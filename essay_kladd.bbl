@@ -1,0 +1,45 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 2.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \sortlist{entry}{ynt}
+    \entry{KandR}{book}{}
+      \name{labelname}{2}{}{%
+        {{hash=1052228cbdc74ef71d9c24c30ddc01ef}{Kernighan}{K\bibinitperiod}{Brian\bibnamedelima W.}{B\bibinitperiod\bibinitdelim W\bibinitperiod}{}{}{}{}}%
+        {{hash=42af644cbe8be3fb0872492484150c5e}{Ritchie}{R\bibinitperiod}{Dennis\bibnamedelima M.}{D\bibinitperiod\bibinitdelim M\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{2}{}{%
+        {{hash=1052228cbdc74ef71d9c24c30ddc01ef}{Kernighan}{K\bibinitperiod}{Brian\bibnamedelima W.}{B\bibinitperiod\bibinitdelim W\bibinitperiod}{}{}{}{}}%
+        {{hash=42af644cbe8be3fb0872492484150c5e}{Ritchie}{R\bibinitperiod}{Dennis\bibnamedelima M.}{D\bibinitperiod\bibinitdelim M\bibinitperiod}{}{}{}{}}%
+      }
+      \list{publisher}{1}{%
+        {Prentice-Hall, Inc.}%
+      }
+      \strng{namehash}{7504cc867375f33ae6c760d0facfc70a}
+      \strng{fullhash}{7504cc867375f33ae6c760d0facfc70a}
+      \field{labelalpha}{KR88}
+      \field{sortinit}{1}
+      \field{labeltitle}{{The C Programming Language Second Edition}}
+      \field{title}{{The C Programming Language Second Edition}}
+      \field{year}{1988}
+    \endentry
+  \endsortlist
+\endrefsection
+\endinput
+

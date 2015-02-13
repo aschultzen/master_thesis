@@ -1,0 +1,38 @@
+% Installed kile the normal way
+% Installed some missing kile stuff
+% Installed Okular
+% Installed texlive-biblatex
+% Installed: yum-plugin-copr
+% yum copr enable cbm/bibeer-1.8
+% Installed biber
+
+
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[
+    backend=biber,
+    style=alphabetic,
+    sorting=ynt
+]{biblatex}
+\addbibresource{refs.bib}
+\nocite{*}
+
+%opening
+\title{GPS Spoofing and the importance of correct time}
+\author{Aril Johannes Schultzen}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Currently, this is not much more but comments and notes in order for me to write an essay, an essay ment for me to prepare for my work with my master thesis. This document does not represent the quality of the finished product in any way. This is a cite \cite{KandR}
+\end{abstract}
+
+\section{Comments and notes}
+
+\newpage
+ 
+\printbibliography[title={Complete Bibliography}]
+
+\end{document}
