@@ -5,3 +5,5 @@
 *.log
 *.backup
 *.pdf
+*.toc
+*.out

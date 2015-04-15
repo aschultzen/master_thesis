@@ -64,26 +64,33 @@
 \setcounter{page}{0}
 
 \begin{abstract}
-Currently, this is not much more but comments and notes in order for me to write an essay, an essay meant for me to prepare for my work with my master thesis. This document does not represent the quality of the finished product in any way. This is a cite \cite{KandR}
+Currently, this is not much more but comments and notes in order for me to write an essay, an essay meant for me to prepare for my work with my master thesis. This document does not represent the quality of the finished product in any way. Example cite \cite{KandR}
 \end{abstract}
 
 \newpage
 \clearpage
 \setcounter{page}{1}
 
-\section{Essay: Notes and Comments}
-Notes and comments directly related to the essay.
+\section{Global Positioning System: A short introduction}
+Most of use have at some time in some way used GPS....go on. Elaborate.
 
-\subsection{PMUs}
+\section{Phasor Measurement Units}
 
+\section{Signal interference: Jamming}
+\subsection{Locking on}
+\subsection{Jamming: How to?}
 
-\section{Master Thesis: Notes and Comments}
-General notes and comments related to the master thesis. Overlap may occur.
+By emitting a high-power signal at the GPS frequency, one can interfere with the signals emitted by the GPS satellites, effectively denying GPS receivers use of these signals. These signals are already weak considering their travel from space. Such an "attack", although effective, is pretty naive and easily recognized by the jammed party. After all, if you don't have a signal, you are probably being jammed. A more sophisticated approach is to emit a counterfeit signal in order to manipulate the receivers reported time or even position. IRAN, DRONE SPOOF STORY!. 
 
-\subsection{RasPI Display}
-Just use an Arduino to control whatever output you need.
+\subsection{Detecting Jamming}
+
+\subsection{Preventing Jamming}
+\subsubsection{Encryption}
+
+\section{Notes}
+A way of detecting a clumsy attempt at jamming, would be to enter a "Jam-mode" as soon as the location changes. The PMUs are not supposed to be moved. Why would they anyway? Moving power-plants? Discuss with Harald.
+
 \newpage
-
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
 
 \end{document}
