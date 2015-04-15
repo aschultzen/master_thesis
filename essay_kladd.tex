@@ -1,32 +1,75 @@
-% Installed kile the normal way
-% Installed some missing kile stuff
-% Installed Okular
-% Installed texlive-biblatex
-% Installed: yum-plugin-copr
-% yum copr enable cbm/bibeer-1.8
-% Installed biber
+\documentclass[12pt,english,a4paper]{article}
 
+\usepackage[utf8]{inputenc}          % Allows UTF-8 encoded characters in the .tex-file.
+\usepackage{babel,csquotes,textcomp} % Set LaTeX to structure the content following international academic standards.
 
-\documentclass[a4paper,10pt]{article}
-\usepackage[utf8]{inputenc}
+% Include the TikZ-package for drawing figures.
+%\usepackage{tikz}
+%\usetikzlibrary{shapes.geometric,arrows}
+%\usepackage{courier}
+
+% Creates clickable hyperlinks in the PDF-document.
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{listings}
+\usepackage{wrapfig}
+\usepackage{color}
+
 \usepackage[
     backend=biber,
     style=alphabetic,
     sorting=ynt
 ]{biblatex}
 \addbibresource{refs.bib}
+% Removes the dots in the table of contents.
+%\usepackage[titles]{tocloft} 
+%\renewcommand{\cftdot}{}
+
+% Enables bibtex for keeping track of the document's reference list.
+%\usepackage[style=numeric-comp,backend=biber,sortcites]{biblatex} 
+\urlstyle{sf}
+%\addbibresource{bibliography.bib} % The text-file that contains the document's references.
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\lstset{ %
+  basicstyle=\ttfamily\small,     
+  backgroundcolor=\color{white},   % choose the background color
+  breaklines=true,                 % automatic line breaking only at whitespace
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{mygreen},    % comment style
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+  keywordstyle=\color{blue},       % keyword style
+  stringstyle=\color{mymauve},     % string literal style
+}
+%\nocite{*}	% This should be removed or the bibliography needs to be updated. 
 
 %opening
 \title{GPS Spoofing and the importance of correct time}
 \author{Aril Johannes Schultzen}
 
 \begin{document}
-
 \maketitle
+\thispagestyle{empty}
+\setcounter{page}{0}
+\newpage
+\tableofcontents
+\thispagestyle{empty}
+\setcounter{page}{0}
+\newpage
+\thispagestyle{empty}
+\setcounter{page}{0}
 
 \begin{abstract}
 Currently, this is not much more but comments and notes in order for me to write an essay, an essay meant for me to prepare for my work with my master thesis. This document does not represent the quality of the finished product in any way. This is a cite \cite{KandR}
 \end{abstract}
+
+\newpage
+\clearpage
+\setcounter{page}{1}
 
 \section{Essay: Notes and Comments}
 Notes and comments directly related to the essay.
@@ -38,9 +81,9 @@ Notes and comments directly related to the essay.
 General notes and comments related to the master thesis. Overlap may occur.
 
 \subsection{RasPI Display}
-Just use an Arduino to control whatever output you need. You are gonna need the serial on the Raspberry to talk with Cesium clock anyway. 
+Just use an Arduino to control whatever output you need.
 \newpage
 
-\printbibliography[title={Complete Bibliography}]
+\printbibliography[title={Complete Bibliography},heading=bibintoc]
 
 \end{document}
