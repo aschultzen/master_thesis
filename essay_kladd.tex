@@ -22,14 +22,6 @@
     sorting=ynt
 ]{biblatex}
 \addbibresource{refs.bib}
-% Removes the dots in the table of contents.
-%\usepackage[titles]{tocloft} 
-%\renewcommand{\cftdot}{}
-
-% Enables bibtex for keeping track of the document's reference list.
-%\usepackage[style=numeric-comp,backend=biber,sortcites]{biblatex} 
-\urlstyle{sf}
-%\addbibresource{bibliography.bib} % The text-file that contains the document's references.
 
 \definecolor{mygreen}{rgb}{0,0.6,0}
 \definecolor{mygray}{rgb}{0.5,0.5,0.5}
@@ -45,9 +37,7 @@
   keywordstyle=\color{blue},       % keyword style
   stringstyle=\color{mymauve},     % string literal style
 }
-%\nocite{*}	% This should be removed or the bibliography needs to be updated. 
 
-%opening
 \title{GPS Spoofing and the importance of correct time}
 \author{Aril Johannes Schultzen}
 
@@ -72,25 +62,33 @@ Currently, this is not much more but comments and notes in order for me to write
 \setcounter{page}{1}
 
 \section{Global Positioning System: A short introduction}
-Most of use have at some time in some way used GPS....go on. Elaborate.
+In our everyday lives we are surrounded with GPS technology. In fields like emergency response, search and rescue, fleet management and even agriculture, it has become a vital tool of utmost importance to everyday operation. For ordinary people, Satellite navigation in cars are by some, used everyday.   
+
+A common misconception is that the GPS satellites track \textit{you} in order to determine where you are. It actually works the other way around. You are, with your GPS receiver, tracking a set of satellites in order to establish your own position.The method used by your GPS receiver to determine its position is called \textit{trilateration}.Trilateration is used in geometry as a process of determining the location (absolute or relative) of point by measuring distance. It is often confused with triangulation which uses angles, where trilateration does not. At any given time, there are at least 24 GPS satellites orbiting the earth \cite{GPSGOV}. In order for a GPS receiver to determine its position, it will need 4 GPS satellites within line of sight \footnote{The line of sight requirement might seem unreasonable, but by the time the signal has reached earth, is has degraded to a minimum of -160 dBW \cite{NATINT}}. 
+\begin{figure}[hb]
+  \centering
+  \includegraphics[scale=0.4]{trilaterate.jpg}
+  \caption[GPS trilaterate figure]
+   {Figure showing how GPS satellites are used to trilaterate to determine a GPS receivers position \cite{GISTRILATERATE}.}
+\end{figure}
 
 \section{Phasor Measurement Units}
 
-\section{Signal interference: Jamming}
+\section{Signal interference}
 \subsection{Locking on}
-\subsection{Jamming: How to?}
+\subsection{Jamming}
+\subsection{Spoofing}
 
 By emitting a high-power signal at the GPS frequency, one can interfere with the signals emitted by the GPS satellites, effectively denying GPS receivers use of these signals. These signals are already weak considering their travel from space. Such an "attack", although effective, is pretty naive and easily recognized by the jammed party. After all, if you don't have a signal, you are probably being jammed. A more sophisticated approach is to emit a counterfeit signal in order to manipulate the receivers reported time or even position. IRAN, DRONE SPOOF STORY!. 
 
-\subsection{Detecting Jamming}
-
-\subsection{Preventing Jamming}
+\subsection{Detection}
+\subsection{Prevention}
 \subsubsection{Encryption}
 
 \section{Notes}
-A way of detecting a clumsy attempt at jamming, would be to enter a "Jam-mode" as soon as the location changes. The PMUs are not supposed to be moved. Why would they anyway? Moving power-plants? Discuss with Harald.
+A way of detecting a clumsy attempt at jamming, would be to enter a "jam-mode" as soon as the location changes. The PMUs are not supposed to be moved. Why would they anyway? Moving power-plants? Discuss with Harald.
 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
 
-\end{document}
+\end{document}                    
