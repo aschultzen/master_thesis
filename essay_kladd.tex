@@ -15,6 +15,7 @@
 \usepackage{listings}
 \usepackage{wrapfig}
 \usepackage{color}
+\usepackage{lettrine}
 
 \usepackage[
     backend=biber,
@@ -62,15 +63,23 @@ Currently, this is not much more but comments and notes in order for me to write
 \setcounter{page}{1}
 
 \section{Global Positioning System: A short introduction}
-In our everyday lives we are surrounded with GPS technology. In fields like emergency response, search and rescue, fleet management and even agriculture, it has become a vital tool of utmost importance to everyday operation. Satellite navigation in cars are more popular than ever and most phones are today sold with GPS receivers. The European Space Agency estimated that there were 2 billion GPS enabled devices by 2012 \cite{ESA}. What started out as a tool for the U.S military is now used by millions, if not billions of users all over the globe.
+The Global Positioning System (GPS) is a utility owned by the United States that provides its user with positioning, navigation and timing services. At the end of 60's, the U.S Navy was developing the Polaris missile, a missile capable of being launched from a submarine. One of the requirements for launching the Polaris missile, was exact knowledge of the submarines position. The problem led the Navy and The Applied Physics Laboratory at Hopkins, to develop the Transit system, the earliest predecessor to the GPS system \cite{SteJ}. 
 
-A common misconception is that the GPS satellites track \textit{you} in order to determine where you are. It actually works the other way around. You are, with your GPS receiver, tracking a set of satellites in order to establish your own position.The method used by your GPS receiver to determine its position is called \textit{trilateration}.Trilateration is used in geometry as a process of determining the location (absolute or relative) of point by measuring distance. It is often confused with triangulation which uses angles, where trilateration does not. At any given time, there are at least 24 GPS satellites orbiting the earth \cite{GPSGOV}. In order for a GPS receiver to determine its position, it will need 4 GPS satellites within line of sight \footnote{The line of sight requirement might seem unreasonable, but by the time the signal has reached earth, is has degraded to a minimum of -160 dBW \cite{NATINT}}. 
+In our everyday lives we are surrounded with GPS technology. In fields like emergency response, search and rescue, fleet management and even agriculture, it has become a vital tool of utmost importance to everyday operation. Satellite navigation can be found in many cars and many phones are today sold with internal GPS receivers. The European Space Agency estimated that there were 2 billion GPS enabled devices by 2012 \cite{ESA}. What started out as a navigation tool for the U.S navy is now used by millions, if not billions of users all over the globe.
+
 \begin{figure}[hb]
   \centering
   \includegraphics[scale=0.4]{trilaterate.jpg}
   \caption[GPS trilaterate figure]
    {Figure showing how GPS satellites are used to trilaterate to determine a GPS receivers position \cite{GISTRILATERATE}.}
 \end{figure}
+
+A common misconception is that the GPS satellites track \textit{you} in order to determine where you are. It actually works the other way around. You are, with your GPS receiver, tracking a set of satellites in order to establish your own position.The method used by your GPS receiver to determine its position is called \textit{trilateration}. Trilateration is used in geometry as a process of determining the location (absolute or relative) of point by measuring distance. It is often confused with triangulation which uses angles, where trilateration does not.
+
+
+
+At any given time, there are at least 24 GPS satellites, each in its own orbit at about 11,000 nautical miles above the earth\cite{GPSGOV}. In order for a GPS receiver to determine its position, it will need 4 GPS satellites within line of sight \footnote{The line of sight requirement might seem unreasonable, but by the time the signal has reached earth, is has degraded to a minimum of -160 dBW \cite{NATINT}}. 
+
 
 \section{Phasor Measurement Units}
 
