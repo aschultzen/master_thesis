@@ -63,9 +63,9 @@ Currently, this is not much more but comments and notes in order for me to write
 \setcounter{page}{1}
 
 \section{Global Positioning System: A short introduction}
-The Global Positioning System (GPS) is a utility owned by the United States that provides its user with positioning, navigation and timing services. At the end of 60's, the U.S Navy was developing the Polaris missile, a missile capable of being launched from a submarine. One of the requirements for launching the Polaris missile, was exact knowledge of the submarines position. The problem led the Navy and The Applied Physics Laboratory at Hopkins, to develop the Transit system, the earliest predecessor to the GPS system \cite{SteJ}. 
+The Global Positioning System (GPS) is a utility owned by the United States that provides its user with positioning, navigation and timing services. At the end of 60's, the U.S Navy was developing the Polaris missile, a missile capable of being launched from a submarine. One of the requirements for launching the Polaris missile was exact knowledge of the submarines position. The problem led the Navy and The Applied Physics Laboratory at Hopkins to develop the Transit system, the earliest predecessor to the GPS system \cite{SteJ}. 
 
-In our everyday lives we are surrounded with GPS technology. In fields like emergency response, search and rescue, fleet management and even agriculture, it has become a vital tool of utmost importance to everyday operation. Satellite navigation can be found in many cars and many phones are today sold with internal GPS receivers. The European Space Agency estimated that there were 2 billion GPS enabled devices by 2012 \cite{ESA}. What started out as a navigation tool for the U.S navy is now used by millions, if not billions of users all over the globe.
+Today, roughly 40 years later we are surrounded with GPS technology. In fields like emergency response, search and rescue, fleet management and even agriculture, it has become a vital tool of utmost importance to everyday operation. Satellite navigation can be found in most new cars and few phones are today sold without an internal GPS receivers. The European Space Agency estimated that there were 2 billion GPS enabled devices by 2012 \cite{ESA}. What started out as a navigation tool for the U.S navy is now used by millions, if not billions of users both civilian and military all over the globe.
 
 \begin{figure}[hb]
   \centering
@@ -74,11 +74,11 @@ In our everyday lives we are surrounded with GPS technology. In fields like emer
    {Figure showing how GPS satellites are used to trilaterate to determine a GPS receivers position \cite{GISTRILATERATE}.}
 \end{figure}
 
-A common misconception is that the GPS satellites track \textit{you} in order to determine where you are. It actually works the other way around. You are, with your GPS receiver, tracking a set of satellites in order to establish your own position.The method used by your GPS receiver to determine its position is called \textit{trilateration}. Trilateration is used in geometry as a process of determining the location (absolute or relative) of point by measuring distance. It is often confused with triangulation which uses angles, where trilateration does not.
+A common misconception (that is often reinforced by Hollywood action movies) is that the GPS satellites track \textit{you} by communicating with your GPS receiver. It actually works the other way around. You are, with your GPS receiver, tracking a set of satellites in order to establish your own position. At any given time, there are at least 24 GPS satellites each in its own orbit at about 11,000 nautical miles above your head \cite{GPSGOVSS}. In order for a GPS receiver to determine its position, it will need 4 GPS satellites within line of sight \footnote{The line of sight requirement might seem unreasonable, but by the time the signal has reached earth, is has degraded to a minimum of -160 dBW \cite{NATINT}}.
+The method used by your GPS receiver to determine its position is called \textit{trilateration}. 
+Trilateration is used in geometry as a process of determining the location (absolute or relative) of point by measuring distance. It is often confused with triangulation which instead of distance, uses angles. Measuring the distance from the GPS satellites to a given position on earth is quite simple when using the equation: \begin{equation} Distance = Rate \times Time \end{equation} In this context, the \textit{rate} is how fast the signals travel. This is equal to the speed of light (299,792,458 m/s). A part of the GPS satellites signal is a time stamp of when the signal was sent. By comparing this time stamp with the current time, one can calculate the age of the signal and therefore how long it has spent traveling. 
 
-
-
-At any given time, there are at least 24 GPS satellites, each in its own orbit at about 11,000 nautical miles above the earth\cite{GPSGOV}. In order for a GPS receiver to determine its position, it will need 4 GPS satellites within line of sight \footnote{The line of sight requirement might seem unreasonable, but by the time the signal has reached earth, is has degraded to a minimum of -160 dBW \cite{NATINT}}. 
+\cite{GPSGOVTE} 
 
 
 \section{Phasor Measurement Units}
@@ -89,6 +89,7 @@ At any given time, there are at least 24 GPS satellites, each in its own orbit a
 \subsection{Spoofing}
 
 By emitting a high-power signal at the GPS frequency, one can interfere with the signals emitted by the GPS satellites, effectively denying GPS receivers use of these signals. These signals are already weak considering their travel from space. Such an "attack", although effective, is pretty naive and easily recognized by the jammed party. After all, if you don't have a signal, you are probably being jammed. A more sophisticated approach is to emit a counterfeit signal in order to manipulate the receivers reported time or even position. IRAN, DRONE SPOOF STORY!. 
+
 
 \subsection{Detection}
 \subsection{Prevention}
