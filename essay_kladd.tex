@@ -39,7 +39,7 @@
   stringstyle=\color{mymauve},     % string literal style
 }
 
-\title{GPS Spoofing and the importance of correct time}
+\title{GPS Spoofing and the importance of time}
 \author{Aril Johannes Schultzen}
 
 \begin{document}
@@ -74,14 +74,17 @@ Today, roughly 40 years later we are surrounded with GPS technology. In fields l
    {Figure showing how GPS satellites are used to trilaterate to determine a GPS receivers position \cite{GISTRILATERATE}.}
 \end{figure}
 
-A common misconception (that is often reinforced by Hollywood action movies) is that the GPS satellites track \textit{you} by communicating with your GPS receiver. It actually works the other way around. You are, with your GPS receiver, tracking a set of satellites in order to establish your own position. At any given time, there are at least 24 GPS satellites each in its own orbit at about 11,000 nautical miles above your head \cite{GPSGOVSS}. In order for a GPS receiver to determine its position, it will need 4 GPS satellites within line of sight \footnote{The line of sight requirement might seem unreasonable, but by the time the signal has reached earth, is has degraded to a minimum of -160 dBW \cite{NATINT}}.
+A common misconception (that is often reinforced by Hollywood action movies) is that the GPS satellites track \textit{you} by communicating with your GPS receiver. It actually works the other way around. You are, with your GPS receiver, tracking a set of satellites in order to establish your own position. At any given time, there are at least 24 GPS satellites each in its own orbit at about 11,000 nautical miles above your head \cite{GPSGOVSS}. In order for a GPS receiver to determine its position and obtain correct time, it will need 4 GPS satellites within line of sight \footnote{The line of sight requirement might seem unreasonable, but by the time the signal has reached earth, is has degraded to a minimum of -160 dBW \cite{NATINT}}.
 The method used by your GPS receiver to determine its position is called \textit{trilateration}. 
-Trilateration is used in geometry as a process of determining the location (absolute or relative) of point by measuring distance. It is often confused with triangulation which instead of distance, uses angles. Measuring the distance from the GPS satellites to a given position on earth is quite simple when using the equation: \begin{equation} Distance = Rate \times Time \end{equation} In this context, the \textit{rate} is how fast the signals travel. This is equal to the speed of light (299,792,458 m/s). A part of the GPS satellites signal is a time stamp of when the signal was sent. By comparing this time stamp with the current time, one can calculate the age of the signal and therefore how long it has spent traveling. 
-
-\cite{GPSGOVTE} 
-
+Trilateration is used in geometry as a process of determining the location (absolute or relative) of point by measuring distance. It is often confused with triangulation which instead of distance, uses angles. Measuring the distance from the GPS satellites to a given position on earth is quite simple when using the equation: 
+\begin{equation} Distance = Rate \times Time \end{equation} 
+The equation is simple to solve, first we need the rate. In this context, the \textit{rate} is how fast the signals travel. This is equal to the speed of light (299,792,458 m/s). The time the signal has used traveling from the satellite to earth can be obtained by analyzing the signal itself. The signal contains a time stamp of when the signal was sent. By comparing this time stamp with the current time, one can calculate the age of the signal and therefore how long it has spent traveling. \cite{GPSGOVTE} 
 
 \section{Phasor Measurement Units}
+During the introduction of this article the properties of GPS as a tool for navigation was made apparent. This is however not the only use of GPS. On board of each GPS satellite there is an atomic clock. These clocks are synchronized with each other and also with clocks on the earth. Even though the use of GPS as a way to obtain correct time was not among the original design goals, it has proven useful for time critical applications. 
+
+An example of such an application is a phasor measurement unit (PMU).A PMU analyzes the waves on the electrical grid and uses a common time source for synchronization. This synchronization allows for real-time measurements between multiple points in the grid by multiple PMU's. The common time source (and why PMU's are relevant) is obtained by using GPS.
+\cite{YLJRNR}
 
 \section{Signal interference}
 \subsection{Locking on}
@@ -94,9 +97,6 @@ By emitting a high-power signal at the GPS frequency, one can interfere with the
 \subsection{Detection}
 \subsection{Prevention}
 \subsubsection{Encryption}
-
-\section{Notes}
-A way of detecting a clumsy attempt at jamming, would be to enter a "jam-mode" as soon as the location changes. The PMUs are not supposed to be moved. Why would they anyway? Moving power-plants? Discuss with Harald.
 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
