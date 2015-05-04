@@ -78,13 +78,19 @@ A common misconception (that is often reinforced by Hollywood action movies) is 
 The method used by your GPS receiver to determine its position is called \textit{trilateration}. 
 Trilateration is used in geometry as a process of determining the location (absolute or relative) of point by measuring distance. It is often confused with triangulation which instead of distance, uses angles. Measuring the distance from the GPS satellites to a given position on earth is quite simple when using the equation: 
 \begin{equation} Distance = Rate \times Time \end{equation} 
-The equation is simple to solve, first we need the rate. In this context, the \textit{rate} is how fast the signals travel. This is equal to the speed of light (299,792,458 m/s). The time the signal has used traveling from the satellite to earth can be obtained by analyzing the signal itself. The signal contains a time stamp of when the signal was sent. By comparing this time stamp with the current time, one can calculate the age of the signal and therefore how long it has spent traveling. \cite{GPSGOVTE} 
+The equation is simple to solve, first we need the rate. In this context, the \textit{rate} is how fast the signals travel. This is equal to the speed of light (299,792,458 m/s). The time the signal has used traveling from the satellite to earth can be obtained by analyzing the signal itself. The signal contains a time stamp of when the signal was sent. By comparing this time stamp with the current time, one can calculate the age of the signal and therefore how long it has spent traveling. \cite{GPSGOVTE}  
 
-\section{Phasor Measurement Units}
+\section{Clocks}
+What does a \$10 wristwatch and a \$100000 atomic clock have in common? They both drift. This phenomena known as \texttt{clock drift}, is when a clock no longer runs at the exact same speed as a reference clock and they drift apart. Of course in our scenario with the wristwatch and the atomic clock, the wristwatch will drift faster. 
+
+\subsection{Atomic clocks}
+
+\subsection{GPS Time}
 During the introduction of this article the properties of GPS as a tool for navigation was made apparent. This is however not the only use of GPS. On board of each GPS satellite there is an atomic clock. These clocks are synchronized with each other and also with clocks on the earth. Even though the use of GPS as a way to obtain correct time was not among the original design goals, it has proven useful for time critical applications. 
 
-An example of such an application is a phasor measurement unit (PMU).A PMU analyzes the waves on the electrical grid and uses a common time source for synchronization. This synchronization allows for real-time measurements between multiple points in the grid by multiple PMU's. The common time source (and why PMU's are relevant) is obtained by using GPS.
-\cite{YLJRNR}
+
+\section{Phasor Measurement Units}
+An example of such an application is a phasor measurement unit (PMU).A PMU analyzes the waves on the electrical grid and uses a common time source for synchronization. This synchronization allows for real-time measurements between multiple points in the grid by multiple PMU's. The common time source (and why PMU's are relevant) is obtained by using GPS. \cite{YLJRNR}
 
 \section{Signal interference}
 \subsection{Locking on}
