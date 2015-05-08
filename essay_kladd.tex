@@ -3,12 +3,6 @@
 \usepackage[utf8]{inputenc}          % Allows UTF-8 encoded characters in the .tex-file.
 \usepackage{babel,csquotes,textcomp} % Set LaTeX to structure the content following international academic standards.
 
-% Include the TikZ-package for drawing figures.
-%\usepackage{tikz}
-%\usetikzlibrary{shapes.geometric,arrows}
-%\usepackage{courier}
-
-% Creates clickable hyperlinks in the PDF-document.
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{pdfpages}
@@ -18,10 +12,9 @@
 \usepackage{lettrine}
 \usepackage[font={small,it}]{caption}
 
-\bibliographystyle{plain}
 \usepackage[
     backend=biber,
-    style=alphabetic
+    style=numeric
 ]{biblatex}
 \addbibresource{refs.bib}
 
@@ -44,6 +37,7 @@
 \author{Aril Johannes Schultzen}
 
 \begin{document}
+
 \maketitle
 \thispagestyle{empty}
 \setcounter{page}{0}
@@ -90,15 +84,14 @@ What does a \$10 wristwatch and a \$100 000 atomic clock have in common? They bo
 This property is a result of how they track time. In essence, all clocks work the same way. They have a part that oscillates, a way to count the number of oscillations and a way to show the count. If we transfer this analogy to the typical "grandfather clock", the pendulum would be the oscillator, the counting mechanism the clockwork and the clock face and dials would be the display. In a typical wristwatch, the oscillator is quartz crystal powered by a battery. The frequency of which the crystal oscillations is then divided down to a single Hertz by simple electronics.The purity of the crystal is among the decisive factors determining the accuracy of the clock. \cite{CSMG}. 
 Although a completely different beast, the same principles apply to the atomic clock which uses the uses the microwave signal that electrons in atoms emit when they change energy levels. One of the most commonly used elements in atomic clocks, is \textit{caesium-133}, an isotope of caesium.\footnote{1 second equals 9,192, 631,770 cycles of the Cs-133 transition} \cite{HP}. This is of course an extremely limited explanation, but for this essay, it will have to suffice.
 
-\subsection{GPS Time}
-During the introduction of this article the properties of GPS as a tool for navigation was made apparent. This is however not the only use of GPS. On board of each GPS satellite there is an atomic clock. These clocks are synchronized with each other and also with clocks on the earth. Even though the use of GPS as a way to obtain correct time was not among the original design goals, it has proven useful for time critical applications. 
+\subsection{GPS and Time}
+During the introduction of this article the properties of GPS as a tool for navigation was made apparent. This is however not the only use of GPS. On board of each GPS satellite there is an atomic clock. These clocks are synchronized with each other and also with clocks on the earth. Even though the use of GPS as a way to obtain correct time was not among the original design goals, it has proven useful for time critical applications. FILL INN ABOUT HOW GPS AND TIME WORKS! An example of such an application is a phasor measurement unit (PMU).A PMU analyzes the waves on the electrical grid and uses a common time source for synchronization. This synchronization allows for real-time measurements between multiple points in the grid by multiple PMU's. The common time source (and why PMU's are relevant) is obtained by using GPS. \cite{YLJRNR}
 
-\section{Phasor Measurement Units}
-An example of such an application is a phasor measurement unit (PMU).A PMU analyzes the waves on the electrical grid and uses a common time source for synchronization. This synchronization allows for real-time measurements between multiple points in the grid by multiple PMU's. The common time source (and why PMU's are relevant) is obtained by using GPS. \cite{YLJRNR}
+\section{Interfering with Signals}
+By emitting a high-power signal at the GPS frequency, one can interfere with the signals emitted by the GPS satellites, effectively denying GPS receivers use of these signals. These signals are already weak considering their travel from space. Such an "attack", although effective, is pretty naive and easily recognized by the jammed party. After all, if you don't have a signal, you are probably being jammed. A more sophisticated approach is to emit a counterfeit signal in order to manipulate the receivers reported time or even position. This approach is known as \textit{spoofing} and is a lot harder to detect. 
 
-\section{Spoofing}
-By emitting a high-power signal at the GPS frequency, one can interfere with the signals emitted by the GPS satellites, effectively denying GPS receivers use of these signals. These signals are already weak considering their travel from space. Such an "attack", although effective, is pretty naive and easily recognized by the jammed party. After all, if you don't have a signal, you are probably being jammed. A more sophisticated approach is to emit a counterfeit signal in order to manipulate the receivers reported time or even position. IRAN, DRONE SPOOF STORY!. 
-
+\subsection{Spoofing}
+When spoofing a GPS signal, a false version of the original signal is made in order to gain control over the victims GPS receiver calculated position and time. Knowing the signal that the victim is receiving is key in order to successfully spoof it. To anyone with access to the military-grade GPS signals, this is not necessarily much of an issue. Their signals are encrypted and hard to spoof, the civilian frequencies on the other hand are publicly known and readily predictable. Daniel P. Shepard and Todd E. Humphreys and Aaron A. Fansler (2012)\cite{EVPMUGA} describes in their paper \textit{Evaluation of the Vulnerability of Phasor Measurement Units to GPS Spoofing Attacks}, a way to successfully spoof a GPS signal used by a PMU. They describe a spoofer that they constructed that is able to mix authentic signals from GPS satellites with their own counterfeit signals. They also describe how they "introduce" the counterfeit signal to the victim by adjusting the power of the signal below the victim receivers noise floor and then gradually raises it until it surpasses the authentic signal signal strength. By using this strategy, they were able to spoof a variety of receivers with great success. 
 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
