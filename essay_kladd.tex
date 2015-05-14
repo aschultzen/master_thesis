@@ -99,13 +99,15 @@ By emitting a high-power signal at the frequencies used by GPS satellites, one c
 Signal-level spoofing is when an attacker causes an receiver to loose lock on an authentic GPS signal by overpowering it with a false signal. This can be achieved by using a GPS simulator that matches the authentic signals phase, code delay and encoded data \cite{SGRCOOPMU}. Knowing the signal that the victim is receiving is important in order to successfully spoof it. To anyone with access to the military-grade GPS signals, this is less of an issue (tough still possible) since their signals are encrypted and harder to spoof, the civilian frequencies on the other hand are publicly known and readily predictable. Shepard, Humphreys and Fansler (2012)\cite{EVPMUGA} describes in their paper \textit{Evaluation of the Vulnerability of Phasor Measurement Units to GPS Spoofing Attacks}, a way to successfully spoof a GPS signal used by a PMU.They describe how they "introduce" the counterfeit signal to the victim by adjusting the power of the signal below the victim receivers noise floor and then gradually raises it until it surpasses the authentic signals strength. Once the victims receiver locks on, the attacker has gained full control.
 
 \subsection{Data-level Spoofing}
-In data-level spoofing, the contents (data) of the GPS signal are manipulated. GPS signals includes a variety of signal, among them the ephemeris data used to calculate the positions of each satellite in orbit and also the time and status of the satellite constellation. By altering this data the receiver calculates incorrect velocity, location and most important in this context, clock offset. 
+In data-level spoofing, the contents (data) of the GPS signal are manipulated. GPS signals includes a variety of signal, among them the ephemeris data used to calculate the positions of each satellite in orbit and also the time and status of the satellite constellation. By altering this data the receiver calculates incorrect velocity, location and most important in this context, clock offset.\cite{SGRCOOPMU}
 
 \subsection{Replay spoofing}
 
 \subsection{Malfunction}
 
 \section{Countermeasures}
+\subsection{Monitoring Signal Power}
+In any kind of attack, jamming or spoofing, a counterfeit signal must overpower the authentic signal in order for the receiver to lock onto it or in the case with jamming, denying the authentic signal. By monitoring the strength of the signal and detecting a spike or rise in signal power, a possible attack can be identified. This is a low-cost, low-complexity and independent (in contrast to for example using other receivers as a reference) countermeasure. It is, \cite{HengChouGao14}
 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
