@@ -41,11 +41,11 @@
 \maketitle
 \thispagestyle{empty}
 \setcounter{page}{0}
-\newpage
+%\newpage
 \tableofcontents
 \thispagestyle{empty}
 \setcounter{page}{0}
-\newpage
+%\newpage
 \thispagestyle{empty}
 \setcounter{page}{0}
 
@@ -53,7 +53,7 @@
 Currently, this is not much more but comments and notes in order for me to write an essay, an essay meant for me to prepare for my work with my master thesis. This document does not represent the quality of the finished product in any way.
 \end{abstract}
 
-\newpage
+%\newpage
 \clearpage
 \setcounter{page}{1}
 
@@ -61,9 +61,9 @@ Currently, this is not much more but comments and notes in order for me to write
 The Global Positioning System (GPS) is a utility owned by the United States that provides its user with positioning, navigation and timing services. At the end of 60's, the U.S Navy was developing the Polaris missile, a missile capable of being launched from a submarine. One of the requirements for launching the Polaris missile was exact knowledge of the submarines position. The problem led the Navy and The Applied Physics Laboratory at Hopkins to develop the Transit system, the earliest predecessor to the GPS system \cite{SteJ}.
 
 Today, roughly 40 years later we are surrounded by GPS technology.
-\begin{wrapfigure}{r}{0.55\textwidth}
+\begin{wrapfigure}{c}{0.45\textwidth}
   \centering
-  \includegraphics[width=0.50\textwidth]{trilaterate.jpg}
+  \includegraphics[width=0.40\textwidth]{trilaterate.jpg}
   \caption[GPS trilaterate figure]
    {Figure showing how GPS satellites are used to trilaterate to determine a GPS receivers position. Source: \cite{GISTRILATERATE}}
 \end{wrapfigure}
@@ -75,26 +75,38 @@ The equation is simple to solve, first we need the rate. In this context, the \t
 
 \section{Clocks}
 What does a \$10 wristwatch and a \$100 000 atomic clock have in common? They both drift. This phenomena known as \textit{clock drift}, is when a clock no longer runs at the exact same speed as a reference clock and they drift apart.
-\begin{wrapfigure}{l}{0.55\textwidth}
+\begin{wrapfigure}{c}{0.45\textwidth}
   \centering
-  \includegraphics[width=0.50\textwidth]{cscrystals.jpg}
+  \includegraphics[width=0.40\textwidth]{cscrystals.jpg}
   \caption[Caesium campule]
    {High pure Caesium crystals in ampule under argon. Source: \cite{DENCES}}
 \end{wrapfigure} 
 This property is a result of how they track time. In essence, all clocks work in the same way. They have a part that oscillates, a way to count the number of oscillations and a way to show the count. If we transfer this analogy to the typical "grandfather clock", the pendulum would be the oscillator, the counting mechanism the clockwork and the clock face and dials would be the display. In a typical wristwatch, the oscillator is a quartz crystal powered by a battery. The frequency of which the crystal oscillates is then divided down to a single Hertz by simple electronics. The purity of the crystal is among the decisive factors determining the accuracy of the clock. \cite{CSMG}. 
-Although a completely different beast, the same principles apply to the atomic clock which uses the microwave signal that electrons in atoms emit when they change energy levels. One of the most commonly used elements in atomic clocks, is \textit{caesium-133}, an isotope of caesium.\footnote{1 second equals 9,192, 631,770 cycles of the Cs-133 transition} \cite{HP}. Bear in mind that this is of course an extremely limited explanation.
+Although a completely different beast, the same principles apply to the atomic clock which uses the microwave radiation that electrons in atoms emit when they change energy levels. One of the most commonly used elements in atomic clocks, is \textit{caesium-133}, an isotope of caesium.\footnote{1 second equals 9,192, 631,770 cycles of the Cs-133 transition} \cite{HP}. Bear in mind that this is of course an extremely limited explanation.
 
 \section{GPS and Time}
-During the introduction of this essay the properties of GPS as a tool for navigation was made apparent. This is however not the only use of GPS. On board of each GPS satellite there are several atomic clocks. The clocks are synchronized with each other and also with clocks on Earth.
+During the introduction of this essay the properties of GPS as a tool for navigation was made apparent. This is however not the only use of GPS. On board of each GPS satellite there are several atomic clocks. The clocks are synchronized with each other and also with clocks on Earth. FILL IN HERE!
 
 \section{Phasor Measurement Units}
 An example of an application relying on GPS derived time is a PMU (phasor measurement unit).A PMU analyzes the waves on the electrical grid and uses a common time source for synchronization. This synchronization allows for real-time measurements between multiple points in the grid by multiple PMU's. The common time source (and why PMU's are relevant) is often obtained by using GPS. \cite{YLJRNR} The value of such a device is understood clearer by recognizing that the power grid is a complex, interconnected, interdependent network. In other words, errors and abnormalities in one part of the grid will have an effect on operation elsewhere and in some cases lead to whole spread blackouts \cite{EVPMUGA}.
 
-\section{Interfering with Signals}
-By emitting a high-power signal at the frequencies used by GPS satellites, one can interfere with the signals received by the GPS receiver, effectively denying GPS receivers use of these signals. These signals are already weak considering their travel from space. Such an "attack", although effective, is pretty naive and easily recognized by the jammed party. After all, if you don't have a signal, you are probably being jammed. A more sophisticated approach is to emit a counterfeit signal in order to manipulate the receivers reported time or even position. This approach is known as \textit{spoofing} and is a lot harder to detect. 
+\section{Threat Models}
 
-\subsection{Spoofing}
-When spoofing a GPS signal, a false version of the authentic signal is made in order to gain control over the victims GPS receiver calculated position and time. Knowing the signal that the victim is receiving is important in order to successfully spoof it. To anyone with access to the military-grade GPS signals, this is less of an issue (tough still possible) since their signals are encrypted and harder to spoof, the civilian frequencies on the other hand are publicly known and readily predictable. Shepard, Humphreys and Fansler (2012)\cite{EVPMUGA} describes in their paper \textit{Evaluation of the Vulnerability of Phasor Measurement Units to GPS Spoofing Attacks}, a way to successfully spoof a GPS signal used by a PMU. They describe a spoofer that they constructed that is able to mix authentic signals from GPS satellites with their own counterfeit signals. They also describe how they "introduce" the counterfeit signal to the victim by adjusting the power of the signal below the victim receivers noise floor and then gradually raises it until it surpasses the authentic signals strength. By using this strategy, they were able to spoof a variety of receivers with great success. 
+\subsection{Jamming}
+By emitting a high-power signal at the frequencies used by GPS satellites, one can interfere with the signals received by the GPS receiver, effectively denying GPS receivers use of these signals. These signals are already weak considering their travel from space. Such an "attack", although effective, is pretty naive and easily recognized by the jammed party. If your equipment is operational and you don't have a signal, you are probably being jammed.
+
+\subsection{Signal-level Spoofing}
+Signal-level spoofing is when an attacker causes an receiver to loose lock on an authentic GPS signal by overpowering it with a false signal. This can be achieved by using a GPS simulator that matches the authentic signals phase, code delay and encoded data \cite{SGRCOOPMU}. Knowing the signal that the victim is receiving is important in order to successfully spoof it. To anyone with access to the military-grade GPS signals, this is less of an issue (tough still possible) since their signals are encrypted and harder to spoof, the civilian frequencies on the other hand are publicly known and readily predictable. Shepard, Humphreys and Fansler (2012)\cite{EVPMUGA} describes in their paper \textit{Evaluation of the Vulnerability of Phasor Measurement Units to GPS Spoofing Attacks}, a way to successfully spoof a GPS signal used by a PMU.They describe how they "introduce" the counterfeit signal to the victim by adjusting the power of the signal below the victim receivers noise floor and then gradually raises it until it surpasses the authentic signals strength. Once the victims receiver locks on, the attacker has gained full control.
+
+\subsection{Data-level Spoofing}
+In data-level spoofing, the contents (data) of the GPS signal are manipulated. GPS signals includes a variety of signal, among them the ephemeris data used to calculate the positions of each satellite in orbit and also the time and status of the satellite constellation. By altering this data the receiver calculates incorrect velocity, location and most important in this context, clock offset. 
+
+\subsection{Replay spoofing}
+
+\subsection{Malfunction}
+
+\section{Countermeasures}
+
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
 
