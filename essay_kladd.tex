@@ -104,7 +104,7 @@ In data-level spoofing, the contents (data) of the GPS signal are manipulated. G
 Replay spoofing (or \textit{meaconing}\footnote{\textit{Meacon} is portmanteau of \textit{Masking Beacon}}) is a technique where GPS signals are intercepted and rebroadcasted. The rebroadcast can be delayed and used to confuse navigation or to cause delay in applications relying on GPS signals for time.
 
 \subsection{Malfunctions}\label{mf}
-
+Just like any tool or device, a GPS receiver is prone to failure. This threat may not be posed by an external party, but is still a threat to normal operation. The ability to differentiate between an attack and a malfunction is important when deciding a response in such an event.
 
 \section{Countermeasures}
 \subsection{Monitoring Signal Power} %[C1]
@@ -118,6 +118,9 @@ By checking the position solution against the known position of the receiver, bo
   \item \textbf{All the receivers are spoofed:} As long as they are spoofed by the same spoofer, they will solve the same time but also the same position which again makes it possible to detect the attack.
 \end{itemize}
 A possible way to for a attacker to avoid detection would be to use one spoofer per receiver. These spoofers would need to be synchronized and their signal power fine tuned to make sure that they only spoof their respective receiver. It is believed that such an attack would be to complex and costly to be considered practical. \cite{HengChouGao14}
+
+\subsection{Checking time solutions against receiver clock statistics} %[C8]
+By comparing statistics create by monitoring the receivers clock with the time solution, one can detect spoofing (\ref{sls},\ref{dls}) as well as malfunctions (\ref{mf}). This is because the time solution is unlikely to be consistent with the statistics in event of an attack. Since this countermeasure relies on the receivers clock which can be described as both unpredictable and stochastic, it should only be used along side other countermeasures. \cite{HengChouGao14}    
 %\section{Our solution}
 %Need some more meat about why time is important anyway.
 
