@@ -103,20 +103,21 @@ In data-level spoofing, the contents (data) of the GPS signal are manipulated. G
 \subsection{Replay spoofing}
 Replay spoofing (or \textit{meaconing}\footnote{\textit{Meacon} is portmanteau of \textit{Masking Beacon}}) is a technique where GPS signals are intercepted and rebroadcasted. The rebroadcast can be delayed and used to confuse navigation or to cause delay in applications relying on GPS signals for time.
 
-\subsection{Malfunction}\label{mf}
+\subsection{Malfunctions}\label{mf}
 
 
 \section{Countermeasures}
 \subsection{Monitoring Signal Power} %[C1]
 In any kind of attack, jamming or spoofing, a counterfeit signal must overpower the authentic signal in order for the receiver to lock onto it or in the case with jamming, denying the authentic signal. By monitoring the strength of the signal and detecting a spike or rise in signal power, a possible attack can be identified. This is a low-cost, low-complexity and independent (in contrast to for example using other receivers as a reference) countermeasure. It is however because of the unpredictable nature of signals, not considered to be a detection confident countermeasure and should therefore only be used along side other countermeasures.\cite{HengChouGao14}
 
-\subsection{Check solved position against known position} %[C7]
+\subsection{Checking solved position against known position} %[C7]
 By checking the position solution against the known position of the receiver, both receiver errors (\ref{mf}) and a replay spoofing (\ref{dls}) attack can be detected. It does however fall short when more sophisticated techniques like Data and Signal-level spoofing (\ref{dls},\ref{sls}) are used. These kind of attacks when done properly (unless it's done with intention), will not alter the solved position. It is important to note that this only relevant when only using \textit{one} receiver. If the position solution from multiple receivers deployed in the same area are cross-checked, this countermeasure can still be considered effective. Consider the following scenarios when using 3 receivers:
 \begin{itemize}
   \item \textbf{None of the receivers are spoofed:} Each receivers solved position matches their respective known position. They all solve the same time. 
   \item \textbf{One or two receivers are spoofed:} The spoofed receiver(s) solve(s) different time compared to the receiver(s) not being spoofed.
   \item \textbf{All the receivers are spoofed:} As long as they are spoofed by the same spoofer, they will solve the same time but also the same position which again makes it possible to detect the attack.
 \end{itemize}
+A possible way to for a attacker to avoid detection would be to use one spoofer per receiver. These spoofers would need to be synchronized and their signal power fine tuned to make sure that they only spoof their respective receiver. It is believed that such an attack would be to complex and costly to be considered practical. \cite{HengChouGao14}
 %\section{Our solution}
 %Need some more meat about why time is important anyway.
 
