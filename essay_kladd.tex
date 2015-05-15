@@ -91,23 +91,35 @@ During the introduction of this essay the properties of GPS as a tool for naviga
 An example of an application relying on GPS derived time is a PMU (phasor measurement unit).A PMU analyzes the waves on the electrical grid and uses a common time source for synchronization. This synchronization allows for real-time measurements between multiple points in the grid by multiple PMU's. The common time source (and why PMU's are relevant) is often obtained by using GPS. \cite{YLJRNR} The value of such a device is understood clearer by recognizing that the power grid is a complex, interconnected, interdependent network. In other words, errors and abnormalities in one part of the grid will have an effect on operation elsewhere and in some cases lead to whole spread blackouts \cite{EVPMUGA}.
 
 \section{Threat Models}
-
 \subsection{Jamming}
 By emitting a high-power signal at the frequencies used by GPS satellites, one can interfere with the signals received by the GPS receiver, effectively denying GPS receivers use of these signals. These signals are already weak considering their travel from space. Such an "attack", although effective, is pretty naive and easily recognized by the jammed party. If your equipment is operational and you don't have a signal, you are probably being jammed.
 
-\subsection{Signal-level Spoofing}
+\subsection{Signal-level Spoofing}\label{sls}
 Signal-level spoofing is when an attacker causes an receiver to loose lock on an authentic GPS signal by overpowering it with a false signal. This can be achieved by using a GPS simulator that matches the authentic signals phase, code delay and encoded data \cite{SGRCOOPMU}. Knowing the signal that the victim is receiving is important in order to successfully spoof it. To anyone with access to the military-grade GPS signals, this is less of an issue (tough still possible) since their signals are encrypted and harder to spoof, the civilian frequencies on the other hand are publicly known and readily predictable. Shepard, Humphreys and Fansler (2012)\cite{EVPMUGA} describes in their paper \textit{Evaluation of the Vulnerability of Phasor Measurement Units to GPS Spoofing Attacks}, a way to successfully spoof a GPS signal used by a PMU.They describe how they "introduce" the counterfeit signal to the victim by adjusting the power of the signal below the victim receivers noise floor and then gradually raises it until it surpasses the authentic signals strength. Once the victims receiver locks on, the attacker has gained full control.
 
-\subsection{Data-level Spoofing}
-In data-level spoofing, the contents (data) of the GPS signal are manipulated. GPS signals includes a variety of signal, among them the ephemeris data used to calculate the positions of each satellite in orbit and also the time and status of the satellite constellation. By altering this data the receiver calculates incorrect velocity, location and most important in this context, clock offset.\cite{SGRCOOPMU}
+\subsection{Data-level Spoofing}\label{dls}
+In data-level spoofing, the contents (data) of the GPS signal are manipulated. GPS signals includes a variety of signal, among them the ephemeris data used to solve the positions of each satellite in orbit and also the time and status of the satellite constellation. By altering this data the receiver solves incorrect velocity, location and most important in this context, clock offset.\cite{SGRCOOPMU}
 
 \subsection{Replay spoofing}
+Replay spoofing (or \textit{meaconing}\footnote{\textit{Meacon} is portmanteau of \textit{Masking Beacon}}) is a technique where GPS signals are intercepted and rebroadcasted. The rebroadcast can be delayed and used to confuse navigation or to cause delay in applications relying on GPS signals for time.
 
-\subsection{Malfunction}
+\subsection{Malfunction}\label{mf}
+
 
 \section{Countermeasures}
-\subsection{Monitoring Signal Power}
-In any kind of attack, jamming or spoofing, a counterfeit signal must overpower the authentic signal in order for the receiver to lock onto it or in the case with jamming, denying the authentic signal. By monitoring the strength of the signal and detecting a spike or rise in signal power, a possible attack can be identified. This is a low-cost, low-complexity and independent (in contrast to for example using other receivers as a reference) countermeasure. It is, \cite{HengChouGao14}
+\subsection{Monitoring Signal Power} %[C1]
+In any kind of attack, jamming or spoofing, a counterfeit signal must overpower the authentic signal in order for the receiver to lock onto it or in the case with jamming, denying the authentic signal. By monitoring the strength of the signal and detecting a spike or rise in signal power, a possible attack can be identified. This is a low-cost, low-complexity and independent (in contrast to for example using other receivers as a reference) countermeasure. It is however because of the unpredictable nature of signals, not considered to be a detection confident countermeasure and should therefore only be used along side other countermeasures.\cite{HengChouGao14}
+
+\subsection{Check solved position against known position} %[C7]
+By checking the position solution against the known position of the receiver, both receiver errors (\ref{mf}) and a replay spoofing (\ref{dls}) attack can be detected. It does however fall short when more sophisticated techniques like Data and Signal-level spoofing (\ref{dls},\ref{sls}) are used. These kind of attacks when done properly (unless it's done with intention), will not alter the solved position. It is important to note that this only relevant when only using \textit{one} receiver. If the position solution from multiple receivers deployed in the same area are cross-checked, this countermeasure can still be considered effective. Consider the following scenarios when using 3 receivers:
+\begin{itemize}
+  \item \textbf{None of the receivers are spoofed:} Each receivers solved position matches their respective known position. They all solve the same time. 
+  \item \textbf{One or two receivers are spoofed:} The spoofed receiver(s) solve(s) different time compared to the receiver(s) not being spoofed.
+  \item \textbf{All the receivers are spoofed:} As long as they are spoofed by the same spoofer, they will solve the same time but also the same position which again makes it possible to detect the attack.
+\end{itemize}
+%\section{Our solution}
+%Need some more meat about why time is important anyway.
+
 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
