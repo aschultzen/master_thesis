@@ -91,7 +91,7 @@ During the introduction of this essay the properties of GPS as a tool for naviga
 An example of an application relying on GPS derived time is a PMU (phasor measurement unit).A PMU analyzes the waves on the electrical grid and uses a common time source for synchronization. This synchronization allows for real-time measurements between multiple points in the grid by multiple PMU's. The common time source (and why PMU's are relevant) is often obtained by using GPS. \cite{YLJRNR} The value of such a device is understood clearer by recognizing that the power grid is a complex, interconnected, interdependent network. In other words, errors and abnormalities in one part of the grid will have an effect on operation elsewhere and in some cases lead to whole spread blackouts \cite{EVPMUGA}.
 
 \section{Threat Models}
-\subsection{Jamming}
+\subsection{Jamming}\label{jam}
 By emitting a high-power signal at the frequencies used by GPS satellites, one can interfere with the signals received by the GPS receiver, effectively denying GPS receivers use of these signals. These signals are already weak considering their travel from space. Such an "attack", although effective, is pretty naive and easily recognized by the jammed party. If your equipment is operational and you don't have a signal, you are probably being jammed.
 
 \subsection{Signal-level Spoofing}\label{sls}
@@ -100,7 +100,7 @@ Signal-level spoofing is when an attacker causes an receiver to loose lock on an
 \subsection{Data-level Spoofing}\label{dls}
 In data-level spoofing, the contents (data) of the GPS signal are manipulated. GPS signals includes a variety of signal, among them the ephemeris data used to solve the positions of each satellite in orbit and also the time and status of the satellite constellation. By altering this data the receiver solves incorrect velocity, location and most important in this context, clock offset.\cite{SGRCOOPMU}
 
-\subsection{Replay spoofing}
+\subsection{Replay spoofing}\label{rs}
 Replay spoofing (or \textit{meaconing}\footnote{\textit{Meacon} is portmanteau of \textit{Masking Beacon}}) is a technique where GPS signals are intercepted and rebroadcasted. The rebroadcast can be delayed and used to confuse navigation or to cause delay in applications relying on GPS signals for time.
 
 \subsection{Malfunctions}\label{mf}
@@ -120,11 +120,15 @@ By checking the position solution against the known position of the receiver, bo
 A possible way to for a attacker to avoid detection would be to use one spoofer per receiver. These spoofers would need to be synchronized and their signal power fine tuned to make sure that they only spoof their respective receiver. It is believed that such an attack would be to complex and costly to be considered practical. \cite{HengChouGao14}
 
 \subsection{Checking time solutions against receiver clock statistics} %[C8]
-By comparing statistics create by monitoring the receivers clock with the time solution, one can detect spoofing (\ref{sls},\ref{dls}) as well as malfunctions (\ref{mf}). This is because the time solution is unlikely to be consistent with the statistics in event of an attack. Since this countermeasure relies on the receivers clock which can be described as both unpredictable and stochastic, it should only be used along side other countermeasures. \cite{HengChouGao14}    
+By comparing statistics create by monitoring the receivers clock with the time solution, one can detect spoofing (\ref{sls},\ref{dls}) as well as malfunctions (\ref{mf}). This is because the time solution is unlikely to be consistent with the statistics in event of an attack. Since this countermeasure relies on the receivers clock which can be described as both unpredictable and stochastic, it should only be used along side other countermeasures.\cite{HengChouGao14}    
 %\section{Our solution}
 %Need some more meat about why time is important anyway.
 
+\subsection{Cross-checking navigation data among receivers} %[C5]
+When under a data-level spoofing attack (\ref{dls}), the navigation data is modified. By comparing one GPS receivers navigation data with another, both data-level spoofing and malfunctions (\ref{mf}) can be detected. This countermeasure can also prove useful during jamming attacks (\ref{jam}) because a jammed receiver could use the data from other receivers in the event that is unable to correctly decode navigation, but still able to track satellites. This may enable the receiver to continue operation during an attack. \cite{HengChouGao14}  
 
+\subsection{Comparing navigation data and reverse-calculated satellite positions} %[C6]
+The PMU GPS receivers are never moved and their position is known. By using their pseudorange measurements, the satellites positions can be reverse calculated by using trilateration. Since the reverse-calculated positions only match the positions calculated from the navigation data when both pseudorange and navigation data is correct, one can effectively detect replay spoofing (\ref{rs}) and malfunctions (\ref{mf}). Its also worth noting that this countermeasure increases the difficulty of both signal and data-level spoofing (\ref{dls},\ref{sls}) because it narrows down the possible valid (seemingly) spoofing signals.
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
 
