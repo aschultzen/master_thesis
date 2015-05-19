@@ -8,7 +8,7 @@
 \usepackage{pdfpages}
 \usepackage{listings}
 \usepackage{wrapfig}
-\usepackage{color}
+\usepackage{color,colortbl}
 \usepackage{lettrine}
 \usepackage[font={small,it}]{caption}
 \usepackage{multirow}
@@ -24,6 +24,12 @@
 \definecolor{mygreen}{rgb}{0,0.6,0}
 \definecolor{mygray}{rgb}{0.5,0.5,0.5}
 \definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\definecolor{effectivec}{RGB}{245,107,0}
+\definecolor{auxiliryc}{RGB}{50,203,0}
+\definecolor{ineffectivec}{RGB}{49,102,255}
+
+
 
 \lstset{ %
   basicstyle=\ttfamily\small,     
@@ -139,7 +145,18 @@ This countermeasure assumes two receivers with at least 1 km distance from each 
 
 \subsubsection{Multi-receiver tracking loops}\label{mrtl}
 
+\newpage
 \subsection{Summary}
+Some text here, whatever.
+
+  \begin{table}[h]
+    \begin{tabular}{|c|c|c|c|c|c|}
+    \hline
+    \cellcolor{effectivec}Y & Effective & \cellcolor{ineffectivec}N & Ineffective & \cellcolor{auxiliryc}X & Auxiliary \\ \hline
+    \end{tabular}
+    \caption{Legend for table \ref{tab:threatcounttable}}
+  \end{table}
+
 \begin{savenotes}
 \begin{table}[h]
   \begin{tabular}{|l|c|c|c|c|c|} \hline
@@ -152,14 +169,14 @@ This countermeasure assumes two receivers with at least 1 km distance from each 
     \multicolumn{1}{l|}{\vtop{\hbox{\strut RS\footnote{Replay Spoofing (\ref{rs}) }}}} & 
     \multicolumn{1}{l|}{\vtop{\hbox{\strut MF\footnote{Malfunctions (\ref{mf}) }}}}\\ 
     \hline
-    Monitoring Signal Power      (\ref{msp})        & N & X & X & X & N \\ \hline
-    Check pos. solution          (\ref{cspakp})     & N & Y & Y & Y & Y \\ \hline
-    Check time solutions         (\ref{ctsarcs})    & N & X & X & X & X \\ \hline
-    Checking nav. data           (\ref{ccndar})     & X & N & Y & N & Y \\ \hline
-    Reverse calculated sat. pos. (\ref{cndrcsp})    & N & X & X & Y & Y \\ \hline
-    Cross-correlating P(Y)       (\ref{ccpc})       & N & Y & Y & N & N \\ \hline
-    PIA TL                       (\ref{ptl})        & Y & N & N & Y & N \\ \hline
-    Multi-receiver TL            (\ref{mrtl})       & Y & X & X & X & X \\ \hline
+    Monitoring Signal Power      (\ref{msp})        & \cellcolor{ineffectivec}N & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{ineffectivec}N \\ \hline
+    Check pos. solution          (\ref{cspakp})     & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y \\ \hline
+    Check time solutions         (\ref{ctsarcs})    & \cellcolor{ineffectivec}N & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X \\ \hline
+    Checking nav. data           (\ref{ccndar})     & \cellcolor{effectivec}X & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y \\ \hline
+    Reverse calculated sat. pos. (\ref{cndrcsp})    & \cellcolor{ineffectivec}N & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y \\ \hline
+    Cross-correlating P(Y)       (\ref{ccpc})       & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N & \cellcolor{ineffectivec}N \\ \hline
+    PIA TL                       (\ref{ptl})        & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N \\ \hline
+    Multi-receiver TL            (\ref{mrtl})       & \cellcolor{auxiliryc}Y & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X \\ \hline
   \end{tabular}
   \caption{The table shows the effectiveness of the covered countermeasures against threat models.}
   \label{tab:threatcounttable}
