@@ -11,6 +11,7 @@
 \usepackage{color}
 \usepackage{lettrine}
 \usepackage[font={small,it}]{caption}
+\usepackage{multirow}
 
 \usepackage[
     backend=biber,
@@ -48,11 +49,6 @@
 %\newpage
 \thispagestyle{empty}
 \setcounter{page}{0}
-
-\begin{abstract}
-Currently, this is not much more but comments and notes in order for me to write an essay, an essay meant for me to prepare for my work with my master thesis. This document does not represent the quality of the finished product in any way.
-\end{abstract}
-
 %\newpage
 \clearpage
 \setcounter{page}{1}
@@ -111,10 +107,10 @@ Replay spoofing (or \textit{meaconing}\footnote{\textit{Meacon} is portmanteau o
 Just like any tool or device, a GPS receiver is prone to failure. This threat may not be posed by an external party, but is still a threat to normal operation. The ability to differentiate between an attack and a malfunction is important when deciding a response in such an event.
 
 \subsection{Countermeasures}
-\subsubsection{Monitoring Signal Power} %[C1]
+\subsubsection{Monitoring Signal Power}\label{msp} %[C1]
 In any kind of attack, jamming or spoofing, a counterfeit signal must overpower the authentic signal in order for the receiver to lock onto it or in the case with jamming, denying the authentic signal. By monitoring the strength of the signal and detecting a spike or rise in signal power, a possible attack can be identified. This is a low-cost, low-complexity and independent (in contrast to for example using other receivers as a reference) countermeasure. It is however because of the unpredictable nature of signals, not considered to be a detection confident countermeasure and should therefore only be used along side other countermeasures.\cite{HengChouGao14}
 
-\subsubsection{Checking solved position against known position} %[C7]
+\subsubsection{Checking solved position against known position}\label{cspakp} %[C7]
 By checking the position solution against the known position of the receiver, both receiver errors (\ref{mf}) and a replay spoofing (\ref{dls}) attack can be detected. It does however fall short when more sophisticated techniques like Data and Signal-level spoofing (\ref{dls},\ref{sls}) are used. These kind of attacks when done properly (unless it's done with intention), will not alter the solved position. It is important to note that this only relevant when only using \textit{one} receiver. If the position solution from multiple receivers deployed in the same area are cross-checked, this countermeasure can still be considered effective. Consider the following scenarios when using 3 receivers:
 \begin{itemize}
   \item \textbf{None of the receivers are spoofed:} Each receivers solved position matches their respective known position. They all solve the same time. 
@@ -123,22 +119,42 @@ By checking the position solution against the known position of the receiver, bo
 \end{itemize}
 A possible way to for a attacker to avoid detection would be to use one spoofer per receiver. These spoofers would need to be synchronized and their signal power fine tuned to make sure that they only spoof their respective receiver. It is believed that such an attack would be to complex and costly to be considered practical. \cite{HengChouGao14}
 
-\subsubsection{Checking time solutions against receiver clock statistics} %[C8]
+\subsubsection{Checking time solutions against receiver clock statistics}\label{ctsarcs} %[C8]
 By comparing statistics create by monitoring the receivers clock with the time solution, one can detect spoofing (\ref{sls},\ref{dls}) as well as malfunctions (\ref{mf}). This is because the time solution is unlikely to be consistent with the statistics in event of an attack. Since this countermeasure relies on the receivers clock which can be described as both unpredictable and stochastic, it should only be used along side other countermeasures.\cite{HengChouGao14}    
 
 
-\subsubsection{Cross-checking navigation data among receivers} %[C5]
+\subsubsection{Cross-checking navigation data among receivers}\label{ccndar} %[C5]
 When under a data-level spoofing attack (\ref{dls}), the navigation data is modified. By comparing one GPS receivers navigation data with another, both data-level spoofing and malfunctions (\ref{mf}) can be detected. This countermeasure can also prove useful during jamming attacks (\ref{jam}) because a jammed receiver could use the data from other receivers in the event that is unable to correctly decode navigation, but still able to track satellites. This may enable the receiver to continue operation during an attack. \cite{HengChouGao14}  
 
-\subsubsection{Comparing navigation data and reverse-calculated satellite positions} %[C6]
+\subsubsection{Comparing navigation data and reverse-calculated satellite positions}\label{cndrcsp} %[C6]
 The PMU GPS receivers are never moved and their position is known. By using their pseudorange measurements, the satellites positions can be reverse calculated by using trilateration. Since the reverse-calculated positions only match the positions calculated from the navigation data when both pseudorange and navigation data is correct, one can effectively detect replay spoofing (\ref{rs}) and malfunctions (\ref{mf}). Its also worth noting that this countermeasure increases the difficulty of both signal and data-level spoofing (\ref{dls},\ref{sls}) because it narrows down the possible valid (seemingly) spoofing signals. \cite{HengChouGao14} 
 
-\subsubsection{Cross-correlating P(Y) code} %[C2]
+\subsubsection{Cross-correlating P(Y) code}\label{ccpc} %[C2]
 This countermeasure assumes two receivers with at least 1 km distance from each other that tracks a signal from a satellite visible to them both. It is also based on the assumption that the encrypted military P(Y) code cannot be forged by a spoofer. The receivers can use the C/A code phase and timing relationships to the P(Y) code to obtain two samples from the same time frame of the received P(Y) code and then correlate the two samples. Even though the samples will be encrypted, noisy and perhaps distorted by narrow-band RF front-end, a high correlation peak should be created when a cross-correlation is conducted as long as the receivers are not spoofed. A key conclusion of the research made by L. Heng (2013) as referenced by L. Heng \textit{et alia} (2014) was that the probability of detection errors using this method decreased exponentially with the length of the samples made from the P(Y) code and the number of receivers used as reference. This method has therefore proved itself effective against spoofing attacks (\ref{dls},\ref{sls}), but ineffective against replay spoofing because the rebroadcast uses authentic GPS signals with correct P(Y) code. It is important to note that the implementation of this countermeasure relies on the GPS receivers ability to output baseband samples and that these samples are able to transfer over data network. Because the sampling rate of the samples are fairly high, it is recommended that the spoofing detection is done periodically instead of continuously. \cite{HengChouGao14}  
 
-\subsubsection{PIA Tracking loops}
-\textit{Vector tracking} is a receiver architecture that combine the tasks of signal tracking and position/velocity estimation into one algorithm. This is a contrast to the traditional way where the tracking methods track satellites independently as well as the position/velocity solution independently. Even though this requires more computing power, it increases immunity to interference and jamming. The vector tracking is aided by the fact the we know the PMU GPS receivers true location. The tracking robustness can be further improved by using a Kalman filter. Since a PMU and its GPS receiver remain stationary, the parameters of the tracking loops can be chosen to narrow the loop filter bandwidth which reduces noise and the effective radius of a potential jamming attack (\ref{jam}).
+\subsubsection{PIA Tracking loops}\label{ptl} %[C3]
+\textit{Vector tracking} is a receiver architecture that combine the tasks of signal tracking and position/velocity estimation into one algorithm. This is a contrast to the traditional way where the tracking methods track satellites independently as well as the position/velocity solution independently. Even though this requires more computing power, it increases immunity to interference and jamming. The vector tracking is aided by the fact the we know the PMU GPS receivers true location. The tracking robustness can be further improved by using a Kalman filter. Since a PMU and its GPS receiver remain stationary, the parameters of the tracking loops can be chosen to narrow the loop filter bandwidth which reduces noise and the effective radius of a potential jamming attack (\ref{jam}). Meaconing attacks will also fail since the PIA vector tracking depends on the knowledge of the GPS receivers true position. In the event of such an attack, the result would be that the vector tracking will fail to function. \cite{HengChouGao14}  
 
+\subsubsection{Multi-receiver tracking loops}\label{mrtl}
+
+\subsection{Summary}
+
+\begin{table}[h]
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\multicolumn{1}{|c|}{\multirow{2}{*}{Counter Measures}} & \multicolumn{5}{c|}{Threat Models} \\ \cline{2-6} 
+\multicolumn{1}{|c|}{} & \multicolumn{1}{l|}{\ref{jam} \newline Jamming} & \multicolumn{1}{r|}{\ref{dls} Data-level spoofing} & \multicolumn{1}{l|}{\ref{sls} Signal-level spoofing} & \multicolumn{1}{l|}{\ref{rs} Replay spoofing} & \multicolumn{1}{l|}{\ref{mf} Accidental receiver errors} \\ \hline
+\ref{msp} Monitoring Signal Power & N & X & X & X & N \\ \hline
+\ref{ccpc} Cross-correlating P(Y) & N & Y & Y & N & N \\ \hline
+\ref{ptl} PIA TL & Y & N & N & Y & N \\ \hline
+\ref{mrtl} Multi-receiver TL & Y & X & X & X & X \\ \hline
+\ref{ccndar} Checking nav. data & X & Y & N & N & Y \\ \hline
+\ref{cndrcsp} Reverse calculated sat. pos. & N & X & X & Y & Y \\ \hline
+\ref{cspakp} Check pos. solution & N & Y & Y & Y & Y \\ \hline
+\ref{ctsarcs} Check time solutions & N & X & X & X & X \\ \hline
+\end{tabular}
+\end{table}
+ 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
 
