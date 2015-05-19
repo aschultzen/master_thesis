@@ -13,6 +13,7 @@
 \usepackage[font={small,it}]{caption}
 \usepackage{multirow}
 \usepackage{tabularx}
+\usepackage{footnote}
 
 \usepackage[
     backend=biber,
@@ -139,27 +140,31 @@ This countermeasure assumes two receivers with at least 1 km distance from each 
 \subsubsection{Multi-receiver tracking loops}\label{mrtl}
 
 \subsection{Summary}
+\begin{savenotes}
 \begin{table}[h]
   \begin{tabular}{|l|c|c|c|c|c|} \hline
   \multicolumn{1}{|c|}{\multirow{2}{*}{Counter Measures}} &
   \multicolumn{5}{c|}{Threat Models} \\ \cline{2-6} 
     \multicolumn{1}{|c|}{} & 
-    \multicolumn{1}{l|}{\vtop{\hbox{\strut \ref{jam}}\hbox{\strut{JAM}}}} &
-    \multicolumn{1}{l|}{\vtop{\hbox{\strut \ref{sls}}\hbox{\strut{SLS}}}} & 
-    \multicolumn{1}{r|}{\vtop{\hbox{\strut \ref{dls}}\hbox{\strut{DLS}}}} & 
-    \multicolumn{1}{l|}{\vtop{\hbox{\strut \ref{rs}}\hbox{\strut{RS}}}} & 
-    \multicolumn{1}{l|}{\vtop{\hbox{\strut \ref{mf}}\hbox{\strut{MF}}}}\\ 
+    \multicolumn{1}{l|}{\vtop{\hbox{\strut JAM\footnote{Jamming (\ref{jam})}}}} &
+    \multicolumn{1}{l|}{\vtop{\hbox{\strut SLS\footnote{Signal-level Spoofing (\ref{sls}) }}}} & 
+    \multicolumn{1}{r|}{\vtop{\hbox{\strut DLS\footnote{Data-level Spoofing (\ref{dls}) }}}} & 
+    \multicolumn{1}{l|}{\vtop{\hbox{\strut RS\footnote{Replay Spoofing (\ref{rs}) }}}} & 
+    \multicolumn{1}{l|}{\vtop{\hbox{\strut MF\footnote{Malfunctions (\ref{mf}) }}}}\\ 
     \hline
-    \ref{msp}          Monitoring Signal Power & N & X & X & X & N \\ \hline
-    \ref{cspakp}           Check pos. solution & N & Y & Y & Y & Y \\ \hline
-    \ref{ctsarcs}         Check time solutions & N & X & X & X & X \\ \hline
-    \ref{ccndar}            Checking nav. data & X & N & Y & N & Y \\ \hline
-    \ref{cndrcsp} Reverse calculated sat. pos. & N & X & X & Y & Y \\ \hline
-    \ref{ccpc}          Cross-correlating P(Y) & N & Y & Y & N & N \\ \hline
-    \ref{ptl}                           PIA TL & Y & N & N & Y & N \\ \hline
-    \ref{mrtl}               Multi-receiver TL & Y & X & X & X & X \\ \hline
+    Monitoring Signal Power      (\ref{msp})        & N & X & X & X & N \\ \hline
+    Check pos. solution          (\ref{cspakp})     & N & Y & Y & Y & Y \\ \hline
+    Check time solutions         (\ref{ctsarcs})    & N & X & X & X & X \\ \hline
+    Checking nav. data           (\ref{ccndar})     & X & N & Y & N & Y \\ \hline
+    Reverse calculated sat. pos. (\ref{cndrcsp})    & N & X & X & Y & Y \\ \hline
+    Cross-correlating P(Y)       (\ref{ccpc})       & N & Y & Y & N & N \\ \hline
+    PIA TL                       (\ref{ptl})        & Y & N & N & Y & N \\ \hline
+    Multi-receiver TL            (\ref{mrtl})       & Y & X & X & X & X \\ \hline
   \end{tabular}
+  \caption{The table shows the effectiveness of the covered countermeasures against threat models.}
+  \label{tab:threatcounttable}
 \end{table}
+\end{savenotes}
  
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
