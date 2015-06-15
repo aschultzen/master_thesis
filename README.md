@@ -23,8 +23,16 @@ With *ntpdate*, the time could by synchronized by force with:
 
 The address *10.1.1.60* is to one of the NTP servers at Justervesenet. 
 
-The NTP config file at */etc/ntp.conf* was changed to the following:
- 
+The NTP config file at */etc/ntp.conf* was changed:
+
+	server 10.1.1.60 minpoll 10 iburst
+	fudge 127.0.0.1 stratum 10
+
+After the config was changed, the *ntpd* service was restarted to apply the changes done in the config file:
+
+	sudo /etc/init.d/ntp restart
+
+
 
 	
 
