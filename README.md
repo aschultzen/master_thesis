@@ -60,7 +60,31 @@ Once this process has started, it might use some time. Be patient.
 
 NOTE: If the block size of 4M for some reason fails, change it to 1M. This will however make the copy process a lot slower.
 
-  
+If everything went according to plan, you should see a similar message:
+
+	781+1 records in
+	781+1 records out
+	3276800000 bytes (3,3 GB) copied, 566,728 s, 5,8 MB/s
+
+Once the SD card is popped into the RASPI, the Ethernet and power cables are connected, you have two options:
+
+- Connect a monitor to the HDMI port
+- Use SSH and manage it remotely over LAN
+
+The latter, is usually the easiest. The RASPI has DHCP enabled by default, this means it might be a little hassle establishing the address it has been leased by the DHCP controller. The subnet i connected mine to, contained 510 hosts, so i used to approach as described under *15.06.2015*. 
+
+Once the IP address has been found, an SSH connection can be made to the device. The default login credentials are:
+
+	Username: pi
+	Password: raspberry
+
+Raspbian includes a tool to do some rudimentary configuration in a very easy way, it can be launched with:
+
+	sudo raspi-config
+
+I chose to expand the filesystem to utilize all the storage space available on the SD card and i also disabled SSH over serial since we are planning to use the serial to control the CSAC later on.
+
+
 
 
  
