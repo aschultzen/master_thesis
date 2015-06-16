@@ -38,7 +38,7 @@ I discovered that i had done a couple of things wrong yesterday, i will therefor
 
 NOTE: It's worth mentioning that these instructions probably will work on other flavors of Linux as well, Raspbian is quite big and has functionality that an NTP server will never benefit from (like a GUI). There are for example a couple of stripped down versions of Raspbian containing only the server essentials with a footprint > 100 MB. 
 
-I downloaded the latest image here: [Raspbian Download]: http://downloads.raspberrypi.org/raspbian_latest ().
+I downloaded the latest image here: [Raspbian Download]: http://downloads.raspberrypi.org/raspbian_latest 
 
 
 
