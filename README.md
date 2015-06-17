@@ -166,9 +166,15 @@ Run the following command to query the NTP server locally:
 
 It should produce output similar to the following:
 
+	     remote           refid      st t when poll reach   delay   offset  jitter
+	==============================================================================
+	*10.1.1.58       .PPS.            1 u   54  128  377    0.406    0.019   0.016
+	+10.1.1.59       .PPS.            1 u   63  128  377    0.403   -0.058   0.025
+	-10.1.1.60       .PPS.            1 u   57  128  377    0.336    0.026   0.019
+	+10.1.1.61       .GPS.            1 u    4  128  377    0.384   -0.054   0.005
+	 LOCAL(0)        .LOCL.          10 l    -   64    0    0.000    0.000   0.000
 
-
-##Complete /etc/ntp.conf for Stratum 2 (Without the CSAC)
+###Complete /etc/ntp.conf for Stratum 2 (Without the CSAC/PPS)
 
 	# /etc/ntp.conf, configuration for ntpd; see ntp.conf(5) for help
 	
