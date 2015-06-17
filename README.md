@@ -1,6 +1,13 @@
 # Master thesis notes
 The following should be considered a log and notes from my summer internship at Justervesenet. They are however highly related to my master thesis.
 
+## Prerequisite information
+Workstation:
+
+	CPU: Core2Duo E7500
+	Windows 7 64 Bit
+	Generic HW
+
 ## 15.06.2015: Installing and setting up the PI : Part 1
 I had some issues finding the PI after it was connected to the network. By doing a simple scan
 
@@ -206,6 +213,27 @@ It should produce output similar to the following:
 	# If you want to provide time to your local subnet, change the next line.
 	# (Again, the address is an example only.)
 	#broadcast 192.168.123.255
+
+## 17.06.2015: Setting up the CSAC
+
+The CSAC (as previously mentioned) will be used as a 1 PPS input to the NTP server. The CSAC can be controlled over serial with software supplied by Symmetricom (CSACdemo) or with simple commands as specified in the documentation over telnet. After connecting the CSAC to a workstation running Winodws 7, the COM driver was configured after Symmetricom's specifications as followed:
+
+- 57600 Baud
+- 8 Data bits
+- No parity
+- 1 stop bit (8-N-1)
+- No flow control
+- CMOS Voltage levels (0-3.3V)
+
+With the exception of the baud rate, all of these settings were set correctly by default on my workstation.
+
+NOTE: We didn't need to worry about the RS232's +/- 12V logic level since the evaluation board employs a level shifter. **Without the level shifter you run the risk of frying the serial interface on the CSAC.**  
+
+PROBLEM: At this point i was not able to establish communication with the CSAC. It does not respond when connected to the workstation. I've tried both the CSACDemo and Realterm. Current theory is that the cable is broken.
+
+
+
+
 
 
 
