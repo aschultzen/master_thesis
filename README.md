@@ -43,6 +43,8 @@ After the config was changed, the *ntpd* service was restarted to apply the chan
 
 </s>
 
+A lot of errors where made this day. Hence the striking.
+
 ## 16.06.2015 Installing and setting up the PI : Part 2
 
 I discovered that i had done a couple of things wrong yesterday, i will therefore attempt to correct my mistakes today and test my instructions on a fresh install of Raspbian. 
