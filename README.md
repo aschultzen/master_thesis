@@ -108,6 +108,9 @@ Set the correct locale:
 
 We now have a RASPI that is ready to go.
 
+### Setting up Static IP and changing host name
+Fill in!
+
 ### Installing NTP
 
 Since we plan to use the CSAC for 1 PPS, we need to update NTP since neither the current one installed or the one in the Debian repository supports PPS. The source files for the latest release of NTP can be downloaded directly:
@@ -226,7 +229,7 @@ Restart the service:
 	sudo service ntp restart
 
 ### Cable testing
-Test the cable with the CSAC and a scope.
+Test the cable with the CSAC and a scope. Pictures?
 	
 ###Complete /etc/ntp.conf for Stratum 2 (Without the CSAC/PPS)
 
