@@ -208,6 +208,8 @@ PROBLEM 1: At this point i was not able to establish communication with the CSAC
 SOLUTION 1: The cable we tried to use for to communicate turned out to be an extension cable. I suppose it is self explanatory, but the cable that worked was *null modem* cable. Symmetricom actually recommend that people use the provided cable in order to avoid confusion like this.
 
 ##18.06.2015: Dealing with leap seconds, testing cables.
+
+### Leap seconds and NTP
 In order for NTP to deal with leap seconds gracefully, NIST has released a leap second file containing a table of both past and upcomming leap seconds. This file can be used by *ntpd* to apply the leap second locally at an appropriate time rather than having the clients noticing the error and correcting it when they detect it. Mirrors for this file can be found at NIST [NIST:Configuring NTP]: http://support.ntp.org/bin/view/Support/ConfiguringNTP#Section_6.14 though some of them where outdated when i tried to download it. 
 
 NOTE: The name of the leap second file name is changed whenever it gets updated. Depending on how old this guide is when you read it, the filename used in the description below might be wrong.
@@ -222,6 +224,9 @@ Once the leap second file is downloaded and copied, changes has to be made to */
 Restart the service:
 
 	sudo service ntp restart
+
+### Cable testing
+Test the cable with the CSAC and a scope.
 	
 ###Complete /etc/ntp.conf for Stratum 2 (Without the CSAC/PPS)
 
