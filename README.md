@@ -15,7 +15,7 @@ I had some issues finding the PI after it was connected to the network. By doing
 
 	nmap -sn -v 10.1.1.1/23
 
-before the pie was connected and one after, the PI's IP was discovered by *diffing* the two. After the PI was up, i updated it and installed *ntpdate*:
+before the pie was connected and one after, the PI's IP was discovered by *diffing* the two. <s>After the PI was up, i updated it and installed *ntpdate*:
 
 	sudo apt-get update
 	sudo apt-get upgrade
@@ -40,6 +40,8 @@ The NTP config file at */etc/ntp.conf* was changed:
 After the config was changed, the *ntpd* service was restarted to apply the changes done in the config file:
 
 	sudo /etc/init.d/ntp restart
+
+</s>
 
 ## 16.06.2015 Installing and setting up the PI : Part 2
 
@@ -157,6 +159,14 @@ In the end, we really need some servers to synchronize with. I added the followi
 	server 10.1.1.60 minpoll 4 iburst
 	server 127.127.1.0
 	fudge 127.127.1.0 stratum 10
+
+I also changed the restrictions somewhat to allow clients to query our server. This can be done by changing:
+
+	#restrict -4 default kod notrap nomodify nopeer noquery
+
+to:
+
+	restrict -4 default kod notrap nomodify nopeer
 
 Restart the service:
 
