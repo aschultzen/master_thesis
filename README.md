@@ -41,9 +41,9 @@ After the config was changed, the *ntpd* service was restarted to apply the chan
 
 ## 16.06.2015 Installing and setting up the PI : Part 2
 
-I discovered that i had done a couple of things wrong yesterday, i will therefore attempt to correct my mistakes today and test my instructions from yesterday on a fresh install of Raspbian. 
+I discovered that i had done a couple of things wrong yesterday, i will therefore attempt to correct my mistakes today and test my instructions on a fresh install of Raspbian. 
 
-NOTE: It's worth mentioning that these instructions probably will work on other flavors of Linux as well, Raspbian is quite big and has functionality that an NTP server will never benefit from (like a GUI). There are for example a couple of stripped down versions of Raspbian containing only the server essentials with a footprint > 100 MB. 
+NOTE: It's worth mentioning that these instructions probably will work on other flavors of Linux as well, Raspbian is quite big and has functionality that a NTP server will never benefit from (like a GUI). There are for example a couple of stripped down versions of Raspbian containing only the server essentials with a footprint > 100 MB. 
 
 I downloaded the latest image here: [Raspbian Download]: http://downloads.raspberrypi.org/raspbian_latest and prepared to copy it to the SD card. After the SD was inserted, the device can found by using:
 
@@ -229,13 +229,15 @@ The CSAC (as previously mentioned) will be used as a 1 PPS input to the NTP serv
 - No parity
 - 1 stop bit (8-N-1)
 - No flow control
-- CMOS Voltage levels (0-3.3V)
+- CMOS Voltage levels (0-3.3V) -> (Not configurable, but worth noting.)
 
 With the exception of the baud rate, all of these settings were set correctly by default on my workstation.
 
 NOTE: We didn't need to worry about the RS232's +/- 12V logic level since the evaluation board employs a level shifter. **Without the level shifter you run the risk of frying the serial interface on the CSAC.**  
 
-PROBLEM: At this point i was not able to establish communication with the CSAC. It does not respond when connected to the workstation. I've tried both the CSACDemo and Realterm. Current theory is that the cable is broken.
+PROBLEM 1: At this point i was not able to establish communication with the CSAC. It does not respond when connected to the workstation. I've tried both the CSACDemo and Realterm. Current theory is that the cable is broken.
+
+SOLUTION 1: The cable we tried to use for to communicate turned out to be an extension cable. I suppose it is self explanatory, but the cable that worked was *null modem* cable. Symmetricom actually recommend that people use the provided cable in order to avoid confusion like this.
 
 
 
