@@ -160,8 +160,18 @@ Issue the following commands to make sure that the NTP server uses only your spe
 
 	rm /etc/dhcp/dhclient-exit-hooks.d/ntp
 	rm /var/lib/ntp/ntp.conf.dhcp
-	
-NOTE: Don't fret if one of the files don't exist on the system. If they are gone, they are gone, and that's good.
+
+As well as changing *dhclient.conf*:
+
+	sudo nano /etc/dhcp/dhclient.conf
+
+...to make sure it stops requesting ntp servers from the DHCP controller. The "request" part should look like this:
+
+	request subnet-mask, broadcast-address, time-offset, routers,
+        domain-name, domain-name-servers, domain-search, host-name,
+        dhcp6.name-servers, dhcp6.domain-search,
+        netbios-name-servers, netbios-scope, interface-mtu,
+        rfc3442-classless-static-routes;
 	
 In order for NTP to deal with leap seconds gracefully, NIST has released a leap second file containing a table of both past and upcomming leap seconds. This file can be used by *ntpd* to apply the leap second locally at an appropriate time rather than having the clients noticing the error and correcting it when they detect it. Mirrors for this file can be found at NIST [NIST:Configuring NTP]: http://support.ntp.org/bin/view/Support/ConfiguringNTP#Section_6.14 though some of them where outdated when i tried to download it. 
 
@@ -210,13 +220,34 @@ Restart the service:
 
 	sudo service ntp restart
 
-Run the following command to query the NTP server locally:
+Run the following command to query the NTP server:
 
-	ntpq -p
+	ntpq -pcrv
 
-It should produce output similar to the following:
- 
- 
+You should get something like this:
+
+	 PPS(0)          .PPS.            0 l   11   16    1    0.000  -155.76   0.004
+	*10.1.1.58       .PPS.            1 u    8   16    3    0.320   -0.023   0.014
+	+10.1.1.59       .PPS.            1 u   12   16    3    0.327   -0.067   0.015
+	+10.1.1.60       .PPS.            1 u   16   16    3    0.337    0.022   0.011
+	 10.1.1.61       .PPS.            1 u    2   16    7    0.334    0.007   0.009
+	associd=0 status=0619 leap_none, sync_ntp, 1 event, leap_armed,
+	version="ntpd 4.2.8p2@1.3265 Fri Jun 19 15:15:04 UTC 2015 (5)",
+	processor="armv7l", system="Linux/3.18.14-v7+", leap=00, stratum=2,
+	precision=-18, rootdelay=0.320, rootdisp=3939.320, refid=10.1.1.58,
+	reftime=d92eb5b3.8613fddd  Fri, Jun 19 2015 17:37:23.523,
+	clock=d92eb5df.e02784ae  Fri, Jun 19 2015 17:38:07.875, peer=1657, tc=4,
+	mintc=3, offset=-0.023357, frequency=-6.015, sys_jitter=0.014451,
+	clk_jitter=0.009, clk_wander=0.000, tai=35, leapsec=201507010000,
+	expire=201512010000
+
+In the output we can observe the following:
+- The version is 4.2.8p2@1.3265 compiled at Fri Jun 19 15:15:04 UTC 2015 (5)
+- It is leap armed
+- PPS is working (first line). 
+
+That's it!
+
 ## IP Setup
 Though DHCP is quite allright, you probably want to set up your Raspberry Pi with a static IP. Just copy and paste the following config file into */etc/networking/interfaces* and change the IP addresses to something available in your subnet (when in doubt, ask the IT guy):
 
