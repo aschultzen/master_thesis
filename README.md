@@ -153,6 +153,7 @@ Extract the source files, compile and install them:
 	./configure -enable-linuxcaps --enable-ATOM
 	make
 	sudo make install
+	sudo cp /usr/local/bin/ntp* /usr/bin/  && sudo cp /usr/local/sbin/ntp* /usr/sbin/
 	sudo service ntp stop
 
 Issue the following commands to make sure that the NTP server uses only your specified servers and not the one used by the DHCP server.
