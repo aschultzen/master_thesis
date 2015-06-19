@@ -3,7 +3,7 @@
 **If you are starting from scratch with a completely blank SD card, start here. If you have bought a SD card with Raspbian installed, go to *Login and Update*. If you are using a pre-configured image (**INSERT FILENAME**), go to *IP Setup*.**
 
 ## Tools
-**(If you plan to use linux for the setup, you can probably ignore this part of the guide.) I've used *putty* (windows application) for SSH connections. Putty supports copy/paste by copying normally in windows and pasting into putty by right-clicking in putty's windows. I also like to use *nano* to edit files. You can open files with nano like this:**
+**(If you plan to use linux for the setup, you can probably ignore this part of the guide.)** I've used *putty* (windows application) for SSH connections. Putty supports copy/paste by copying normally in windows and pasting into putty by right-clicking in putty's windows. I also like to use *nano* to edit files. You can open files with nano like this:
 
 	sudo nano /example_dir/example_file
 
