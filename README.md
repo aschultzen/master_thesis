@@ -224,7 +224,7 @@ Though DHCP is quite allright, you probably want to set up your Raspberry Pi wit
 	        network 10.1.0.0/23     #Optional
 	        broadcast 10.1.1.255    #Also optional
 	        
-This is also a good time to change the hostname:
+This is also a good time to change the host name:
 
 	sudo nano /etc/hosts
 
@@ -234,9 +234,21 @@ Change the following line:
 
 to whatever name you have chosen to use. 
 
-NOTE: The line mentioned over might contain some other name. It does not matter. 
+NOTE: The line mentioned over might contain some other name. It does not matter. Also, at this point, the system might start nagging about not being able to resolve the host name. Just ignore it and soldier on. 
 
-DID YOU KNOW?: We all know that 127.0.0.1 is localhost, however, in Debian there is a bug [Debian Bug #719621] https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=719621 for which there was made a workaround that makes the hostname resolve to 127.0.1.1 and localhost 127.0.0.1
+Do the same in *hostname*:
+
+	sudo nano /etc/hostname
+
+No IP goes here. Only the host name.
+
+Do a reboot:
+	
+	sudo reboot
+
+**PRO-TIP:** Remember to connect to the new address instead of the old!
+
+**DID YOU KNOW?:** We all know that 127.0.0.1 is localhost, however, in Debian there is a bug [Debian Bug #719621] https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=719621 for which there was made a workaround that makes the hostname resolve to 127.0.1.1 and localhost 127.0.0.1
 	
 # Master thesis notes
 The following should be considered a log and notes from my summer internship at Justervesenet. They are however highly related to my master thesis. 
