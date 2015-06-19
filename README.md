@@ -83,7 +83,7 @@ Set the correct locale and reboot:
 	sudp dpkg-reconfigure tzdata
 	sudo reboot
 
-NOTE: Every time you reboot the Raspberry PI, the SSH connections is lost and needs to be re-established after boot. Depending on the DHCP controller, it might lease the Raspberry PI a new IP when it reboots. This means you have to do subnet scan with NMAP again.
+NOTE: **Every time you reboot the Raspberry PI, the SSH connections is lost and needs to be re-established after boot.** 
 
 ## Setup PPS
 We first need to install some packages for our PPS setup to work:
@@ -223,10 +223,21 @@ Though DHCP is quite allright, you probably want to set up your Raspberry Pi wit
 	        gateway 10.1.1.19
 	        network 10.1.0.0/23     #Optional
 	        broadcast 10.1.1.255    #Also optional
+	        
+This is also a good time to change the hostname:
 
+	sudo nano /etc/hosts
 
+Change the following line: 
 
+	127.0.1.1	raspberrypi
 
+to whatever name you have chosen to use. 
+
+NOTE: The line mentioned over might contain some other name. It does not matter. 
+
+DID YOU KNOW?: We all know that 127.0.0.1 is localhost, however, in Debian there is a bug [Debian Bug #719621] https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=719621 for which there was made a workaround that makes the hostname resolve to 127.0.1.1 and localhost 127.0.0.1
+	
 # Master thesis notes
 The following should be considered a log and notes from my summer internship at Justervesenet. They are however highly related to my master thesis. 
 
