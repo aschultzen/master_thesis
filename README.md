@@ -6,6 +6,8 @@
 
 NOTE: It's worth mentioning that these instructions probably will work on other flavors of Linux as well, Raspbian is quite big and has functionality that a NTP server will never benefit from (like a GUI). There are for example a couple of stripped down versions of Raspbian containing only the server essentials with a footprint > 100 MB. 
 
+**The following instructions are meant for a empty SD card.**
+
 I downloaded the latest image here: [Raspbian Download]: http://downloads.raspberrypi.org/raspbian_latest and prepared to copy it to the SD card. After the SD was inserted, the device can found by using:
 
 	dmesg
@@ -60,16 +62,22 @@ Raspbian includes a tool to do some rudimentary configuration in a very easy way
 
 	sudo raspi-config
 
-I chose to expand the file-system to utilize all the storage space available on the SD card and i also disabled SSH over serial since we are planning to use the serial to control the CSAC later on. Once the RASPI has rebooted, i updated the system entirely:
+This opens a menu. I chose to expand the file-system to utilize all the storage space available on the SD card and i also disabled SSH over serial since we are planning to use the serial to control the CSAC later on. The latter is *8 Advanced Options* -> *A8 Serial*.
+
+NOTE: The expansion feature might fail when using SD cards with pre-installed versions of Raspbian (NOOBS).
+
+Once the RASPI has rebooted, i updated the system entirely (the upgrade process is going to take some time):
 
 	sudo apt-get update
 	sudo apt-get dist-upgrade
 	sudo rpi-update
-	sudo reboot
 
-Set the correct locale:
+Set the correct locale and reboot:
 
 	sudp dpkg-reconfigure tzdata
+	sudo reboot
+
+NOTE: Every time you reboot the Raspberry PI, the SSH connections is lost and needs to be re-established after boot. Depending on the DHCP controller, it might lease the Raspberry PI a new IP when it reboots. This means you have to do subnet scan with NMAP again.
 
 ## Setup PPS
 We first need to install some packages for our PPS setup to work:
