@@ -2,6 +2,12 @@
 
 **If you are starting from scratch with a completely blank SD card, start here. If you have bought a SD card with Raspbian installed, go to *Login and Update*. If you are using a pre-configured image (**INSERT FILENAME**), go to *IP Setup*.**
 
+## Tools
+**(If you plan to use linux for the setup, you can probably ignore this part of the guide.) I've used *putty* (windows application) for SSH connections. Putty supports copy/paste by copying normally in windows and pasting into putty by right-clicking in putty's windows. I also like to use *nano* to edit files. You can open files with nano like this:**
+
+	sudo nano /example_dir/example_file
+
+
 ## From scratch
 
 NOTE: It's worth mentioning that these instructions probably will work on other flavors of Linux as well, Raspbian is quite big and has functionality that a NTP server will never benefit from (like a GUI). There are for example a couple of stripped down versions of Raspbian containing only the server essentials with a footprint > 100 MB. 
@@ -205,6 +211,21 @@ It should produce output similar to the following:
  
  
 ## IP Setup
+Though DHCP is quite allright, you probably want to set up your Raspberry Pi with a static IP. Just copy and paste the following config file into */etc/networking/interfaces* and change the IP addresses to something available in your subnet (when in doubt, ask the IT guy):
+
+	auto lo
+	iface lo inet loopback
+	
+	auto eth0
+	iface eth0 inet static
+	        address 10.1.1.62
+	        netmask 255.255.254.0
+	        gateway 10.1.1.19
+	        network 10.1.0.0/23     #Optional
+	        broadcast 10.1.1.255    #Also optional
+
+
+
 
 # Master thesis notes
 The following should be considered a log and notes from my summer internship at Justervesenet. They are however highly related to my master thesis. 
