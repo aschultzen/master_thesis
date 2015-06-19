@@ -43,7 +43,7 @@ Once the SD card is popped into the RASPI, the Ethernet and power cables are con
 - Connect a monitor to the HDMI port
 - Use SSH and manage it remotely over LAN
 
-The latter, is usually the easiest. The RASPI has DHCP enabled by default, this means it might be a little hassle establishing the address it has been leased by the DHCP controller. The subnet i connected mine to, contained 510 hosts, so i used NMAP to scan the subnet with the following command:
+The latter, is usually the easiest. The RASPI has DHCP enabled by default, this means it might be a little hassle establishing the address it has been leased by the DHCP controller. The subnet i connected mine to, contained 510 hosts, so i used NMAP to scan the subnet with the following command (**Substitute the IP address in the example with one from your own!**):
 
 	nmap -sn -v 10.1.1.1/23
 
