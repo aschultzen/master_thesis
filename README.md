@@ -216,7 +216,6 @@ Though DHCP is quite allright, you probably want to set up your Raspberry Pi wit
 	auto lo
 	iface lo inet loopback
 	
-	auto eth0
 	iface eth0 inet static
 	        address 10.1.1.62
 	        netmask 255.255.254.0
