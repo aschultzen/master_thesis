@@ -159,8 +159,15 @@ Issue the following commands to make sure that the NTP server uses only your spe
 
 	rm /etc/dhcp/dhclient-exit-hooks.d/ntp
 	rm /var/lib/ntp/ntp.conf.dhcp
-
+	
 NOTE: Don't fret if one of the files don't exist on the system. If they are gone, they are gone, and that's good.
+	
+In order for NTP to deal with leap seconds gracefully, NIST has released a leap second file containing a table of both past and upcomming leap seconds. This file can be used by *ntpd* to apply the leap second locally at an appropriate time rather than having the clients noticing the error and correcting it when they detect it. Mirrors for this file can be found at NIST [NIST:Configuring NTP]: http://support.ntp.org/bin/view/Support/ConfiguringNTP#Section_6.14 though some of them where outdated when i tried to download it. 
+
+NOTE: The name of the leap second file name is changed whenever it gets updated. Depending on how old this guide is when you read it, the filename used in the description below might be wrong.
+
+	sudo mkdir /var/ntp && cd /var/ntp
+	wget ftp://tycho.usno.navy.mil/pub/ntp/leap-seconds.3629577600
 
 Replace the contents of */etc/ntp.conf* with the following:
 
