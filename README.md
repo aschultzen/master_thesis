@@ -43,7 +43,13 @@ Once the SD card is popped into the RASPI, the Ethernet and power cables are con
 - Connect a monitor to the HDMI port
 - Use SSH and manage it remotely over LAN
 
-The latter, is usually the easiest. The RASPI has DHCP enabled by default, this means it might be a little hassle establishing the address it has been leased by the DHCP controller. The subnet i connected mine to, contained 510 hosts, so i used to approach as described under *15.06.2015*. 
+The latter, is usually the easiest. The RASPI has DHCP enabled by default, this means it might be a little hassle establishing the address it has been leased by the DHCP controller. The subnet i connected mine to, contained 510 hosts, so i used NMAP to scan the subnet with the following command:
+
+	nmap -sn -v 10.1.1.1/23
+
+By scanning the subnet right before you connect the Raspberry PI and once after it has been connected (and booted), you can compare the two results and find the difference. The Raspberry PI's IP will be that difference.
+
+NOTE: On a busy subnet where devices are connected and disconnected often, the Raspberry Pi might not be the only change you detect, but it still narrows down the search dramaticly.
 
 Once the IP address has been found, a SSH connection can be made to the device. The default login credentials are:
 
@@ -84,6 +90,31 @@ A line also needs to be added to */etc/modules*:
 Reboot:
 
 	sudo reboot
+
+### Verifying PPS setup
+
+Before you go any further, it is recommended to check that the PPS setup acutally works. Use the following command:
+
+	dmesg | grep pps
+
+This should result in the following output (or similar):
+
+	[    3.252888] pps_core: LinuxPPS API ver. 1 registered
+	[    3.257520] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+	[    3.328702] pps pps0: new PPS source pps.-1
+	[    3.331458] pps pps0: Registered IRQ 498 as PPS source
+
+At this point the PPS is registered in the system, it might not receive a pulse, but it is ready. To check for a pulse use the following command:
+
+	sudo ppstest /dev/pps0
+
+Thkis should result in output similar to this:
+
+	trying PPS source "/dev/pps0"
+	found PPS source "/dev/pps0"
+	ok, found 1 source(s), now start fetching data...
+	source 0 - assert 1434703831.155754060, sequence: 6971 - clear  0.000000000, sequence: 0
+	source 0 - assert 1434703832.155752877, sequence: 6972 - clear  0.000000000, sequence: 0
 
 We are now ready for the NTP install.
 ## Installing NTP
@@ -162,9 +193,9 @@ It should produce output similar to the following:
 	-10.1.1.60       .PPS.            1 u   57  128  377    0.336    0.026   0.019
 	+10.1.1.61       .GPS.            1 u    4  128  377    0.384   -0.054   0.005
 	 LOCAL(0)        .LOCL.          10 l    -   64    0    0.000    0.000   0.000
-
-
-
+ 
+ 
+ 
 ## IP Setup
 
 # Master thesis notes
@@ -453,6 +484,44 @@ NOTE: According to ntp.org, the ATOM driver will look for a PPS signal on */dev/
 	# If you want to provide time to your local subnet, change the next line.
 	# (Again, the address is an example only.)
 	#broadcast 192.168.123.255
+	
+	
+### Lates config file with CSAC
+
+	/etc/ntp.conf, configuration for ntpd; see ntp.conf(5) for help
+	
+	driftfile /var/lib/ntp/ntp.drift
+	
+	# Enable this if you want statistics to be logged.
+	#statsdir /var/log/ntpstats/
+	
+	leapfile /etc/leap-seconds.3629577600
+	
+	statistics loopstats peerstats clockstats
+	filegen loopstats file loopstats type day enable
+	filegen peerstats file peerstats type day enable
+	filegen clockstats file clockstats type day enable
+	
+	#server 127.127.1.0
+	#fudge 127.127.1.0 stratum 10
+	
+	server 127.127.22.0 minpoll 4 maxpoll 4
+	fudge 127.127.22.0 refid PPS
+	fudge 127.127.22.0 flag 3 1
+	
+	server 10.1.1.58 minpoll 4 maxpoll 4 iburst prefer
+	server 10.1.1.59 minpoll 4 maxpoll 4 iburst
+	server 10.1.1.60 minpoll 4 maxpoll 4 iburst
+	server 10.1.1.61 minpoll 4 maxpoll 4 iburst
+	
+	# By default, exchange time with everybody, but don't allow configuration.
+	restrict -4 default kod notrap nomodify nopeer
+	restrict -6 default kod notrap nomodify nopeer noquery
+	
+	# Local users may interrogate the ntp server more closely.
+	restrict 127.0.0.1
+	restrict ::1
+
 
 
 	
