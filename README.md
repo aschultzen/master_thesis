@@ -1,6 +1,6 @@
 # Instructions for Raspberry PI Stratum 1 server
 
-**If you are starting from scratch with a completely blank SD card, start here. If you have bought a SD card with Raspbian installed, go to *Login and Update* If you are using a pre-configured image (**INSERT FILENAME**), go to *IP Setup*.**
+**If you are starting from scratch with a completely blank SD card, start here. If you have bought a SD card with Raspbian installed, go to *Login and Update*. If you are using a pre-configured image (**INSERT FILENAME**), go to *IP Setup*.**
 
 ## From scratch
 
