@@ -167,7 +167,7 @@ In order for NTP to deal with leap seconds gracefully, NIST has released a leap 
 NOTE: The name of the leap second file name is changed whenever it gets updated. Depending on how old this guide is when you read it, the filename used in the description below might be wrong.
 
 	sudo mkdir /var/ntp && cd /var/ntp
-	wget ftp://tycho.usno.navy.mil/pub/ntp/leap-seconds.3629577600
+	sudo wget ftp://tycho.usno.navy.mil/pub/ntp/leap-seconds.3629577600
 
 Replace the contents of */etc/ntp.conf* with the following:
 
