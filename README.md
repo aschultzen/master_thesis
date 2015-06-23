@@ -105,6 +105,8 @@ Reboot:
 
 	sudo reboot
 
+Depending on your source for the 1 PPS, you might have to fabricate a cable in order to connect the Raspberry Pi to GPIO pin 18 and ground. The CSAC that i used, had a 1 PPS OUT with a SMA connector. This is pretty straight forward, but beware that there is limited space in the Raspberry Pi's enclosure.
+
 ### Verifying PPS setup
 
 Before you go any further, it is recommended to check that the PPS setup acutally works. Use the following command:
