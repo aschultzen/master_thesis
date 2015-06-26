@@ -48,16 +48,21 @@ Pop the SD card into the RASPI and connect the power.
 
 Once the SD card is popped into the RASPI, the Ethernet and power cables are connected, you have two options:
 
-- Connect a monitor to the HDMI port
+- Connect a monitor to the HDMI port 
 - Use SSH and manage it remotely over LAN
 
-The latter, is usually the easiest. The RASPI has DHCP enabled by default, this means it might be a little hassle establishing the address it has been leased by the DHCP controller. The subnet i connected mine to, contained 510 hosts, so i used NMAP to scan the subnet with the following command (**Substitute the IPs in the example with ones from your own subnet!**):
+Depending on what you have at hand (i preferred the NMAP way, but i didn't have access to a HDMI cable) choose a way to determine the IP:
+### The NMAP way
+
+ The RASPI has DHCP enabled by default, this means it might be a little hassle establishing the address it has been leased by the DHCP controller. The subnet i connected mine to, contained 510 hosts, so i used NMAP to scan the subnet with the following command (**Substitute the IPs in the example with ones from your own subnet!**):
 
 	nmap -sn -v 10.1.1.1/23
 
 By scanning the subnet right before you connect the Raspberry PI and once after it has been connected (and booted), you can compare the two results and find the difference. The Raspberry PI's IP will be that difference.
 
 NOTE: On a busy subnet where devices are connected and disconnected often, the Raspberry Pi might not be the only change you detect, but it still narrows down the search dramaticly.
+
+### The HDMI way
 
 Once the IP address has been found, a SSH connection can be made to the device. The default login credentials are:
 
