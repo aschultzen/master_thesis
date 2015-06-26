@@ -155,6 +155,13 @@ Building on the idea from \textit{PIA Tracking loops}(\ref{ptl}) one can benefit
 \end{wrapfigure} 
 We propose to use a smart miniature atomic clock controller(SMACC) with a chip scale atomic clock(CSAC) to complement a commercial GPS controlled clock to harden it against attacks. The Symmetricom SA.45 is CSAC measuring only 16cc with 1 pulse per second (PPS) output and 1 PPS input (for sync) as well as a RS-232 interface. The key element in our proposal is that we have a clock that we can trust and use as a reference. Any correction needed as implied by the GPS signal will be checked with the CSAC. If the correction is to big, an alarm will be raised. In the event of a jamming attack (or malfunction in the receiver), the CSAC can be used to correct a GPS controlled clock instead of the 1 PPS output from the GPS receiver. In the event of a spoofing attack (\ref{sls},\ref{dls},\ref{rs}) on a PMU with a GPS controlled clock, the stable nature of the CSAC can be used by a controller to detect the attack and to disable the GPS correction and instead rely on the CSAC for correction. When used with an atomic clock, the controller can simply disable the GPS correction since the atomic clock would keep better time than the CSAC.
 
+\begin{wrapfigure}{c}{0.45\textwidth}
+  \centering
+  \includegraphics[width=0.40\textwidth]{master_sketch_arrows.pdf}
+  \caption[CSAC SMACC Block diagram]
+   {A block diagram of our proposed solution \cite{DENCES}}
+\end{wrapfigure} 
+
 It is important to note that this approach doesn't really do anything with the fact that you are being attacked, it simply tries to eliminate the effects of it. In a scenario where you are under attack weeks at a time, you will have to address the fact that you are under attack at some point. It is also important to notes that this countermeasure mostly apply to applications using GPS as a source of time. Having a stable clock during a jamming attack will not help you determine your position once you move (given that you are fully jammed).
 
 \newpage
@@ -194,7 +201,7 @@ The table (\ref{tab:threatcounttable}) shows the different threat models and the
   \caption{The table shows the effectiveness of the covered countermeasures against threat models.}
   \label{tab:threatcounttable}
 \end{table}
-\end{savenotes}
+\end{savenotes} 
  
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
