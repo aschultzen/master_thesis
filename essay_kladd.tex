@@ -153,40 +153,35 @@ Building on the idea from \textit{PIA Tracking loops}(\ref{ptl}) one can benefit
   \caption[Symmetricom SA.45s CSAC]
    {Symmetricom SA.45s CSAC. Courtesy Symmetricom.}
 \end{wrapfigure} 
+
+\iffalse  
 We propose to use a smart miniature atomic clock controller(SMACC) with a chip scale atomic clock(CSAC) to complement a commercial GPS controlled clock to harden it against attacks. The Symmetricom SA.45 is CSAC measuring only 16cc with 1 pulse per second (PPS) output and 1 PPS input (for sync) as well as a RS-232 interface. The key element in our proposal is that we have a clock that we can trust and use as a reference. Any correction needed as implied by the GPS signal will be checked with the CSAC.
 If the correction is to big, an alarm will be raised. In the event of a jamming attack (or malfunction in the receiver), the CSAC can be used to correct a GPS controlled clock instead of the 1 PPS output from the GPS receiver. In the event of a spoofing attack (\ref{sls},\ref{dls},\ref{rs}) on a PMU with a GPS controlled clock, the stable nature of the CSAC can be used by a controller to detect the attack and to disable the GPS correction and instead rely on the CSAC for correction. When used with an atomic clock, the controller can simply disable the GPS correction since the atomic clock would keep better time than the CSAC.
 
 It is important to note that this approach doesn't really do anything with the fact that you are being attacked, it simply tries to eliminate the effects of it. In a scenario where you are under attack weeks at a time, you will have to address the fact that you are under attack at some point. It is also important to notes that this countermeasure mostly apply to applications using GPS as a source of time. Having a stable clock during a jamming attack will not help you determine your position once you move (given that you are fully jammed).
+\fi
 
-
-We propose to use a smart miniature atomic clock controller(SMACC) that controls a CSAC (chip scale atomic clock). The Symmetricom SA.45 is CSAC measuring only 16cc with 1 pulse per second (PPS) output and 1 PPS input (for disciplining) as well as a RS-232 interface. Playing the role as the SMACC will be a Raspberry Pi with software that implements the following countermeasures:
-
+We propose to use a smart miniature atomic clock controller(SMACC) that controls a CSAC (chip scale atomic clock). Playing the role as the SMACC will be a Raspberry Pi running Linux with software that implements the following countermeasures:
 \begin{itemize}
   \item Checking solved position against known position (\ref{cspakp})
   \item Checking time solutions against receiver clock statistics (\ref{ctsarcs})
   \item Monitoring Signal Power(\ref{msp})
 \end{itemize}
-
-
-\begin{figure}[h!]\label{bd}
-  \includegraphics[width=1\textwidth]{master_sketch_arrows.pdf}
+Even tough any atomic clock would do, we propose to use the Symmetricom SA.45. This is a CSAC measuring only 16cc with 1 pulse per second (PPS) output and 1 PPS input (for disciplining) as well as a RS-232 interface. 
+\begin{figure}[]\label{bd}
+  \includegraphics[angle=90, scale=0.5]{master_sketch_arrows.pdf}
    \caption[CSAC SMACC Block diagram]{A block diagram of our proposed solution}
 \end{figure}
+
+It is important to note that this approach doesn't really do anything with the fact that you are being attacked, it simply tries to eliminate the effects of it. In a scenario where you are under attack weeks at a time, you will have to address the fact that you are under attack at some point. It is also important to notes that this countermeasure mostly apply to applications using GPS as a source of time. Having a stable clock during a jamming attack will not help you determine your position once you move (given that you are fully jammed).
 
 \newpage
 \subsection{Summary}
 The table (\ref{tab:threatcounttable}) shows the different threat models and the effect of the countermeasures covered in this essay. Our proposed countermeasure is not yet tested, but is still included in the table reflecting the effect we believe it might have.  
 
-  \begin{table}[h]
-    \begin{tabular}{|c|c|c|c|c|c|}
-    \hline
-    \cellcolor{effectivec}Y & Effective & \cellcolor{ineffectivec}N & Ineffective & \cellcolor{auxiliryc}X & Auxiliary \\ \hline
-    \end{tabular}
-    \caption{Legend for table \ref{tab:threatcounttable}}
-  \end{table}
-
 \begin{savenotes}
 \begin{table}[h]
+  \caption{The table shows the effectiveness of the covered countermeasures against threat models.}
   \begin{tabular}{|l|c|c|c|c|c|} \hline
   \multicolumn{1}{|c|}{\multirow{2}{*}{Counter Measures}} &
   \multicolumn{5}{c|}{Threat Models} \\ \cline{2-6} 
@@ -207,10 +202,17 @@ The table (\ref{tab:threatcounttable}) shows the different threat models and the
     Multi-receiver TL            (\ref{mrtl})       & \cellcolor{auxiliryc}Y & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X \\ \hline
     CSAC SMACC                   (\ref{op})         & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y \\ \hline
   \end{tabular}
-  \caption{The table shows the effectiveness of the covered countermeasures against threat models.}
   \label{tab:threatcounttable}
 \end{table}
 \end{savenotes} 
+
+ \begin{table}[h]
+    \caption{Legend for table (\ref{tab:threatcounttable)}}
+    \begin{tabular}{|c|c|c|c|c|c|}
+    \hline
+    \cellcolor{effectivec}Y & Effective & \cellcolor{ineffectivec}N & Ineffective & \cellcolor{auxiliryc}X & Auxiliary \\ \hline
+    \end{tabular}
+  \end{table}
  
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
