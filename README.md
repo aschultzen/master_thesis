@@ -290,7 +290,7 @@ Do a reboot:
 	
 	sudo reboot
 
-**PRO-TIP:** Remember to connect to the new address instead of the old!
+**PRO-TIP:** Remember to connect using the new address instead of the old!
 
 **DID YOU KNOW?:** We all know that 127.0.0.1 is localhost, however, in Debian there is a bug [Debian Bug #719621] https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=719621 for which there was made a workaround that makes the hostname resolve to 127.0.1.1 and localhost 127.0.0.1
 	
