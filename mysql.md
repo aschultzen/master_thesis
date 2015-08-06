@@ -1,6 +1,6 @@
 # Prosjekt notes
 
-## Mysql setup
+## MySQL setup
 
 The MySQL server can easy be installed with the following command if you are running Debian/Ubuntu:
 
