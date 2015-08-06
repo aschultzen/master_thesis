@@ -2,26 +2,34 @@
 
 ## Mysql setup
 
-Installed the package with:
+The MySQL server can easy be installed with the following command if you are running Debian/Ubuntu:
 
 	sudo apt-get install mysql-server python-mysqldb
 
-Credentials:
+The installer will help you set up the root account, i used to following:
 
 	User: root
 	pass: sqlroot
 
+The MySQL server is at this stage installed and ready to go and can be accessed with the following command:
+
+	mysql -u root -p
+
+After typing the correct password, you can use the MySql monitor to issue queries.
+
 ## Dealing with users
 
-During the install of mySql, we set up a root account. This is all nice and dandy, but for everyday use in scripts and such, we need to create a user with a restricted set of GRANTS for security reasons. A user can be create with the following command:
+During the install of MySql, we set up a root account. This is all nice and dandy, but for everyday use in scripts and such, we need to create a user with a restricted permissions for security reasons. A user can be created with the following command:
 
 	CREATE USER 'monitor'@'yl6l005396.justernett.no' IDENTIFIED BY 'monitor';
 
-Notice how the hostname is specified. Since the hostname is *workstation specific*, the same user could not login from a different workstation. It is also important to grant the newly created user some permissions. In mySQL, permissions are called *grants*. These can be granted to users in a manner that you seem fit. For our script, we only need to be able to select, insert, update. But since we still don't know exactly what the script might end up doing, the user is granted permission to create and delete:
+Notice how the hostname is specified. Since the hostname is *workstation specific*, the same user could not login from a different workstation. It is also important to grant the newly created user some permissions. In MySQL, permissions are called *grants*. These can be granted to users in a manner that you seem fit. For our script, we only need to be able to *select*, *insert*, *update*. But since we still don't know exactly what the script might end up doing, the user is also granted permission to *create* (tables) and *delete* (rows):
 
 	GRANT SELECT, INSERT, DELETE, UPDATE, CREATE ON clock_data. * TO 'monitor'@'yl6l005396.justernett.no';
 
-At some point you might need to change a user. Maybe the script will be executed from a different workstation. 
+At some point you might need to change a user. Maybe the script will be executed from a different workstation. The following command changes the hostname for *someuser*:
+
+	UPDATE mysql.user SET host "fnt655j" where user = "someuser";
 
 ## Creating the "base"
 
