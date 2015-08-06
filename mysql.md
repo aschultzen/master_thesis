@@ -31,17 +31,17 @@ At some point you might need to change a user. Maybe the script will be executed
 
 	UPDATE mysql.user SET host "fnt655j" where user = "someuser";
 
-## Creating the "base"
+## Creating the database and tables
 
-Log in with root.
+Log in with root:
 
 	mysql -u root -p
 
-Now to make a DB:
+To create a database, use the following command:
 
-	CREATE DATABASE clock_data;
+	CREATE DATABASE example_base;
 
-The reason why we just used root, is that the monitor does not have the proper GRANTS to create a DB. The database that we just created, is empty. There are no tables here. You can check by selecting the database...:
+The reason why we just used root, is that the monitor does not have the proper *grants* to create a database. Since a database can contain many tables, we need to select the database before we issue any queries:
 	
 	USE clock_data;
 
