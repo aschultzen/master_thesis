@@ -15,11 +15,11 @@ The MySQL server is at this stage installed and ready to go and can be accessed 
 
 	mysql -u root -p
 
-After typing the correct password, you can use the MySql monitor to issue queries.
+After typing the correct password, you can use the MySQL monitor to issue queries.
 
 ## Dealing with users
 
-During the install of MySql, we set up a root account. This is all nice and dandy, but for everyday use in scripts and such, we need to create a user with a restricted permissions for security reasons. A user can be created with the following command:
+During the install of MySQL, we set up a root account. This is all nice and dandy, but for everyday use in scripts and such, we need to create a user with a restricted permissions for security reasons. A user can be created with the following command:
 
 	CREATE USER 'monitor'@'yl6l005396.justernett.no' IDENTIFIED BY 'monitor';
 
@@ -66,7 +66,7 @@ Let's make a table:
 		ntpqPoll FLOAT(10,4),
 		ntpqReach FLOAT(10,4),
 		ntpqDelay FLOAT(10,4),
-		ntpqOffset FLOAT(10,4),
+		ntpqOffset FLOAT(10,4),h
 		ntpqJitter FLOAT(10,4),
 		ntpMonitorID VARCHAR(100), 
 		timeStampBackDated VARCHAR(100),
