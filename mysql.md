@@ -95,6 +95,13 @@ If you later find out that you need to add a column, you can use the ALTER comma
 
 ### Example queries
 
+#### Show table info
+
+To show the names for all the columns:
+
+	show columns from ntpq;
+
+#### Select
 Select all the rows where syncSource = .ATOM. and show all columns:
 
 	select * from ntpq where syncSource = ".ATOM.";
@@ -102,6 +109,25 @@ Select all the rows where syncSource = .ATOM. and show all columns:
 The same, but show only the ntpqID column:
 
 	select ntpqID from ntpq where syncSource = ".ATOM.";
+
+#### Insert
+To insert a row into table:
+
+	INSERT INTO alarm (ntpqID, alarmDescri, alarmEmail) VALUES (2, "Something happened!", "aril@email.com");
+
+In this insertion not all the fields where defined. Depending on the constraints imposed on the table, this might not always be possible. Sometimes a field *has* to be defined for a insertion to take effect. This is usually the case with a field that is a primary key. See section *See table info* for more. 
+
+#### Update
+Updating a row (or multiple rows) can be achieved with with the *update* command. In it's simplest form, you just define a criteria and what needs to be changed/updated:
+
+	UPDATE alarm SET alarmDescri = "Alarm cleared by technician" WHERE ntpqID = 2;
+
+All rows matching the criteria will be changed. 
+
+#### Remove
+To remove a row for whatever reason, the syntax is simple:
+
+	DELETE FROM alarm WHERE ntpqID = 2;
 
 ### Useful commands
 
