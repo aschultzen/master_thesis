@@ -101,6 +101,20 @@ To show the names for all the columns:
 
 	show columns from ntpq;
 
+This generates output similar to this:
+
+	+-----------------+--------------+------+-----+---------+----------------+
+	| Field           | Type         | Null | Key | Default | Extra          |
+	+-----------------+--------------+------+-----+---------+----------------+
+	| alarmID         | int(11)      | NO   | PRI | NULL    | auto_increment |
+	| ntpqID          | int(11)      | YES  | MUL | NULL    |                |
+	| alarmDescri     | varchar(100) | YES  |     | NULL    |                |
+	| alarmState      | int(11)      | YES  |     | NULL    |                |
+	| alarmEmail      | varchar(100) | YES  |     | NULL    |                |
+	| alarmCondition  | varchar(100) | YES  |     | NULL    |                |
+	| clearedByNtpqID | int(11)      | YES  |     | NULL    |                |
+	+-----------------+--------------+------+-----+---------+----------------+
+
 #### Select
 Select all the rows where syncSource = .ATOM. and show all columns:
 
