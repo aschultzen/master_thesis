@@ -95,6 +95,7 @@ If you later find out that you need to add a column, you can use the ALTER comma
 
 ### Example queries
 
+A short note about queries: A query is issued once it has been "terminated" with a semicolon. This means that you can write a line, press enter and then continue on the next as long as you want until you write the ";". An examples of this is the table creation.
 #### Show table info
 
 To show the names for all the columns:
@@ -142,6 +143,16 @@ All rows matching the criteria will be changed.
 To remove a row for whatever reason, the syntax is simple:
 
 	DELETE FROM alarm WHERE ntpqID = 2;
+
+#### Joins
+Earlier in this guide we created two tables, the ntpq table and the alarm table. The alarm table has a column *ntpqID* which refers to the primary key in the ntpq table. We can use this to *join* these tables together as if they where one:
+
+	SELECT ntpq.ntpqID, ntpq.timeStamp, ntpq.stratum, alarm.alarmID, alarm.clearedByNtpqID
+    from ntpq
+    INNER JOIN alarm
+    ON ntpq.ntpqID = alarm.ntpqID;
+
+As the example shows, some of the columns are chosen (similar to earlier select examples) but the tables from which they are selected are defined before the name of the column (nameoftable.column). The *INNER JOIN* shows which table the ntpq table should be join *on*, and lastly at *what* column.
 
 ### Useful commands
 
