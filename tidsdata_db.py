@@ -7,6 +7,10 @@ import win32serviceutil
 import win32event 
 import ctypes
 import mysql.connector
+import configparser
+import datetime
+
+config = configparser.ConfigParser()
 
 
 class PySvc(win32serviceutil.ServiceFramework):
@@ -46,18 +50,25 @@ class PySvc(win32serviceutil.ServiceFramework):
 # "memoutofbound"
 def path2list(path):
     result = open(path, 'r')
-    return result.read()
-    close.result
+    resultList = result.read()
+    result.close()
+    t_print("File " + path + " : loaded.")
+    return resultList
 
 def dbConnect():
     try:    
-        dbConnection = mysql.connector.connect(host='10.1.0.232',database='clock_data',user='monitor',password='monitor')
+        dbConnection = mysql.connector.connect(
+            host= config['db']['ip'],
+            database= config['db']['database'],
+            user= config['db']['user'],
+            password= config['db']['password'])
         
         if dbConnection.is_connected():
-            print("Connection to database (" + dbConnection.server_host +":" + str(dbConnection.server_port) + ") established")
+            t_print("Connection to database (" + dbConnection.server_host +":" 
+                + str(dbConnection.server_port) + ") established")
 
     except Error as e:
-            print(e)
+            t_print(e)
 
     return dbConnection    
 
@@ -65,13 +76,27 @@ def dbClose(dbConnection):
     dbConnection.close()
 
     if dbConnection.is_connected():
-            print("Connection to database (" + dbConnection.server_host +":" + str(dbConnection.server_port) + ") NOT closed") 
+            t_print("Connection to database (" + dbConnection.server_host +":" 
+                + str(dbConnection.server_port) + ") NOT closed") 
     else:
-        print("Connection to database closed")
+        t_print("Connection to database closed")
+
+def dbInsert(data):
+    dbc = dbConnect()
+
+def initConfig():
+    configFile = "config.ini"
+    config.read(configFile)
+    t_print("Config file " + configFile + " : loaded.")
+
+def t_print(message):
+    current_time = datetime.datetime.now().time()
+    print("[" + current_time.isoformat() + "] " +"[" + message + "]")
+
 
 if __name__ == '__main__':
+    initConfig()
     #win32serviceutil.HandleCommandLine(PySvc)
-    #somelist = path2list("C:\\test2.dat")
-    #print (somelist)
-    db_con = dbConnect()
-    dbClose(db_con)
+    data = path2list(config['data']['path'])
+    dbConnect()
+    #dbInsert(data)
