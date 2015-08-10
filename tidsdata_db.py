@@ -53,6 +53,8 @@ def path2list(path):
     resultList = result.read()
     result.close()
     t_print("File " + path + " : loaded.")
+    resultList = str(resultList)
+    resultList = resultList.replace(",",".")
     return resultList
 
 def dbConnect():
@@ -83,6 +85,30 @@ def dbClose(dbConnection):
 
 def dbInsert(data):
     dbc = dbConnect()
+    cursor = dbc.cursor(buffered=True)
+    rows = data.splitlines()
+    row_count = len(rows)
+    columns = (config['columns']['list'])
+    columns = columns.split()
+    sources = (config['sources']['list'])
+    sources = sources.split()
+    #While?
+    cell = rows[0].split()
+    insert_measurement = ("INSERT INTO " + 
+        config['db']['tablename'] + " " + 
+        "(" + ''.join(columns) + ")" 
+        + " VALUES (" + "'" + cell[0] + "'" + "," + "'" +  cell[1] + "'" + "," + cell[2] + "," +  "'" + sources[0] + "'" + "," + cell[3] + ");")
+
+    print(insert_measurement)
+
+    try:    
+        cursor.execute(insert_measurement)
+        dbc.commit
+        print(cursor.fetchone())
+        cursor.close
+        dbClose(dbc)
+    except mysql.connector.Error as err:
+        print("Something went wrong: {}".format(err))
 
 def initConfig():
     configFile = "config.ini"
@@ -95,8 +121,7 @@ def t_print(message):
 
 
 if __name__ == '__main__':
-    initConfig()
     #win32serviceutil.HandleCommandLine(PySvc)
+    initConfig()
     data = path2list(config['data']['path'])
-    dbConnect()
-    #dbInsert(data)
+    dbInsert(data)
