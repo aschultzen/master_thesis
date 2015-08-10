@@ -164,7 +164,62 @@ As the example shows, some of the columns are chosen (similar to earlier select 
 	delete * from ntpq where "seenFromIp" == "lol"
 	SELECT table_schema "Data Base Name", sum( data_length + index_length) / 1024 / 1024 "Data Base Size in MB" FROM information_schema.TABLES GROUP BY table_schema ;
 
+# Documentation
 
+## Tables
+
+The following tables (represented by the query that made them) has been created on the mySQL server:
+
+	CREATE TABLE ntpq (
+			ntpqID INT NOT NULL AUTO_INCREMENT,
+			seenFromIP VARCHAR(32),
+			timeStamp FLOAT(10,4),
+			timeStampString VARCHAR(100),
+			serverIP VARCHAR(32),
+			ntpqResponse INT,
+			selectStatus VARCHAR(25),
+			syncSource VARCHAR(25), 
+			stratum INT, 
+			ntpClockType VARCHAR(5),
+			ntpqWhen FLOAT(10,4),
+			ntpqPoll FLOAT(10,4),
+			ntpqReach FLOAT(10,4),
+			ntpqDelay FLOAT(10,4),
+			ntpqOffset FLOAT(10,4),h
+			ntpqJitter FLOAT(10,4),
+			ntpMonitorID VARCHAR(100), 
+			timeStampBackDated VARCHAR(100),
+			PRIMARY KEY (ntpqID)
+		);
+
+The ntpq table is used to store data from ntpq queries. 
+
+
+	CREATE TABLE alarm (
+		alarmID INT NOT NULL AUTO_INCREMENT,
+		ntpqID INT, 
+		alarmDescri VARCHAR(100),
+		alarmState INT,
+		alarmEmail VARCHAR(100),
+		alarmCondition VARCHAR(100),
+		clearedByNtpqID INT, 
+		PRIMARY KEY (alarmID),
+		FOREIGN KEY (ntpqID) REFERENCES ntpq(ntpqID)
+	);
+The alarm table is used to store alarms raised on the basis of data stored in the ntpq table. They were designed to be joined at *ntpqID*.
+
+
+	CREATE TABLE clock_measurements (
+		clck_msrmID INT NOT NULL AUTO_INCREMENT,
+		date DATE, 
+		time TIME,
+		mjd FLOAT(10,5),
+		source VARCHAR(50),
+		value DECIMAL(65,30),
+		PRIMARY KEY (clck_msrmID)
+	);
+
+The clock_measurements table is used to store data collected from clocks and produced by LabView. 
 
 
 
