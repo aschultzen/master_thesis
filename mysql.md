@@ -29,7 +29,7 @@ Notice how the hostname is specified. Since the hostname is *workstation specifi
 
 At some point you might need to change a user. Maybe the script will be executed from a different workstation. The following command changes the hostname for *someuser*:
 
-	UPDATE mysql.user SET host "fnt655j" where user = "someuser";
+	UPDATE mysql.user SET host = "fnt655j" where user = "someuser";
 
 ## Creating the database and tables
 
@@ -192,7 +192,31 @@ The following tables (represented by the query that made them) has been created 
 			PRIMARY KEY (ntpqID)
 		);
 
-The ntpq table is used to store data from ntpq queries. 
+The ntpq table is used to store data from ntpq queries.
+
+	CREATE TABLE ntpq2 (
+			ntpqID INT,
+			seenFromIP VARCHAR(32),
+			timeStamp FLOAT(10,4),
+			timeStampString VARCHAR(100),
+			serverIP VARCHAR(32),
+			ntpqResponse INT,
+			selectStatus VARCHAR(25),
+			syncSource VARCHAR(25), 
+			stratum INT, 
+			ntpClockType VARCHAR(5),
+			ntpqWhen FLOAT(10,4),
+			ntpqPoll FLOAT(10,4),
+			ntpqReach FLOAT(10,4),
+			ntpqDelay FLOAT(10,4),
+			ntpqOffset FLOAT(10,4),h
+			ntpqJitter FLOAT(10,4),
+			ntpMonitorID VARCHAR(100), 
+			timeStampBackDated VARCHAR(100),
+			PRIMARY KEY (ntpqID)
+		);
+Same as ntpq table, but without the auto increment on primary key (ntpqID). This table is used for testing only.
+
 
 
 	CREATE TABLE alarm (
