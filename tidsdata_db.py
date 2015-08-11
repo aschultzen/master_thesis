@@ -1,6 +1,5 @@
-## ADD line counter
-## Remove the sql print
 ## FIx date bug
+## ADD "in progress" message
 ## TEst service 
 
 
@@ -15,8 +14,10 @@ import ctypes
 import mysql.connector
 import configparser
 import datetime
+import time
 
-config = configparser.ConfigParser()
+# Something should be done about these!
+config = configparser.ConfigParser()    # Global variable for configparser.
 
 
 class PySvc(win32serviceutil.ServiceFramework):
@@ -103,7 +104,7 @@ def dbInsert(data):
     sources_count = len(sources)
 
     counter = 0
-
+    operation_counter = 0
     while(counter < row_count):  
         source_counter = 0
         cell = rows[counter].split()
@@ -112,18 +113,17 @@ def dbInsert(data):
         config['db']['tablename'] + " " + 
         "(" + ''.join(columns) + ")" 
         + " VALUES (" + "'" + cell[0] + "'" + "," + "'" +  cell[1] + "'" + "," + cell[2] + "," +  "'" + sources[source_counter] + "'" + "," + cell[3 + source_counter] + ");")
-            try: 
-                print(insert_measurement)   
+            try:   
                 cursor.execute(insert_measurement)
                 dbc.commit
                 source_counter = source_counter + 1
+                operation_counter = operation_counter + 1
             except mysql.connector.Error as err:
                 print("Something went wrong: {}".format(err))
         counter = counter + 1
     cursor.close
     dbClose(dbc)
-
-
+    t_print("Inserted " + str(operation_counter) + " lines")
 
 def initConfig():
     configFile = "config.ini"
@@ -134,9 +134,12 @@ def t_print(message):
     current_time = datetime.datetime.now().time()
     print("[" + current_time.isoformat() + "] " +"[" + message + "]")
 
-
 if __name__ == '__main__':
+    t_print("Starting up...")
+    time_start = time.time()
     #win32serviceutil.HandleCommandLine(PySvc)
     initConfig()
     data = path2list(config['data']['path'])
     dbInsert(data)
+    seconds = int(time.time() - time_start)
+    t_print("Elapsed time: " + str(seconds) + "s")
