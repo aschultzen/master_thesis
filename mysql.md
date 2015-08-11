@@ -93,6 +93,10 @@ If you later find out that you need to add a column, you can use the ALTER comma
 
 	ALTER TABLE ntpq ADD ntpMonitorID VARCHAR(50);
 
+A column can also be dropped:
+
+	ALTER TABLE ntpq2 DROP COLUMN ntpqID;
+
 ### Example queries
 
 A short note about queries: A query is issued once it has been "terminated" with a semicolon. This means that you can write a line, press enter and then continue on the next as long as you want until you write the ";". An examples of this is the table creation.
