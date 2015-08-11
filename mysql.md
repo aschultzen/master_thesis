@@ -4,7 +4,7 @@
 
 The MySQL server can easy be installed with the following command if you are running Debian/Ubuntu:
 
-	sudo apt-get install mysql-server python-mysqldb
+	sudo apt-get install mysql-server
 
 The installer will help you set up the root account, i used to following:
 
@@ -16,6 +16,38 @@ The MySQL server is at this stage installed and ready to go and can be accessed 
 	mysql -u root -p
 
 After typing the correct password, you can use the MySQL monitor to issue queries.
+
+Important notice: If you plan to connect to the MySQL server from other computers in the network, you have to change the MySQL config file: */etc/mysql/my.cnf*. It can be opened with the following command:
+
+	sudo nano /etc/mysql/my.cnf
+
+Once it is open, look for the following line:
+
+	bind-address           = 127.0.0.1
+
+It should be located under *[mysqld]*:
+
+	[mysqld]
+	#
+	# * Basic Settings
+	#
+	user            = mysql
+	pid-file        = /var/run/mysqld/mysqld.pid
+	socket          = /var/run/mysqld/mysqld.sock
+	port            = 3306
+	basedir         = /usr
+	datadir         = /var/lib/mysql
+	tmpdir          = /tmp
+	lc-messages-dir = /usr/share/mysql
+	skip-external-locking
+	log=/tmp/mysql.log
+	#
+	# Instead of skip-networking the default is now to listen only on
+	# localhost which is more compatible and is not less secure.
+	bind-address           = 127.0.0.1
+
+Make sure to comment it (#) *out*. If this is not done, the MySQL server will not accept connections from other computers.
+
 
 ## Dealing with users
 
@@ -160,7 +192,7 @@ To insert a row into table:
 In this insertion not all the fields where defined. Depending on the constraints imposed on the table, this might not always be possible. Sometimes a field *has* to be defined for a insertion to take effect. This is usually the case with a field that is a primary key. See section *See table info* for more. 
 
 #### Update
-Updating a row (or multiple rows) can be achieved with with the *update* command. In it's simplest form, you just define a criteria and what needs to be changed/updated:
+Updating a row (or multiple roz
 
 	UPDATE alarm SET alarmDescri = "Alarm cleared by technician" WHERE ntpqID = 2;
 
@@ -200,7 +232,7 @@ The following tables (represented by the query that made them) has been created 
 	CREATE TABLE ntpq (
 			ntpqID INT NOT NULL AUTO_INCREMENT,
 			seenFromIP VARCHAR(32),
-			timeStamp FLOAT(10,4),
+			timeStamp FLOAT(10,5),
 			timeStampString VARCHAR(100),
 			serverIP VARCHAR(32),
 			ntpqResponse INT,
@@ -208,23 +240,24 @@ The following tables (represented by the query that made them) has been created 
 			syncSource VARCHAR(25), 
 			stratum INT, 
 			ntpClockType VARCHAR(5),
-			ntpqWhen FLOAT(10,4),
-			ntpqPoll FLOAT(10,4),
+			ntpqWhen INT,
+			ntpqPoll INT,
 			ntpqReach FLOAT(10,4),
 			ntpqDelay FLOAT(10,4),
-			ntpqOffset FLOAT(10,4),h
+			ntpqOffset FLOAT(10,4),
 			ntpqJitter FLOAT(10,4),
 			ntpMonitorID VARCHAR(100), 
-			timeStampBackDated VARCHAR(100),
+			timeStampBackDated FLOAT(10,5),
 			PRIMARY KEY (ntpqID)
 		);
 
 The ntpq table is used to store data from ntpq queries.
 
 	CREATE TABLE ntpq2 (
+			localID INT AUTO_INCREMENT,
 			ntpqID INT,
 			seenFromIP VARCHAR(32),
-			timeStamp FLOAT(10,4),
+			timeStamp FLOAT(10,5),
 			timeStampString VARCHAR(100),
 			serverIP VARCHAR(32),
 			ntpqResponse INT,
@@ -232,15 +265,15 @@ The ntpq table is used to store data from ntpq queries.
 			syncSource VARCHAR(25), 
 			stratum INT, 
 			ntpClockType VARCHAR(5),
-			ntpqWhen FLOAT(10,4),
-			ntpqPoll FLOAT(10,4),
+			ntpqWhen INT,
+			ntpqPoll INT,
 			ntpqReach FLOAT(10,4),
 			ntpqDelay FLOAT(10,4),
-			ntpqOffset FLOAT(10,4),h
+			ntpqOffset FLOAT(10,4),
 			ntpqJitter FLOAT(10,4),
 			ntpMonitorID VARCHAR(100), 
-			timeStampBackDated VARCHAR(100),
-			PRIMARY KEY (ntpqID)
+			timeStampBackDated FLOAT(10,5),
+			PRIMARY KEY (localID)
 		);
 Same as ntpq table, but without the auto increment on primary key (ntpqID). This table is used for testing only.
 

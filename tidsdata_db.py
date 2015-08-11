@@ -1,3 +1,9 @@
+## ADD line counter
+## Remove the sql print
+## FIx date bug
+## TEst service 
+
+
 # NOTES:
 # Used Python v.3.4.3
 # and mysql-connector-python-2.0.4-py3.4
