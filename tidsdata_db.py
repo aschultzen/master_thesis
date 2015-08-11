@@ -63,7 +63,9 @@ def dbConnect():
             host= config['db']['ip'],
             database= config['db']['database'],
             user= config['db']['user'],
-            password= config['db']['password'])
+            password= config['db']['password'],
+            autocommit=True
+            )
         
         if dbConnection.is_connected():
             t_print("Connection to database (" + dbConnection.server_host +":" 
@@ -92,23 +94,30 @@ def dbInsert(data):
     columns = columns.split()
     sources = (config['sources']['list'])
     sources = sources.split()
-    #While?
-    cell = rows[0].split()
-    insert_measurement = ("INSERT INTO " + 
+    sources_count = len(sources)
+
+    counter = 0
+
+    while(counter < row_count):  
+        source_counter = 0
+        cell = rows[counter].split()
+        while(source_counter < sources_count):
+            insert_measurement = ("INSERT INTO " + 
         config['db']['tablename'] + " " + 
         "(" + ''.join(columns) + ")" 
-        + " VALUES (" + "'" + cell[0] + "'" + "," + "'" +  cell[1] + "'" + "," + cell[2] + "," +  "'" + sources[0] + "'" + "," + cell[3] + ");")
+        + " VALUES (" + "'" + cell[0] + "'" + "," + "'" +  cell[1] + "'" + "," + cell[2] + "," +  "'" + sources[source_counter] + "'" + "," + cell[3 + source_counter] + ");")
+            try: 
+                print(insert_measurement)   
+                cursor.execute(insert_measurement)
+                dbc.commit
+                source_counter = source_counter + 1
+            except mysql.connector.Error as err:
+                print("Something went wrong: {}".format(err))
+        counter = counter + 1
+    cursor.close
+    dbClose(dbc)
 
-    print(insert_measurement)
 
-    try:    
-        cursor.execute(insert_measurement)
-        dbc.commit
-        print(cursor.fetchone())
-        cursor.close
-        dbClose(dbc)
-    except mysql.connector.Error as err:
-        print("Something went wrong: {}".format(err))
 
 def initConfig():
     configFile = "config.ini"
