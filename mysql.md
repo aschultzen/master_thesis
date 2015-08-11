@@ -31,6 +31,29 @@ At some point you might need to change a user. Maybe the script will be executed
 
 	UPDATE mysql.user SET host = "fnt655j" where user = "someuser";
 
+### Deleting a user and revoking grants
+
+Deleting (or "dropping") a user in MySQL is nothing fancy. It is however a good idea to revoke any grants that user might have been given before the user is deleted. The following command shows the grants given to the specified user:
+
+	show grants for 'user'@'somewhere';
+
+This might produce an output like this (the hash has been replaced with <hash> in the example):
+
+	+---------------------------------------------------------------------------+
+	| Grants for monitor@somewhere                                              |
+	+---------------------------------------------------------------------------+
+	| GRANT USAGE ON *.* TO 'user'@'somewhere' IDENTIFIED BY PASSWORD '<hash>' 	|
+	+---------------------------------------------------------------------------+
+	1 row in set (0.00 sec)
+
+Now that we know the what grants the user had been granted, we can revoke them:
+
+	REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'user'@'somewhere';
+
+And finally, drop the user:
+
+	DROP USER 'user'@'somewhere';
+
 ## Creating the database and tables
 
 Log in with root:
