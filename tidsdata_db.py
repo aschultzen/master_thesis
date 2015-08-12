@@ -147,37 +147,13 @@ def update_progress(current, goal):
     progress = (current / goal) * 100
     print ("\rInserting lines: " + str(current) + "/" + str(goal),end="",flush=True)
 
-def get_mjd():
+def get_today_mjd():
     today = datetime.datetime.utcnow()
     return jdutil.jd_to_mjd(jdutil.datetime_to_jd(today)) 
 
-def mjd_inrange(mjd_start, mjd_stop, subject):
-    if(subject == mjd_start or subject == mjd_stop):
-        return True
-    if(subject > mjd_start and subject < mjd_stop):
-        return True
-    else:
-        return False
-
-def get_filecandidates():
-    mjd_today = get_mjd()
-    candidates = []
-    files = os.listdir(config['data']['folder'])
-    for s in files:
-        if config['data']['file_prefix'] in s:
-            files_sub = s.split(" ")
-            if mjd_inrange(float(files_sub[1]), float(files_sub[3].replace(".dat"," ")), mjd_today) == True:
-               candidates.append(s)
-    return candidates
-
-def evaluate_candidates(file_candidates):
-    print (file_candidates)
-
-def file_detector():
-    file_candidates = get_filecandidates()
-    evaluate_candidates(file_candidates)
-
-
+def calculate_file_name():
+    start_mjd = ( int(int(get_today_mjd()) / 60) * 60 )
+    
 
 if __name__ == '__main__':
     #t_print("Starting up...")
@@ -188,4 +164,4 @@ if __name__ == '__main__':
     #dbInsert(data)
     #seconds = "{0:.2f}".format(float(time.time() - time_start))
     #t_print("Elapsed time: " + str(seconds) + "s")
-    file_detector()
+    calculate_file_name()
