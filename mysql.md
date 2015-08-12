@@ -277,19 +277,23 @@ The ntpq table is used to store data from ntpq queries.
 		);
 Same as ntpq table, but without the auto increment on primary key (ntpqID). This table is used for testing only.
 
-
-
 	CREATE TABLE alarm (
 		alarmID INT NOT NULL AUTO_INCREMENT,
 		ntpqID INT, 
-		alarmDescri VARCHAR(100),
+		alarmDescription VARCHAR(100),
 		alarmState INT,
 		alarmEmail VARCHAR(100),
 		alarmCondition VARCHAR(100),
-		clearedByNtpqID INT, 
-		PRIMARY KEY (alarmID),
-		FOREIGN KEY (ntpqID) REFERENCES ntpq(ntpqID)
+		clearedByNtpqID INT,
+		serverIP VARCHAR(32),
+		seenFromIP VARCHAR(32),
+		alarmSet VARCHAR(100),
+		alarmCleared VARCHAR(100),
+		alarmComment VARCHAR(100),
+		timeStamp DECIMAL(12,6),
+		PRIMARY KEY(alarmID)
 	);
+
 The alarm table is used to store alarms raised on the basis of data stored in the ntpq table. They were designed to be joined at *ntpqID*.
 
 
