@@ -60,7 +60,6 @@ def path2list(path):
     resultList = result.read()
     result.close()
     t_print("File " + path + " : loaded.")
-    resultList = str(resultList)
     resultList = resultList.replace(",",".")
     return resultList
 
@@ -108,19 +107,22 @@ def dbInsert(data):
     while(counter < row_count):  
         source_counter = 0
         cell = rows[counter].split()
+        cell[0] = format_date_string(cell[0])
         while(source_counter < sources_count):
             insert_measurement = ("INSERT INTO " + 
         config['db']['tablename'] + " " + 
         "(" + ''.join(columns) + ")" 
         + " VALUES (" + "'" + cell[0] + "'" + "," + "'" +  cell[1] + "'" + "," + cell[2] + "," +  "'" + sources[source_counter] + "'" + "," + cell[3 + source_counter] + ");")
-            try:   
+            try: 
                 cursor.execute(insert_measurement)
                 dbc.commit
                 source_counter = source_counter + 1
                 operation_counter = operation_counter + 1
+                update_progress(operation_counter, row_count*22)
             except mysql.connector.Error as err:
                 print("Something went wrong: {}".format(err))
         counter = counter + 1
+    print()
     cursor.close
     dbClose(dbc)
     t_print("Inserted " + str(operation_counter) + " lines")
@@ -133,6 +135,17 @@ def initConfig():
 def t_print(message):
     current_time = datetime.datetime.now().time()
     print("[" + current_time.isoformat() + "] " +"[" + message + "]")
+
+def format_date_string(date_s):
+    split = date_s.split(".")
+    split = split[::-1]
+    split = ''.join(split)
+    return split
+
+
+def update_progress(current, goal):
+    progress = (current / goal) * 100
+    print ("\rInserting lines: " + str(current) + "/" + str(goal),end="",flush=True)
 
 if __name__ == '__main__':
     t_print("Starting up...")
