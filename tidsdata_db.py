@@ -1,5 +1,4 @@
-## FIx date bug
-## ADD "in progress" message
+## Create logig to check the tables for new data
 ## TEst service 
 
 
@@ -15,6 +14,8 @@ import mysql.connector
 import configparser
 import datetime
 import time
+import jdutil
+import os
 
 # Something should be done about these!
 config = configparser.ConfigParser()    # Global variable for configparser.
@@ -27,7 +28,7 @@ class PySvc(win32serviceutil.ServiceFramework):
     # Control Manager (SCM)
     _svc_display_name_ = "TimedataToDB"
     # this text shows up as the description in the SCM
-    _svc_description_ = "LabvView time data to DB monitor."
+    _svc_description_ = "Monitoring Lab View files and inserting changes to DB."
     
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self,args)
@@ -142,17 +143,49 @@ def format_date_string(date_s):
     split = ''.join(split)
     return split
 
-
 def update_progress(current, goal):
     progress = (current / goal) * 100
     print ("\rInserting lines: " + str(current) + "/" + str(goal),end="",flush=True)
 
+def get_mjd():
+    today = datetime.datetime.utcnow()
+    return jdutil.jd_to_mjd(jdutil.datetime_to_jd(today)) 
+
+def mjd_inrange(mjd_start, mjd_stop, subject):
+    if(subject == mjd_start or subject == mjd_stop):
+        return True
+    if(subject > mjd_start and subject < mjd_stop):
+        return True
+    else:
+        return False
+
+def get_filecandidates():
+    mjd_today = get_mjd()
+    candidates = []
+    files = os.listdir(config['data']['folder'])
+    for s in files:
+        if config['data']['file_prefix'] in s:
+            files_sub = s.split(" ")
+            if mjd_inrange(float(files_sub[1]), float(files_sub[3].replace(".dat"," ")), mjd_today) == True:
+               candidates.append(s)
+    return candidates
+
+def evaluate_candidates(file_candidates):
+    print (file_candidates)
+
+def file_detector():
+    file_candidates = get_filecandidates()
+    evaluate_candidates(file_candidates)
+
+
+
 if __name__ == '__main__':
-    t_print("Starting up...")
-    time_start = time.time()
+    #t_print("Starting up...")
+    #time_start = time.time()
     #win32serviceutil.HandleCommandLine(PySvc)
     initConfig()
-    data = path2list(config['data']['path'])
-    dbInsert(data)
-    seconds = int(time.time() - time_start)
-    t_print("Elapsed time: " + str(seconds) + "s")
+    #data = path2list(config['data']['path'])
+    #dbInsert(data)
+    #seconds = "{0:.2f}".format(float(time.time() - time_start))
+    #t_print("Elapsed time: " + str(seconds) + "s")
+    file_detector()
