@@ -274,13 +274,15 @@ The alarm table is used to store alarms raised on the basis of data stored in th
 
 
 	CREATE TABLE clock_measurements (
-	clck_msrmID INT NOT NULL AUTO_INCREMENT,
-	date DATE, 
-	time TIME,
-	mjd decimal(12,6),
-	source VARCHAR(50),
-	value DECIMAL(65,30),
-	PRIMARY KEY (clck_msrmID)
+		clck_msrmID INT NOT NULL AUTO_INCREMENT,
+		date DATE, 
+		time TIME,
+		mjd decimal(12,6),
+		source VARCHAR(50),
+		value DECIMAL(65,30),
+		ref_clock VARCHAR(50),
+		measurerID VARCHAR(50),
+		PRIMARY KEY (clck_msrmID)
 	);
 
 The clock_measurements table is used to store data collected from clocks and produced by LabView. 

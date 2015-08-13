@@ -1,7 +1,3 @@
-## Create logig to check the tables for new data
-## TEst service 
-
-
 # NOTES:
 # Used Python v.3.4.3
 # and mysql-connector-python-2.0.4-py3.4
@@ -12,6 +8,7 @@ import win32event
 import ctypes
 import mysql.connector
 import configparser
+import fileinput, sys
 import datetime
 import time
 import jdutil
@@ -63,6 +60,7 @@ def insert_file(path):
     result.close()
     t_print("File " + path + " : loaded.")
     resultList = resultList.replace(",",".")
+    resultList = resultList.splitlines()
     dbInsert(resultList)
 
 def dbConnect():
@@ -114,7 +112,7 @@ def dbInsert(data):
             insert_measurement = ("INSERT INTO " + 
         config['db']['tablename'] + " " + 
         "(" + ''.join(columns) + ")" 
-        + " VALUES (" + "'" + cell[0] + "'" + "," + "'" +  cell[1] + "'" + "," + cell[2] + "," +  "'" + sources[source_counter] + "'" + "," + cell[3 + source_counter] + ");")
+        + " VALUES (" + "'" + cell[0] + "'" + "," + "'" +  cell[1] + "'" + "," + cell[2] + "," +  "'" + sources[source_counter] + "'" + "," + cell[3 + source_counter] + "," +  "'" + config['data']['ref_clock'] + "'" + "," +  "'" + config['data']['measurerID'] + "'" + ");")
             try: 
                 cursor.execute(insert_measurement)
                 dbc.commit
@@ -155,12 +153,12 @@ def get_today_mjd():
 def calculate_file_name():
     start_mjd = ( int(int(get_today_mjd()) / 60) * 60 )
     stop_mjd = start_mjd + 59;
-    filename = config['data']['file_prefix'] + " " + str(start_mjd) + " - " + str(stop_mjd) + ".dat"
+    filename = config['files']['file_prefix'] + " " + str(start_mjd) + " - " + str(stop_mjd) + ".dat"
     return filename
 
 def get_full_path():
     calculate_file_name()
-    return str(config['data']['folder'] + calculate_file_name())
+    return str(config['files']['folder'] + calculate_file_name())
 
 def get_last_db_line_mjd():
     dbc = dbConnect()
@@ -174,37 +172,53 @@ def get_last_db_line_mjd():
     else:
         return -1
     
-def find_new_lines():
+    ## Changed open with to 'r'
+def find_new_lines(db_last_mjd):
     file_full_path = get_full_path()
-    last_db_mjd = str(get_last_db_line_mjd()).replace(".",",")
-
-    if(last_db_mjd == "-1"):
-        return -1
+    last_db_mjd = str(db_last_mjd).replace(".",",")
 
     line_found_switch = False;
     new_lines = []
 
     t_print("Opening file: " + file_full_path)
-    with open(file_full_path) as openfile:
+    with open(file_full_path, 'r') as openfile: 
         for line in openfile:
             if(line_found_switch == True):
                 new_lines.append(line.replace(",","."))
             if line.find(last_db_mjd) != -1:
                 line_found_switch = True
 
-    t_print("Found " + str(len(new_lines)) + " new line(s)")
+    t_print("Found " + str(len(new_lines)) + " new line(s), base is up to date!")
     new_lines = new_lines            
     return new_lines
-                
 
-
+def disable_file_insert():
+    for line in fileinput.input(["config.ini"], inplace=True):
+        line = line.replace("file_insert: 1", "file_insert: 0")
+        line = line.replace("are_you_sure_you_want_to_insert : 1", "file_insert: 0")
+        # sys.stdout is redirected to the file
+        sys.stdout.write(line)
+            
 if __name__ == '__main__':
     t_print("Starting up...")
     time_start = time.time()
     #win32serviceutil.HandleCommandLine(PySvc)
     initConfig()
-    new_lines = find_new_lines()
-    if(len(new_lines) > 0):
-        dbInsert(new_lines)
+
+    if(config['modes']['file_insert'] == "1"):
+        if(config['modes']['are_you_sure_you_want_to_insert'] == "1"):
+            insert_file(config['files']['insert_mode_path'])
+            disable_file_insert()
+
+    else:
+        last_mjd = get_last_db_line_mjd()
+        if(last_mjd != -1):
+            new_lines = find_new_lines(last_mjd)
+            if(len(new_lines) > 0):
+                dbInsert(new_lines)
+        else:
+            print("The DB is empty. Using file insertion mode")
+            insert_file(get_full_path())
+
     seconds = "{0:.2f}".format(float(time.time() - time_start))
     t_print("Elapsed time: " + str(seconds) + "s")
