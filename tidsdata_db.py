@@ -56,13 +56,14 @@ class PySvc(win32serviceutil.ServiceFramework):
 # BUG: Does not care if file is
 # bigger than memory. Could cause
 # "memoutofbound"
-def path2list(path):
+
+def insert_file(path):
     result = open(path, 'r')
     resultList = result.read()
     result.close()
     t_print("File " + path + " : loaded.")
     resultList = resultList.replace(",",".")
-    return resultList
+    dbInsert(resultList)
 
 def dbConnect():
     try:    
@@ -95,8 +96,8 @@ def dbClose(dbConnection):
 def dbInsert(data):
     dbc = dbConnect()
     cursor = dbc.cursor(buffered=True)
-    rows = data.splitlines()
-    row_count = len(rows)
+    #rows = data.splitlines()
+    row_count = len(data)
     columns = (config['columns']['list'])
     columns = columns.split()
     sources = (config['sources']['list'])
@@ -107,7 +108,7 @@ def dbInsert(data):
     operation_counter = 0
     while(counter < row_count):  
         source_counter = 0
-        cell = rows[counter].split()
+        cell = data[counter].split()
         cell[0] = format_date_string(cell[0])
         while(source_counter < sources_count):
             insert_measurement = ("INSERT INTO " + 
@@ -153,15 +154,57 @@ def get_today_mjd():
 
 def calculate_file_name():
     start_mjd = ( int(int(get_today_mjd()) / 60) * 60 )
+    stop_mjd = start_mjd + 59;
+    filename = config['data']['file_prefix'] + " " + str(start_mjd) + " - " + str(stop_mjd) + ".dat"
+    return filename
+
+def get_full_path():
+    calculate_file_name()
+    return str(config['data']['folder'] + calculate_file_name())
+
+def get_last_db_line_mjd():
+    dbc = dbConnect()
+    cursor = dbc.cursor(buffered=True)
+    query = "SELECT mjd FROM clock_measurements ORDER BY clck_msrmID DESC LIMIT 1"
+    cursor.execute(query)
+    result = cursor.fetchall()
+    dbClose(dbc)
+    if(result): 
+        return result[0][0]
+    else:
+        return -1
     
+def find_new_lines():
+    file_full_path = get_full_path()
+    last_db_mjd = str(get_last_db_line_mjd()).replace(".",",")
+
+    if(last_db_mjd == "-1"):
+        return -1
+
+    line_found_switch = False;
+    new_lines = []
+
+    t_print("Opening file: " + file_full_path)
+    with open(file_full_path) as openfile:
+        for line in openfile:
+            if(line_found_switch == True):
+                new_lines.append(line.replace(",","."))
+            if line.find(last_db_mjd) != -1:
+                line_found_switch = True
+
+    t_print("Found " + str(len(new_lines)) + " new line(s)")
+    new_lines = new_lines            
+    return new_lines
+                
+
 
 if __name__ == '__main__':
-    #t_print("Starting up...")
-    #time_start = time.time()
+    t_print("Starting up...")
+    time_start = time.time()
     #win32serviceutil.HandleCommandLine(PySvc)
     initConfig()
-    #data = path2list(config['data']['path'])
-    #dbInsert(data)
-    #seconds = "{0:.2f}".format(float(time.time() - time_start))
-    #t_print("Elapsed time: " + str(seconds) + "s")
-    calculate_file_name()
+    new_lines = find_new_lines()
+    if(len(new_lines) > 0):
+        dbInsert(new_lines)
+    seconds = "{0:.2f}".format(float(time.time() - time_start))
+    t_print("Elapsed time: " + str(seconds) + "s")

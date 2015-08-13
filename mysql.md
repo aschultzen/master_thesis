@@ -232,7 +232,7 @@ The following tables (represented by the query that made them) has been created 
 	CREATE TABLE ntpq (
 			ntpqID INT NOT NULL AUTO_INCREMENT,
 			seenFromIP VARCHAR(32),
-			timeStamp FLOAT(10,5),
+			timeStamp decimal(12,6),
 			timeStampString VARCHAR(100),
 			serverIP VARCHAR(32),
 			ntpqResponse INT,
@@ -251,30 +251,6 @@ The following tables (represented by the query that made them) has been created 
 			PRIMARY KEY (ntpqID)
 		);
 
-The ntpq table is used to store data from ntpq queries.
-
-	CREATE TABLE ntpq2 (
-			localID INT AUTO_INCREMENT,
-			ntpqID INT,
-			seenFromIP VARCHAR(32),
-			timeStamp FLOAT(10,5),
-			timeStampString VARCHAR(100),
-			serverIP VARCHAR(32),
-			ntpqResponse INT,
-			selectStatus VARCHAR(25),
-			syncSource VARCHAR(25), 
-			stratum INT, 
-			ntpClockType VARCHAR(5),
-			ntpqWhen INT,
-			ntpqPoll INT,
-			ntpqReach FLOAT(10,4),
-			ntpqDelay FLOAT(10,4),
-			ntpqOffset FLOAT(10,4),
-			ntpqJitter FLOAT(10,4),
-			ntpMonitorID VARCHAR(100), 
-			timeStampBackDated FLOAT(10,5),
-			PRIMARY KEY (localID)
-		);
 Same as ntpq table, but without the auto increment on primary key (ntpqID). This table is used for testing only.
 
 	CREATE TABLE alarm (
@@ -298,13 +274,13 @@ The alarm table is used to store alarms raised on the basis of data stored in th
 
 
 	CREATE TABLE clock_measurements (
-		clck_msrmID INT NOT NULL AUTO_INCREMENT,
-		date DATE, 
-		time TIME,
-		mjd FLOAT(10,5),
-		source VARCHAR(50),
-		value DECIMAL(65,30),
-		PRIMARY KEY (clck_msrmID)
+	clck_msrmID INT NOT NULL AUTO_INCREMENT,
+	date DATE, 
+	time TIME,
+	mjd decimal(12,6),
+	source VARCHAR(50),
+	value DECIMAL(65,30),
+	PRIMARY KEY (clck_msrmID)
 	);
 
 The clock_measurements table is used to store data collected from clocks and produced by LabView. 
