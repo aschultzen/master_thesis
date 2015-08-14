@@ -142,7 +142,7 @@ def get_full_path():
 def get_last_db_line_mjd():
     dbc = dbConnect()
     cursor = dbc.cursor(buffered=True)
-    query = "SELECT mjd FROM clock_measurements ORDER BY clck_msrmID DESC LIMIT 1"
+    query = "SELECT mjd from clock_measurements where mjd = (SELECT max(mjd) FROM  clock_measurements)"
     cursor.execute(query)
     result = cursor.fetchall()
     dbClose(dbc)
@@ -172,7 +172,7 @@ def find_new_lines(db_last_mjd):
 
 def disable_file_insert():
     for line in fileinput.input(["config.ini"], inplace=True):
-        line = line.replace("file_insert: 1", "file_insert: 0")
+        line = line.replace("file_insert: yes", "file_insert: no")
         sys.stdout.write(line)
 
 def main_routine():

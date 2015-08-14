@@ -41,7 +41,16 @@ The scripts is used by the command line (cmd). To launch the script, given that 
 
 	python .\cdtdb.py
 
-### Modes of operation
+## Modes of operation
+### Normal
+During normal operation, CDTDB will wake up at specified intervals and check if something new has been written to file. If there is nothing new, it will go back to sleep.
 
+### File insert
+When **insert_mode_path** is set to some file and **file_insert** is set to "yes", that file will be inserted into the base. CDTDB DOES NOT contain any sort of duplicate protection, so USE WITH CAUTION!
+CDTDB uses the time stamp (mjd) to check where the database is relative to the file it is monitoring. Never use the insert mode for fresh files. The monitoring relies on that the newest time stamps are from the file currently being monitored. Failure to follow these instructions can result in a loss of database integrity. 
 
 ## Known issues
+- Editing the config file while it's being read crashes the program. Make sure it's only edited while it sleeps.
+
+## To do
+See "Known issues"
