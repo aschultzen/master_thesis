@@ -18,27 +18,29 @@ The script will NOT work without this software.
 ## How to use
 
 ### Configuring
-A big part of CDTDB is it's config file. The script has no user-interface so all settings has to set in it's config file. The following is a short description of the config file's fields:
+A big part of CDTDB is it's config file. The script has no user-interface so all settings has to be set in it's config file. The following is a short description of the config file's fields:
 
 	[data]
 	ref_clock : Someclock
 	measurerID : Aril
 
-*ref_clock_* is the name of the clock uses as reference by *TidFreq-Klokker-Meas v04_06* when producing measurements.
-*measurerID* is the name or id of the device running an instance of CDTDB. 
+- **ref_clock_** is the name of the clock uses as reference by *TidFreq-Klokker-Meas v04_06* when producing measurements.
+- **measurerID** is the name or id of the device running an instance of CDTDB. 
 
 	[files]
 	folder: C:\
 	file_prefix : Kontinuerlig
 	insert_mode_path: C:\\test2.dat
 
-*folder* is the path to the folder containing the data produced by *TidFreq-Klokker-Meas v04_06*. 
-*file_prefix* is *static* part of the file name that *TidFreq-Klokker-Meas v04_06* produces. 
-
-
-
+- **folder** is the path to the folder containing the data produced by *TidFreq-Klokker-Meas v04_06*. 
+- **file_prefix** is *static* part of the file name that *TidFreq-Klokker-Meas v04_06* produces. 
+- **insert_mode_path** specifies the full path to a file to be used during **file insertion mode** (see "Modes of operation" for more)
 
 ### Launching
 The scripts is used by the command-line (cmd). To launch the script, given that you have navigated to it's location, simply issue the command:
 
 	python .\cdtdb.py
+
+### Modes of operation
+
+## Known issues
