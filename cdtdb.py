@@ -100,8 +100,8 @@ def t_print(message):
     current_time = datetime.datetime.now().time()
     complete_message = "[" + current_time.isoformat() + "] " +"[" + message + "]"
     print(complete_message)
-    if(config['logs']['enabled'] == "yes"):
-        with open(config['logs']['path'], "a+") as log:
+    if(config['logs']['enable_logging'] == "yes"):
+        with open(config['logs']['log_path'], "a+") as log:
             log.write(complete_message + "\n")
 
 def format_date_string(date_s):
