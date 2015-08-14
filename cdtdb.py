@@ -2,9 +2,6 @@
 # Used Python v.3.4.3
 # and mysql-connector-python-2.0.4-py3.4
 
-import win32service
-import win32serviceutil
-import win32event 
 import ctypes
 import mysql.connector
 import configparser
@@ -16,39 +13,6 @@ import os
 
 # Something should be done about these!
 config = configparser.ConfigParser()    # Global variable for configparser.
-
-
-class PySvc(win32serviceutil.ServiceFramework):
-    # you can NET START/STOP the service by the following name
-    _svc_name_ = "TimedataToDB"
-    # this text shows up as the service name in the Service
-    # Control Manager (SCM)
-    _svc_display_name_ = "TimedataToDB"
-    # this text shows up as the description in the SCM
-    _svc_description_ = "Monitoring Lab View files and inserting changes to DB."
-    
-    def __init__(self, args):
-        win32serviceutil.ServiceFramework.__init__(self,args)
-        # create an event to listen for stop requests on
-        self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-    
-    # core logic of the service   
-    def SvcDoRun(self):
-        import servicemanager
-
-        rc = none
-        while rc != win32event.WAIT_OBJECT_0:
-            # This is the main loop. Put whatever
-            # needs to be done in here.
-            # block for 5 seconds and listen for a stop event
-            rc = win32event.WaitForSingleObject(self.hWaitStop, 5000)
-        
-    # called when we're being shut down    
-    def SvcStop(self):
-        # tell the SCM we're shutting down
-        self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        # fire the stop event
-        win32event.SetEvent(self.hWaitStop)
 
 # BUG: Does not care if file is
 # bigger than memory. Could cause
@@ -125,16 +89,20 @@ def dbInsert(data):
     print()
     cursor.close
     dbClose(dbc)
-    t_print("Inserted " + str(operation_counter) + " lines")
+    t_print("Inserted " + str(operation_counter) + " lines into DB (" + str(row_count) + " rows in file)" )
 
 def initConfig():
     configFile = "config.ini"
     config.read(configFile)
-    t_print("Config file " + configFile + " : loaded.")
+    #t_print("Config file " + configFile + " : loaded.")
 
 def t_print(message):
     current_time = datetime.datetime.now().time()
-    print("[" + current_time.isoformat() + "] " +"[" + message + "]")
+    complete_message = "[" + current_time.isoformat() + "] " +"[" + message + "]"
+    print(complete_message)
+    if(config['logs']['enabled'] == "yes"):
+        with open(config['logs']['path'], "a+") as log:
+            log.write(complete_message + "\n")
 
 def format_date_string(date_s):
     split = date_s.split(".")
@@ -144,7 +112,7 @@ def format_date_string(date_s):
 
 def update_progress(current, goal):
     progress = (current / goal) * 100
-    print ("\rInserting lines: " + str(current) + "/" + str(goal),end="",flush=True)
+    print ("\r      Inserting lines: " + str(current) + "/" + str(goal),end="",flush=True)
 
 def get_today_mjd():
     today = datetime.datetime.utcnow()
@@ -195,16 +163,14 @@ def find_new_lines(db_last_mjd):
 def disable_file_insert():
     for line in fileinput.input(["config.ini"], inplace=True):
         line = line.replace("file_insert: 1", "file_insert: 0")
-        line = line.replace("are_you_sure_you_want_to_insert : 1", "file_insert: 0")
-        # sys.stdout is redirected to the file
         sys.stdout.write(line)
-            
-if __name__ == '__main__':
-    t_print("Starting up...")
-    time_start = time.time()
-    #win32serviceutil.HandleCommandLine(PySvc)
-    initConfig()
 
+def main_routine():
+    time_start = time.time()
+    initConfig()
+    t_print("Starting up...")
+
+    
     if(config['modes']['file_insert'] == "1"):
         if(config['modes']['are_you_sure_you_want_to_insert'] == "1"):
             insert_file(config['files']['insert_mode_path'])
@@ -217,8 +183,12 @@ if __name__ == '__main__':
             if(len(new_lines) > 0):
                 dbInsert(new_lines)
         else:
-            print("The DB is empty. Using file insertion mode")
+            t_print("The DB is empty. Inserting the whole file")
             insert_file(get_full_path())
 
     seconds = "{0:.2f}".format(float(time.time() - time_start))
     t_print("Elapsed time: " + str(seconds) + "s")
+            
+if __name__ == '__main__':
+    main_routine()
+   
