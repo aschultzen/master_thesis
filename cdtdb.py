@@ -68,28 +68,39 @@ def dbInsert(data):
 
     counter = 0
     operation_counter = 0
+    query_static = ("INSERT INTO " + 
+                                config['db']['tablename'] + " " + 
+                                "(" + ''.join(columns) + ")" 
+                                + " VALUES ")
     while(counter < row_count):  
         source_counter = 0
         cell = data[counter].split()
         cell[0] = format_date_string(cell[0])
+        insert_measurement = ""
         while(source_counter < sources_count):
-            insert_measurement = ("INSERT INTO " + 
-        config['db']['tablename'] + " " + 
-        "(" + ''.join(columns) + ")" 
-        + " VALUES (" + "'" + cell[0] + "'" + "," + "'" +  cell[1] + "'" + "," + cell[2] + "," +  "'" + sources[source_counter] + "'" + "," + cell[3 + source_counter] + "," +  "'" + config['data']['ref_clock'] + "'" + "," +  "'" + config['data']['measurerID'] + "'" + ");")
-            try: 
-                cursor.execute(insert_measurement)
-                dbc.commit
-                source_counter = source_counter + 1
-                operation_counter = operation_counter + 1
-                update_progress(operation_counter, row_count*22)
-            except mysql.connector.Error as err:
-                print("Something went wrong: {}".format(err))
+            insert_measurement = insert_measurement + ( "('" + cell[0] + "'" + "," + "'" +  
+                                                        cell[1] + "'" + "," + 
+                                                        cell[2] + "," +  "'" + 
+                                                        sources[source_counter] + "'" + "," + 
+                                                        cell[3 + source_counter] + "," +  "'" + 
+                                                        config['data']['ref_clock'] + "'" + "," +  "'" + 
+                                                        config['data']['measurerID'] + "'" + "),")
+            source_counter = source_counter + 1
+        try: 
+            insert_measurement = insert_measurement[:-1]
+            insert_measurement = insert_measurement + ";"
+            insert_measurement = query_static + insert_measurement;
+            cursor.execute(insert_measurement)
+            dbc.commit
+            operation_counter = operation_counter + 1
+            update_progress(operation_counter, row_count)
+        except mysql.connector.Error as err:
+            print("Something went wrong: {}".format(err))
         counter = counter + 1
     print()
     cursor.close
     dbClose(dbc)
-    t_print("Inserted " + str(operation_counter) + " lines into DB (" + str(row_count) + " rows in file)" )
+    t_print("Inserted " + str(operation_counter*22) + " lines into DB (" + str(row_count) + " rows in file)" )
 
 def initConfig():
     configFile = "config.ini"
@@ -168,10 +179,10 @@ def main_routine():
     while(True):
         initConfig()
         print("\n")
+
         t_print("Starting up...")
         time_start = time.time()
-        if(config['modes']['file_insert'] == "1"):
-            if(config['modes']['are_you_sure_you_want_to_insert'] == "1"):
+        if(config['modes']['file_insert'] == "yes"):
                 insert_file(config['files']['insert_mode_path'])
                 disable_file_insert()
 
