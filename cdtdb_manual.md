@@ -20,14 +20,18 @@ The script will NOT work without this software.
 ### Configuring
 A big part of CDTDB is it's config file. The script has no user-interface so all settings has to be set in it's config file. The following is a short description of the config file's fields:
 
-- **ref_clock_** is the name of the clock uses as reference by *TidFreq-Klokker-Meas v04_06* when producing measurements.
-- **measurerID** is the name or id of the device running an instance of CDTDB. 
-- **folder** is the path to the folder containing the data produced by *TidFreq-Klokker-Meas v04_06*. 
-- **file_prefix** is *static* part of the file name that *TidFreq-Klokker-Meas v04_06* produces. 
-- **insert_mode_path** specifies the full path to a file to be used during *file insertion mode* (see "Modes of operation" for more)
+- **ref_clock_** The name of the clock uses as reference by *TidFreq-Klokker-Meas v04_06* when producing measurements.
+- **measurerID** The name or id of the device running an instance of CDTDB. 
+- **folder** Path to the folder containing the data produced by *TidFreq-Klokker-Meas v04_06*. 
+- **file_prefix** The *static* part of the file name that *TidFreq-Klokker-Meas v04_06* produces. 
+- **insert_mode_path** Specifies the full path to a file to be used during *file insertion mode* (see "Modes of operation" for more)
+- **file_insert** If set to yes, enables file insert mode and uses the **insert_mode_path** to find the file.
+- **enable_logging** If set to yes, enables logging. The log file contains the same as what get written to the command line.
+- **log_path** Specifies full path to the log file.
+- **interval** Specifies in seconds how often the daemon should look for changes in the file produced by *TidFreq-Klokker-Meas v04_06*
 
 ### Launching
-The scripts is used by the command-line (cmd). To launch the script, given that you have navigated to it's location, simply issue the command:
+The scripts is used by the command line (cmd). To launch the script, given that you have navigated to it's location, simply issue the command:
 
 	python .\cdtdb.py
 
