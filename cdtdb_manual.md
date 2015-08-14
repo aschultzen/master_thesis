@@ -20,10 +20,10 @@ The script will NOT work without this software.
 ### Configuring
 A big part of CDTDB is it's config file. The script has no user-interface so all settings has to be set in it's config file. The following is a short description of the config file's fields:
 
-1 [data]
+- [data]
   - **ref_clock** The name of the clock uses as reference by *TidFreq-Klokker-Meas v04_06* when producing measurements.
   - **measurerID** The name or id of the device running an instance of CDTDB. 
-2 [files]
+- [files]
   - **folder** Path to the folder containing the data produced by *TidFreq-Klokker-Meas v04_06*. 
   - **file_prefix** The *static* part of the file name that *TidFreq-Klokker-Meas v04_06* produces. 
   - **insert_mode_path** Specifies the full path to a file to be used during *file insertion mode* (see "Modes of operation" for more)
