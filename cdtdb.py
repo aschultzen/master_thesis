@@ -143,21 +143,20 @@ def get_last_db_line_mjd():
     ## Changed open with to 'r'
 def find_new_lines(db_last_mjd):
     file_full_path = get_full_path()
-    last_db_mjd = str(db_last_mjd).replace(".",",")
+    last_db_mjd = str(db_last_mjd)
 
     line_found_switch = False;
     new_lines = []
 
     t_print("Opening file: " + file_full_path)
-    with open(file_full_path, 'r') as openfile: 
-        for line in openfile:
+    with open(file_full_path) as openfile: 
+        for line in openfile:   
             if(line_found_switch == True):
                 new_lines.append(line.replace(",","."))
             if line.find(last_db_mjd) != -1:
                 line_found_switch = True
 
-    t_print("Found " + str(len(new_lines)) + " new line(s), base is up to date!")
-    new_lines = new_lines            
+    t_print("Found " + str(len(new_lines)) + " new line(s)")            
     return new_lines
 
 def disable_file_insert():
@@ -166,28 +165,29 @@ def disable_file_insert():
         sys.stdout.write(line)
 
 def main_routine():
-    time_start = time.time()
-    initConfig()
-    t_print("Starting up...")
+    while(True):
+        initConfig()
+        print("\n")
+        t_print("Starting up...")
+        time_start = time.time()
+        if(config['modes']['file_insert'] == "1"):
+            if(config['modes']['are_you_sure_you_want_to_insert'] == "1"):
+                insert_file(config['files']['insert_mode_path'])
+                disable_file_insert()
 
-    
-    if(config['modes']['file_insert'] == "1"):
-        if(config['modes']['are_you_sure_you_want_to_insert'] == "1"):
-            insert_file(config['files']['insert_mode_path'])
-            disable_file_insert()
-
-    else:
-        last_mjd = get_last_db_line_mjd()
-        if(last_mjd != -1):
-            new_lines = find_new_lines(last_mjd)
-            if(len(new_lines) > 0):
-                dbInsert(new_lines)
         else:
-            t_print("The DB is empty. Inserting the whole file")
-            insert_file(get_full_path())
+            last_mjd = get_last_db_line_mjd()
+            if(last_mjd != -1):
+                new_lines = find_new_lines(last_mjd)
+                if(len(new_lines) > 0):
+                    dbInsert(new_lines)
+            else:
+                t_print("The DB is empty. Inserting the whole file")
+                insert_file(get_full_path())
 
-    seconds = "{0:.2f}".format(float(time.time() - time_start))
-    t_print("Elapsed time: " + str(seconds) + "s")
+        seconds = "{0:.2f}".format(float(time.time() - time_start))
+        t_print("Elapsed time: " + str(seconds) + "s")
+        time.sleep(float(config['general']['interval']))
             
 if __name__ == '__main__':
     main_routine()
