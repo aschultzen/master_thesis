@@ -13,7 +13,11 @@ and Python 3.4.3:
 
 	https://www.python.org/downloads/release/python-343/
 
-The script will NOT work without this software.
+The script also uses the jdutil package from:
+
+	https://gist.github.com/jiffyclub/1294443
+
+The script will NOT work without this software. jdutil.py has to be downloaded and located in some directory in the Python installation path. E.g. C:\python34\Lib\
 
 ## How to use
 
@@ -39,7 +43,12 @@ A big part of CDTDB is it's config file. The script has no user-interface so all
 ### Launching
 The scripts is used by the command line (cmd). To launch the script, given that you have navigated to it's location, simply issue the command:
 
-	python .\cdtdb.py
+	python .\cdtdb.py  	
+
+or more explicitely if Windows doesn't recognize the path tp the python executable:
+
+	C:\python34\python .\cdtdb.py
+	
 
 ## Modes of operation
 ### Normal
