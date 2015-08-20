@@ -60,6 +60,7 @@ CDTDB uses the time stamp (mjd) to check where the database is relative to the f
 
 ## Known issues
 - Editing the config file while it's being read crashes the program. Make sure it's only edited while it sleeps.
+- The script doesn't add new data to a non-empty database unless there is already some data with the same measurerID as in the current config. The workaround is to first add data using 'file_insert: yes', then run the script again with file insert switched off.
 
 ## To do
 See "Known issues"
