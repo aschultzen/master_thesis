@@ -1,11 +1,5 @@
 # Notes
 
-# 28.08.2015
-Had a meeting with Harald at Justervesenet. I need to check out the following:
-
-- rtklib for the Ublox
-- Com with CSAC, build a layer that implements the "CSAC" protocol.
-
 # 31.08.2015
 
 ## rtklib, Raspi and Ublox
@@ -28,7 +22,16 @@ Just discovered that rtklib is easy to compile and run for ARM architectures. rt
 	JAVAD 		Multiple 	Multiple frequencies 		From $1500
 	NovAtel 	OEM4/V/6, OEM3, OEMStar, Superstar II
 source(http://wiki.openstreetmap.org/wiki/RTKLIB)
-The same source states the rtklib can be used with all ublox receivers, so that's worth looking into.
+
+The same source states the rtklib can be used with all u-blox receivers, so that's worth looking into. From what I've gathered, the U-blox 6M can be configured to transmit raw data over serial that can be used by rtklib. The price difference between the 6M and the 6T isn't really big, i found them priced at about ~100NOK and ~300NOK respectively (at ebay from china). The 6T actually came with an "antenna assembly" which looked pretty good. 
+
+# 28.08.2015
+Had a meeting with Harald at Justervesenet. I need to check out the following:
+
+- rtklib for the Ublox
+- Com with CSAC, build a layer that implements the "CSAC" protocol.
+
+
 
 
 
