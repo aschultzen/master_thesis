@@ -30,6 +30,9 @@ Det sier noe om nøyaktigheten over tid. GPS hadde et svært lavt stigninstall s
 ### Del 2
 Det ser ut til at *xcsacen* er mest stabil, men drifter mer enn GPS som knapt drifter i forhold til *xcsac* og *ocxo*. På nært hold blir det vanskelig å se da oppløsningen for *xcsacen* er lavere grunnet færre punkter. *xcsacen* Virker å være mer stabil og nøyaktig enn *ocxoen* jevnt over. Det virker å være en klar sammenheng mellom *slope* under **Phase Difference** og *origin/drift* for **Frequency Difference**. Lavere slope gir lavere drift.
 
+### Del 3
+GPS er mest stabil. Csac er stabil lengre enn crystal. <- Prat med Harald.
+
 
 
 
