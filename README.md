@@ -1,13 +1,17 @@
+[rpirb]: https://github.com/aschultzen/master_thesis/blob/master/raspberry_pi_gps_rubber_bands.png "Raspi GPS Rubber Bands"
+
 # Notes
 
-## 3.09.2015
+## 3.09.2015 rtklib, Raspi and Ublox Part 3
+Turned out i just had mixed up RX and TX. Swapped them around and got the following by cat'ing */dev/ttyAMA0*:
+	
+	output
 
-## rtklib, Raspi and Ublox Part 3
+At this point the setup looks like this:
+![alt text][rpirb]
 
 
-## 2.09.2015
-
-## rtklib, Raspi and Ublox Part 2
+## 2.09.2015 rtklib, Raspi and Ublox Part 2
 Picking things up where i left them last time.
 <s>Installed *minibian* (https://minibianpi.wordpress.com/) on my Raspi 1 that i had laying around.
 
@@ -34,16 +38,20 @@ Now, the compiling took a good while, so you might as well get some coffee. I go
 
 *I haven't tried it, usually GCC is way better than me anyway.*
 
-Using **raspi-config** i disabled login over serial:
+Rtkrcv can be started with:
+
+	./rtkrvc
+
+*PRO-TIP: Use 'shutdown' to exit. You'll thank me later*
+
+Using **raspi-config** i disabled login over serial. Raspbian will by default use the serial for console, so it needs to be disabled. 
 
 	8 Advanced Options
 	A8 Serial Options
 
-At this point i have not yet been able to receive any data from the U-blox receiver. The PPS led is blinking like it's supposed to, so it might be an issue with the wiring or setup. 
+**The GPIO serial port is /dev/ttyAMA0.** At this point i have not yet been able to receive any data from the U-blox chip. The PPS led is blinking like it's supposed to, so it might be an issue with the wiring or setup. The U-blox chip should output empty NMEA data even without satellite lock.
 
-## 31.08.2015
-
-## rtklib, Raspi and Ublox
+## 31.08.2015 rtklib, Raspi and Ublox
 Just discovered that rtklib is easy to compile and run for ARM architectures. rtklib contains a GUI environment that only works with Windows, but this does not matter for me. I also discovered that rtklib only (officially) support the following GNSS chips. 
 
 	Brand 		Device 		Supported frequencies 		Approximate price
