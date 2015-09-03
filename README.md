@@ -1,15 +1,28 @@
 [rpirb]: https://github.com/aschultzen/master_thesis/blob/master/raspberry_pi_gps_rubber_bands.png "Raspi GPS Rubber Bands"
 
+[schm_rpirb]: https://github.com/aschultzen/master_thesis/blob/master/raspi_gps.svg "Raspi GPS Schematic"
+
 # Notes
 
 ## 3.09.2015 rtklib, Raspi and Ublox Part 3
-Turned out i just had mixed up RX and TX. Swapped them around and got the following by cat'ing */dev/ttyAMA0*:
+Turned out i just had mixed up RX and TX. Swapped them around and the following:
+
+	cat /dev/ttyAMA0
+
+Produced:
 	
-	output
+	$GPRMC,120200.00,V,,,,,,,030915,,,N*72
+	$GPVTG,,,,,,,,,N*30
+	$GPGGA,120200.00,,,,,0,00,99.99,,,,,,*67
+	$GPGSA,A,1,,,,,,,,,,,,,99.99,99.99,99.99*30
+	$GPGSV,2,1,05,02,,,22,03,,,22,09,,,22,17,,,22*71
+	$GPGSV,2,2,05,27,,,28*73
+	$GPGLL,,,,,120200.00,V,N*4B
 
-At this point the setup looks like this:
+The U-blox hasn't got a lock on the satellites yet, but the communication works. At this point the setup looks like this:
 ![alt text][rpirb]
-
+Yeah, i know. It's not pretty but at least i can transport it somehow. I use some really cheap leads i ordered of Ebay a long time a go, it's a long story. Anyway, the schematics:
+![alt text][schm_rpirb]
 
 ## 2.09.2015 rtklib, Raspi and Ublox Part 2
 Picking things up where i left them last time.
