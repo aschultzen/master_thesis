@@ -1,6 +1,6 @@
-[rpirb]: https://github.com/aschultzen/master_thesis/blob/master/raspberry_pi_gps_rubber_bands.png "Raspi GPS Rubber Bands"
+[rpirb]: https://github.com/aschultzen/master_thesis/pics/blob/master/raspberry_pi_gps_rubber_bands.png "Raspi GPS Rubber Bands"
 
-[schm_rpirb]: https://github.com/aschultzen/master_thesis/blob/master/raspi_gps.svg "Raspi GPS Schematic"
+[schm_rpirb]: https://github.com/aschultzen/master_thesis/pics/blob/master/raspi_gps.png "Raspi GPS Schematic"
 
 # Notes
 
@@ -22,9 +22,7 @@ Produced:
 The U-blox hasn't got a lock on the satellites yet, but the communication works. At this point the setup looks like this:
 ![alt text][rpirb]
 Yeah, i know. It's not pretty but at least i can transport it somehow. I use some really cheap leads i ordered of Ebay a long time a go, it's a long story. Anyway, the schematics:
-
-![Alt text](https://rawgit.com/aschultzen/master_thesis/master/raspi_gps.svg)
-<img src="https://rawgit.com/aschultzen/master_thesis/master/raspi_gps.svg">
+![alt text][schm_rpirb]
 
 ## 2.09.2015 rtklib, Raspi and Ublox Part 2
 Picking things up where i left them last time.
