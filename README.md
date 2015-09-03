@@ -1,6 +1,6 @@
-[rpirb]: https://github.com/aschultzen/master_thesis/pics/blob/master/raspberry_pi_gps_rubber_bands.png "Raspi GPS Rubber Bands"
+[rpirb]: https://github.com/aschultzen/master_thesis/blob/master/pics/raspberry_pi_gps_rubber_bands.png"Raspi GPS Rubber Bands"
 
-[schm_rpirb]: https://github.com/aschultzen/master_thesis/pics/blob/master/raspi_gps.png "Raspi GPS Schematic"
+[schm_rpirb]: https://github.com/aschultzen/master_thesis/blob/master/pics/raspi_gps.png "Raspi GPS Schematic"
 
 # Notes
 
