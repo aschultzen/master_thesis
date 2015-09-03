@@ -4,12 +4,23 @@
 # Notes
 
 ## 3.09.2015 rtklib, Raspi and Ublox Part 3
+### Getting a signal
 Turned out i just had mixed up RX and TX. Swapped them around and the following:
 
 	cat /dev/ttyAMA0
 
 Produced:
 	
+	$GPRMC,120200.00,V,,,,,,,030915,,,N*72
+	$GPVTG,,,,,,,,,N*30
+	$GPGGA,120200.00,,,,,0,00,99.99,,,,,,*67
+	$GPGSA,A,1,,,,,,,,,,,,,99.99,99.99,99.99*30
+	$GPGSV,2,1,05,02,,,22,03,,,22,09,,,22,17,,,22*71
+	$GPGSV,2,2,05,27,,,28*73
+	$GPGLL,,,,,120200.00,V,N*4B
+
+The U-blox hasn't got a lock on the satellites yet, but the communication works. *EDIT*: I put the whole assembly in a plastic bag in hung it out the window. This is the output it produces once a lock has been acquired:
+
 	$GPRMC,143809.00,A,5957.80441,N,01043.83609,E,0.152,,030915,,,D*7F
 	$GPVTG,,T,,M,0.152,N,0.281,K,D*2B
 	$GPGGA,143809.00,5957.80441,N,01043.83609,E,2,11,0.86,185.6,M,38.5,M,,0000*57
@@ -20,7 +31,8 @@ Produced:
 	$GPGSV,4,4,16,28,20,328,30,30,04,297,,32,15,204,31,33,18,209,36*71
 	$GPGLL,5957.80441,N,01043.83609,E,143809.00,A,D*6E
 
-The U-blox hasn't got a lock on the satellites yet, but the communication works. At this point the setup looks like this:
+### The setup
+At this point the setup looks like this:
 ![alt text][rpirb]
 Yeah, i know. It's not pretty but at least i can transport it somehow. I use some really cheap leads i ordered of Ebay a long time a go, it's a long story. Anyway, the schematics:
 ![alt text][schm_rpirb]
