@@ -1,5 +1,41 @@
 # Notes
 
+# 2.09.2015
+
+## rtklib, Raspi and Ublox Part 2
+Picking things where i left last time.
+~~Installed *minibian* (https://minibianpi.wordpress.com/) on my Raspi 1 that i had laying around.
+
+	dd bs=4M if=2015-02-18-minibian.img of=/dev/sdd
+
+Update and upgraded and restarted the box.~~
+NOTE: Something happened when i updated and upgraded using miniban. Falling back to Raspbian. The procedure is the same though.
+
+After i had a clean box with Raspbian, i downloaded the rtklib source:
+
+	wget http://www.rtklib.com/prog/rtklib_2.4.2.zip
+	unzip rtklib_2.4.2.zip
+
+And compiled it with:
+
+	make
+
+standing in:
+	
+	~/rtklib_2.4.2/app/rtkrcv/gcc
+
+Now, this took a good while, so might as well get some coffee. I got a couple of warnings but no errors.
+
+PRO-TIP: Thomas Yan @ GNSS Corner (http://gnss.co/?p=52) suggest modifying the makefile with: 
+
+	CTARGET = -march=armv6 -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -ffast-math
+
+I haven't tried it, usually GCC is way better than me anyway. 
+
+	
+
+
+
 # 31.08.2015
 
 ## rtklib, Raspi and Ublox
