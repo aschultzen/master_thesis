@@ -12,30 +12,111 @@ Turned out i just had mixed up RX and TX. Swapped them around and the following:
 Produced:
 	
 	$GPRMC,120200.00,V,,,,,,,030915,,,N*72
+
 	$GPVTG,,,,,,,,,N*30
+
 	$GPGGA,120200.00,,,,,0,00,99.99,,,,,,*67
+
 	$GPGSA,A,1,,,,,,,,,,,,,99.99,99.99,99.99*30
+
 	$GPGSV,2,1,05,02,,,22,03,,,22,09,,,22,17,,,22*71
+
 	$GPGSV,2,2,05,27,,,28*73
+
 	$GPGLL,,,,,120200.00,V,N*4B
 
-The U-blox hasn't got a lock on the satellites yet, but the communication works. *EDIT*: I put the whole assembly in a plastic bag in hung it out the window. This is the output it produces once a lock has been acquired:
+	$GPTXT,01,01,01,NMEA unknown msg*58
+
+	$GPTXT,01,01,01,NMEA unknown msg*58
+
+	...
+
+The U-blox hasn't got a lock on the satellites yet, but the communication works. *EDIT: I put the whole assembly in a plastic bag in hung it out the window. This is the output it produces once a lock has been acquired:*
 
 	$GPRMC,143809.00,A,5957.80441,N,01043.83609,E,0.152,,030915,,,D*7F
+
 	$GPVTG,,T,,M,0.152,N,0.281,K,D*2B
+
 	$GPGGA,143809.00,5957.80441,N,01043.83609,E,2,11,0.86,185.6,M,38.5,M,,0000*57
+
 	$GPGSA,A,3,14,18,27,19,28,32,22,08,04,01,11,,1.50,0.86,1.23*0F
+
 	$GPGSV,4,1,16,01,21,263,17,04,48,258,34,08,69,239,35,11,34,272,34*76
+
 	$GPGSV,4,2,16,14,18,122,19,15,06,017,,18,32,060,29,19,66,265,35*73
+
 	$GPGSV,4,3,16,21,01,089,,22,61,101,27,24,00,050,,27,48,160,25*72
+
 	$GPGSV,4,4,16,28,20,328,30,30,04,297,,32,15,204,31,33,18,209,36*71
+
 	$GPGLL,5957.80441,N,01043.83609,E,143809.00,A,D*6E
+
+	$GPTXT,01,01,01,NMEA unknown msg*58
+
+	$GPTXT,01,01,01,NMEA unknown msg*58
+
+	...
 
 ### The setup
 At this point the setup looks like this:
 ![alt text][rpirb]
 Yeah, i know. It's not pretty but at least i can transport it somehow. I use some really cheap leads i ordered of Ebay a long time a go, it's a long story. Anyway, the schematics:
 ![alt text][schm_rpirb]
+
+### Getting the RAW data
+I've used most of the day debugging the serial connection to the U-blox chip. One of the problems I've encountered is that Python tends to do reconfigure some parameters of the TTY. This would make it impossible to get any output any by using cat on */dev/ttyAMA0* after using Python to do serial stuff. In order to reset them, the following command can be used:
+
+	 stty -F /dev/ttyAMA0 icanon
+
+I also started work on a script that should enable RAW data output from the U-blox chip:
+
+	import serial
+
+	ser = serial.Serial('/dev/ttyAMA0',9600)
+	print 'Enabling RAW data mode for RTKLIB'
+	command = b'\xb5\x62\x09\x01\x10\x00\xc8\x16\x00\x00\x00\x00\x00\x00\x97\x69\x2$
+	command2 = b'\xb5\x62\x09\x01\x10\x00\x0c\x19\x00\x00\x00\x00\x00\x00\x83\x69\x$
+	ser.write(command)
+	ser.write(command2)
+
+The first command enables **RXM-RAW**, the second **RXM-SFRB** (used by rtklib). **The changes are not permanent, only in RAM on U-blox chip. Once the chip is powered off, the changes disappear**. It's important to note at the time I'm writing this, i don't really know if it actually works. According to U-blox documentation, the chips is supposed to give an acknowledgment that the command is received and that it was accepted. This is something i will implement in the script later. I did however find that the output changed from:
+
+
+	$GPRMC,200556.00,V,,,,,,,030915,,,N*77
+
+	$GPVTG,,,,,,,,,N*30
+
+	$GPGGA,200556.00,,,,,0,00,99.99,,,,,,*62
+
+	$GPGSA,A,1,,,,,,,,,,,,,99.99,99.99,99.99*30
+
+	$GPGSV,4,1,14,04,01,241,,08,16,219,17,14,53,018,,15,00,142,*71
+
+	$GPGSV,4,2,14,16,22,298,,18,41,145,21,19,06,217,15,21,35,095,22*76
+
+	$GPGSV,4,3,14,22,64,209,,24,04,103,,26,14,327,,27,53,232,*75
+
+	$GPGSV,4,4,14,29,02,032,,32,08,295,*73
+
+	$GPGLL,,,,,200556.00,V,N*4E
+
+	$GPTXT,01,01,01,NMEA unknown msg*58
+
+	$GPTXT,01,01,01,NMEA unknown msg*58
+
+to:
+
+	$GPRMC,200700.00,V,,,,,,,030915,,,N*76
+	$GPVTG,,,,,,,,,N*30
+	$GPGGA,200700.00,,,,,0,00,99.99,,,,,,*63
+	$GPGSA,A,1,,,,,,,,,,,,,99.99,99.99,99.99*30
+	$GPGSV,4,1,14,04,01,240,21,08,17,219,20,14,54,019,12,15,00,142,*73
+	$GPGSV,4,2,14,16,22,298,23,18,41,145,,19,07,217,,21,35,094,16*77
+	$GPGSV,4,3,14,22,64,208,,24,04,103,,26,14,327,,27,53,232,*74
+	$GPGSV,4,4,14,29,02,032,,32,09,295,13*70
+	$GPGLL,,,,,200700.00,V,N*4F
+
+The first thing i noticed was that the newlines between each line was gone, the same with the **$GPTXT** fields. Perhaps this is it?
 
 ## 2.09.2015 rtklib, Raspi and Ublox Part 2
 Picking things up where i left them last time.
