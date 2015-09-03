@@ -1,9 +1,14 @@
 # Notes
 
-# 2.09.2015
+## 3.09.2015
+
+## rtklib, Raspi and Ublox Part 3
+
+
+## 2.09.2015
 
 ## rtklib, Raspi and Ublox Part 2
-Picking things up where i left last time.
+Picking things up where i left them last time.
 <s>Installed *minibian* (https://minibianpi.wordpress.com/) on my Raspi 1 that i had laying around.
 
 	dd bs=4M if=2015-02-18-minibian.img of=/dev/sdd
@@ -16,27 +21,27 @@ After i had a clean box with Raspbian, i downloaded the rtklib source:
 	wget http://www.rtklib.com/prog/rtklib_2.4.2.zip
 	unzip rtklib_2.4.2.zip
 
-And compiled it with:
-
-	make
-
-standing in:
+Now standing in:
 	
 	~/rtklib_2.4.2/app/rtkrcv/gcc
+	make
 
-Now, this took a good while, so might as well get some coffee. I got a couple of warnings but no errors.
+Now, the compiling took a good while, so you might as well get some coffee. I got a couple of warnings but no errors.
 
-PRO-TIP: Thomas Yan @ GNSS Corner (http://gnss.co/?p=52) suggest modifying the makefile with: 
+*PRO-TIP: Thomas Yan @ GNSS Corner (http://gnss.co/?p=52) suggest modifying the makefile with:* 
 
 	CTARGET = -march=armv6 -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -ffast-math
 
-I haven't tried it, usually GCC is way better than me anyway. 
+*I haven't tried it, usually GCC is way better than me anyway.*
 
-	
+Using **raspi-config** i disabled login over serial:
 
+	8 Advanced Options
+	A8 Serial Options
 
+At this point i have not yet been able to receive any data from the U-blox receiver. The PPS led is blinking like it's supposed to, so it might be an issue with the wiring or setup. 
 
-# 31.08.2015
+## 31.08.2015
 
 ## rtklib, Raspi and Ublox
 Just discovered that rtklib is easy to compile and run for ARM architectures. rtklib contains a GUI environment that only works with Windows, but this does not matter for me. I also discovered that rtklib only (officially) support the following GNSS chips. 
@@ -61,14 +66,8 @@ source(http://wiki.openstreetmap.org/wiki/RTKLIB)
 
 The same source states the rtklib can be used with all u-blox receivers, so that's worth looking into. From what I've gathered, the U-blox 6M can be configured to transmit raw data over serial that can be used by rtklib. The price difference between the 6M and the 6T isn't really big, i found them priced at about ~100NOK and ~300NOK respectively (at ebay from china). The 6T actually came with an "antenna assembly" which looked pretty good. 
 
-# 28.08.2015
+## 28.08.2015
 Had a meeting with Harald at Justervesenet. I need to check out the following:
 
 - rtklib for the Ublox
 - Com with CSAC, build a layer that implements the "CSAC" protocol.
-
-
-
-
-
-
