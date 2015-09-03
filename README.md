@@ -79,7 +79,7 @@ I also started work on a script that should enable RAW data output from the U-bl
 	ser.write(command)
 	ser.write(command2)
 
-The first command enables **RXM-RAW**, the second **RXM-SFRB** (used by rtklib). **The changes are not permanent, only in RAM on U-blox chip. Once the chip is powered off, the changes disappear**. It's important to note at the time I'm writing this, i don't really know if it actually works. According to U-blox documentation, the chips is supposed to give an acknowledgment that the command is received and that it was accepted. This is something i will implement in the script later. I did however find that the output changed from:
+The first command enables **RXM-RAW**, the second **RXM-SFRB** (used by rtklib). **The changes are not permanent, only in RAM on the U-blox chip. Once the chip is powered off, the changes disappear**. It's important to note at the time I'm writing this, i don't really know if it actually works. According to U-blox documentation, the chips is supposed to give an acknowledgment that the command is received and that it was accepted. This is something i will implement in the script later. I did however find that the output changed from:
 
 
 	$GPRMC,200556.00,V,,,,,,,030915,,,N*77
