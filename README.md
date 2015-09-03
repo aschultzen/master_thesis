@@ -3,12 +3,12 @@
 # 2.09.2015
 
 ## rtklib, Raspi and Ublox Part 2
-Picking things where i left last time.
-~~Installed *minibian* (https://minibianpi.wordpress.com/) on my Raspi 1 that i had laying around.
+Picking things up where i left last time.
+<s>Installed *minibian* (https://minibianpi.wordpress.com/) on my Raspi 1 that i had laying around.
 
 	dd bs=4M if=2015-02-18-minibian.img of=/dev/sdd
 
-Update and upgraded and restarted the box.~~
+Update and upgraded and restarted the box.</s>
 NOTE: Something happened when i updated and upgraded using miniban. Falling back to Raspbian. The procedure is the same though.
 
 After i had a clean box with Raspbian, i downloaded the rtklib source:
