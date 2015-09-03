@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="23cm" height="20cm" viewBox="-91 184 454 390" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <image x="-89.4996" y="185" width="266.429" height="387.587" xlink:href="file:///C:/Users/Octa/Pictures/raspi_small.png"/>
+  <image x="198" y="303.5" width="163.623" height="264.913" xlink:href="file:///C:/Users/Octa/Pictures/ublox6m_small.png"/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #ff0000" points="134.852,200.765 278.42,200.765 278.42,301.006 278.42,301.006 "/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="133.879,222.469 292.393,222.469 292.393,301.006 292.61,301.006 "/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #00ff00" points="133.313,232.062 320.275,232.062 320.275,300.128 320.275,300.128 "/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #0000ff" points="132.91,242.447 306.334,242.447 306.334,301.111 307.01,301.111 "/>
+  <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="43.7149" y="378.793">
+    <tspan x="43.7149" y="378.793"></tspan>
+  </text>
+  <text font-size="8.46654" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="142.76" y="197.067">
+    <tspan x="142.76" y="197.067">GPIO 2 +5V</tspan>
+  </text>
+  <text font-size="8.46654" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="143.41" y="217.837">
+    <tspan x="143.41" y="217.837">GPIO 6 GND</tspan>
+  </text>
+  <text font-size="8.46654" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="142.762" y="235.344">
+    <tspan x="142.762" y="235.344">PIN 8 (GPIO14) TXD</tspan>
+  </text>
+  <text font-size="8.46654" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="142.762" y="256.093">
+    <tspan x="142.762" y="256.093">PIN 10 (GPIO15) RXD</tspan>
+  </text>
+</svg>
