@@ -23,8 +23,8 @@ The U-blox hasn't got a lock on the satellites yet, but the communication works.
 ![alt text][rpirb]
 Yeah, i know. It's not pretty but at least i can transport it somehow. I use some really cheap leads i ordered of Ebay a long time a go, it's a long story. Anyway, the schematics:
 
-![Alt text](https://github.com/aschultzen/master_thesis/blob/master/raspi_gps.svg)
-<img src="https://github.com/aschultzen/master_thesis/blob/master/raspi_gps.svg">
+![Alt text](https://rawgit.com/aschultzen/master_thesis/master/raspi_gps.svg)
+<img src="https://rawgit.com/aschultzen/master_thesis/master/raspi_gps.svg">
 
 ## 2.09.2015 rtklib, Raspi and Ublox Part 2
 Picking things up where i left them last time.
