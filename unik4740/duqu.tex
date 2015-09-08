@@ -61,8 +61,13 @@
 \clearpage
 \setcounter{page}{1}
 
+\begin{abstract}
+This report on Duqu (a collection of computer malware) was an assignment given in the course UNIK4740. It is mainly based on \textit{Duqu: A Stuxnet-like malware found in the wild.} by Boldizsár Bencsáth et al (October 2011) and \textit{W32.Duqu: The precursor to the next Stuxnet} by Symantec (November 2011).
+\end{abstract}
+\newpage
+
 \section{Introduction}
-This report on Duqu (a collection of computer malware) is based on the report \textit{Duqu: A Stuxnet-like malware found in the wild.} by Boldizsár Bencsáth et al (2011) and the result of an assignment given in the course UNIK4740. 
+
 
 \section{Prerequisite knowledge}
 Though not a technical marvel, Duqu exploits numerous mechanisms and features in the Winodws Operating system. Some of these mechanisms will be explained in this section and should be understood before venturing further into this report.
@@ -74,9 +79,12 @@ A DLL (Dynamic Link Libraries) is Microsoft's implementation of the \textit{shar
 A Driver (also known as Device driver) an abstraction layer that provides a software interface to the hardware. A driver can either be written in kernel mode or user mode. When running in kernel mode, the driver has access to every resource and all hardware, this also means that every CPU instruction can be executed and every memory address can accessed. An application written in user-mode can not directly access hardware or memory but has to use APIs instead. This isolation makes a crash in user-mode recoverable instead of catastrophic as in a kernel-mode. WHY VULNERABLE?
 
 \subsection{The Windows registry}
-The registry is a database used in Microsoft Windows to store settings and options. It can be considered an alternative to the use of INI files. An application written for Microsoft Windows doest not have to use the registry. 
+The registry is a database used in Microsoft Windows to store settings and options. It can be considered an alternative to the use of INI files. The use of the registry is not compulsory.
 
 \subsection{RPC}
+Remote Procedure Calls (RPC) is a system that allows programmers to write distributed software without worrying about the underlying network code. It is most often used to create a server/client model. \cite{MSRPC}
+
+\subsection{Code-signing}
 
 
 \section{Injection}
