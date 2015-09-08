@@ -1,0 +1,88 @@
+\documentclass[12pt,english,a4paper]{article}
+
+\usepackage[utf8]{inputenc}          % Allows UTF-8 encoded characters in the .tex-file.
+\usepackage{babel,csquotes,textcomp} % Set LaTeX to structure the content following international academic standards.
+
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{listings}
+\usepackage{wrapfig}
+\usepackage{color,colortbl}
+\usepackage{lettrine}
+\usepackage[font={small,it}]{caption}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{footnote}
+
+\usepackage[
+    backend=biber,
+    style=numeric
+]{biblatex}
+\addbibresource{refs.bib}
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\definecolor{auxiliryc}{RGB}{70,240,161} %Green
+
+\definecolor{ineffectivec}{RGB}{70,149,240} %purple
+
+\definecolor{effectivec}{RGB}{115,70,240} % Blue
+
+\lstset{ %
+  basicstyle=\ttfamily\small,     
+  backgroundcolor=\color{white},   % choose the background color
+  breaklines=true,                 % automatic line breaking only at whitespace
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{mygreen},    % comment style
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+  keywordstyle=\color{blue},       % keyword style
+  stringstyle=\color{mymauve},     % string literal style
+}
+
+\title{Report on Duqu: A collection of computer Malware}
+\author{Aril Johannes Schultzen}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\setcounter{page}{0}
+%\newpage
+\tableofcontents
+\thispagestyle{empty}
+\setcounter{page}{0}
+%\newpage
+\thispagestyle{empty}
+\setcounter{page}{0}
+%\newpage
+\clearpage
+\setcounter{page}{1}
+
+\section{Introduction}
+This report on Duqu (a collection of computer malware) is based on the report \textit{Duqu: A Stuxnet-like malware found in the wild.} by Boldizsár Bencsáth et al (2011) and the result of an assignment given in the course UNIK4740. 
+
+\section{Prerequisite knowledge}
+Though not a technical marvel, Duqu exploits numerous mechanisms and features in the Winodws Operating system. Some of these mechanisms will be explained in this section and should be understood before venturing further into this report.
+
+\subsection{DLL}
+A DLL (Dynamic Link Libraries) is Microsoft's implementation of the \textit{shared library} concept used in both Windows and the OS/2 operating system. It can contain both code and data and shares it's file format with the Windows Executable file (EXE). A DLL can be used by multiple programs at the same time. The idea is that it promotes reuse of code while achieving higher memory efficiency. WHY VULNERABLE?
+
+\subsection{Drivers}
+A Driver (also known as Device driver) an abstraction layer that provides a software interface to the hardware. A driver can either be written in kernel mode or user mode. When running in kernel mode, the driver has access to every resource and all hardware, this also means that every CPU instruction can be executed and every memory address can accessed. An application written in user-mode can not directly access hardware or memory but has to use APIs instead. This isolation makes a crash in user-mode recoverable instead of catastrophic as in a kernel-mode. WHY VULNERABLE?
+
+\subsection{The Windows registry}
+The registry is a database used in Microsoft Windows to store settings and options. It can be considered an alternative to the use of INI files. An application written for Microsoft Windows doest not have to use the registry. 
+
+\subsection{RPC}
+
+
+\section{Injection}
+Show list of trusted processes. Usually anti-virus.
+
+\newpage
+\printbibliography[title={Complete Bibliography},heading=bibintoc]
+
+\end{document}                    
