@@ -62,12 +62,12 @@
 \setcounter{page}{1}
 
 \begin{abstract}
-This report on Duqu (a collection of computer malware) was an assignment given in the course UNIK4740. It is mainly based on \textit{Duqu: A Stuxnet-like malware found in the wild.} by Boldizsár Bencsáth et al (October 2011) and \textit{W32.Duqu: The precursor to the next Stuxnet} by Symantec (November 2011).
+This report on Duqu (a collection of computer malware) was an assignment given in the course UNIK4740. It is mainly based on \textit{Duqu: A Stuxnet-like malware found in the wild.}\cite{DUQU_BUD} by Boldizsár Bencsáth et al (October 2011) and \textit{W32.Duqu: The precursor to the next Stuxnet}\cite{DUQU_SYMANTEC} by Symantec (November 2011).
 \end{abstract}
 \newpage
 
 \section{Introduction}
-
+Duqu is a collection of malware discovered by The Laboratory of Cryptography and System Security (CrySyS) of the Budapest University of Technology and Economics in Hungary. They analyzed it and named it Duqu from the prefix "~DQ" that the key logger use to name its files. It is an interesting piece of code despite it being anything but technically astonishing. It is however interesting because of its similarities with \textit{Stuxnet} and \textit{Stuxnets} modular design and how these modules combined can be used to create a targeted thread to control systems in nuclear facilities. It is believed that the creator(s) of Duqu also created \textit{Stuxnet} or at least had access to \textit{Stuxnets} source code.
 
 \section{Prerequisite knowledge}
 Though not a technical marvel, Duqu exploits numerous mechanisms and features in the Winodws Operating system. Some of these mechanisms will be explained in this section and should be understood before venturing further into this report.
@@ -87,8 +87,8 @@ Remote Procedure Calls (RPC) is a system that allows programmers to write distri
 \subsection{Code-signing}
 
 
-\section{Injection}
-Show list of trusted processes. Usually anti-virus.
+\section{Installation}
+
 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
