@@ -84,20 +84,29 @@ The registry is a database used in Microsoft Windows to store settings and optio
 \subsection{RPC}
 Remote Procedure Calls (RPC) is a system that allows programmers to write distributed software without worrying about the underlying network code. It is most often used to create a server/client model. \cite{MSRPC}
 
-\section{Installation}
+\section{Installation of Duqu}
+The following sections covers one of the most discussed method of delivering and installing Duqu. The process is divided into two, the \textit{Preparation} and the \textit{Installation}.
+
 \subsection{Preparation}
-In one of the most discussed examples oh Duqu installation, Duqu was delivered to the target by using a malformed Microsoft Word document. The Word document contained an exploit in the Win32k TrueType font parsing engine which allowed arbitrary code to run in kernel mode. According to Microsoft the Duqu malware exploits a problem in T2EMBED.DLL which is called by the TrueType font parsing engine in some cases.\cite{RYAN_ZDNET} Once the Word document is opened and the exploit triggered, the code will do a check to determine whether or not the target has been infected. This is done by checking the registry for the following value:
+Duqu was delivered to the target by using a specially crafted Microsoft Word document. According to Microsoft the Duqu malware exploits a problem in T2EMBED.DLL which is called by the TrueType font parsing engine \cite{RYAN_ZDNET}. This exploit in the Win32k TrueType font parsing engine allows arbitrary code to run in kernel mode. This arbitrary code will from now on in this report be reference to as the \textit{prep-code}. 
+
+Once the Word document is opened and the exploit triggered, the prep-code will do a check to determine whether or not the target has been infected. This is done by checking the registry for the following value:
 \begin{lstlisting}
     HKEY_LOCAL_MACHINE\ SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\4\"CF1D" 
 \end{lstlisting}
-Unless the value is found, indicating that the computer is compromised, the code decrypts two files from the Word document:
+Unless the value is found, indicating that the computer is compromised, the prep-code decrypts two files from the Word document:
  \begin{enumerate}
-   \item  jminet7.sys or cmi4432.sys, both drivers.
-   \item  netp191.pnf or cmi4432.pnf, both DLLs.
+   \item  \texttt{jminet7.sys} or \texttt{cmi4432.sys}, both drivers.
+   \item  \texttt{netp191.pnf} or \texttt{cmi4432.pnf}, both DLLs.
   \end{enumerate}
-The code then executes the driver file which injects code into services.exe. This behavior is defined by the config file (either netp192.pnf or cmi4464.pnf respectively). Before it exits completely, the code wipes itself from memory by overwriting itself with zeroes.
+For the sake of simplicity, it is assumed that the \texttt{jminet7.sys} and \texttt{netp191.pnf} is the files used in this attack. According to the CrySys report \cite{DUQU_BUD}, the files are very similar and it is theorized that one of them provides the functionality to utilize the key logger.
 
-\subsection{The install}
+The prep-code executes \texttt{jminet7.sys} (driver) which injects the \texttt{netp191.pnf} into \texttt{services.exe}. This behavior is defined by the configuration file \texttt{netp192.pnf} which is loaded and decrypted. Before the prep-code exits, it executes \texttt{netp191.pnf} and overwrite itself with zeros. 
+
+\subsection{Installation}
+At this point, the prep-code no longer exists in RAM, and the driver (\texttt{jminet7.sys}) passes the execution to \texttt{netp192.pnf}. This is where things get a little tricky. During the preparation process, \texttt{netp192.pnf} was injected into \texttt{services.exe}. Now, the same code but launched by the driver, decrypts three files from the injected \texttt{netp192.pnf} code. These files are:
+
+
 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
