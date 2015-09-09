@@ -75,6 +75,12 @@ Though not a technical marvel, Duqu exploits numerous mechanisms and features in
 \subsection{DLL}
 A DLL (Dynamic Link Libraries) is Microsoft's implementation of the \textit{shared library} concept used in both Windows and the OS/2 operating system. It can contain both code and data and shares it's file format with the Windows Executable file (EXE). A DLL can be used by multiple programs at the same time. The idea is that it promotes reuse of code while achieving higher memory efficiency. WHY VULNERABLE?
 
+\subsubsection{DLL Injecting and Hooking} \label{DLL_HOOKING}
+A \textbf{DLL injection} is when a DLL is injected into the address space of an already running process. By using an already running process as opposed to making a new process to run the DLL, detection is far easier to avoid \cite{DEJAN_HOOK}
+
+\textbf{DLL Hooking} or \textbf{API Hooking}
+
+
 \subsection{Drivers}
 A Driver (also known as Device driver) an abstraction layer that provides a software interface to the hardware. A driver can either be written in kernel mode or user mode. When running in kernel mode, the driver has access to every resource and all hardware, this also means that every CPU instruction can be executed and every memory address can accessed. An application written in user-mode can not directly access hardware or memory but has to use APIs instead. This isolation makes a crash in user-mode recoverable instead of catastrophic as in a kernel-mode. WHY VULNERABLE?
 
@@ -105,7 +111,12 @@ The prep-code executes \texttt{jminet7.sys} (driver) which injects the \texttt{n
 
 \subsection{Installation}
 At this point, the prep-code no longer exists in RAM, and the driver (\texttt{jminet7.sys}) passes the execution to \texttt{netp192.pnf}. This is where things get a little tricky. During the preparation process, \texttt{netp192.pnf} was injected into \texttt{services.exe}. Now, the same code but launched by the driver, decrypts three files from the injected \texttt{netp192.pnf} code. These files are:
-
+ \begin{enumerate}
+   \item \texttt{netp191.pnf} (extracted from itself)
+   \item A .sys driver file used as a load point for Duqu after reboot
+   \item The installer configuration file
+  \end{enumerate}
+A time frame is defined in the installer configuration file. The installer will terminate if the it executed outside this time frame. If it does not, the installer will pass the execution to Duqus main DLL (\texttt{netp192.pnf}) by hooking \texttt{ntdll.dll} (see \ref{DLL_HOOKING}).
 
 
 \newpage
