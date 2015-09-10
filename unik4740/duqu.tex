@@ -2,6 +2,7 @@
 
 \usepackage[utf8]{inputenc}          % Allows UTF-8 encoded characters in the .tex-file.
 \usepackage{babel,csquotes,textcomp} % Set LaTeX to structure the content following international academic standards.
+\usepackage[titletoc,toc]{appendix}
 
 \usepackage{hyperref}
 \usepackage{graphicx}
@@ -101,7 +102,7 @@ Duqu was delivered to the target by using a specially crafted Microsoft Word doc
 
 Once the Word document is opened and the exploit triggered, the prep-code will do a check to determine whether or not the target has been infected. This is done by checking the registry for the following value:
 \begin{lstlisting}
-    HKEY_LOCAL_MACHINE\ SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\4\"CF1D" 
+HKEY_LOCAL_MACHINE\ SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\4\"CF1D" 
 \end{lstlisting}
 Unless the value is found, indicating that the computer is compromised, the prep-code decrypts two files from the Word document:
  \begin{enumerate}
@@ -119,7 +120,34 @@ At this point, the prep-code no longer exists in RAM, and the driver (\texttt{jm
    \item A .sys driver file used as a load point for Duqu after reboot
    \item The installer configuration file
   \end{enumerate}
-A time frame is defined in the installer configuration file. The installer will terminate if the it executed outside this time frame. If it does not, the installer will pass the execution to Duqus main DLL (\texttt{netp192.pnf}) by hooking \texttt{ntdll.dll} (see \ref{DLL_HOOKING}). The main DLL
+A time frame is defined in the installer configuration file. The installer will terminate if the it executed outside this time frame. If it does not, the installer will pass the execution to Duqus main DLL (\texttt{netp192.pnf}) by hooking \texttt{ntdll.dll} (see \ref{DLL_HOOKING}). The main DLL has a number of exports (see \ref{app:mainexports} for all). Installation is handles by number 4 and 5. Export 4 is used to inject the main DLL into a suitable process and to pass a pointer to the three decrypted files. Export 5 drops the earlier mentioned driver used as a load point into the following directory:
+\begin{lstlisting}
+%System%\Drivers\ 
+\end{lstlisting}
+The drivers name is defined by the installation configuration file (decrypted earlier). A service is created to make sure that the load point driver is loaded every time the computer is booted. Finally, the main DLL and the installation configuration file is encrypted and named according to the definition in the installation configuration file and placed in the following directory:
+\begin{lstlisting}
+%Windir%\inf\ 
+\end{lstlisting}
+
+
+\begin{appendices}
+  \chapter{NETP191.PNF Exports} \label{app:mainexports}
+    \begin{table}[h]
+        \caption{Table of NETP191.PNF exports \cite{DUQU_SYMANTEC}}
+        \label{my-label}
+        \begin{tabular}{|l|l|}
+        \hline
+        1 & Data initializer \\ \hline
+        2 & Run export 6  \\ \hline
+        3 & Get version info from configuration data \\ \hline
+        4 & Inject self into process, run export 5 (32-bit only) \\ \hline
+        5 & \begin{tabular}[c]{@{}l@{}}Setup, depends on install status.\\ Before install: Drop provided load point driver and create service.\\ After install: Load resource 302\end{tabular} \\ \hline
+        6 & Routine for cleanup \\ \hline
+        7 & Start RPC \\ \hline
+        8 & Identical to export 1, but uses a delay timer. \\ \hline
+        \end{tabular}
+      \end{table}
+\end{appendices}
 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
