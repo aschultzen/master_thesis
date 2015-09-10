@@ -85,14 +85,17 @@ A DLL contains an \textit{exports table} which contains the name of every functi
 \section{Drivers}
 A Driver (also known as Device driver) an abstraction layer that provides a software interface to the hardware. A driver can either be written in kernel mode or user mode. When running in kernel mode, the driver has access to every resource and all hardware, this also means that every CPU instruction can be executed and every memory address can accessed. An application written in user-mode can not directly access hardware or memory but has to use APIs instead. This isolation makes a crash in user-mode recoverable instead of catastrophic as in a kernel-mode.
 
-\section{Signing}
-Write about driver signing.
+\subsection{Driver Signing} \label{DRIVER_SIGN}
+Digital signatures are used to demonstrate the authenticity of the producer of the driver and the integrity of the code. This can be used to protect an operating system against malicious code, for example, Microsoft Windows 7 is by default set to reject unsigned drivers.  
 
 \section{The Windows registry}
 The registry is a database used in Microsoft Windows to store settings and options. It can be considered an alternative to the use of INI files. The use of the registry is not compulsory.
 
 \section{RPC}
 Remote Procedure Calls (RPC) is a system that allows programmers to write distributed software without worrying about the underlying network code. It is most often used to create a server/client model. \cite{MSRPC}
+
+\chapter{Targets}
+According to \textit{W32.Duqu: The precursor to the next Stuxnet}\cite{DUQU_SYMANTEC} by Symantec (November 2011), Duqu is the precursor to Stuxnet. It is believed that it was only made to gather information though with a different payload, it could do anything. Judging by infection data, it would seem as if it was made to gather intelligence from industrial infrastructure and system manufactures. This data is believed to be used for a later attack \cite{DUQU_SYMANTEC}. This makes sense if it was made by the same people as Stuxnet considering how specifically targeted it was. 
 
 \chapter{Installation of Duqu}
 The following sections covers one of the most discussed method of delivering and installing Duqu. The process is divided into two, the \textit{Preparation} and the \textit{Installation}.
@@ -110,7 +113,7 @@ Unless the value is found, indicating that the computer is compromised, the prep
    \item  \texttt{netp191.pnf} or \texttt{cmi4432.pnf}, both DLLs.
   \end{enumerate}
 {\raggedright
-For the sake of simplicity, it is assumed that the \texttt{jminet7.sys} and \texttt{netp191.pnf} is the files used in this attack. According to the CrySys report \cite{DUQU_BUD}, the files are very similar and it is theorized that one of them provides the functionality to utilize the key logger. The prep-code executes \texttt{jminet7.sys} (driver) which injects the \texttt{netp191.pnf} into \texttt{services.exe}. This behavior is defined by the configuration file \texttt{netp192.pnf} which is loaded and decrypted. Before the prep-code exits, it executes \texttt{netp191.pnf} and overwrite itself with zeros. 
+On of the differences between \texttt{jminet7.sys} and \texttt{cmi4432.sys} is that latter actually was signed (\ref{DRIVER_SIGN}) by C-Media Electronics Inc. For the sake of simplicity, it is assumed that the \texttt{jminet7.sys} and \texttt{netp191.pnf} is the files used in this attack. According to the CrySys report \cite{DUQU_BUD}, the files are very similar and it is theorized that one of them provides the functionality to utilize the key logger. The prep-code executes \texttt{jminet7.sys} (driver) which injects the \texttt{netp191.pnf} into \texttt{services.exe}. This behavior is defined by the configuration file \texttt{netp192.pnf} which is loaded and decrypted. Before the prep-code exits, it executes \texttt{netp191.pnf} and overwrite itself with zeros. 
 \par}
 
 \section{Installation}
@@ -148,6 +151,10 @@ The drivers name is defined by the installation configuration file (decrypted ea
         \end{tabular}
       \end{table}
 \end{appendices}
+
+\chapter{Consequences}
+\chapter{Mitigation}
+\chapter{Conclusion}
 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
