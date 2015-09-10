@@ -1,4 +1,4 @@
-\documentclass[12pt,english,a4paper]{article}
+\documentclass[11pt,english,a4paper]{report}
 
 \usepackage[utf8]{inputenc}          % Allows UTF-8 encoded characters in the .tex-file.
 \usepackage{babel,csquotes,textcomp} % Set LaTeX to structure the content following international academic standards.
@@ -66,34 +66,37 @@ This report on Duqu (a collection of computer malware) was an assignment given i
 \end{abstract}
 \newpage
 
-\section{Introduction}
+\chapter{Introduction}
 Duqu is a collection of malware discovered by The Laboratory of Cryptography and System Security (CrySyS) of the Budapest University of Technology and Economics in Hungary. They analyzed it and named it Duqu from the prefix "~DQ" that the key logger use to name its files. It is an interesting piece of code despite it being anything but technically astonishing. It is however interesting because of its similarities with \textit{Stuxnet} and \textit{Stuxnets} modular design and how these modules combined can be used to create a targeted thread to control systems in nuclear facilities. It is believed that the creator(s) of Duqu also created \textit{Stuxnet} or at least had access to \textit{Stuxnets} source code.
 
-\section{Prerequisite knowledge}
+\chapter{Prerequisite knowledge}
 Though not a technical marvel, Duqu exploits numerous mechanisms and features in the Winodws Operating system. Some of these mechanisms will be explained in this section and should be understood before venturing further into this report.
 
-\subsection{DLL}
-A DLL (Dynamic Link Libraries) is Microsoft's implementation of the \textit{shared library} concept used in both Windows and the OS/2 operating system. It can contain both code and data and shares it's file format with the Windows Executable file (EXE). A DLL can be used by multiple programs at the same time. The idea is that it promotes reuse of code while achieving higher memory efficiency. WHY VULNERABLE?
+\section{DLL}
+A DLL (Dynamic Link Libraries) is Microsoft's implementation of the \textit{shared library} concept used in both Windows and the OS/2 operating system. It can contain both code and data and shares it's file format with the Windows Executable file (EXE). A DLL can be used by multiple programs at the same time. The idea is that it promotes reuse of code while achieving higher memory efficiency.
 
-\subsubsection{DLL Injecting and Hooking} \label{DLL_HOOKING}
-A \textbf{DLL injection} is when a DLL is injected into the address space of an already running process. By using an already running process as opposed to making a new process to run the DLL, detection is far easier to avoid \cite{DEJAN_HOOK}
+\subsection{DLL Injecting and Hooking} \label{DLL_HOOKING}
+A DLL injection is when a DLL is injected into the address space of an already running process. By using an already running process as opposed to making a new process to run the DLL, detection is far easier to avoid \cite{DEJAN_HOOK} DLL Hooking or API Hooking is a range of techniques of intercepting function calls or messages in an operating system, changing the behavior of it \cite{BREMER_HOOK}. In any case, both DLL injecting and Hooking requires administrative privileges. This means that you need complete control over the victims system before these techniques are employed. In other words, the techniques are used not to gain access, but to avoid detection. 
 
-\textbf{DLL Hooking} or \textbf{API Hooking}
+\subsection{Exports} \label{EXPORTS}
+A DLL contains an \textit{exports table} which contains the name of every function that the DLL exposes (or exports) to other executables. A Java analogy would be the \texttt{public} modifier.
 
+\section{Drivers}
+A Driver (also known as Device driver) an abstraction layer that provides a software interface to the hardware. A driver can either be written in kernel mode or user mode. When running in kernel mode, the driver has access to every resource and all hardware, this also means that every CPU instruction can be executed and every memory address can accessed. An application written in user-mode can not directly access hardware or memory but has to use APIs instead. This isolation makes a crash in user-mode recoverable instead of catastrophic as in a kernel-mode.
 
-\subsection{Drivers}
-A Driver (also known as Device driver) an abstraction layer that provides a software interface to the hardware. A driver can either be written in kernel mode or user mode. When running in kernel mode, the driver has access to every resource and all hardware, this also means that every CPU instruction can be executed and every memory address can accessed. An application written in user-mode can not directly access hardware or memory but has to use APIs instead. This isolation makes a crash in user-mode recoverable instead of catastrophic as in a kernel-mode. WHY VULNERABLE?
+\section{Signing}
+Write about driver signing.
 
-\subsection{The Windows registry}
+\section{The Windows registry}
 The registry is a database used in Microsoft Windows to store settings and options. It can be considered an alternative to the use of INI files. The use of the registry is not compulsory.
 
-\subsection{RPC}
+\section{RPC}
 Remote Procedure Calls (RPC) is a system that allows programmers to write distributed software without worrying about the underlying network code. It is most often used to create a server/client model. \cite{MSRPC}
 
-\section{Installation of Duqu}
+\chapter{Installation of Duqu}
 The following sections covers one of the most discussed method of delivering and installing Duqu. The process is divided into two, the \textit{Preparation} and the \textit{Installation}.
 
-\subsection{Preparation}
+\section{Preparation}
 Duqu was delivered to the target by using a specially crafted Microsoft Word document. According to Microsoft the Duqu malware exploits a problem in T2EMBED.DLL which is called by the TrueType font parsing engine \cite{RYAN_ZDNET}. This exploit in the Win32k TrueType font parsing engine allows arbitrary code to run in kernel mode. This arbitrary code will from now on in this report be reference to as the \textit{prep-code}. 
 
 Once the Word document is opened and the exploit triggered, the prep-code will do a check to determine whether or not the target has been infected. This is done by checking the registry for the following value:
@@ -105,21 +108,19 @@ Unless the value is found, indicating that the computer is compromised, the prep
    \item  \texttt{jminet7.sys} or \texttt{cmi4432.sys}, both drivers.
    \item  \texttt{netp191.pnf} or \texttt{cmi4432.pnf}, both DLLs.
   \end{enumerate}
-For the sake of simplicity, it is assumed that the \texttt{jminet7.sys} and \texttt{netp191.pnf} is the files used in this attack. According to the CrySys report \cite{DUQU_BUD}, the files are very similar and it is theorized that one of them provides the functionality to utilize the key logger.
+{\raggedright
+For the sake of simplicity, it is assumed that the \texttt{jminet7.sys} and \texttt{netp191.pnf} is the files used in this attack. According to the CrySys report \cite{DUQU_BUD}, the files are very similar and it is theorized that one of them provides the functionality to utilize the key logger. The prep-code executes \texttt{jminet7.sys} (driver) which injects the \texttt{netp191.pnf} into \texttt{services.exe}. This behavior is defined by the configuration file \texttt{netp192.pnf} which is loaded and decrypted. Before the prep-code exits, it executes \texttt{netp191.pnf} and overwrite itself with zeros. 
+\par}
 
-The prep-code executes \texttt{jminet7.sys} (driver) which injects the \texttt{netp191.pnf} into \texttt{services.exe}. This behavior is defined by the configuration file \texttt{netp192.pnf} which is loaded and decrypted. Before the prep-code exits, it executes \texttt{netp191.pnf} and overwrite itself with zeros. 
-
-\subsection{Installation}
+\section{Installation}
 At this point, the prep-code no longer exists in RAM, and the driver (\texttt{jminet7.sys}) passes the execution to \texttt{netp192.pnf}. This is where things get a little tricky. During the preparation process, \texttt{netp192.pnf} was injected into \texttt{services.exe}. Now, the same code but launched by the driver, decrypts three files from the injected \texttt{netp192.pnf} code. These files are:
  \begin{enumerate}
    \item \texttt{netp191.pnf} (extracted from itself)
    \item A .sys driver file used as a load point for Duqu after reboot
    \item The installer configuration file
   \end{enumerate}
-A time frame is defined in the installer configuration file. The installer will terminate if the it executed outside this time frame. If it does not, the installer will pass the execution to Duqus main DLL (\texttt{netp192.pnf}) by hooking \texttt{ntdll.dll} (see \ref{DLL_HOOKING}).
-
+A time frame is defined in the installer configuration file. The installer will terminate if the it executed outside this time frame. If it does not, the installer will pass the execution to Duqus main DLL (\texttt{netp192.pnf}) by hooking \texttt{ntdll.dll} (see \ref{DLL_HOOKING}). The main DLL
 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
-
 \end{document}                     
