@@ -68,7 +68,7 @@ This report on Duqu (a collection of computer malware) was an assignment given i
 \newpage
 
 \chapter{Introduction}
-Duqu is a collection of malware discovered by The Laboratory of Cryptography and System Security (CrySyS) of the Budapest University of Technology and Economics in Hungary. They analyzed it and named it Duqu from the prefix "~DQ" that the key logger use to name its files. It is an interesting piece of code despite it being anything but technically astonishing. It is however interesting because of its similarities with \textit{Stuxnet} and \textit{Stuxnets} modular design and how these modules combined can be used to create a targeted thread to control systems in nuclear facilities. It is believed that the creator(s) of Duqu also created \textit{Stuxnet} or at least had access to \textit{Stuxnets} source code.
+Duqu is a collection of malware discovered by The Laboratory of Cryptography and System Security (CrySyS) of the Budapest University of Technology and Economics in Hungary. They analyzed it and named it Duqu from the prefix \textasciitilde DQ that the key logger use to name its files. It is an interesting piece of code despite it being anything but technically astonishing. It is however interesting because of its similarities with \textit{Stuxnet} and \textit{Stuxnets} modular design and how these modules combined can be used to create a targeted thread to control systems in nuclear facilities. It is believed that the creator(s) of Duqu also created \textit{Stuxnet} or at least had access to \textit{Stuxnets} source code. Duqu contains code that implements command and control, making it possible to control and update it as well as downloading and executing new payloads by using dummy .jpg files. Based on forensic analysis, Duqu does not self-replicate, but has in some instances been known to be instructed to replicate through the network via shares. \cite{DUQU_SYMANTEC}
 
 \chapter{Prerequisite knowledge}
 Though not a technical marvel, Duqu exploits numerous mechanisms and features in the Winodws Operating system. Some of these mechanisms will be explained in this section and should be understood before venturing further into this report.
@@ -94,8 +94,12 @@ The registry is a database used in Microsoft Windows to store settings and optio
 \section{RPC}
 Remote Procedure Calls (RPC) is a system that allows programmers to write distributed software without worrying about the underlying network code. It is most often used to create a server/client model. \cite{MSRPC}
 
-\chapter{Targets}
+\chapter{Targets and Infections}
+\section{Targets}
 According to \textit{W32.Duqu: The precursor to the next Stuxnet}\cite{DUQU_SYMANTEC} by Symantec (November 2011), Duqu is the precursor to Stuxnet. It is believed that it was only made to gather information though with a different payload, it could do anything. Judging by infection data, it would seem as if it was made to gather intelligence from industrial infrastructure and system manufactures. This data is believed to be used for a later attack \cite{DUQU_SYMANTEC}. This makes sense if it was made by the same people as Stuxnet considering how specifically targeted it was. 
+
+\section{Infections}
+
 
 \chapter{Installation of Duqu}
 The following sections covers one of the most discussed method of delivering and installing Duqu. The process is divided into two, the \textit{Preparation} and the \textit{Installation}.
@@ -132,6 +136,18 @@ The drivers name is defined by the installation configuration file (decrypted ea
 %Windir%\inf\ 
 \end{lstlisting}
 
+\chapter{Payload and consequences}
+
+\chapter{Mitigation}
+Microsoft released a patch for the vulnerability in the Win32k TrueType font parsing engine (MS11-087 \cite{TT_MSB}) in  December 2011. This restricts the access to the T2EMBED.DLL effectively disabling one of Duqus known threat vectors. In general, the following actions should be done:
+ \begin{enumerate}
+   \item Make sure all units connected to the system has some sort of security software installed and updated.
+   \item Patch all operating systems. 
+   \item Disable mounting of USB flash drives. This can be done through group policies in Active Directory.
+   \item Use extreme caution when opening Microsoft Word documents.
+  \end{enumerate}
+
+\chapter{Conclusion}
 
 \begin{appendices}
   \chapter{NETP191.PNF Exports} \label{app:mainexports}
@@ -151,10 +167,6 @@ The drivers name is defined by the installation configuration file (decrypted ea
         \end{tabular}
       \end{table}
 \end{appendices}
-
-\chapter{Consequences}
-\chapter{Mitigation}
-\chapter{Conclusion}
 
 \newpage
 \printbibliography[title={Complete Bibliography},heading=bibintoc]
