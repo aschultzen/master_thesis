@@ -99,7 +99,20 @@ Remote Procedure Calls (RPC) is a system that allows programmers to write distri
 According to \textit{W32.Duqu: The precursor to the next Stuxnet}\cite{DUQU_SYMANTEC} by Symantec (November 2011), Duqu is the precursor to Stuxnet. It is believed that it was only made to gather information though with a different payload, it could do anything. Judging by infection data, it would seem as if it was made to gather intelligence from industrial infrastructure and system manufactures. This data is believed to be used for a later attack \cite{DUQU_SYMANTEC}. This makes sense if it was made by the same people as Stuxnet considering how specifically targeted it was. 
 
 \section{Infections}
-
+I have failed to find any detailed reports concerning specific Duqu infections. One theory explaining why is that infected organizations are reluctant to admit that they have been victims for an attack. Publications of an infection could harm public relations and hurt customers and clients trust. However, Symantec have produced some statistics on Duqu infections and in which countries it has occurred. They claim that nine international organizations systems have been compromised:
+\begin{table}[h]
+        \caption{Compromised nations in victim organizations \cite{DUQU_SYMANTEC}}
+        \label{my-label}
+        \begin{tabular}{|l|l|}
+        \hline
+        Organization A & France, Netherlands, Switzerland, Ukraine  \\ \hline
+        Organization B & India  \\ \hline
+        Organization C & Iran  \\ \hline
+        Organization D & Iran  \\ \hline
+        Organization E & Sudan  \\ \hline
+        Organization F & Vietnam  \\ \hline
+        \end{tabular}
+      \end{table}
 
 \chapter{Installation of Duqu}
 The following sections covers one of the most discussed method of delivering and installing Duqu. The process is divided into two, the \textit{Preparation} and the \textit{Installation}.
@@ -113,20 +126,23 @@ HKEY_LOCAL_MACHINE\ SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\
 \end{lstlisting}
 Unless the value is found, indicating that the computer is compromised, the prep-code decrypts two files from the Word document:
  \begin{enumerate}
-   \item  \texttt{jminet7.sys} or \texttt{cmi4432.sys}, both drivers.
-   \item  \texttt{netp191.pnf} or \texttt{cmi4432.pnf}, both DLLs.
+   \item  A Driver
+   \item  Main DLL
   \end{enumerate}
 {\raggedright
-On of the differences between \texttt{jminet7.sys} and \texttt{cmi4432.sys} is that latter actually was signed (\ref{DRIVER_SIGN}) by C-Media Electronics Inc. For the sake of simplicity, it is assumed that the \texttt{jminet7.sys} and \texttt{netp191.pnf} is the files used in this attack. According to the CrySys report \cite{DUQU_BUD}, the files are very similar and it is theorized that one of them provides the functionality to utilize the key logger. The prep-code executes \texttt{jminet7.sys} (driver) which injects the \texttt{netp191.pnf} into \texttt{services.exe}. This behavior is defined by the configuration file \texttt{netp192.pnf} which is loaded and decrypted. Before the prep-code exits, it executes \texttt{netp191.pnf} and overwrite itself with zeros. 
+The prep-code executes the driver which injects the \texttt{netp191.pnf} into \texttt{services.exe}. This behavior is defined by the configuration file \texttt{netp192.pnf} which is loaded and decrypted. Before the prep-code exits, it executes \texttt{netp191.pnf} and overwrite itself with zeros. 
 \par}
 
 \section{Installation}
-At this point, the prep-code no longer exists in RAM, and the driver (\texttt{jminet7.sys}) passes the execution to \texttt{netp192.pnf}. This is where things get a little tricky. During the preparation process, \texttt{netp192.pnf} was injected into \texttt{services.exe}. Now, the same code but launched by the driver, decrypts three files from the injected \texttt{netp192.pnf} code. These files are:
+At this point, the prep-code no longer exists in RAM, and the driver passes the execution to \texttt{netp192.pnf}. This is where things get a little tricky. During the preparation process, \texttt{netp192.pnf} was injected into \texttt{services.exe}. Now, the same DLL but launched by the driver, decrypts three files from the injected \texttt{netp192.pnf} code. These files are:
  \begin{enumerate}
    \item \texttt{netp191.pnf} (extracted from itself)
-   \item A .sys driver file used as a load point for Duqu after reboot
+   \item A driver file, either \texttt{JMINET7.pnf} or \texttt{cmi4432.sys}. For the sake of simplicity in this report, it is assumed that the \texttt{jminet7.sys} is the driver used in this attack. \footnote{One of the differences between \texttt{jminet7.sys} and \texttt{cmi4432.sys} is that latter actually was signed (\ref{DRIVER_SIGN}) by C-Media Electronics Inc. According to the CrySys report \cite{DUQU_BUD}, the files are very similar and it is theorized that one of them provides the functionality to utilize the key logger.}
    \item The installer configuration file
   \end{enumerate}
+{\raggedright
+The prep-code executes \texttt{jminet7.sys} (driver) which injects the \texttt{netp191.pnf} into \texttt{services.exe}. This behavior is defined by the configuration file \texttt{netp192.pnf} which is loaded and decrypted. Before the prep-code exits, it executes \texttt{netp191.pnf} and overwrite itself with zeros. 
+\par}
 A time frame is defined in the installer configuration file. The installer will terminate if the it executed outside this time frame. If it does not, the installer will pass the execution to Duqus main DLL (\texttt{netp192.pnf}) by hooking \texttt{ntdll.dll} (see \ref{DLL_HOOKING}). The main DLL has a number of exports (see \ref{app:mainexports} for all). Installation is handles by number 4 and 5. Export 4 is used to inject the main DLL into a suitable process and to pass a pointer to the three decrypted files. Export 5 drops the earlier mentioned driver used as a load point into the following directory:
 \begin{lstlisting}
 %System%\Drivers\ 
@@ -138,6 +154,7 @@ The drivers name is defined by the installation configuration file (decrypted ea
 
 \chapter{Payload and consequences}
 
+
 \chapter{Mitigation}
 Microsoft released a patch for the vulnerability in the Win32k TrueType font parsing engine (MS11-087 \cite{TT_MSB}) in  December 2011. This restricts the access to the T2EMBED.DLL effectively disabling one of Duqus known threat vectors. In general, the following actions should be done:
  \begin{enumerate}
@@ -148,6 +165,7 @@ Microsoft released a patch for the vulnerability in the Win32k TrueType font par
   \end{enumerate}
 
 \chapter{Conclusion}
+
 
 \begin{appendices}
   \chapter{NETP191.PNF Exports} \label{app:mainexports}
