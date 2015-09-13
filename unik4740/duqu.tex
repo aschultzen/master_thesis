@@ -140,20 +140,19 @@ At this point, the prep-code no longer exists in RAM, and the driver passes the 
    \item A driver file, either \texttt{JMINET7.pnf} or \texttt{cmi4432.sys}. For the sake of simplicity in this report, it is assumed that the \texttt{jminet7.sys} is the driver used in this attack. \footnote{One of the differences between \texttt{jminet7.sys} and \texttt{cmi4432.sys} is that latter actually was signed (\ref{DRIVER_SIGN}) by C-Media Electronics Inc. According to the CrySys report \cite{DUQU_BUD}, the files are very similar and it is theorized that one of them provides the functionality to utilize the key logger.}
    \item The installer configuration file
   \end{enumerate}
-{\raggedright
-The prep-code executes \texttt{jminet7.sys} (driver) which injects the \texttt{netp191.pnf} into \texttt{services.exe}. This behavior is defined by the configuration file \texttt{netp192.pnf} which is loaded and decrypted. Before the prep-code exits, it executes \texttt{netp191.pnf} and overwrite itself with zeros. 
-\par}
-A time frame is defined in the installer configuration file. The installer will terminate if the it executed outside this time frame. If it does not, the installer will pass the execution to Duqus main DLL (\texttt{netp192.pnf}) by hooking \texttt{ntdll.dll} (see \ref{DLL_HOOKING}). The main DLL has a number of exports (see \ref{app:mainexports} for all). Installation is handles by number 4 and 5. Export 4 is used to inject the main DLL into a suitable process and to pass a pointer to the three decrypted files. Export 5 drops the earlier mentioned driver used as a load point into the following directory:
+The prep-code executes \texttt{jminet7.sys} (driver) which injects the {\raggedright \texttt{netp191.pnf} into \texttt{services.exe}. \par} This behavior is defined by the configuration file \texttt{netp192.pnf} which is loaded and decrypted. Before the prep-code exits, it executes \texttt{netp191.pnf} and overwrites itself with zeros. 
+
+A time frame is defined in the installer configuration file. The installer will terminate if it is executed outside this time frame. If it is not, the installer will pass the execution to Duqus main DLL (\texttt{netp192.pnf}) by hooking \texttt{ntdll.dll} (see \ref{DLL_HOOKING}). The main DLL has a number of exports (see \ref{app:mainexports} for all). Installation is handled by number 4 and 5. Export 4 is used to inject the main DLL into a suitable process and to pass a pointer to the three decrypted files. Export 5 drops the earlier mentioned driver used as a load point into the following directory:
 \begin{lstlisting}
 %System%\Drivers\ 
 \end{lstlisting}
-The drivers name is defined by the installation configuration file (decrypted earlier). A service is created to make sure that the load point driver is loaded every time the computer is booted. Finally, the main DLL and the installation configuration file is encrypted and named according to the definition in the installation configuration file and placed in the following directory:
+The driver's name is defined by the installation configuration file (decrypted earlier). A service is created to make sure that the load point driver is loaded every time the computer is booted. Finally, the main DLL and the installation configuration file is encrypted and named according to the definition in the installation configuration file and placed in the following directory:
 \begin{lstlisting}
 %Windir%\inf\ 
 \end{lstlisting}
 
 \chapter{Payload and consequences}
-
+After the installation process is completed, \texttt{jminet7.sys} is used to activate the threat at system start. It is responsible for injecting \texttt{netp192.pnf} into a specified process. RESUME AT PAGE 7
 
 \chapter{Mitigation}
 Microsoft released a patch for the vulnerability in the Win32k TrueType font parsing engine (MS11-087 \cite{TT_MSB}) in  December 2011. This restricts the access to the T2EMBED.DLL effectively disabling one of Duqus known threat vectors. In general, the following actions should be done:
