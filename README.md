@@ -1,7 +1,21 @@
 [rpirb]: https://github.com/aschultzen/master_thesis/blob/master/pics/raspberry_pi_gps_rubber_bands.png "Raspi GPS Rubber Bands"
 [schm_rpirb]: https://github.com/aschultzen/master_thesis/blob/master/pics/raspi_gps.png "Raspi GPS Schematic"
+[nkd_swt]: https://github.com/aschultzen/master_thesis/blob/master/pics/naked_switch.png "Naked switch"
+[1u_enc]: https://github.com/aschultzen/master_thesis/blob/master/pics/1u_enc.jpg "1U Enclosure"
 
 # Notes
+
+## 14.09.2015 Making a case for it
+I had an idea earlier to use more than one Raspi and have them communicate with each other over a local LAN using static IPs (for example). I was able to source a Giga bit switch with 8 ports. With the case removed, it measures only 11.5 x 12 x 2 cm:
+![alt text][nkd_swt]
+
+This could be really cool if it was put in a 1U enclosure like this:
+
+![alt text][1u_enc]
+Enclosure was found at: http://www.circuitspecialists.com/rackmount-enclosure-et135b.html 
+
+It would require some machining, but i have always been looking for an excuse to buy a Dremel.
+
 
 ## 3.09.2015 rtklib, Raspi and Ublox Part 3
 ### Getting a signal
@@ -59,7 +73,7 @@ The U-blox hasn't got a lock on the satellites yet, but the communication works.
 
 ### The setup
 At this point the setup looks like this:
-![alt text][rpirb]
+nkd_swt
 Yeah, i know. It's not pretty but at least i can transport it somehow. I use some really cheap leads i ordered of Ebay a long time a go, it's a long story. Anyway, the schematics:
 ![alt text][schm_rpirb]
 
