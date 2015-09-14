@@ -63,7 +63,7 @@
 \setcounter{page}{1}
 
 \begin{abstract}
-This report on Duqu (a collection of computer malware) was an assignment given in the course UNIK4740. It is mainly based on \textit{Duqu: A Stuxnet-like malware found in the wild.}\cite{DUQU_BUD} by Boldizsár Bencsáth et al (October 2011) and \textit{W32.Duqu: The precursor to the next Stuxnet}\cite{DUQU_SYMANTEC} by Symantec (November 2011).
+This report on Duqu (a collection of computer malware) was an assignment given in the course UNIK4740. It is mainly based on \textit{Duqu: A Stuxnet-like malware found in the wild.}\cite{DUQU_BUD} by Boldizsár Bencsáth et al (October 2011) and \textit{W32.Duqu: The precursor to the next Stuxnet}\cite{DUQU_SYMANTEC} by Symantec (November 2011). The readability of this report suffers from the level of detail it strives to achieve.
 \end{abstract}
 \newpage
 
@@ -163,15 +163,26 @@ A key is among the fields revealed when the value is decrypted. This key is used
 The driver also makes sure that the system is not booted into Safe Mode and that no debuggers are running. It then waits until the system is ready, and injects the main DLL. It also contains code that is specific for the process used for injection, making sure it uses the right addresses for the relevant APIs.
 
 \section{Main DLL, Duqu's body}
-The main DLL of Duqu (\texttt{netp192.pnf}) is responsible for loading the payload and removing the trace of Duqu after a given time. It contains the payload DLL (See appendix figure X) 
+The main DLL of Duqu (\texttt{netp191.pnf}) contains the payload (See \ref{app:duqu_arc}) and is responsible for loading it as well removing the trace of Duqu after a given time. When executed, it decrypts it's configuration data (\texttt{netp192.pnf}) and checks for how long it has been running. By default, Duqu has a lifetime of 30 days. This lifetime can be extended by the attackers. If it has exceeded its lifetime, it calls export 2 (see \ref{app:mainexports}) which again calls export 6. This is the routine responsible for clean-up. Duqu then might check whether or not the system is connected to the Internet by performing a DNS lookup for a domain stored in its configuration file. It then injects itself into one of the following processes:
+ \begin{enumerate}
+   \item Explorer.exe
+   \item IExplore.exe
+   \item Firefox.exe
+   \item Pccntmon.exe
+  \end{enumerate}
+The main DLL also contains an RPC component. Most of the RPC exports are left unused, but the ones concerning loading of modules are used to execute the embedded resource\_302. \footnote{ According to Symantec \cite{DUQU_SYMANTEC}, the RPC component of Duqu is identical to the one used in Stuxnet}. Finally, Duqu scans for security products and injects itself into a process (see Appendix \ref{app:injection_targets}) depending on the security product found. 
+
+\section{Payload}
+
 
 \chapter{Mitigation}
 Microsoft released a patch for the vulnerability in the Win32k TrueType font parsing engine (MS11-087 \cite{TT_MSB}) in  December 2011. This restricts the access to the T2EMBED.DLL effectively disabling one of Duqus known threat vectors. In general, the following actions should be done:
  \begin{enumerate}
-   \item Make sure all units connected to the system has some sort of security software installed and updated.
-   \item Patch all operating systems. 
-   \item Disable mounting of USB flash drives. This can be done through group policies in Active Directory.
-   \item Use extreme caution when opening Microsoft Word documents.
+   \item Make sure all devices connected to the system has some sort of updated security software installed.
+   \item Keep all operating systems updated with the latest patches and fixes.
+   \item Disable mounting of USB flash drives. 
+   \item Verify the sender of emails
+   \item Use extreme caution when opening Microsoft Office documents. 
   \end{enumerate}
 
 \chapter{Conclusion}
@@ -183,22 +194,43 @@ Microsoft released a patch for the vulnerability in the Win32k TrueType font par
         \caption{Table of NETP191.PNF exports \cite{DUQU_SYMANTEC}}
         \begin{tabular}{|l|l|}
         \hline
+        \cellcolor[gray]{0.8} Export & \cellcolor[gray]{0.8} Function \\ \hline
         1 & Data initializer \\ \hline
         2 & Run export 6  \\ \hline
         3 & Get version info from configuration data \\ \hline
         4 & Inject self into process, run export 5 (32-bit only) \\ \hline
-        5 & \begin{tabular}[c]{@{}l@{}}Setup, depends on install status.\\ Before install: Drop provided load point driver and create service.\\ After install: Load resource 302\end{tabular} \\ \hline
+        5 & \begin{tabular}[c]{@{}l@{}}Setup, depends on install status.\\ Before install: Drop provided load point driver and create service.\\ After install: Load resource\_302\end{tabular} \\ \hline
         6 & Routine for cleanup \\ \hline
         7 & Start RPC \\ \hline
         8 & Identical to export 1, but uses a delay timer. \\ \hline
         \end{tabular}
       \end{table}
 
-  \chapter{Duqu architecture}
+\chapter{Security products and injection targets} \label{app:injection_targets}
+    \begin{table}[h]
+        \caption{Table of processes scanned for by Duqu \cite{DUQU_SYMANTEC}}
+        \begin{tabular}{|l|l|}
+        \hline
+        \cellcolor[gray]{0.8} Product & \cellcolor[gray]{0.8} Injection Target \\ \hline
+        Kaspersky Antivirus (V.1 - 7) & lsass.exe \\ \hline
+        Kaspersky Antivirus (V.8 - 11) & Kaspersky proc \\ \hline
+        McAfee & Winlogon.exe \\ \hline
+        AntiVir & lsass.exe \\ \hline
+        Bitdefender & lsass.exe \\ \hline
+        Etrust (5 and 6) & does not inject \\ \hline
+        Etrust (other) & lsass.exe \\ \hline
+        Symantec & lsass.exe \\ \hline
+        ESET NOD32 & lsass.exe \\ \hline
+        Trend & Trend proc \\ \hline
+        Rising & Rising proc \\ \hline
+        \end{tabular}
+      \end{table}
+
+  \chapter{Duqu architecture} \label{app:duqu_arc}
     \begin{figure}[hb]
       \centering
       \includegraphics[width=0.90\textwidth]{duqu_arc.eps}
-      \caption[File system anatomy] {Diagram showing the architecture of Duqu once installed. \cite{DUQU_SYMANTEC}}\label{anatomy}
+      \caption[File system anatomy] {Diagram showing the architecture of Duqu once installed. \cite{DUQU_SYMANTEC}} 
     \end{figure}
 
 \end{appendices}
