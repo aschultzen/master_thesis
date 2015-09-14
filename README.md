@@ -8,7 +8,9 @@
 ## 14.09.2015 Making a case for it
 I had an idea earlier to use more than one Raspi and have them communicate with each other over a local LAN using static IPs (for example). I was able to source a Giga bit switch with 8 ports. With the case removed, it measures only 11.5 x 12 x 2 cm:
 ![alt text][nkd_swt]
+
 This could be really cool if it was put in a 1U enclosure like this:
+
 ![alt text][1u_enc]
 It would require some machining, but i have always been looking for an excuse to buy a Dremel.
 
