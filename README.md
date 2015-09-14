@@ -12,6 +12,8 @@ I had an idea earlier to use more than one Raspi and have them communicate with 
 This could be really cool if it was put in a 1U enclosure like this:
 
 ![alt text][1u_enc]
+Enclosure was found at: http://www.circuitspecialists.com/rackmount-enclosure-et135b.html 
+
 It would require some machining, but i have always been looking for an excuse to buy a Dremel.
 
 
