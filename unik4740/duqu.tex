@@ -163,7 +163,7 @@ A key is among the fields revealed when the value is decrypted. This key is used
 The driver also makes sure that the system is not booted into Safe Mode and that no debuggers are running. It then waits until the system is ready, and injects the main DLL. It also contains code that is specific for the process used for injection, making sure it uses the right addresses for the relevant APIs.
 
 \section{Main DLL, Duqu's body}
-
+The main DLL of Duqu (\texttt{netp192.pnf}) is responsible for loading the payload and removing the trace of Duqu after a given time. It contains the payload DLL (See appendix figure X) 
 
 \chapter{Mitigation}
 Microsoft released a patch for the vulnerability in the Win32k TrueType font parsing engine (MS11-087 \cite{TT_MSB}) in  December 2011. This restricts the access to the T2EMBED.DLL effectively disabling one of Duqus known threat vectors. In general, the following actions should be done:
@@ -193,6 +193,14 @@ Microsoft released a patch for the vulnerability in the Win32k TrueType font par
         8 & Identical to export 1, but uses a delay timer. \\ \hline
         \end{tabular}
       \end{table}
+
+  \chapter{Duqu architecture}
+    \begin{figure}[hb]
+      \centering
+      \includegraphics[width=0.90\textwidth]{duqu_arc.eps}
+      \caption[File system anatomy] {Diagram showing the architecture of Duqu once installed. \cite{DUQU_SYMANTEC}}\label{anatomy}
+    \end{figure}
+
 \end{appendices}
 
 \newpage
