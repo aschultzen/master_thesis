@@ -102,7 +102,6 @@ According to \textit{W32.Duqu: The precursor to the next Stuxnet}\cite{DUQU_SYMA
 I have failed to find any detailed reports concerning specific Duqu infections. One theory explaining why is that infected organizations are reluctant to admit that they have been victims for an attack. Publications of an infection could harm public relations and hurt customers and clients trust. However, Symantec have produced some statistics on Duqu infections and in which countries it has occurred. They claim that nine international organizations systems have been compromised:
 \begin{table}[h]
         \caption{Compromised nations in victim organizations \cite{DUQU_SYMANTEC}}
-        \label{my-label}
         \begin{tabular}{|l|l|}
         \hline
         Organization A & France, Netherlands, Switzerland, Ukraine  \\ \hline
@@ -152,7 +151,19 @@ The driver's name is defined by the installation configuration file (decrypted e
 \end{lstlisting}
 
 \chapter{Payload and consequences}
-After the installation process is completed, \texttt{jminet7.sys} is used to activate the threat at system start. It is responsible for injecting \texttt{netp192.pnf} into a specified process. RESUME AT PAGE 7
+\section{Starting the threat}
+After the installation process is completed, \texttt{jminet7.sys} is used to activate the threat at system start. It is responsible for injecting \texttt{netp192.pnf} into a specified process. The name of the process and the path to the DLL is specified in an encrypted registry value at:
+\begin{lstlisting}
+HKEY _ LOCAL _ MACHINE\SYSTEM\CurrentControlSet\Services\JmiNET3\FILTER
+\end{lstlisting}
+A key is among the fields revealed when the value is decrypted. This key is used to decrypt the main DLL stored on disk. By default the process used for injection is \texttt{services.exe} as mentioned earlier, and the DLL is stored at:
+\begin{lstlisting}
+%SystemDrive%\inf\netp191.pnf 
+\end{lstlisting}
+The driver also makes sure that the system is not booted into Safe Mode and that no debuggers are running. It then waits until the system is ready, and injects the main DLL. It also contains code that is specific for the process used for injection, making sure it uses the right addresses for the relevant APIs.
+
+\section{Main DLL, Duqu's body}
+
 
 \chapter{Mitigation}
 Microsoft released a patch for the vulnerability in the Win32k TrueType font parsing engine (MS11-087 \cite{TT_MSB}) in  December 2011. This restricts the access to the T2EMBED.DLL effectively disabling one of Duqus known threat vectors. In general, the following actions should be done:
@@ -170,7 +181,6 @@ Microsoft released a patch for the vulnerability in the Win32k TrueType font par
   \chapter{NETP191.PNF Exports} \label{app:mainexports}
     \begin{table}[h]
         \caption{Table of NETP191.PNF exports \cite{DUQU_SYMANTEC}}
-        \label{my-label}
         \begin{tabular}{|l|l|}
         \hline
         1 & Data initializer \\ \hline
