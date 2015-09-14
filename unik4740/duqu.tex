@@ -170,10 +170,24 @@ The main DLL of Duqu (\texttt{netp191.pnf}) contains the payload (See \ref{app:d
    \item Firefox.exe
    \item Pccntmon.exe
   \end{enumerate}
-The main DLL also contains an RPC component. Most of the RPC exports are left unused, but the ones concerning loading of modules are used to execute the embedded resource\_302. \footnote{ According to Symantec \cite{DUQU_SYMANTEC}, the RPC component of Duqu is identical to the one used in Stuxnet}. Finally, Duqu scans for security products and injects itself into a process (see Appendix \ref{app:injection_targets}) depending on the security product found. 
+The main DLL also contains an RPC component. Most of the RPC exports are left unused, but the ones concerning loading of modules are used to execute the embedded resource\_302 DLL. \footnote{ According to Symantec \cite{DUQU_SYMANTEC}, the RPC component of Duqu is identical to the one used in Stuxnet}. Finally, Duqu scans for security products and injects itself into a process (see Appendix \ref{app:injection_targets}) depending on the security product found. 
+
+\section{Payload Loader}
+As previously mentioned, \texttt{resource\_302} is contained in the main DLL. Its purpose is to load and execute payloads. The payload, configuration file for command and control as well as a second DLL is all compressed and contained in \texttt{resource\_302} itself. What payload to load is not configurable but hard coded in the payload file itself. The function used to load a payload does have some parameters:
+ \begin{enumerate}
+   \item A method that should be used to load the payload (Int)
+   \item The name of the process that should be used to load the payload into RAM (String)
+   \item A String (usually set to 0)
+  \end{enumerate}
+The methods used for loading the payload is quite complex, but the following is a simplified explanation:
+  \begin{enumerate}
+    \item 0: Using hook on Ntdll and call LoadLibrary sort[RANDOM].nls as a parameter. This approach is neat because it replaces functions that monitors the file sort[RANDOM].nls which doesn't even exist. When LoadLibrary is called with that parameter, it loads from a buffer in RAM rather than on a physical disk.
+    \item 1: Use a template .exe file to load the payload DLL by creating the executable process in suspended mode and then resuming execution.
+    \item 2: Use CreateProcessAsUser to execute the template executable and elevate privileges as needed.
+    \item 3: Attempt to use an existing process name for the template executable and elevate privileges
+  \end{enumerate}
 
 \section{Payload}
-
 
 \chapter{Mitigation}
 Microsoft released a patch for the vulnerability in the Win32k TrueType font parsing engine (MS11-087 \cite{TT_MSB}) in  December 2011. This restricts the access to the T2EMBED.DLL effectively disabling one of Duqus known threat vectors. In general, the following actions should be done:
