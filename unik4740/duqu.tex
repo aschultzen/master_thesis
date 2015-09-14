@@ -15,6 +15,7 @@
 \usepackage{multirow}
 \usepackage{tabularx}
 \usepackage{footnote}
+\usepackage{enumitem}
 
 \usepackage[
     backend=biber,
@@ -68,7 +69,7 @@ This report on Duqu (a collection of computer malware) was an assignment given i
 \newpage
 
 \chapter{Introduction}
-Duqu is a collection of malware discovered by The Laboratory of Cryptography and System Security (CrySyS) of the Budapest University of Technology and Economics in Hungary. They analyzed it and named it Duqu from the prefix \textasciitilde DQ that the key logger use to name its files. It is an interesting piece of code despite it being anything but technically astonishing. It is however interesting because of its similarities with \textit{Stuxnet} and \textit{Stuxnets} modular design and how these modules combined can be used to create a targeted thread to control systems in nuclear facilities. It is believed that the creator(s) of Duqu also created \textit{Stuxnet} or at least had access to \textit{Stuxnets} source code. Duqu contains code that implements command and control, making it possible to control and update it as well as downloading and executing new payloads by using dummy .jpg files. Based on forensic analysis, Duqu does not self-replicate, but has in some instances been known to be instructed to replicate through the network via shares. \cite{DUQU_SYMANTEC}
+Duqu is a collection of malware discovered by The Laboratory of Cryptography and System Security (CrySyS) of the Budapest University of Technology and Economics in Hungary. They analyzed it and named it Duqu from the prefix \textasciitilde DQ that a downloaded info stealer module used to name its files. It is an interesting piece of code despite it being anything but technically astonishing. It is however interesting because of its similarities with \textit{Stuxnet} and \textit{Stuxnets} modular design and how these modules combined can be used to create a targeted thread to control systems in nuclear facilities. It is believed that the creator(s) of Duqu also created \textit{Stuxnet} or at least had access to \textit{Stuxnets} source code. Duqu contains code that implements command and control, making it possible to control and update it as well as downloading and executing new payloads by using dummy .jpg files. Based on forensic analysis, Duqu does not self-replicate, but has in some instances been known to be instructed to replicate through the network via shares. \cite{DUQU_SYMANTEC}
 
 \chapter{Prerequisite knowledge}
 Though not a technical marvel, Duqu exploits numerous mechanisms and features in the Winodws Operating system. Some of these mechanisms will be explained in this section and should be understood before venturing further into this report.
@@ -164,32 +165,61 @@ The driver also makes sure that the system is not booted into Safe Mode and that
 
 \section{Main DLL, Duqu's body}
 The main DLL of Duqu (\texttt{netp191.pnf}) contains the payload (See \ref{app:duqu_arc}) and is responsible for loading it as well removing the trace of Duqu after a given time. When executed, it decrypts it's configuration data (\texttt{netp192.pnf}) and checks for how long it has been running. By default, Duqu has a lifetime of 30 days. This lifetime can be extended by the attackers. If it has exceeded its lifetime, it calls export 2 (see \ref{app:mainexports}) which again calls export 6. This is the routine responsible for clean-up. Duqu then might check whether or not the system is connected to the Internet by performing a DNS lookup for a domain stored in its configuration file. It then injects itself into one of the following processes:
- \begin{enumerate}
+ \begin{itemize}
    \item Explorer.exe
    \item IExplore.exe
    \item Firefox.exe
    \item Pccntmon.exe
-  \end{enumerate}
+  \end{itemize}
 The main DLL also contains an RPC component. Most of the RPC exports are left unused, but the ones concerning loading of modules are used to execute the embedded resource\_302 DLL. \footnote{ According to Symantec \cite{DUQU_SYMANTEC}, the RPC component of Duqu is identical to the one used in Stuxnet}. Finally, Duqu scans for security products and injects itself into a process (see Appendix \ref{app:injection_targets}) depending on the security product found. 
 
 \section{Payload Loader}
-As previously mentioned, \texttt{resource\_302} is contained in the main DLL. Its purpose is to load and execute payloads. The payload, configuration file for command and control as well as a second DLL is all compressed and contained in \texttt{resource\_302} itself. What payload to load is not configurable but hard coded in the payload file itself. The function used to load a payload does have some parameters:
+As previously mentioned, \texttt{resource\_302} is contained in the main DLL. Its purpose is to load and execute payloads. The payload, configuration file for command and control (more in \ref{payload}) as well as a second DLL is all compressed and contained in \texttt{resource\_302} itself. What payload to load is not configurable but hard coded in the payload file itself. The function used to load a payload does have some parameters:
  \begin{enumerate}
    \item A method that should be used to load the payload (Int)
    \item The name of the process that should be used to load the payload into RAM (String)
    \item A String (usually set to 0)
   \end{enumerate}
 The methods used for loading the payload is quite complex, but the following is a simplified explanation:
-  \begin{enumerate}
+  \begin{itemize}[label={}]
     \item 0: Using hook on Ntdll and call LoadLibrary sort[RANDOM].nls as a parameter. This approach is neat because it replaces functions that monitors the file sort[RANDOM].nls which doesn't even exist. When LoadLibrary is called with that parameter, it loads from a buffer in RAM rather than on a physical disk.
-    \item 1: Use a template .exe file to load the payload DLL by creating the executable process in suspended mode and then resuming execution.
-    \item 2: Use CreateProcessAsUser to execute the template executable and elevate privileges as needed.
-    \item 3: Attempt to use an existing process name for the template executable and elevate privileges
-  \end{enumerate}
+    \item 1: Use a template executable which is decoded from inside the loader. The template loads the DLL from a buffer and calls an export from the DLL. By populating the template with the correct memory offsets, it can find the payload in execute it. A process is chosen and overwritten. This process is created in "suspended mode"m overwritten by the template and the executed and running under a legitimate name.
+    \item 2: Same as method 1, but attempts to elevate privileges before the template is executed. 
+    \item 3: Same as method 2, but takes a name of running process as parameter to be overwritten.
+  \end{itemize}
 
-\section{Payload}
+\section{Payload} \label{payload}
+\begin{wrapfigure}{c}{0.45\textwidth} 
+  \centering
+  \includegraphics[width=0.40\textwidth]{hubble_duqu.jpg} 
+  \caption[Hubble photo containing encrypted data]
+   {Hubble photo containing encrypted data \cite{DUQU_SYMANTEC}}
+   \label{hubble}
+\end{wrapfigure}
+Finally, the payload. It is contained in the \texttt{.zdata} section of \texttt{resource\_302} DLL. The purpose of the payload is to implement command and control functionality. This makes it possible for the attacker to download updates and new functionality to the victims system. These updates can be stored to disk or just executed directly from RAM. The command and control protocol is implemented with a custom protocol using one of the following methods:
+\begin{itemize}
+  \item Port 80, HTTP encapsulated
+  \item Port 80, HTTP encapsulated using a proxy
+  \item Port 443, HTTPS encapsulated
+  \item Port 443, directly
+  \item SMB Encapsulated
+\end{itemize}
+The configuration file often contain information like ports, servers and protocols to use. This way, other "clients" (or victims) can be configured to use other clients systems as proxies. Duqu also has functionality for infecting other computers on the same network, peer-to-peer. This is done over SMB (Server Message Block). Duqu can also reach a computer whose zone is considered to be secure by going through an infected computer in an insecure zone as a proxy. 
 
-\chapter{Mitigation}
+\subsection{Info stealer}
+By using the command and control functionality in Duqu, attackers have been known to download and execute an "infostealer" module. The module is encrypted within an image taken by the Hubble telescope (see \ref{hubble}). When the file is executed, a DLL is extracted and an export is executed. It then steals data that it stores in the temp folder, prepending them with \textasciitilde DQ which gave Duqu its name.
+The files are den compressed and XOR-encrypted. The data stolen included information such as (but not limited to):
+\begin{itemize}
+  \item Running processes
+  \item Names of local and shared drives
+  \item Screenshots
+  \item Network info
+  \item Key presses
+  \item Name of open windows
+\end{itemize}
+The info stealer module is just one example of a downloaded module. A reconnaissance module as well as an life extender module has been observed in the wild.
+
+\chapter{Mitigation and conclusion}
 Microsoft released a patch for the vulnerability in the Win32k TrueType font parsing engine (MS11-087 \cite{TT_MSB}) in  December 2011. This restricts the access to the T2EMBED.DLL effectively disabling one of Duqus known threat vectors. In general, the following actions should be done:
  \begin{enumerate}
    \item Make sure all devices connected to the system has some sort of updated security software installed.
@@ -198,9 +228,6 @@ Microsoft released a patch for the vulnerability in the Win32k TrueType font par
    \item Verify the sender of emails
    \item Use extreme caution when opening Microsoft Office documents. 
   \end{enumerate}
-
-\chapter{Conclusion}
-
 
 \begin{appendices}
   \chapter{NETP191.PNF Exports} \label{app:mainexports}
