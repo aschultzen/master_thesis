@@ -13,6 +13,17 @@ import time
 import os
 import sys
 
+class average:
+	count = 0 # Number of times called; n.
+	avg = 0
+
+	def __init__(self):
+		average.count = average.count + 1
+
+	def get_average(value_n):
+		average.avg = (average.avg + value_n) / average.count 
+		return average.count
+
 def getFile(path):
 	result = open(path, 'r')
 	resultList = result.read()
@@ -29,7 +40,6 @@ def filter(file1):
 		f_out.write(str(file1[count]) + "\n")
 		count = count + 1
 	f_out.close()
-
 
 if __name__ == '__main__':
 	file_1 = getFile(sys.argv[1])
