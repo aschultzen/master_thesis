@@ -13,7 +13,7 @@ class PID:
 	Discrete PID control
 	"""
 
-	def __init__(self, P=2.0, I=0.0, D=1.0, Derivator=0, Integrator=0, Integrator_max=500, Integrator_min=-500):
+	def __init__(self, P=2.0, I=0.0, D=1.0, Derivator=0.0, Integrator=0.0, Integrator_max=500.0, Integrator_min=-500.0):
 
 		self.Kp=P
 		self.Ki=I
@@ -39,10 +39,10 @@ class PID:
 
 		self.Integrator = self.Integrator + self.error
 
-		if self.Integrator > self.Integrator_max:
-			self.Integrator = self.Integrator_max
-		elif self.Integrator < self.Integrator_min:
-			self.Integrator = self.Integrator_min
+		#if self.Integrator > self.Integrator_max:
+		#	self.Integrator = self.Integrator_max
+		#elif self.Integrator < self.Integrator_min:
+		#	self.Integrator = self.Integrator_min
 
 		self.I_value = self.Integrator * self.Ki
 
@@ -55,8 +55,8 @@ class PID:
 		Initilize the setpoint of PID
 		"""
 		self.set_point = set_point
-		self.Integrator=0
-		self.Derivator=0
+		self.Integrator=0.0
+		self.Derivator=0.0
 
 	def setIntegrator(self, Integrator):
 		self.Integrator = Integrator
@@ -152,39 +152,55 @@ def write_average_file(input_file, output_name, a_type):
 	file_out.close()
 	t_print("Finished")
 
-def controller(ref_file, disc_file, output_name):
+def controller(ref_file, disc_file, output_name, start, interval,samplerate):
 	length = len(ref_file)
 	file_out = open(output_name, 'w+')
 	time = 1
 	reference = 0.0
 	avg = average(0)
-	my_pid = PID(0.01,0.001,1.0)
+	my_pid = PID(0.0001,0.000001,1.0)
 	pid_v = 0.0
 
 	while(time < length):
 		reference = avg.pushpeek(ref_file[time])	# Building average
 
-		if(time > 56):
-			if(time % 100 == 0):	
+		if((time*samplerate) > start):
+			if(time % interval == 0):	
 				current = disc_file[time]	
 				my_pid.setPoint(reference)
+				#my_pid.setPoint(ref_file[time])
 				pid_v = my_pid.update(current)
-			file_out.write(str (disc_file[time] + pid_v) + "\n")	
+				file_out.write(str (disc_file[time] + pid_v) + "\n")	
 		else:
 			file_out.write(str (disc_file[time]) + "\n")
 
 		time = time + 1
 	file_out.close()
 
+# Used for dropping the sample rate. 
+# Example GPS 1s to GPS 60s.
+def drop_sample_rate(input_file, magnitude, output_name):
+	length = len(input_file)
+	file_out = open(output_name, 'w+')
+	pos = 0
+
+	while(pos < length):
+		if(pos % magnitude == 0):
+			file_out.write(str (input_file[pos]) + "\n")
+		pos = pos + 1
+	file_out.close()
+
 def test():
 	count = 0
-	while(count < 40000):
-		if(count % 1000 == 0):
+	while(count < 100):
+		if(count % 2 == 0):
 			print(count)
 		count = count + 1
 
 if __name__ == '__main__':
-	gps = getFile(getConfVal("files","gps"))
-	#write_average_file(gps, "gps_average", 1)
-	ocxo = getFile(getConfVal("files","ocxo"))
-	controller(gps, ocxo, "ocxo_disc.txt")
+	gps_f = getFile(getConfVal("files","gps_dropped"))
+	#drop_sample_rate(gps_f, 60, "gps_dropped.txt")
+	#write_average_file(gps_f, "gps_dropped_average", 1)
+	disc_f = getFile(getConfVal("files","xcsac_60"))
+	controller(gps_f, disc_f, "xsac_disc.txt", 2309,1,60)
+	#test()
