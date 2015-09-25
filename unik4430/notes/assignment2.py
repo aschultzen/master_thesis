@@ -31,7 +31,7 @@ class PID:
 		Calculate PID output value for given reference input and feedback
 		"""
 
-		self.error = self.set_point - current_value
+		self.error = current_value
 
 		self.P_value = self.Kp * self.error
 		self.D_value = self.Kd * ( self.error - self.Derivator)
@@ -152,25 +152,24 @@ def write_average_file(input_file, output_name, a_type):
 	file_out.close()
 	t_print("Finished")
 
-def controller(ref_file, disc_file, output_name, start, interval,samplerate):
+def controller(ref_file, disc_file, output_name, start, interval, samplerate):
 	length = len(ref_file)
 	file_out = open(output_name, 'w+')
 	time = 1
 	reference = 0.0
 	avg = average(0)
-	my_pid = PID(0.0001,0.000001,1.0)
-	pid_v = 0.0
+	my_pid = PID(-5,3,3)
+	delta_y = 0.0
+	my_pid.setPoint(0)
 
 	while(time < length):
 		reference = avg.pushpeek(ref_file[time])	# Building average
 
 		if((time*samplerate) > start):
 			if(time % interval == 0):	
-				current = disc_file[time]	
-				my_pid.setPoint(reference)
-				#my_pid.setPoint(ref_file[time])
-				pid_v = my_pid.update(current)
-				file_out.write(str (disc_file[time] + pid_v) + "\n")	
+				error = disc_file[time] - reference	
+				delta_y = my_pid.update(error)
+				file_out.write(str (disc_file[time] + delta_y) + "\n")	
 		else:
 			file_out.write(str (disc_file[time]) + "\n")
 
