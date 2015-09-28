@@ -1,35 +1,39 @@
-/* See sensor_server_client_notes.md for details */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h> 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <errno.h>
-#include <stdarg.h>
+#include "sensor_server.h"
 
 static void die (int line_number, const char * format, ...)
 {
+    exit (1);
     va_list vargs;
     va_start (vargs, format);
     fprintf (stderr, "%d: ", line_number);
     vfprintf (stderr, format, vargs);
     fprintf (stderr, ".\n");
-    exit (1);
+    
 }
 
 void handle_session(int session_fd) {
-    char buffer[256];
-    bzero(buffer,256);
+    char *buffer = (char*) calloc (BUFFER_SIZE,sizeof(char));
     int status = 0;
-    status = read(session_fd,buffer,255);
-    if (status < 0) die(29, "ERROR reading from socket");
-    printf("Received: %s\n",buffer);
-    status = write(session_fd,"I got your message",18);
-    if (status < 0) die(32, "ERROR writing to socket");
+    
+    while(1){
+        bzero(buffer,512);
+        status = read(session_fd,buffer,255);
+        if (status < 0){
+            die(21, "ERROR reading from socket");
+        }
+
+        printf("Received: %s\n",buffer);
+        if(strstr(buffer, "DISCONNECT") != NULL){
+            printf("Received DISCONNECT, removing client\n");
+            free(buffer);   
+            break;
+        }
+
+        status = write(session_fd,"ACK\n",4);
+        if (status < 0){
+            die(32, "ERROR writing to socket");
+        } 
+    }
 }
 
 int main(int argc, char *argv[])
@@ -88,7 +92,7 @@ int main(int argc, char *argv[])
             close(server_sockfd);
             handle_session(session_fd);
             close(session_fd);
-            _exit(0);
+            exit(0);
         } else {
             close(session_fd);
         }
