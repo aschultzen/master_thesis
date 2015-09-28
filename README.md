@@ -73,7 +73,7 @@ The U-blox hasn't got a lock on the satellites yet, but the communication works.
 
 ### The setup
 At this point the setup looks like this:
-nkd_swt
+![alt text][rpirb]
 Yeah, i know. It's not pretty but at least i can transport it somehow. I use some really cheap leads i ordered of Ebay a long time a go, it's a long story. Anyway, the schematics:
 ![alt text][schm_rpirb]
 
