@@ -14,6 +14,8 @@
 #include <netdb.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 // C++
 #include <string>
@@ -21,6 +23,8 @@
 
 
 #define BUFFER_SIZE 512
+#define TIME_OUT 10
+
 #define DISCONNECT "DISCONNECT"
 
 #endif /* !SENSOR_SERVER_H */
