@@ -1,58 +1,51 @@
 #include "net.h"
 
-int m_read(int session_fd, char *buffer) {
-    int status = 0;
-    bzero(buffer,512);
-    status = read(session_fd, buffer,255);
-    return status;
+int s_read(struct session_info *s_info) {
+    bzero(s_info->iobuffer,BUFFER_SIZE);
+    return read(s_info->session_fd, s_info->iobuffer,255);
 }
 
-int m_write(int session_fd) {
+int s_write(int session_fd) {
     return 0;
 }
 
-void handle_session(int session_fd) {
-    printf("New connection (PID:%d)\n", getpid());
-    void *buffer = calloc (BUFFER_SIZE, sizeof(char));
-    if(buffer == NULL){
-        die(26, "Memory allocation failed!");
+int respond(struct session_info *s_info) {
+    int status = s_read(s_info);
+    if(strstr((char*)s_info->iobuffer, DISCONNECT) != NULL){
+        printf("Client %d requested DISCONNECT.", s_info->client_id);
+        return -1;
     }
 
-    struct timeval tv;      
-            tv.tv_sec = TIME_OUT;
-            tv.tv_usec = 0;
+    printf("%s", (char*)s_info->iobuffer);
+    return status;
+}
 
-    setsockopt(session_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof tv);
+/* The session_info struct allocated on stack only */
+void handle_session(int session_fd) {
+    /* Initializing structure */
+
+    struct session_info *s_info = malloc(sizeof(struct session_info)); 
+        s_info->tv.tv_sec = TIME_OUT;
+        s_info->tv.tv_usec = 0;
+        s_info->client_id = -1;
+        s_info->session_fd = session_fd;
+        s_info->iobuffer = calloc (BUFFER_SIZE, sizeof(char));
+        if(s_info->iobuffer == NULL){
+            die(21, "Memory allocation failed!");
+        }
+
+    /* Setting socket timeout to default value */
+    /* This doesn't always work for some reason, race condition? :/ */
+     if (setsockopt (s_info->session_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&s_info->tv, sizeof(struct timeval)) < 0)
+        die(36,"setsockopt failed\n");
 
     while(1){
-        if(m_read(session_fd,buffer) < 0) {
-            printf("ERROR reading from socket, closing socket.\n");
+        if(respond(s_info) < 0){
             break;
-        } else {
-            printf("%s", (char*)buffer);
         }
-        /*bzero(buffer,512);
-        status = read(session_fd,buffer,255);
-        if (status < 0){
-            printf("ERROR reading from socket, closing socket.\n");
-            break;
-        }*/
-
-
-
-        /*printf("Received: %s\n",buffer);
-        if(strstr(buffer, "DISCONNECT") != NULL){
-            printf("Received DISCONNECT, closing connection.\n"); 
-            break;
-        }*/
-
-        /*status = write(session_fd,"ACK\n",4);
-        if (status < 0){
-            printf("ERROR writing to socket\n");
-            break;
-        }*/ 
     }
-    free(buffer);  
+    free(s_info->iobuffer);
+    free(s_info);
 }
 
 void handle_sigchld(int sig) {

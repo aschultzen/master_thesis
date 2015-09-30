@@ -15,7 +15,7 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/wait.h>
-#include <sys/time.h>
+//#include <sys/time.h>
 
 // Mine
 #include "utils.h"
@@ -25,6 +25,14 @@
 * Takes a port as param.
 */
 int start_server(int port);
+
+//Size 32 bytes
+struct session_info{
+	int session_fd;		/* 4 B */
+	int client_id;		/* 4 B */
+	void *iobuffer; 	/* 8 B */
+	struct timeval tv; 	/* 16 B */
+} __attribute__ ((packed));
 
 /* GENERAL */
 #define BUFFER_SIZE 512
