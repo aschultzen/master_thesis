@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <cstdlib>
+#include <stdlib.h>
 
 /*
 * DIE function

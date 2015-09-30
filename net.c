@@ -1,36 +1,35 @@
 #include "net.h"
 
-int set_sock_timeout(int session_fd, int s_timeout) {
-    struct timeval timeout;      
-            timeout.tv_sec = s_timeout;
-            timeout.tv_usec = 0;
-    
-    return setsockopt (session_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
-}
-
-int read(int session_fd, char *buffer) {
+int m_read(int session_fd, char *buffer) {
     int status = 0;
     bzero(buffer,512);
     status = read(session_fd, buffer,255);
     return status;
 }
 
-int write(int session_fd) {
+int m_write(int session_fd) {
     return 0;
 }
 
 void handle_session(int session_fd) {
     printf("New connection (PID:%d)\n", getpid());
-    char *buffer = (char*) calloc (BUFFER_SIZE,sizeof(char));
-    //int status = 0;
-    
+    void *buffer = calloc (BUFFER_SIZE, sizeof(char));
+    if(buffer == NULL){
+        die(26, "Memory allocation failed!");
+    }
+
+    struct timeval tv;      
+            tv.tv_sec = TIME_OUT;
+            tv.tv_usec = 0;
+
+    setsockopt(session_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof tv);
+
     while(1){
-        if(read(session_fd,buffer) < 0) {
+        if(m_read(session_fd,buffer) < 0) {
             printf("ERROR reading from socket, closing socket.\n");
             break;
-        }
-        else {
-            printf("%s", buffer);
+        } else {
+            printf("%s", (char*)buffer);
         }
         /*bzero(buffer,512);
         status = read(session_fd,buffer,255);
@@ -56,18 +55,34 @@ void handle_session(int session_fd) {
     free(buffer);  
 }
 
+void handle_sigchld(int sig) {
+  while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
+}
+
+/* 
+* Main loop and everything.
+* Variables to watch out for:
+*   session_fd
+*/
 int start_server(int portno) {
     /* Initializing variables */
-    int server_sockfd, newsockfd;
-    socklen_t clilen;             
-    /*char buffer[256];*/
-    struct sockaddr_in serv_addr, cli_addr;
-    int n;
+    int server_sockfd;          
+    struct sockaddr_in serv_addr;
 
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sockfd < 0){
        die(62,"ERROR opening socket\n");
+    }
+
+    /* Registering the SIGCHLD handler */
+    struct sigaction sa;
+    sa.sa_handler = &handle_sigchld;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    if (sigaction(SIGCHLD, &sa, 0) == -1) {
+      perror(0);
+      exit(1);
     }
 
     /* 

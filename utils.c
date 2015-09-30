@@ -7,5 +7,5 @@ void die (int line_number, const char * format, ...)
     fprintf (stderr, "%d: ", line_number);
     vfprintf (stderr, format, vargs);
     fprintf (stderr, ".\n");
-    exit (1);
+    exit(1);
 }
