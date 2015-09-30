@@ -11,12 +11,36 @@ int s_write(int session_fd) {
 
 int respond(struct session_info *s_info) {
     int status = s_read(s_info);
+
+    printf("%s\n", (char*)s_info->iobuffer);
+
+    if(strstr((char*)s_info->iobuffer, "IDENTIFY") != NULL){
+        int pos = strstr((char*)s_info->iobuffer, "IDENTIFY");
+        if(pos == (s_info->iobuffer)){
+            printf("Length of input: %d\n", strlen(s_info->iobuffer));
+            int length = strlen(s_info->iobuffer) - strlen(IDENTIFY) - 2;
+            char temp[length];
+            memcpy(&temp, (s_info->iobuffer)+(9*(sizeof(char))), 5); //Is this safe?
+            sscanf(temp, "%d", &s_info->client_id);
+            printf("Client ID: %d\n", s_info->client_id);
+            return 0;
+        }
+        else{
+            printf("Illegal command, ignoring...\n");
+            return 0;
+        }
+    }
+
+    if(s_info->client_id < 0){
+        printf("Unidentified client, ignored...\n");
+        return 0;
+    }
+
     if(strstr((char*)s_info->iobuffer, DISCONNECT) != NULL){
-        printf("Client %d requested DISCONNECT.", s_info->client_id);
+        printf("Client %d requested DISCONNECT.\n", s_info->client_id);
         return -1;
     }
 
-    printf("%s", (char*)s_info->iobuffer);
     return status;
 }
 
@@ -25,7 +49,7 @@ void handle_session(int session_fd) {
     /* Initializing structure */
 
     struct session_info *s_info = malloc(sizeof(struct session_info)); 
-        s_info->tv.tv_sec = TIME_OUT;
+        s_info->tv.tv_sec = TIME_OUT + 1000;
         s_info->tv.tv_usec = 0;
         s_info->client_id = -1;
         s_info->session_fd = session_fd;
