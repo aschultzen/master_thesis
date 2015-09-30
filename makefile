@@ -1,7 +1,7 @@
 OBJS = net.o utils.o sensor_server.o
-CC = g++
+CC = gcc
 DEBUG = -g
-CFLAGS = -Wall -c $(DEBUG)
+CFLAGS = -Wall -c $(DEBUG) -ansi -pedantic -O2
 LFLAGS = -Wall $(DEBUG)
 
 server : $(OBJS)

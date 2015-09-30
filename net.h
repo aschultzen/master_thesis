@@ -15,10 +15,6 @@
 #include <signal.h>
 #include <sys/wait.h>
 
-// C++
-#include <string>
-#include <iostream>
-
 // Mine
 #include "utils.h"
 
