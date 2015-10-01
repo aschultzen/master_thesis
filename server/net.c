@@ -9,15 +9,36 @@ int s_write(int session_fd) {
     return 0;
 }
 
+char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
+{
+    switch(sa->sa_family) {
+        case AF_INET:
+            inet_ntop(AF_INET, &(((struct sockaddr_in *)sa)->sin_addr),
+                    s, maxlen);
+            break;
+
+        case AF_INET6:
+            inet_ntop(AF_INET6, &(((struct sockaddr_in6 *)sa)->sin6_addr),
+                    s, maxlen);
+            break;
+
+        default:
+            strncpy(s, "Unknown AF", maxlen);
+            return NULL;
+    }
+
+    return s;
+}
+
 int respond(struct session_info *s_info) {
     int status = s_read(s_info);
 
     printf("%s\n", (char*)s_info->iobuffer);
 
     if(strstr((char*)s_info->iobuffer, "IDENTIFY") != NULL){
-        int pos = strstr((char*)s_info->iobuffer, "IDENTIFY");
+        char *pos = strstr((char*)s_info->iobuffer, "IDENTIFY");
         if(pos == (s_info->iobuffer)){
-            printf("Length of input: %d\n", strlen(s_info->iobuffer));
+            //printf("Length of input: %d\n", strlen(s_info->iobuffer));
             int length = strlen(s_info->iobuffer) - strlen(IDENTIFY) - 2;
             char temp[length];
             memcpy(&temp, (s_info->iobuffer)+(9*(sizeof(char))), 5); //Is this safe?
@@ -31,14 +52,14 @@ int respond(struct session_info *s_info) {
         }
     }
 
-    if(s_info->client_id < 0){
-        printf("Unidentified client, ignored...\n");
-        return 0;
-    }
-
     if(strstr((char*)s_info->iobuffer, DISCONNECT) != NULL){
         printf("Client %d requested DISCONNECT.\n", s_info->client_id);
         return -1;
+    }
+
+    if(s_info->client_id < 0){
+        printf("Unidentified client, ignored...\n");
+        return 0;
     }
 
     return status;
@@ -63,6 +84,18 @@ void handle_session(int session_fd) {
      if (setsockopt (s_info->session_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&s_info->tv, sizeof(struct timeval)) < 0)
         die(36,"setsockopt failed\n");
 
+    char str[INET_ADDRSTRLEN];
+    bzero(str, INET_ADDRSTRLEN);
+    struct sockaddr_in addr;
+    socklen_t addr_len = sizeof(addr);
+
+    if(getpeername(session_fd, (struct sockaddr *) &addr, &addr_len)){
+        die(93,"getsocketname failed\n");
+    }
+
+    inet_ntop(AF_INET, &(addr.sin_addr),str, addr_len);
+    printf("Client on address: %s\n connected", str); // prints "192.0.2.33"
+
     while(1){
         if(respond(s_info) < 0){
             break;
@@ -75,6 +108,7 @@ void handle_session(int session_fd) {
 void handle_sigchld(int sig) {
   while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
 }
+
 
 /* 
 * Main loop and everything.

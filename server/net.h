@@ -15,6 +15,7 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <arpa/inet.h>
 //#include <sys/time.h>
 
 // Mine
