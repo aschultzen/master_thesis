@@ -2,6 +2,8 @@ OBJS = sensor_server.o net.o utils.o
 CC = gcc
 DEBUG = -g
 CFLAGS = -Wall -c $(DEBUG) -std=gnu99 -pedantic -O2
+#CFLAGS = -Wall -c $(DEBUG) -march=armv7-a -mtune=arm7
+
 LFLAGS = -Wall $(DEBUG)
 
 server : $(OBJS)
