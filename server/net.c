@@ -68,9 +68,8 @@ int respond(struct session_info *s_info) {
 /* The session_info struct allocated on stack only */
 void handle_session(int session_fd) {
     /* Initializing structure */
-
     struct session_info *s_info = malloc(sizeof(struct session_info)); 
-        s_info->tv.tv_sec = TIME_OUT + 1000;
+        s_info->tv.tv_sec = TIME_OUT + 1000; //remove 1000 when testing is done!
         s_info->tv.tv_usec = 0;
         s_info->client_id = -1;
         s_info->session_fd = session_fd;
@@ -84,23 +83,26 @@ void handle_session(int session_fd) {
      if (setsockopt (s_info->session_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&s_info->tv, sizeof(struct timeval)) < 0)
         die(36,"setsockopt failed\n");
 
-    char str[INET_ADDRSTRLEN];
-    bzero(str, INET_ADDRSTRLEN);
-    struct sockaddr_in addr;
+    /* 
+    * Fetching clients IP address and 
+    * storing it in s_info
+    */
+    struct sockaddr addr;
+    addr.sa_family = AF_INET;
     socklen_t addr_len = sizeof(addr);
-
     if(getpeername(session_fd, (struct sockaddr *) &addr, &addr_len)){
         die(93,"getsocketname failed\n");
     }
+    get_ip_str(&addr, s_info->ip,addr_len);
+    printf("Client on address: %s\n connected", s_info->ip); // prints "192.0.2.33"
 
-    inet_ntop(AF_INET, &(addr.sin_addr),str, addr_len);
-    printf("Client on address: %s\n connected", str); // prints "192.0.2.33"
-
+    /* Entering child process main loop */
     while(1){
         if(respond(s_info) < 0){
             break;
         }
     }
+    /* Freeing resources */
     free(s_info->iobuffer);
     free(s_info);
 }

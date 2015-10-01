@@ -33,13 +33,15 @@ struct session_info{
 	int client_id;		/* 4 B */
 	void *iobuffer; 	/* 8 B */
 	struct timeval tv; 	/* 16 B */
+	char ip[INET_ADDRSTRLEN];
 } __attribute__ ((packed));
 
 /* GENERAL */
 #define BUFFER_SIZE 512
-#define TIME_OUT 5
 #define CLIENT_MAX 10
 #define MONITOR_MAX 2
+#define CLIENT_TIMEOUT 5
+#define MONITOR_TIMEOUT 100
 
 /* PROTOCOL */
 #define DISCONNECT "DISCONNECT"
