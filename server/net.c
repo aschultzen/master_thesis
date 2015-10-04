@@ -7,8 +7,8 @@ int s_read(struct session_info *s_info) {
     return read(s_info->session_fd, s_info->iobuffer,255);
 }
 
-int s_write(int session_fd) {
-    return 0;
+int s_write(struct session_info *s_info) {
+    return write(s_info->session_fd, s_info->iobuffer,sizeof(s_info->iobuffer));
 }
 
 char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
@@ -45,7 +45,10 @@ int respond(struct session_info *s_info) {
             memcpy(&temp, (s_info->iobuffer)+(9*(sizeof(char))), 5); //Is this safe?
             sscanf(temp, "%d", &s_info->client_id);
             printf("Client ID: %d\n", s_info->client_id);
-            connections[0] = '1';
+            if(connections[s_info->client_id] == '1') {
+                s_info->client_id = -1;
+            }
+            connections[s_info->client_id] = '1';
             return 0;
         }
         else{
@@ -56,6 +59,7 @@ int respond(struct session_info *s_info) {
 
     if(strstr((char*)s_info->iobuffer, DISCONNECT) != NULL){
         printf("Client %d requested DISCONNECT.\n", s_info->client_id);
+        connections[s_info->client_id] = '0';
         return -1;
     }
 
@@ -79,6 +83,7 @@ void handle_session(int session_fd) {
         if(s_info->iobuffer == NULL){
             die(21, "Memory allocation failed!");
         }
+         printf("HANDLE_SESSION: connections addr: %p\n", connections);
 
     /* Setting socket timeout to default value */
     /* This doesn't always work for some reason, race condition? :/ */
@@ -120,7 +125,7 @@ void handle_sigchld(int sig) {
 */
 int start_server(int portno) {
     /* Initializing variables */
-    char *USB = "/dev/ttyACM0";
+    char *USB = "/dev/ttyACM1";
     int server_sockfd;          
     struct sockaddr_in serv_addr;
     //Shared memory

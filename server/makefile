@@ -1,4 +1,4 @@
-OBJS = sensor_server.o net.o utils.o 
+OBJS = sensor_server.o net.o utils.o serial.o
 CC = gcc
 DEBUG = -g
 CFLAGS = -Wall -c $(DEBUG) -std=gnu99 -pedantic -O2
@@ -17,6 +17,9 @@ net.o : net.h utils.h net.c
 
 utils.o : utils.h utils.c
 	$(CC) $(CFLAGS) utils.c
+
+serial.o : serial.h serial.c
+	$(CC) $(CFLAGS) serial.c
 
 clean:
 	\rm *.o

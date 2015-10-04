@@ -85,7 +85,6 @@ void open_serial(char *portname, char *connections) {
         sleep(2);
 
         n = read (fd, in_buf, sizeof in_buf); 
-        printf("%s\n", in_buf);
 
         while(1){
                 counter = 0;
@@ -98,11 +97,6 @@ void open_serial(char *portname, char *connections) {
 
                         sleep(2);
                         n = read (fd, in_buf, sizeof in_buf); 
-                        //printf("Read some %d bytes of data from serial\n", n); 
-                        int i  = 0;
-                        for(i; i < n; i++){
-                                printf("%c", in_buf[i]);     
-                        }
                         ++counter;
                 }
         }
