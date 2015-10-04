@@ -16,10 +16,12 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <arpa/inet.h>
+#include <sys/mman.h>
 //#include <sys/time.h>
 
 // Mine
 #include "utils.h"
+#include "serial.h"
 
 /*
 * Starts the server.
@@ -29,13 +31,14 @@ int start_server(int port);
 
 //Size 32 bytes
 struct session_info{
-	int session_fd;		/* 4 B */
-	int client_id;		/* 4 B */
-	void *iobuffer; 	/* 8 B */
-	struct timeval tv; 	/* 16 B */
-	char ip[INET_ADDRSTRLEN];
+	int session_fd;				/* 4 B */
+	int client_id;				/* 4 B */
+	void *iobuffer; 			/* 8 B */
+	struct timeval tv; 			/* 16 B */
+	char ip[INET_ADDRSTRLEN]; 	/* 16 B */
 } __attribute__ ((packed));
 
+/* MOVE TO DEFS.H?*/
 /* GENERAL */
 #define BUFFER_SIZE 512
 #define CLIENT_MAX 10

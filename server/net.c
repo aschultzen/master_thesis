@@ -1,5 +1,7 @@
 #include "net.h"
 
+static char *connections;
+
 int s_read(struct session_info *s_info) {
     bzero(s_info->iobuffer,BUFFER_SIZE);
     return read(s_info->session_fd, s_info->iobuffer,255);
@@ -38,12 +40,12 @@ int respond(struct session_info *s_info) {
     if(strstr((char*)s_info->iobuffer, "IDENTIFY") != NULL){
         char *pos = strstr((char*)s_info->iobuffer, "IDENTIFY");
         if(pos == (s_info->iobuffer)){
-            //printf("Length of input: %d\n", strlen(s_info->iobuffer));
             int length = strlen(s_info->iobuffer) - strlen(IDENTIFY) - 2;
             char temp[length];
             memcpy(&temp, (s_info->iobuffer)+(9*(sizeof(char))), 5); //Is this safe?
             sscanf(temp, "%d", &s_info->client_id);
             printf("Client ID: %d\n", s_info->client_id);
+            connections[0] = '1';
             return 0;
         }
         else{
@@ -69,7 +71,7 @@ int respond(struct session_info *s_info) {
 void handle_session(int session_fd) {
     /* Initializing structure */
     struct session_info *s_info = malloc(sizeof(struct session_info)); 
-        s_info->tv.tv_sec = TIME_OUT + 1000; //remove 1000 when testing is done!
+        s_info->tv.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
         s_info->tv.tv_usec = 0;
         s_info->client_id = -1;
         s_info->session_fd = session_fd;
@@ -94,7 +96,7 @@ void handle_session(int session_fd) {
         die(93,"getsocketname failed\n");
     }
     get_ip_str(&addr, s_info->ip,addr_len);
-    printf("Client on address: %s\n connected", s_info->ip); // prints "192.0.2.33"
+    printf("Client connected from: %s\n", s_info->ip); // prints "192.0.2.33"
 
     /* Entering child process main loop */
     while(1){
@@ -111,7 +113,6 @@ void handle_sigchld(int sig) {
   while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
 }
 
-
 /* 
 * Main loop and everything.
 * Variables to watch out for:
@@ -119,8 +120,18 @@ void handle_sigchld(int sig) {
 */
 int start_server(int portno) {
     /* Initializing variables */
+    char *USB = "/dev/ttyACM0";
     int server_sockfd;          
     struct sockaddr_in serv_addr;
+    //Shared memory
+    connections = mmap(NULL, sizeof 8*(sizeof(char)), PROT_READ | PROT_WRITE, 
+                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+    int i;
+
+    for(i = 0; i < 8; i++){
+        connections[i] = '0';
+    }
 
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -158,6 +169,17 @@ int start_server(int portno) {
 
     /* Marking the connection for listening*/
     listen(server_sockfd,SOMAXCONN);
+
+    /* Forking out proc for serial com */
+    pid_t pid=fork();
+        if (pid==-1) {
+            die(94, "failed to create child process (errno=%d)",errno);
+        } else if (pid==0) {
+            printf("Serial COM started (PID: %d)\n", getpid());
+            open_serial(USB, connections);
+            printf("Serial COM closed (PID: %d)\n", getpid());
+            _exit(0);
+        }
 
     while (1) {
         int session_fd = accept(server_sockfd,0,0);
