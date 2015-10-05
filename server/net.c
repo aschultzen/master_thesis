@@ -1,6 +1,8 @@
 #include "net.h"
 
+/* Declaration of shared memory variables */
 static char *connections;
+static char *message;
 
 int s_read(struct session_info *s_info) {
     bzero(s_info->iobuffer,BUFFER_SIZE);
@@ -123,20 +125,11 @@ void handle_sigchld(int sig) {
 * Variables to watch out for:
 *   session_fd
 */
-int start_server(int portno) {
+int start_server(int portno, char *usb) {
     /* Initializing variables */
-    char *USB = "/dev/ttyACM1";
+    //char *USB = "/dev/ttyACM0";
     int server_sockfd;          
     struct sockaddr_in serv_addr;
-    //Shared memory
-    connections = mmap(NULL, sizeof 8*(sizeof(char)), PROT_READ | PROT_WRITE, 
-                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-
-    int i;
-
-    for(i = 0; i < 8; i++){
-        connections[i] = '0';
-    }
 
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -154,12 +147,10 @@ int start_server(int portno) {
       exit(1);
     }
 
-    /* 
-    Initializing the server address struct:
+    /* Initializing the server address struct:
     AF_INET = IPV4 Internet protocol
     INADDR_ANY = Accept connections to all IPs of the machine
-    htons(portno) = Endianess: network to host long(port number). 
-    */
+    htons(portno) = Endianess: network to host long(port number).*/
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
@@ -176,15 +167,31 @@ int start_server(int portno) {
     listen(server_sockfd,SOMAXCONN);
 
     /* Forking out proc for serial com */
-    pid_t pid=fork();
+    if(usb != NULL){
+
+    /* Shared memory used for "IPC"*/
+    connections = mmap(NULL, sizeof 8*(sizeof(char)), PROT_READ | PROT_WRITE, 
+                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+    message = mmap(NULL, sizeof 8*(sizeof(char)), PROT_READ | PROT_WRITE, 
+                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+    int i;
+    for(i = 0; i < 8; i++){
+        connections[i] = '0';
+        message[i] = '0';
+    }
+
+        pid_t pid=fork();
         if (pid==-1) {
             die(94, "failed to create child process (errno=%d)",errno);
         } else if (pid==0) {
             printf("Serial COM started (PID: %d)\n", getpid());
-            open_serial(USB, connections);
+            open_serial(usb, connections);
             printf("Serial COM closed (PID: %d)\n", getpid());
             _exit(0);
         }
+    }
 
     while (1) {
         int session_fd = accept(server_sockfd,0,0);

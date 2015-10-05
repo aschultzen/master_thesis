@@ -7,7 +7,6 @@ int main(int argc, char *argv[])
         fprintf(stderr,"ERROR, no port provided\n");
         exit(1);
     }
-
-    start_server(atoi(argv[1]));
+    start_server(atoi(argv[1]), argv[2]);
     exit(0);
 } 

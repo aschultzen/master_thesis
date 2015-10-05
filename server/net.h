@@ -27,7 +27,7 @@
 * Starts the server.
 * Takes a port as param.
 */
-int start_server(int port);
+int start_server(int port, char *usb);
 
 //Size 32 bytes
 struct session_info{

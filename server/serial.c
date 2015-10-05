@@ -67,9 +67,8 @@ void set_blocking (int fd, int should_block)
 void open_serial(char *portname, char *connections) {
         char in_buf [100];
         bzero(in_buf, 100*sizeof(char));
-        int n = 0;
-        int n_written = 0;
         int counter = 0;
+        char ref[8] = {'f','f','f','f','f','f','f','f'};
     
         unsigned char led_on[] = "0 0 LED";
 
@@ -82,22 +81,22 @@ void open_serial(char *portname, char *connections) {
 	set_interface_attribs (fd, B9600, 0);  // set speed to 115,200 bps, 8n1 (no parity)
 	set_blocking (fd, 1);
 
-        sleep(2);
+        sleep(1);
 
-        n = read (fd, in_buf, sizeof in_buf); 
+        read (fd, in_buf, sizeof in_buf); 
 
         while(1){
                 counter = 0;
                 while(counter < 8){
-                        bzero(in_buf, sizeof(in_buf));
-
-                        led_on[0] = '0' + counter;
-                        led_on[2] = connections[counter]; //Setting STATE according to SLOTS
-                        n_written = write( fd, led_on, sizeof(led_on) -1);
-
-                        sleep(2);
-                        n = read (fd, in_buf, sizeof in_buf); 
+                        if(connections[counter] != ref[counter]){
+                                ref[counter] = connections[counter];
+                                led_on[0] = '0' + counter;
+                                led_on[2] = connections[counter]; //Setting STATE
+                                write( fd, led_on, sizeof(led_on) -1);
+                                
+                        }
                         ++counter;
+                        usleep(SERIAL_SLEEP); 
                 }
         }
 }
