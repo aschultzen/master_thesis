@@ -31,7 +31,7 @@ char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
     return s;
 }
 
-void print_timestamp(const char* format, ...){
+void t_print(const char* format, ...){
 	char buffer[100];
 	time_t rawtime;
 	struct tm *info;

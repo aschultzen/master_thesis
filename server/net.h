@@ -51,5 +51,6 @@ struct session_info{
 #define GET_TIME "GET_TIME"
 #define IDENTIFY "IDENTIFY"
 #define STORE "STORE"
+#define IN_USE "This identity is already in use"
 
 #endif /* !NET_H */

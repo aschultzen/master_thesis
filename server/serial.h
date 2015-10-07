@@ -12,6 +12,7 @@
 
 void open_serial(char *portname, char *connections);
 
-#define SERIAL_SLEEP 200000
+#define SERIAL_SLEEP 200000	/* Sleep duration between checks on */
+							/* shared variables */
 
 #endif /* !SERIAL_H */

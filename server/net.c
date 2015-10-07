@@ -3,41 +3,21 @@
 /* Declaration of shared memory variables */
 static char *connections;
 static char *message;
+static int display_status;
 
 int s_read(struct session_info *s_info) {
     bzero(s_info->iobuffer,BUFFER_SIZE);
     return read(s_info->session_fd, s_info->iobuffer,255);
 }
 
-int s_write(struct session_info *s_info) {
+int s_write(struct session_info *s_info, char *message) {
     return write(s_info->session_fd, s_info->iobuffer,sizeof(s_info->iobuffer));
-}
-
-char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
-{
-    switch(sa->sa_family) {
-        case AF_INET:
-            inet_ntop(AF_INET, &(((struct sockaddr_in *)sa)->sin_addr),
-                    s, maxlen);
-            break;
-
-        case AF_INET6:
-            inet_ntop(AF_INET6, &(((struct sockaddr_in6 *)sa)->sin6_addr),
-                    s, maxlen);
-            break;
-
-        default:
-            strncpy(s, "Unknown AF", maxlen);
-            return NULL;
-    }
-
-    return s;
 }
 
 int respond(struct session_info *s_info) {
     int status = s_read(s_info);
 
-    printf("%s\n", (char*)s_info->iobuffer);
+    //printf("%s\n", (char*)s_info->iobuffer);
 
     if(strstr((char*)s_info->iobuffer, "IDENTIFY") != NULL){
         char *pos = strstr((char*)s_info->iobuffer, "IDENTIFY");
@@ -46,27 +26,29 @@ int respond(struct session_info *s_info) {
             char temp[length];
             memcpy(&temp, (s_info->iobuffer)+(9*(sizeof(char))), 5); //Is this safe?
             sscanf(temp, "%d", &s_info->client_id);
-            printf("Client ID: %d\n", s_info->client_id);
+            t_print("%s ID set to: %d\n",s_info->ip, s_info->client_id);
+            
             if(connections[s_info->client_id] == '1') {
                 s_info->client_id = -1;
+                s_write(s_info, IN_USE);
             }
             connections[s_info->client_id] = '1';
             return 0;
         }
         else{
-            printf("Illegal command, ignoring...\n");
+            t_print("Illegal command received...\n");
             return 0;
         }
     }
 
     if(strstr((char*)s_info->iobuffer, DISCONNECT) != NULL){
-        printf("Client %d requested DISCONNECT.\n", s_info->client_id);
+        t_print("Client %d requested DISCONNECT.\n", s_info->client_id);
         connections[s_info->client_id] = '0';
         return -1;
     }
 
     if(s_info->client_id < 0){
-        printf("Unidentified client, ignored...\n");
+        t_print("Unidentified client, ignored...\n");
         return 0;
     }
 
@@ -85,7 +67,6 @@ void handle_session(int session_fd) {
         if(s_info->iobuffer == NULL){
             die(21, "Memory allocation failed!");
         }
-         printf("HANDLE_SESSION: connections addr: %p\n", connections);
 
     /* Setting socket timeout to default value */
     /* This doesn't always work for some reason, race condition? :/ */
@@ -103,7 +84,7 @@ void handle_session(int session_fd) {
         die(93,"getsocketname failed\n");
     }
     get_ip_str(&addr, s_info->ip,addr_len);
-    printf("Client connected from: %s\n", s_info->ip); // prints "192.0.2.33"
+    t_print("Client connected from: %s\n", s_info->ip); // prints "192.0.2.33"
 
     /* Entering child process main loop */
     while(1){
@@ -168,29 +149,34 @@ int start_server(int portno, char *usb) {
 
     /* Forking out proc for serial com */
     if(usb != NULL){
+        display_status = 1;
 
-    /* Shared memory used for "IPC"*/
-    connections = mmap(NULL, sizeof 8*(sizeof(char)), PROT_READ | PROT_WRITE, 
-                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        /* Shared memory used for "IPC"*/
+        connections = mmap(NULL, sizeof 8*(sizeof(char)), PROT_READ | PROT_WRITE, 
+                        MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-    message = mmap(NULL, sizeof 8*(sizeof(char)), PROT_READ | PROT_WRITE, 
-                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        message = mmap(NULL, sizeof 8*(sizeof(char)), PROT_READ | PROT_WRITE, 
+                        MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-    int i;
-    for(i = 0; i < 8; i++){
-        connections[i] = '0';
-        message[i] = '0';
-    }
+        int i;
+        for(i = 0; i < 8; i++){
+            connections[i] = '0';
+            message[i] = '0';
+        }
 
         pid_t pid=fork();
         if (pid==-1) {
             die(94, "failed to create child process (errno=%d)",errno);
         } else if (pid==0) {
-            printf("Serial COM started (PID: %d)\n", getpid());
+            t_print("Serial COM started (PID: %d)\n", getpid());
             open_serial(usb, connections);
-            printf("Serial COM closed (PID: %d)\n", getpid());
+            t_print("Serial COM closed (PID: %d)\n", getpid());
             _exit(0);
         }
+    }
+    else
+    {
+        display_status = 0;
     }
 
     while (1) {
@@ -205,7 +191,7 @@ int start_server(int portno, char *usb) {
         } else if (pid==0) {
             close(server_sockfd);
             handle_session(session_fd);
-            printf("Closing up session (PID: %d)\n", getpid());
+            t_print("Closing up session (PID: %d)\n", getpid());
             close(session_fd);
             _exit(0);
         } else {

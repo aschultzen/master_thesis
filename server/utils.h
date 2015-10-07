@@ -10,6 +10,6 @@
 
 void die (int line_number, const char * format, ...);
 char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen);
-void print_timestamp(const char* format, ...);
+void t_print(const char* format, ...);
 
 #endif /* !UTILS_H */
