@@ -3,40 +3,41 @@
 /* Declaration of shared memory variables */
 static char *connections;
 static char *message;
-static int display_status;
 
 int s_read(struct session_info *s_info) {
     bzero(s_info->iobuffer,BUFFER_SIZE);
     return read(s_info->session_fd, s_info->iobuffer,255);
 }
 
-int s_write(struct session_info *s_info, char *message) {
-    return write(s_info->session_fd, s_info->iobuffer,sizeof(s_info->iobuffer));
+int s_write(struct session_info *s_info, char *message, int length) {
+    return write(s_info->session_fd, message, length);
 }
 
 int respond(struct session_info *s_info) {
     int status = s_read(s_info);
-
-    //printf("%s\n", (char*)s_info->iobuffer);
 
     if(strstr((char*)s_info->iobuffer, "IDENTIFY") != NULL){
         char *pos = strstr((char*)s_info->iobuffer, "IDENTIFY");
         if(pos == (s_info->iobuffer)){
             int length = strlen(s_info->iobuffer) - strlen(IDENTIFY) - 2;
             char temp[length];
+            int temp_id = 0;
             memcpy(&temp, (s_info->iobuffer)+(9*(sizeof(char))), 5); //Is this safe?
-            sscanf(temp, "%d", &s_info->client_id);
-            t_print("%s ID set to: %d\n",s_info->ip, s_info->client_id);
+            sscanf(temp, "%d", &temp_id);
             
-            if(connections[s_info->client_id] == '1') {
+            if(connections[temp_id] == '1') {
                 s_info->client_id = -1;
-                s_write(s_info, IN_USE);
+                s_write(s_info, "ID in use!\n", 11);
+                return 0;
             }
+
+            s_info->client_id = temp_id;
+            t_print("%s ID set to: %d\n",s_info->ip, s_info->client_id);
             connections[s_info->client_id] = '1';
             return 0;
         }
         else{
-            t_print("Illegal command received...\n");
+            s_write(s_info, ILL_COM, sizeof(ILL_COM));
             return 0;
         }
     }
@@ -48,7 +49,7 @@ int respond(struct session_info *s_info) {
     }
 
     if(s_info->client_id < 0){
-        t_print("Unidentified client, ignored...\n");
+        s_write(s_info, NO_ID, sizeof(NO_ID));
         return 0;
     }
 
@@ -149,8 +150,6 @@ int start_server(int portno, char *usb) {
 
     /* Forking out proc for serial com */
     if(usb != NULL){
-        display_status = 1;
-
         /* Shared memory used for "IPC"*/
         connections = mmap(NULL, sizeof MAX_CONNECTIONS*(sizeof(char)), PROT_READ | PROT_WRITE, 
                         MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -177,7 +176,6 @@ int start_server(int portno, char *usb) {
     {
         connections = malloc(sizeof MAX_CONNECTIONS*(sizeof(char)));
         t_print("No serial display defined.\n");
-        display_status = 0;
     }
 
     /* Initializing connection table */
