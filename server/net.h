@@ -17,11 +17,9 @@
 #include <sys/wait.h>
 #include <arpa/inet.h>
 #include <sys/mman.h>
-//#include <sys/time.h>
 
 // Mine
 #include "utils.h"
-#include "serial.h"
 
 /*
 * Starts the server.

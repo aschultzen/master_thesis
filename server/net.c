@@ -1,4 +1,5 @@
 #include "net.h"
+#include "serial.h"
 
 /* Declaration of shared memory variables */
 static char *connections;
