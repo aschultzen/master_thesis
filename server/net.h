@@ -40,11 +40,13 @@ struct session_info{
 
 /* MOVE TO DEFS.H?*/
 /* GENERAL */
+#define MAX_CONNECTIONS 10
 #define BUFFER_SIZE 512
 #define CLIENT_MAX 10
 #define MONITOR_MAX 2
 #define CLIENT_TIMEOUT 5
 #define MONITOR_TIMEOUT 100
+#define DISPLAY_SIZE 8
 
 /* PROTOCOL */
 #define DISCONNECT "DISCONNECT"

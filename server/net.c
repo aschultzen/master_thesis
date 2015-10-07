@@ -152,17 +152,11 @@ int start_server(int portno, char *usb) {
         display_status = 1;
 
         /* Shared memory used for "IPC"*/
-        connections = mmap(NULL, sizeof 8*(sizeof(char)), PROT_READ | PROT_WRITE, 
+        connections = mmap(NULL, sizeof MAX_CONNECTIONS*(sizeof(char)), PROT_READ | PROT_WRITE, 
                         MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-        message = mmap(NULL, sizeof 8*(sizeof(char)), PROT_READ | PROT_WRITE, 
+        message = mmap(NULL, sizeof DISPLAY_SIZE*(sizeof(char)), PROT_READ | PROT_WRITE, 
                         MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-
-        int i;
-        for(i = 0; i < 8; i++){
-            connections[i] = '0';
-            message[i] = '0';
-        }
 
         pid_t pid=fork();
         if (pid==-1) {
@@ -173,10 +167,23 @@ int start_server(int portno, char *usb) {
             t_print("Serial COM closed (PID: %d)\n", getpid());
             _exit(0);
         }
+
+        int i;
+        for(i = 0; i < DISPLAY_SIZE; i++){
+            message[i] = '0';
+        }
     }
     else
     {
+        connections = malloc(sizeof MAX_CONNECTIONS*(sizeof(char)));
+        t_print("No serial display defined.\n");
         display_status = 0;
+    }
+
+    /* Initializing connection table */
+    int i;
+        for(i = 0; i < MAX_CONNECTIONS; i++){
+        connections[i] = '0';
     }
 
     while (1) {
