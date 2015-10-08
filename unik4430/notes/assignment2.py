@@ -113,6 +113,10 @@ class average:
 		self.push(value_n) 
 		return self.avg
 
+	def get_average(self, value_n):
+		self.push(value_n) 
+		return self.avg
+
 	def get_count(self):
 		return self.count
 	
@@ -158,7 +162,7 @@ def controller(ref_file, disc_file, output_name, start, interval, samplerate):
 	time = 1
 	reference = 0.0
 	avg = average(0)
-	my_pid = PID(-5,3,3)
+	my_pid = PID(5,3,3)
 	delta_y = 0.0
 	my_pid.setPoint(0)
 
@@ -175,6 +179,49 @@ def controller(ref_file, disc_file, output_name, start, interval, samplerate):
 
 		time = time + 1
 	file_out.close()
+
+# NOTE: START NOT IMPLEMENTED
+# NOTE: INTERVAL NOT IMPLEMENTED
+def new_controller(gps, osci, output_name, start, interval, samplerate):
+	# Python specific init:
+	length = len(gps)										# Length of files
+	file_freq_cor = open("pid_corr", 'w+')					# "Estimerte frekvenskorreksjoner"
+	file_corrected = open(output_name, 'w+')				# "Korrigert tidsavvik"
+	pid = PID(0.0000000005,0.0000000003,0.0000000003)		# PID controller object
+	avg = average(1)										# Average (low pass)
+
+	pid.setPoint(0)											# =|= BEWARE! =|=
+
+	# Algorithm Init step: (Steps 1 - 2)
+	n = 0 													# N, where we are, a counter.
+	OSCI_COR = osci[n]										# Corrected is set to X0.
+	OSCI_COR_PREV = osci[n] 								# Previous corrected
+	ERROR = 0												# Error
+	FILTERED_ERROR = 0										# Filtered error
+	T_SAMPLE = samplerate 									# T sample
+	Yn = 0													# "Relativ frekvensavvik"
+	DELTA_Y = 0												# Output from PID
+	
+	# Main loop	(Steps 3 - 5)
+	while (n < length):
+		if((n*samplerate) > start):							 # Where to begin
+			ERROR = OSCI_COR - gps[n]							# Calculated error updated
+			FILTERED_ERROR = avg.get_average(ERROR)				# Filtered error updated
+			DELTA_Y = pid.update(FILTERED_ERROR)				# Aquiring DELTA_Y from PID
+			Yn = (osci[n] - osci[n-1])/T_SAMPLE					# For use in next step...
+			OSCI_COR_PREV = OSCI_COR 							# Storing for use in next iteration
+			OSCI_COR = OSCI_COR_PREV + T_SAMPLE * (Yn + DELTA_Y)# Calc new corrected
+
+			# Writing to files for use in Timelab
+			file_freq_cor.write(str(DELTA_Y) + "\n")			# Write est. freq. corr. + newline
+			file_corrected.write(str(OSCI_COR) + "\n")			# Write corrected to file + newline
+		n = n + 1 												# Advancing "time"
+	
+	file_freq_cor.close()									# Closing file, finished writing								
+	file_corrected.close()									# Closing file, finished writing
+
+
+
 
 # Used for dropping the sample rate. 
 # Example GPS 1s to GPS 60s.
@@ -198,8 +245,5 @@ def test():
 
 if __name__ == '__main__':
 	gps_f = getFile(getConfVal("files","gps_dropped"))
-	#drop_sample_rate(gps_f, 60, "gps_dropped.txt")
-	#write_average_file(gps_f, "gps_dropped_average", 1)
-	disc_f = getFile(getConfVal("files","xcsac_60"))
-	controller(gps_f, disc_f, "xsac_disc.txt", 2309,1,60)
-	#test()
+	osc_f = getFile(getConfVal("files","xcsac_60"))
+	new_controller(gps_f, osc_f, "xcsac_corrected.txt", 1360,1,60)
