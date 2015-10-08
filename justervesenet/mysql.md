@@ -94,7 +94,7 @@ Log in with root:
 
 To create a database, use the following command:
 
-	CREATE DATABASE example_base;
+	CREATE DATABASE clock_data;
 
 The reason why we just used root, is that the monitor does not have the proper *grants* to create a database. Since a database can contain many tables, we need to select the database before we issue any queries:
 	
