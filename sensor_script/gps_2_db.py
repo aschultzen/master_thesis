@@ -42,8 +42,9 @@ def format_date_string(date_s):
 def insert(con, text):
 	x = con.cursor()
 	try:
-   		x.execute("INSERT INTO " + config.get('db','table') + " VALUES " + text)
-   		conn.commit()
+		query = "INSERT INTO " + config.get('db','table') + " (gprmc) VALUES " +  "('" + text + "');"
+   		x.execute(query)
+   		con.commit()
 	except:
    		con.rollback()
 
@@ -57,7 +58,7 @@ def main_routine():
 	while 1:
    		temp = ser.readline()
 		if(temp.find("GPRMC") == 1):
-			print(temp)
+			#print(temp)
 			insert(con, temp)			
         seconds = "{0:.2f}".format(float(time.time() - time_start))
         t_print("Elapsed time: " + str(seconds) + "s")
