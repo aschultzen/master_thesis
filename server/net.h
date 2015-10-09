@@ -25,7 +25,6 @@
 * Starts the server.
 * Takes a port as param.
 */
-int start_server(int port, char *usb);
 
 //Size 32 bytes
 struct session_info{
@@ -53,5 +52,9 @@ struct session_info{
 #define STORE "STORE"
 #define ILL_COM "ILLEGAL COMMAND\n"
 #define NO_ID "CLIENT NOT IDENTIFIED\n"
+
+int s_read(struct session_info *s_info);
+int s_write(struct session_info *s_info, char *message, int length);
+
 
 #endif /* !NET_H */
