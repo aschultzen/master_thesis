@@ -1,46 +1,26 @@
 # NOTES:
-# Used Python v.3.4.3
-# and mysql-connector-python-2.0.4-py3.4
+# Used Python v.2.7
+# python-mysqldb
 
 import ctypes
-import mysql.connector
-import configparser
+import MySQLdb as mdb
+import ConfigParser
 import fileinput, sys
 import datetime
 import time
-import jdutil
 import os
+import serial
 
 # Something should be done about these!
-config = configparser.ConfigParser()    # Global variable for configparser.
+config = ConfigParser.ConfigParser()    # Global variable for configparser.
 
 def dbConnect():
-    try:    
-        dbConnection = mysql.connector.connect(
-            host= config['db']['ip'],
-            database= config['db']['database'],
-            user= config['db']['user'],
-            password= config['db']['password'],
-            autocommit=True
-            )
-        
-        if dbConnection.is_connected():
-            t_print("Connection to database (" + dbConnection.server_host +":" 
-                + str(dbConnection.server_port) + ") established")
-
-    except Error as e:
-            t_print(e)
-
-    return dbConnection    
+	con = mdb.connect(config.get('db','ip'), config.get('db','user'), config.get('db','password'), config.get('db','database')); 
+	return con    
 
 def dbClose(dbConnection):
     dbConnection.close()
-
-    if dbConnection.is_connected():
-            t_print("Connection to database (" + dbConnection.server_host +":" 
-                + str(dbConnection.server_port) + ") NOT closed") 
-    else:
-        t_print("Connection to database closed")
+    t_print("Connection to database closed")
 
 def initConfig():
     configFile = "config.ini"
@@ -49,11 +29,8 @@ def initConfig():
 
 def t_print(message):
     current_time = datetime.datetime.now().time()
-    complete_message = "[" + current_time.isoformat() + "] " +"[" + message + "]"
+    complete_message = "[" + str(current_time.isoformat()) + "] " +"[" + message + "]"
     print(complete_message)
-    if(config['logs']['enable_logging'] == "yes"):
-        with open(config['logs']['log_path'], "a+") as log:
-            log.write(complete_message + "\n")
 
 def format_date_string(date_s):
     split = date_s.split(".")
@@ -61,25 +38,31 @@ def format_date_string(date_s):
     split = ''.join(split)
     return split
 
-def update_progress(current, goal):
-    progress = (current / goal) * 100
-    print ("\r      Inserting lines: " + str(current) + "/" + str(goal),end="",flush=True)
-
-def get_today_mjd():
-    today = datetime.datetime.utcnow()
-    return jdutil.jd_to_mjd(jdutil.datetime_to_jd(today))
+# Do not look directly at this horrible function
+def insert(con, text):
+	x = con.cursor()
+	try:
+		query = "INSERT INTO " + config.get('db','table') + " (gprmc) VALUES " +  "('" + text + "');"
+   		x.execute(query)
+   		con.commit()
+	except:
+   		con.rollback()
 
 def main_routine():
+    initConfig()	
+    t_print("GPS 2 DB starting up")
+    con = dbConnect()
     while(True):
-        initConfig()
-        print("\n")
-
-        t_print("GPS 2 DB starting up")
         time_start = time.time()
-
+	ser = serial.Serial(config.get('gps','port'),config.get('gps','baud'),timeout=1)
+	while 1:
+   		temp = ser.readline()
+		if(temp.find("GPRMC") == 1):
+			#print(temp)
+			insert(con, temp)			
         seconds = "{0:.2f}".format(float(time.time() - time_start))
         t_print("Elapsed time: " + str(seconds) + "s")
-        time.sleep(float(config['general']['interval']))
+    dbClose(con)
             
 if __name__ == '__main__':
     main_routine()
