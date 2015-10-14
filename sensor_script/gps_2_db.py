@@ -110,16 +110,18 @@ def insert(con, data):
 
 def main_routine():
     initConfig()	
-    t_print("GPS 2 DB starting up")
+    t_print("GPS 2 DB started")
     con = dbConnect()
+    counter = 0
     while(True):
 	ser = serial.Serial(config.get('gps','port'),config.get('gps','baud'),timeout=1)
 	while 1:
-		time.sleep(float(config.get('general','interval')))
-   		temp = ser.readline()
+	   	temp = ser.readline()
 		if(temp.find("GPRMC") == 1):
-			print(temp)
-			insert(con, temp)			
+			counter = counter + 1
+			if(counter == int(config.get('general','discard_interval'))):
+				insert(con, temp)
+				counter = 0					
     dbClose(con)
             
 if __name__ == '__main__':
