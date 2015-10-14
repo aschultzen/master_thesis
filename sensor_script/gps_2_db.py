@@ -1,3 +1,50 @@
+"""
+README
+---------
+ 
+This script is used to store NMEA->GPRMC data from
+a GNSS chip to a database. It was tested using mysql 
+running on a Raspberry Pi (1). All the settings like
+DB, GPS interface (TTY) and such, is defined in the
+config file using ConfigParser. 
+
+The point of the script was to be able to log GPS
+data for later analysis in a system with a DB
+readily available.
+
+BUGS
+---------
+
+- The direction of the magnetic variation is stored
+WITH the checksum. This is because the NMEA string
+is "," seperated. For our use, this doesn't really
+matter since it wont be used much. It is however, 
+still availabe.  
+
+- No NULL error checks are done. I'm letting
+the database do my dirtywork for me. I know,
+I'm a bad person.
+
+EXPECTED TABLE (14.10.2015):
+---------
+
+create table gprmc (  
+	id INT NOT NULL AUTO_INCREMENT, 
+	sensorID INT ,
+	fix_time TIME,  
+	recv_warn VARCHAR(5),  
+	latitude DECIMAL(10,5),  
+	la_dir VARCHAR(5),  
+	longitude DECIMAL(10,5),  
+	lo_dir VARCHAR(5),  
+	speed DECIMAL(10,5),  
+	course DECIMAL(5,2),  
+	fix_date DATE,  
+	variation DECIMAL(5,2),  
+	var_dir VARCHAR(5),  
+	PRIMARY KEY (id) );
+"""
+
 # NOTES:
 # Used Python v.2.7
 # python-mysqldb
@@ -39,10 +86,17 @@ def format_date_string(date_s):
     return split
 
 # Do not look directly at this horrible function
-def insert(con, text):
+def insert(con, data):
+	st = data.replace(",", " ")
+	st = st.split(" ")
 	x = con.cursor()
+	lol = st[12]
+	lol = lol[:-2]
+	st[12] = lol
 	try:
-		query = "INSERT INTO " + config.get('db','table') + " (gprmc) VALUES " +  "('" + text + "');"
+		query = ("INSERT INTO " + config.get('db','table') +
+		" (sensorID, fix_time, recv_warn, latitude, la_dir, longitude, lo_dir, speed, course, fix_date, variation, var_dir) VALUES " +
+		"(" + config.get('general','sensorID') + "," + st[1] + ",'" + st[2] + "'," + st[3] + ",'" + st[4] + "'," + st[5] + ",'" + st[6] + "','" + st[7] + "','" + st[8] + "','" + st[9] + "','" + st[10] + "','" + st[12] + "');")
    		x.execute(query)
    		con.commit()
 	except:
@@ -53,15 +107,13 @@ def main_routine():
     t_print("GPS 2 DB starting up")
     con = dbConnect()
     while(True):
-        time_start = time.time()
 	ser = serial.Serial(config.get('gps','port'),config.get('gps','baud'),timeout=1)
 	while 1:
+		#time.sleep(float(config.get('general','interval')))
    		temp = ser.readline()
 		if(temp.find("GPRMC") == 1):
-			#print(temp)
+			print(temp)
 			insert(con, temp)			
-        seconds = "{0:.2f}".format(float(time.time() - time_start))
-        t_print("Elapsed time: " + str(seconds) + "s")
     dbClose(con)
             
 if __name__ == '__main__':
