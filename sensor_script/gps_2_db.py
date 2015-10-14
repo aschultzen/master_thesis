@@ -40,8 +40,10 @@ create table gprmc (
 	speed DECIMAL(10,5),  
 	course DECIMAL(5,2),  
 	fix_date DATE,  
-	variation DECIMAL(5,2),  
+	variation DECIMAL(5,2),
 	var_dir VARCHAR(5),  
+	faa VARCHAR(5),  
+	checksum VARCHAR(5),
 	PRIMARY KEY (id) );
 """
 
@@ -87,16 +89,20 @@ def format_date_string(date_s):
 
 # Do not look directly at this horrible function
 def insert(con, data):
+	# Removing newline and return carriage
 	st = data.replace(",", " ")
 	st = st.split(" ")
+	temp = st[12]
+	checksum = temp[1] + temp[2] + temp[3] 
+	faa = temp[0]
 	x = con.cursor()
-	lol = st[12]
-	lol = lol[:-2]
-	st[12] = lol
+	
+	#return 0
 	try:
 		query = ("INSERT INTO " + config.get('db','table') +
-		" (sensorID, fix_time, recv_warn, latitude, la_dir, longitude, lo_dir, speed, course, fix_date, variation, var_dir) VALUES " +
-		"(" + config.get('general','sensorID') + "," + st[1] + ",'" + st[2] + "'," + st[3] + ",'" + st[4] + "'," + st[5] + ",'" + st[6] + "','" + st[7] + "','" + st[8] + "','" + st[9] + "','" + st[10] + "','" + st[12] + "');")
+		" (sensorID, fix_time, recv_warn, latitude, la_dir, longitude, lo_dir, speed, course, fix_date, variation, var_dir, faa, checksum) VALUES " +
+		"(" + config.get('general','sensorID') + "," + st[1] + ",'" + st[2] + "'," + st[3] + ",'" + st[4] + "'," + st[5] + ",'" + st[6] + "','" + st[7] + "','" + st[8] + "','" + st[9] + "','" + st[10] + "','" + st[11] + "','" + faa + "','" + checksum + "');")
+		#print(query)
    		x.execute(query)
    		con.commit()
 	except:
@@ -109,7 +115,7 @@ def main_routine():
     while(True):
 	ser = serial.Serial(config.get('gps','port'),config.get('gps','baud'),timeout=1)
 	while 1:
-		#time.sleep(float(config.get('general','interval')))
+		time.sleep(float(config.get('general','interval')))
    		temp = ser.readline()
 		if(temp.find("GPRMC") == 1):
 			print(temp)
