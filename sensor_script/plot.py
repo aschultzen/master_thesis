@@ -76,7 +76,7 @@ def plot(data):
 	plt.show()
 	
 def get_data(con):
-	query = "select latitude, longitude from gprmc;"
+	query = "select latitude,longitude,la_dir,lo_dir from gprmc;"
 	cursor = con.cursor()
 	cursor.execute(query)
 	latitude = []
@@ -85,17 +85,43 @@ def get_data(con):
 	#rows[0][0] = Latitude
 	#rows[0][1] = Longitude
 
-	length = cursor.rowcount
+	q_length = cursor.rowcount
 	x = 0
-	while(x < length-1):
-		temp = str(rows[2][0]).split(".")[0][:-2]
-		print(temp)
-		latitude.append(int(temp))
+	while(x < q_length-1):
+		temp = str(rows[x][0])
+		length = len(temp) -1
+		p_point = temp.find(".") - 2
+		post_p = temp[(p_point):]
+		offsett = length - (length - p_point)
+		pre_p = temp[:offsett]
+		post_p = float(post_p)
+		post_p = post_p/60
+		result = float(pre_p) + post_p
+		if(rows[x][2] != "N"):	#Checking la_dir
+			result = result * -1
+		latitude.append(result)
 		x = x + 1
+
+	x = 0	
+	while(x < q_length-1):
+		temp = str(rows[x][1])
+		length = len(temp) -1
+		p_point = temp.find(".") - 2
+		post_p = temp[(p_point):]
+		offsett = length - (length - p_point)
+		pre_p = temp[:offsett]
+		post_p = float(post_p)
+		post_p = post_p/60
+		result = float(pre_p) + post_p
+		if(rows[x][3] != "W"):	#Checking la_dir
+			result = result * -1
+		longitude.append(result)
+		x = x + 1
+
+	print(q_length)	
 
 	cursor.close()
 	con.close()
-
 
 def main_routine():
 	initConfig()
