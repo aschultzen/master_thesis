@@ -52,7 +52,7 @@ def t_print(message):
     complete_message = "[" + str(current_time.isoformat()) + "] " +"[" + message + "]"
     print(complete_message)
 
-def latlon_to_ecef(data):
+#def latlon_to_ecef(data):
 	#LAT = latitude * pi/180
     #LON = longitude * pi/180
     #x = -R * cos(LAT) * cos(LON)
@@ -76,11 +76,31 @@ def plot(data):
 	plt.show()
 	
 def get_data(con):
+	query = "select latitude, longitude from gprmc;"
+	cursor = con.cursor()
+	cursor.execute(query)
+	latitude = []
+	longitude = []
+	rows = cursor.fetchall()
+	#rows[0][0] = Latitude
+	#rows[0][1] = Longitude
+
+	length = cursor.rowcount
+	x = 0
+	while(x < length-1):
+		temp = str(rows[2][0]).split(".")[0][:-2]
+		print(temp)
+		latitude.append(int(temp))
+		x = x + 1
+
+	cursor.close()
+	con.close()
 
 
 def main_routine():
 	initConfig()
 	con = dbConnect();
+	get_data(con)
 
 if __name__ == '__main__':
     main_routine()
