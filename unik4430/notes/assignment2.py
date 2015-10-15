@@ -103,11 +103,7 @@ class average:
 	total = 0.0	# n-1 + n + n +1
 	avg = 0.0	# The current average
 	prev_avg = 0.0 # The previous average
-	smart_switch = 0
 
-	def __init__(self, smart_switch):
-		self.smart_switch = smart_switch
-		t_print("Smart switch: " + str(smart_switch))
 		
 	def pushpeek(self, value_n):
 		self.push(value_n) 
@@ -127,10 +123,6 @@ class average:
 		if(self.count == 0.0):
 				self.avg = value_n
 		else:
-			if(self.smart_switch == 0): # Naive but accurate method
-				self.total = self.total + value_n
-				self.avg = self.total / self.count
-			else: 						# The coolest method
 				self.prev_avg = self.avg
 				self.avg = ( ( (self.count-1) * self.prev_avg) + value_n ) / self.count 
 		self.count = self.count + 1
@@ -161,7 +153,7 @@ def controller(ref_file, disc_file, output_name, start, interval, samplerate):
 	file_out = open(output_name, 'w+')
 	time = 1
 	reference = 0.0
-	avg = average(0)
+	avg = average()
 	my_pid = PID(5,3,3)
 	delta_y = 0.0
 	my_pid.setPoint(0)
@@ -180,26 +172,26 @@ def controller(ref_file, disc_file, output_name, start, interval, samplerate):
 		time = time + 1
 	file_out.close()
 
-# NOTE: START NOT IMPLEMENTED
-# NOTE: INTERVAL NOT IMPLEMENTED
 def new_controller(gps, osci, output_name, start, interval, samplerate):
 	# Python specific init:
 	length = len(gps)										# Length of files
-	file_freq_cor = open("pid_corr", 'w+')					# "Estimerte frekvenskorreksjoner"
+	file_freq_cor = open("pid_corr.txt", 'w+')				# "Estimerte frekvenskorreksjoner"
 	file_corrected = open(output_name, 'w+')				# "Korrigert tidsavvik"
-	pid = PID(0.0000000005,0.0000000003,0.0000000003)		# PID controller object
-	avg = average(1)										# Average (low pass)
+	pid = PID(0.00005,0.0000003,0.03)						# PID controller object
+	avg = average()										# Average (low pass)
 
 	pid.setPoint(0)											# =|= BEWARE! =|=
 
 	# Algorithm Init step: (Steps 1 - 2)
-	n = 0 													# N, where we are, a counter.
+	n = 2 													# N, where we are, a counter. Currently
+															# it is advanced by 2 in order to initialize
+															# it properly
 	OSCI_COR = osci[n]										# Corrected is set to X0.
 	OSCI_COR_PREV = osci[n] 								# Previous corrected
 	ERROR = 0												# Error
 	FILTERED_ERROR = 0										# Filtered error
 	T_SAMPLE = samplerate 									# T sample
-	Yn = 0													# "Relativ frekvensavvik"
+	Yn = osci[n]											# "Relativ frekvensavvik"
 	DELTA_Y = 0												# Output from PID
 	
 	# Main loop	(Steps 3 - 5)
@@ -215,6 +207,9 @@ def new_controller(gps, osci, output_name, start, interval, samplerate):
 			# Writing to files for use in Timelab
 			file_freq_cor.write(str(DELTA_Y) + "\n")			# Write est. freq. corr. + newline
 			file_corrected.write(str(OSCI_COR) + "\n")			# Write corrected to file + newline
+		else:
+			file_freq_cor.write(str(0) + "\n")					# Corrections has not started
+			file_corrected.write(str(osci[n]) + "\n")			# Pass through
 		n = n + 1 												# Advancing "time"
 	
 	file_freq_cor.close()									# Closing file, finished writing								
