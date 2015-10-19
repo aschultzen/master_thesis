@@ -5,6 +5,9 @@
 
 # Notes
 
+## 19.10.2015 Collecting data
+Just finished writing a Python script that stores the **$GNRMC** NMEA string retrieved from a GNSS chip to a database. I tried to deploy it a Justervesenet Friday 16 with the Ublox EVK-M8, but it failed. It turns out the serial settings are different when using UART and USB (in this case, the EOL character was different). It should work fine now and i plan to deploy it tomorrow. 
+
 ## 14.09.2015 Making a case for it
 I had an idea earlier to use more than one Raspi and have them communicate with each other over a local LAN using static IPs (for example). I was able to source a Giga bit switch with 8 ports. With the case removed, it measures only 11.5 x 12 x 2 cm:
 ![alt text][nkd_swt]
@@ -82,7 +85,7 @@ I've used most of the day debugging the serial connection to the U-blox chip. On
 
 	 stty -F /dev/ttyAMA0 icanon
 	 
-** 19.10.2015 Edit:
+** 19.10.2015 Edit: **
 
 The *stty* utility in linux can also be used do get terminal I/O characteristics:
 
