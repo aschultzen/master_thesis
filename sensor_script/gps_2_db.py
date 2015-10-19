@@ -13,14 +13,7 @@ data for later analysis in a system with a DB
 readily available.
 
 BUGS
----------
-
-- The direction of the magnetic variation is stored
-WITH the checksum. This is because the NMEA string
-is "," seperated. For our use, this doesn't really
-matter since it wont be used much. It is however, 
-still availabe.  
-
+---------  
 - No NULL error checks are done. I'm letting
 the database do my dirtywork for me. I know,
 I'm a bad person.
@@ -57,8 +50,10 @@ import ConfigParser
 import fileinput, sys
 import datetime
 import time
+import io
 import os
 import serial
+from subprocess import call
 
 # Something should be done about these!
 config = ConfigParser.ConfigParser()    # Global variable for configparser.
@@ -108,19 +103,28 @@ def insert(con, data):
 	except:
    		con.rollback()
 
+# Function used to reset the serial configuration
+# in Linux in case its mangled by something'
+def reset_serial():
+	call("stty -F " + config.get('gps','port') + " icanon", shell=True)
+
 def main_routine():
     initConfig()	
     t_print("GPS 2 DB started")
+    reset_serial()
     con = dbConnect()
     counter = 0
     while(True):
-	ser = serial.Serial(config.get('gps','port'),config.get('gps','baud'),timeout=1)
+	ser = serial.Serial(config.get('gps','port'),config.get('gps','baud'),timeout=0.1)
+	sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser),newline="\r")
+	time.sleep(1)
 	while 1:
-	   	temp = ser.readline()
-		if(temp.find("GPRMC") == 1):
+	   	temp = sio.readline()
+		if(temp.find("GNRMC") == 1):
 			counter = counter + 1
 			if(counter == int(config.get('general','discard_interval'))):
 				insert(con, temp)
+				t_print("Insertion succeeded!")
 				counter = 0					
     dbClose(con)
             
