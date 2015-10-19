@@ -81,6 +81,12 @@ Yeah, i know. It's not pretty but at least i can transport it somehow. I use som
 I've used most of the day debugging the serial connection to the U-blox chip. One of the problems I've encountered is that Python tends to do reconfigure some parameters of the TTY. This would make it impossible to get any output any by using cat on */dev/ttyAMA0* after using Python to do serial stuff. In order to reset them, the following command can be used:
 
 	 stty -F /dev/ttyAMA0 icanon
+	 
+** 19.10.2015 Edit:
+
+The *stty* utility in linux can also be used do get terminal I/O characteristics:
+
+	stty -F /dev/ttyACM0
 
 I also started work on a script that should enable RAW data output from the U-blox chip:
 
