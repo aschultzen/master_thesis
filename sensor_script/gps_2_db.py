@@ -91,6 +91,8 @@ def insert(con, data):
 	checksum = temp[1] + temp[2] + temp[3] 
 	faa = temp[0]
 	x = con.cursor()
+	date = st[9][4:6] + st[9][2:4] + st[9][0:2]
+	st[9] = date
 	
 	#return 0
 	try:
