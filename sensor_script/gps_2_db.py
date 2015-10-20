@@ -126,7 +126,6 @@ def main_routine():
 			counter = counter + 1
 			if(counter == int(config.get('general','discard_interval'))):
 				insert(con, temp)
-				t_print("Insertion succeeded!")
 				counter = 0					
     dbClose(con)
             
