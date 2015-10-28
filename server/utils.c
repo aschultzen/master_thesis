@@ -31,16 +31,16 @@ char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
     return s;
 }
 
+/* Print with timestamp:
+* Example : [01.01.01 - 10:10:10] [Some String]
+*/
 void t_print(const char* format, ...){
 	char buffer[100];
 	time_t rawtime;
 	struct tm *info;
 	time(&rawtime);
 	info = gmtime(&rawtime);
-
-	//sprintf(buffer, "[%02d:%02d:%02d] ", (info->tmyear, info->tm_hour)%24, info->tm_min, info->tm_sec);
 	strftime(buffer,80,"[%x - %X] ", info);
-
 	va_list argptr;
     va_start(argptr, format);
     fputs(buffer, stdout);

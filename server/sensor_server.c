@@ -1,15 +1,3 @@
-/* 
-*   TODO:
-*   Make client ->
-*                   Connect to server (Reuse server code)
-*                   Identify and handle rejection (./client port, ip, ID, GPS_CON)
-*                   Use Store_GPRMC command to store data from GPS
-*                   
-*   Server  ->
-*               Implement store_GPRMC command
-*               
-*/      
-
 #include "sensor_server.h"
 #include "serial.h"
 
@@ -18,16 +6,17 @@ static char *connections;
 static char *message;
  
 
-int respond(struct session_info *s_info) {
+/*int respond(struct session_info *s_info) {
     int status = s_read(s_info);
+    parse_input(s_info);
 
-    if(strstr((char*)s_info->iobuffer, "IDENTIFY") != NULL){
-        char *pos = strstr((char*)s_info->iobuffer, "IDENTIFY");
+    if(strstr((char*)s_info->iobuffer, P_IDENTIFY) != NULL){
+        char *pos = strstr((char*)s_info->iobuffer, P_IDENTIFY);
         if(pos == (s_info->iobuffer)){
-            int length = strlen(s_info->iobuffer) - strlen(IDENTIFY) - 2;
+            int length = strlen(s_info->iobuffer) - strlen(P_IDENTIFY) - 2;
             char temp[length];
             int temp_id = 0;
-            memcpy(&temp, (s_info->iobuffer)+(9*(sizeof(char))), 5); //Is this safe?
+            memcpy(&temp, (s_info->iobuffer)+(9*(sizeof(char))), 5);
             sscanf(temp, "%d", &temp_id);
             
             if(connections[temp_id] == '1') {
@@ -47,7 +36,7 @@ int respond(struct session_info *s_info) {
         }
     }
 
-    if(strstr((char*)s_info->iobuffer, DISCONNECT) != NULL){
+    if(strstr((char*)s_info->iobuffer, P_DISCONNECT) != NULL){
         t_print("Client %d requested DISCONNECT.\n", s_info->client_id);
         connections[s_info->client_id] = '0';
         return -1;
@@ -59,6 +48,58 @@ int respond(struct session_info *s_info) {
     }
 
     return status;
+}*/
+
+int respond(struct session_info *s_info) {
+    int read_status = s_read(s_info);
+    if(read_status == -1){
+        t_print("Read failed, disconnecting client\n");
+        if(s_info->client_id != -1){
+          connections[s_info->client_id] = '0';  
+        }
+        return -1;
+    }
+    int parse_status = parse_input(s_info);
+
+    if(parse_status == -1){
+        s_write(s_info, ILL_SIZE, sizeof(ILL_SIZE));
+    }
+    if(parse_status == 0){
+        s_write(s_info, ILL_COM, sizeof(ILL_COM));
+    }
+    if(parse_status == 1){
+        if(s_info->cm.command_code == C_DISCONNECT){
+            t_print("Client %d requested DISCONNECT.\n", s_info->client_id);
+            s_write(s_info, OK, sizeof(OK));
+            connections[s_info->client_id] = '0';
+            return -1;
+        }
+        if(s_info->cm.command_code == C_IDENTIFY){
+            int id = 0;
+            if(sscanf(s_info->cm.parameter, "%d", &id) == -1){
+                s_write(s_info, ILL_COM, sizeof(ILL_COM));
+                return 0;
+            }
+
+            if(connections[id] == '1') {
+                s_info->client_id = -1;
+                s_write(s_info, "ID in use!\n", 11);
+                return 0;
+            }   
+
+            s_info->client_id = id;
+            t_print("%s ID set to: %d\n",s_info->ip, s_info->client_id);
+            connections[s_info->client_id] = '1';
+            s_write(s_info, OK, sizeof(OK));
+            return 0;
+        }
+
+        if(s_info->client_id < 0){
+            s_write(s_info, NO_ID, sizeof(NO_ID));
+            return 0;  
+        }
+    }
+    return 0;
 }
 
 /* The session_info struct allocated on stack only */
@@ -92,7 +133,11 @@ void handle_session(int session_fd) {
     get_ip_str(&addr, s_info->ip,addr_len);
     t_print("Client connected from: %s\n", s_info->ip); // prints "192.0.2.33"
 
-    /* Entering child process main loop */
+    /* 
+    * Entering child process main loop 
+    * Breaks (disconnects the client) if 
+    * respond == 0
+    */
     while(1){
         if(respond(s_info) < 0){
             break;

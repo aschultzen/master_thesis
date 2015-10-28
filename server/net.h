@@ -20,20 +20,7 @@
 
 // Mine
 #include "utils.h"
-
-/*
-* Starts the server.
-* Takes a port as param.
-*/
-
-//Size 32 bytes
-struct session_info{
-	int session_fd;				/* 4 B */
-	int client_id;				/* 4 B */
-	void *iobuffer; 			/* 8 B */
-	struct timeval tv; 			/* 16 B */
-	char ip[INET_ADDRSTRLEN]; 	/* 16 B */
-} __attribute__ ((packed));
+#include "protocol.h"
 
 /* MOVE TO DEFS.H?*/
 /* GENERAL */
@@ -44,17 +31,27 @@ struct session_info{
 #define CLIENT_TIMEOUT 5
 #define MONITOR_TIMEOUT 100
 #define DISPLAY_SIZE 8
+#define MAX_COMMAND_SIZE 20
+#define MAX_PARAMETER_SIZE 100
 
-/* PROTOCOL */
-#define DISCONNECT "DISCONNECT"
-#define GET_TIME "GET_TIME"
-#define IDENTIFY "IDENTIFY"
-#define STORE "STORE"
-#define ILL_COM "ILLEGAL COMMAND\n"
-#define NO_ID "CLIENT NOT IDENTIFIED\n"
+struct comm{
+	int command_code;
+	char parameter[MAX_PARAMETER_SIZE];
+} __attribute__ ((packed));
+
+//Size 32 bytes
+struct session_info{
+	int session_fd;				/* 4 B */
+	int client_id;				/* 4 B */
+	void *iobuffer; 			/* 8 B */	// Deprecated?
+	struct timeval tv; 			/* 16 B */
+	char ip[INET_ADDRSTRLEN]; 	/* 16 B */
+	struct comm cm;				/* 120 B */
+} __attribute__ ((packed));
 
 int s_read(struct session_info *s_info);
 int s_write(struct session_info *s_info, char *message, int length);
+int parse_input(struct session_info *s_info);
 
 
 #endif /* !NET_H */
