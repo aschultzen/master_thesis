@@ -86,6 +86,19 @@ class PID:
 		return self.Derivator
 ## Not my code END
 
+# Used for dropping the sample rate. 
+# Example GPS 1s to GPS 60s.
+def drop_sample_rate(input_file, magnitude, output_name):
+	length = len(input_file)
+	file_out = open(output_name, 'w+')
+	pos = 0
+
+	while(pos < length):
+		if(pos % magnitude == 0):
+			file_out.write(str (input_file[pos]) + "\n")
+		pos = pos + 1
+	file_out.close()
+
 def t_print(message):
     current_time = datetime.datetime.now().time()
     complete_message = "[" + current_time.isoformat() + "] " +"[" + message + "]"
@@ -98,7 +111,15 @@ def getConfVal(column, value):
 	conf_value = config[column][value]
 	return conf_value
 
-class average:
+def getFile(path):
+	result = open(path, 'r')
+	resultList = result.read()
+	resultList = resultList.splitlines()
+	result.close()
+	resultList = [float(i) for i in resultList]
+	return resultList
+
+class old_average:
 	count = 0.0 # Number of times called; n.
 	total = 0.0	# n-1 + n + n +1
 	avg = 0.0	# The current average
@@ -127,80 +148,96 @@ class average:
 				self.avg = ( ( (self.count-1) * self.prev_avg) + value_n ) / self.count 
 		self.count = self.count + 1
 
-def getFile(path):
-	result = open(path, 'r')
-	resultList = result.read()
-	resultList = resultList.splitlines()
-	result.close()
-	resultList = [float(i) for i in resultList]
-	return resultList
+class simple_pid:
+	ACCUM_ERROR = 0
+	PREV_ERROR = 0
+	DELTA_Y = 0
+
+	def __init__(self, P, I, D):
+		self.Kp=P
+		self.Ki=I
+		self.Kd=D
+
+	def update(self, FILTERED_ERROR):
+		ACCUM_ERROR = ACCUM_ERROR + FILTERED_ERROR	#Accumulating error
+
+		P_VALUE = Kp * FILTERED_ERROR
+		I_VALUE = Ki * ACCUM_ERROR
+		D_VALUE = Kd * FILTERED_ERROR - PREV_ERROR	# What happens first time?
+		PREV_ERROR = FILTERED_ERROR
+
+		DELTA_Y = P_VALUE + I_VALUE + D_VALUE
+		return DELTA_Y
 
 
-## Debug method
-def write_average_file(input_file, output_name, a_type):
-	avg = average(a_type)	
-	length = len(input_file)
-	file_out = open(output_name, 'w+')
-	count = 0
-	while(count < length):
-		file_out.write(str(avg.pushpeek(input_file[count])) + "\n")
-		count = count + 1
-	file_out.close()
-	t_print("Finished")
+class filter:
+	f_now = 0.0		# Filtered now
+	f_prev = 0.0 	# Filtered previous
+	T_SAMPLE = 0
+	#u_input		#Unfiltered input
 
-def controller(ref_file, disc_file, output_name, start, interval, samplerate):
-	length = len(ref_file)
-	file_out = open(output_name, 'w+')
-	time = 1
-	reference = 0.0
-	avg = average()
-	my_pid = PID(5,3,3)
-	delta_y = 0.0
-	my_pid.setPoint(0)
+	def __init__(self, T_SAMPLE):
+		self.T_SAMPLE = T_SAMPLE
 
-	while(time < length):
-		reference = avg.pushpeek(ref_file[time])	# Building average
-
-		if((time*samplerate) > start):
-			if(time % interval == 0):	
-				error = disc_file[time] - reference	
-				delta_y = my_pid.update(error)
-				file_out.write(str (disc_file[time] + delta_y) + "\n")	
+	def get(self, u_input):
+		if(self.f_now == 0 and self.f_prev == 0):
+				self.f_now = u_input
+				return self.f_now
 		else:
-			file_out.write(str (disc_file[time]) + "\n")
+				self.f_prev = self.f_now
+				self.f_now = ( ((self.T_SAMPLE - 1) * (self.f_prev + u_input)) / self.T_SAMPLE )
+				return self.f_now
 
-		time = time + 1
-	file_out.close()
-
-def new_controller(gps, osci, output_name, start, interval, samplerate):
+#GPS : GPS reference file
+#OSC : Oscillator file
+#Output_name : Name of the main file made by the controller | Corrected
+#Start : When to start | at which sample
+#Interval : At what interval to update PID
+#SPS : Samples per second
+#T_SAMPLE : Width of the filter | used in average
+def new_controller(gps, osci, output_name, start, interval, sps, T_SAMPLE):
 	# Python specific init:
-	length = len(gps)										# Length of files
-	file_freq_cor = open("pid_corr.txt", 'w+')				# "Estimerte frekvenskorreksjoner"
-	file_corrected = open(output_name, 'w+')				# "Korrigert tidsavvik"
-	pid = PID(0.00005,0.0000003,0.03)						# PID controller object
-	avg = average()										# Average (low pass)
+	length = len(gps)											# Length of files
+	file_freq_cor = open("pid_corr.txt", 'w+')					# "Estimerte frekvenskorreksjoner"
+	file_corrected = open(output_name, 'w+')					# "Korrigert tidsavvik"
+	pid = simple_pid(0.002,0.0000005,0.00)						# PID controller object
+	filtr = filter(T_SAMPLE)									# Average (low pass)
 
-	pid.setPoint(0)											# =|= BEWARE! =|=
+	#pid.setPoint(0)												# =|= BEWARE! =|=
 
 	# Algorithm Init step: (Steps 1 - 2)
-	n = 2 													# N, where we are, a counter. Currently
-															# it is advanced by 2 in order to initialize
-															# it properly
-	OSCI_COR = osci[n]										# Corrected is set to X0.
-	OSCI_COR_PREV = osci[n] 								# Previous corrected
-	ERROR = 0												# Error
-	FILTERED_ERROR = 0										# Filtered error
-	T_SAMPLE = samplerate 									# T sample
-	Yn = osci[n]											# "Relativ frekvensavvik"
-	DELTA_Y = 0												# Output from PID
+	i = 1 														# N, where we are, a counter. Currently
+																# it is advanced by 2 in order to initialize
+																# it properly
+	OSCI_COR = osci[i]											# Corrected is set to X0.
+	OSCI_COR_PREV = osci[i] 									# Previous corrected
+	ERROR = 0													# Error
+	FILTERED_ERROR = 0											# Filtered error
+	Yn = osci[i] - osci[i-1]/T_SAMPLE							# "Relativ frekvensavvik"
+	DELTA_Y = 0													# Output from PID	# Python specific init:
+	length = len(gps)											# Length of files
+	file_freq_cor = open("pid_corr.txt", 'w+')					# "Estimerte frekvenskorreksjoner"
+	file_corrected = open(output_name, 'w+')					# "Korrigert tidsavvik"
+	pid = PID(0.002,0.0000005,0.00)								# PID controller object
+
+	# Algorithm Init step: (Steps 1 - 2)
+	i = 1 														# N, where we are, a counter. Currently
+																# it is advanced by 2 in order to initialize
+																# it properly
+	OSCI_COR = osci[i]											# Corrected is set to X0.
+	OSCI_COR_PREV = osci[i] 									# Previous corrected
+	ERROR = 0													# Error
+	FILTERED_ERROR = 0											# Filtered error
+	Yn = osci[i] - osci[i-1]/T_SAMPLE							# "Relativ frekvensavvik"
+	DELTA_Y = 0													# Output from PID
 	
 	# Main loop	(Steps 3 - 5)
-	while (n < length):
-		if((n*samplerate) > start):							 # Where to begin
-			ERROR = OSCI_COR - gps[n]							# Calculated error updated
-			FILTERED_ERROR = avg.get_average(ERROR)				# Filtered error updated
+	while (i < length):
+		if((i*sps) > start):							 		# Where to begin
+			ERROR = OSCI_COR - gps[i]							# Calculated error updated
+			FILTERED_ERROR = filtr.get(ERROR)					# Filtered error updated
 			DELTA_Y = pid.update(FILTERED_ERROR)				# Aquiring DELTA_Y from PID
-			Yn = (osci[n] - osci[n-1])/T_SAMPLE					# For use in next step...
+			Yn = (osci[i] - osci[i-1])/T_SAMPLE					# For use in next step...
 			OSCI_COR_PREV = OSCI_COR 							# Storing for use in next iteration
 			OSCI_COR = OSCI_COR_PREV + T_SAMPLE * (Yn + DELTA_Y)# Calc new corrected
 
@@ -209,36 +246,13 @@ def new_controller(gps, osci, output_name, start, interval, samplerate):
 			file_corrected.write(str(OSCI_COR) + "\n")			# Write corrected to file + newline
 		else:
 			file_freq_cor.write(str(0) + "\n")					# Corrections has not started
-			file_corrected.write(str(osci[n]) + "\n")			# Pass through
-		n = n + 1 												# Advancing "time"
+			file_corrected.write(str(osci[i]) + "\n")			# Pass through
+		i = i + 1 												# Advancing "time"
 	
-	file_freq_cor.close()									# Closing file, finished writing								
-	file_corrected.close()									# Closing file, finished writing
-
-
-
-
-# Used for dropping the sample rate. 
-# Example GPS 1s to GPS 60s.
-def drop_sample_rate(input_file, magnitude, output_name):
-	length = len(input_file)
-	file_out = open(output_name, 'w+')
-	pos = 0
-
-	while(pos < length):
-		if(pos % magnitude == 0):
-			file_out.write(str (input_file[pos]) + "\n")
-		pos = pos + 1
-	file_out.close()
-
-def test():
-	count = 0
-	while(count < 100):
-		if(count % 2 == 0):
-			print(count)
-		count = count + 1
+	file_freq_cor.close()										# Closing file, finished writing								
+	file_corrected.close()										# Closing file, finished writing
 
 if __name__ == '__main__':
 	gps_f = getFile(getConfVal("files","gps_dropped"))
 	osc_f = getFile(getConfVal("files","xcsac_60"))
-	new_controller(gps_f, osc_f, "xcsac_corrected.txt", 1360,1,60)
+	new_controller(gps_f, osc_f, "xcsac_corrected.txt", 1360,1,60, 100)
