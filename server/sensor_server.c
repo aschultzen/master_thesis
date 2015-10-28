@@ -5,51 +5,6 @@
 static char *connections;
 static char *message;
  
-
-/*int respond(struct session_info *s_info) {
-    int status = s_read(s_info);
-    parse_input(s_info);
-
-    if(strstr((char*)s_info->iobuffer, P_IDENTIFY) != NULL){
-        char *pos = strstr((char*)s_info->iobuffer, P_IDENTIFY);
-        if(pos == (s_info->iobuffer)){
-            int length = strlen(s_info->iobuffer) - strlen(P_IDENTIFY) - 2;
-            char temp[length];
-            int temp_id = 0;
-            memcpy(&temp, (s_info->iobuffer)+(9*(sizeof(char))), 5);
-            sscanf(temp, "%d", &temp_id);
-            
-            if(connections[temp_id] == '1') {
-                s_info->client_id = -1;
-                s_write(s_info, "ID in use!\n", 11);
-                return 0;
-            }
-
-            s_info->client_id = temp_id;
-            t_print("%s ID set to: %d\n",s_info->ip, s_info->client_id);
-            connections[s_info->client_id] = '1';
-            return 0;
-        }
-        else{
-            s_write(s_info, ILL_COM, sizeof(ILL_COM));
-            return 0;
-        }
-    }
-
-    if(strstr((char*)s_info->iobuffer, P_DISCONNECT) != NULL){
-        t_print("Client %d requested DISCONNECT.\n", s_info->client_id);
-        connections[s_info->client_id] = '0';
-        return -1;
-    }
-
-    if(s_info->client_id < 0){
-        s_write(s_info, NO_ID, sizeof(NO_ID));
-        return 0;
-    }
-
-    return status;
-}*/
-
 int respond(struct session_info *s_info) {
     int read_status = s_read(s_info);
     if(read_status == -1){
@@ -110,7 +65,7 @@ void handle_session(int session_fd) {
         s_info->tv.tv_usec = 0;
         s_info->client_id = -1;
         s_info->session_fd = session_fd;
-        s_info->iobuffer = calloc (BUFFER_SIZE, sizeof(char));
+        s_info->iobuffer = calloc (BUFFER_SIZE, sizeof(void*));
         if(s_info->iobuffer == NULL){
             die(21, "Memory allocation failed!");
         }
@@ -250,6 +205,7 @@ int start_server(int portno, char *usb) {
             close(session_fd);
             _exit(0);
         } else {
+            free(message);
             close(session_fd);
         }
     }

@@ -32,7 +32,7 @@ int parse_input(struct session_info *s_info){
 	/* IDENTIFY */
 	if(strstr((char*)s_info->iobuffer, P_IDENTIFY ) == (s_info->iobuffer)){
 		int length = (strlen(s_info->iobuffer) - strlen(P_IDENTIFY) ) - 2; //2 = escape characters
-        memcpy(&s_info->cm.parameter, (s_info->iobuffer)+(strlen(P_IDENTIFY)*(sizeof(char))), length);
+        memcpy(&s_info->cm.parameter, (char*)(s_info->iobuffer)+(strlen(P_IDENTIFY)*(sizeof(char))), length);
         s_info->cm.command_code = C_IDENTIFY;
         return 1;
     }
