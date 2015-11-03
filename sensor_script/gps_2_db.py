@@ -18,7 +18,17 @@ BUGS
 the database do my dirtywork for me. I know,
 I'm a bad person.
 
-EXPECTED TABLE (14.10.2015):
+- (mainRoutine) There was a strange case where 
+Python seemed
+to be unable to find "GNGGA" in a string. I
+think it might have been something with 
+the formatting done on the GNSS chip. This
+bug is worked around by issuing an extra
+readline(), thus iterating forward to the
+"GNGGA" part of the NMEA string. It does
+however look a little weird.
+
+EXPECTED TABLE (03.11.2015):
 ---------
 
 create table gprmc (  
@@ -37,6 +47,8 @@ create table gprmc (
 	var_dir VARCHAR(5),  
 	faa VARCHAR(5),  
 	checksum VARCHAR(5),
+	mjd VARCHAR(50),
+	alt DECIMAL(5,2),
 	PRIMARY KEY (id) );
 """
 
@@ -53,6 +65,7 @@ import time
 import io
 import os
 import serial
+import jdutil
 from subprocess import call
 
 # Something should be done about these!
@@ -84,9 +97,7 @@ def format_date_string(date_s):
 
 # Do not look directly at this horrible function
 def insert(con, data):
-	# Removing newline and return carriage
-	st = data.replace(",", " ")
-	st = st.split(" ")
+	st = data
 	temp = st[12]
 	checksum = temp[1] + temp[2] + temp[3] 
 	faa = temp[0]
@@ -94,12 +105,10 @@ def insert(con, data):
 	date = st[9][4:6] + st[9][2:4] + st[9][0:2]
 	st[9] = date
 	
-	#return 0
 	try:
 		query = ("INSERT INTO " + config.get('db','table') +
-		" (sensorID, fix_time, recv_warn, latitude, la_dir, longitude, lo_dir, speed, course, fix_date, variation, var_dir, faa, checksum) VALUES " +
-		"(" + config.get('general','sensorID') + "," + st[1] + ",'" + st[2] + "'," + st[3] + ",'" + st[4] + "'," + st[5] + ",'" + st[6] + "','" + st[7] + "','" + st[8] + "','" + st[9] + "','" + st[10] + "','" + st[11] + "','" + faa + "','" + checksum + "');")
-		#print(query)
+		" (sensorID, fix_time, recv_warn, latitude, la_dir, longitude, lo_dir, speed, course, fix_date, variation, var_dir, faa, checksum, mjd, alt) VALUES " +
+		"(" + config.get('general','sensorID') + "," + st[1] + ",'" + st[2] + "'," + st[3] + ",'" + st[4] + "'," + st[5] + ",'" + st[6] + "','" + st[7] + "','" + st[8] + "','" + st[9] + "','" + st[10] + "','" + st[11] + "','" + faa + "','" + checksum  + "'," + st[14] + ",'" + st[13] +  "');") 
    		x.execute(query)
    		con.commit()
 	except:
@@ -110,12 +119,18 @@ def insert(con, data):
 def reset_serial():
 	call("stty -F " + config.get('gps','port') + " icanon", shell=True)
 
+def get_today_mjd():
+    today = datetime.datetime.utcnow()
+    return jdutil.jd_to_mjd(jdutil.datetime_to_jd(today)) 
+
 def main_routine():
     initConfig()	
     t_print("GPS 2 DB started")
     reset_serial()
     con = dbConnect()
     counter = 0
+    data = ""
+
     while(True):
 	ser = serial.Serial(config.get('gps','port'),config.get('gps','baud'),timeout=0.1)
 	sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser),newline="\r")
@@ -123,10 +138,17 @@ def main_routine():
 	while 1:
 	   	temp = sio.readline()
 		if(temp.find("GNRMC") == 1):
-			counter = counter + 1
+			data = temp
+			data = data.split(",")
+			sio.readline() # Reading forward manually
+			temp = sio.readline()
+			temp = temp.split(",")
+			data.append(str(temp[9]))
+			data.append(str(get_today_mjd()))
+			counter = counter + 1 
 			if(counter == int(config.get('general','discard_interval'))):
-				insert(con, temp)
-				counter = 0					
+				insert(con, data)
+				counter = 0						
     dbClose(con)
             
 if __name__ == '__main__':
