@@ -56,7 +56,7 @@ int usage(char *argv[]){
 int main(int argc, char *argv[])
 {
     char *ip_adress = NULL;
-    char *port_no = NULL;
+    char *port_number = NULL;
 
     if(argc < 4){
         usage(argv);
@@ -75,20 +75,17 @@ int main(int argc, char *argv[])
             ip_adress = optarg;
             break;
         case 'p':
-            port_no = optarg;
-            // Do something with it
-            //printf ("User has invoked with -p %s \n", optarg);
+            port_number = optarg;
             break;
         default:
             usage(argv);
         }
     }
 
-    //This shold never happen.
-    if(ip_adress == NULL || port_no == NULL){
+    if(ip_adress == NULL || port_number == NULL){
         printf("Missing parameters!\n");
     }
 
-    start_client(atoi(port_no), ip_adress);
+    start_client(atoi(port_number), ip_adress);
     return 0;
 }
