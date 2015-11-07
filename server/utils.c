@@ -10,6 +10,10 @@ void die (int line_number, const char * format, ...)
     exit(1);
 }
 
+/* 
+* Extracts IP adress from sockaddr struct.
+* Supports both IPV4 and IPV6
+*/
 char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
 {
     switch(sa->sa_family) {
@@ -31,8 +35,9 @@ char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
     return s;
 }
 
-/* Print with timestamp:
-* Example : [01.01.01 - 10:10:10] [Some String]
+/* 
+* Print with timestamp:
+* Example : [01.01.01 - 10:10:10] [<Some string>]
 */
 void t_print(const char* format, ...){
 	char buffer[100];
