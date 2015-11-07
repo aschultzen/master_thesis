@@ -4,6 +4,8 @@
 /* Declaration of shared memory variables */
 static char *connections;
 static char *message;
+
+volatile sig_atomic_t done = 0;
  
 int respond(struct session_info *s_info) {
     int read_status = s_read(s_info);
@@ -94,6 +96,7 @@ void setup_session(int session_fd) {
     * respond == 0
     */
     while(1){
+        //ADD SIGTERM BEHAVIOUR HERE
         if(respond(s_info) < 0){
             break;
         }
@@ -107,12 +110,24 @@ void handle_sigchld(int sig) {
   while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
 }
 
+void term(int signum)
+{   
+    if(signum == 15){
+        t_print("SIGTERM received!\n");
+    }
+    if(signum == 2){
+        t_print("SIGINT received!\n");
+    }
+    t_print("Stopping server...\n");
+    done = 1;
+}
+
 /* 
 * Main loop for the server.
 * Forks everytime a client connects 
 * and calls setup_session()
 */
-int start_server(int portno, char *usb) {
+void start_server(int portno, char *usb) {
     /* Initializing variables */
     //char *USB = "/dev/ttyACM0";
     int server_sockfd;          
@@ -124,12 +139,24 @@ int start_server(int portno, char *usb) {
        die(62,"ERROR opening socket\n");
     }
 
+    /* Registering the SIGINT handler */
+    struct sigaction sigint_action;
+    memset(&sigint_action, 0, sizeof(struct sigaction));
+    sigint_action.sa_handler = term;
+    sigaction(SIGINT, &sigint_action, NULL);
+
+    /* Registering the SIGTERM handler */
+    struct sigaction sigterm_action;
+    memset(&sigterm_action, 0, sizeof(struct sigaction));
+    sigterm_action.sa_handler = term;
+    sigaction(SIGTERM, &sigterm_action, NULL);
+
     /* Registering the SIGCHLD handler */
-    struct sigaction sa;
-    sa.sa_handler = &handle_sigchld;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
-    if (sigaction(SIGCHLD, &sa, 0) == -1) {
+    struct sigaction child_action;
+    child_action.sa_handler = &handle_sigchld;
+    sigemptyset(&child_action.sa_mask);
+    child_action.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    if (sigaction(SIGCHLD, &child_action, 0) == -1) {
       perror(0);
       exit(1);
     }
@@ -189,7 +216,7 @@ int start_server(int portno, char *usb) {
         connections[loop_counter] = '0';
     }
 
-    while (1) {
+    while (!done) {
         int session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
             if (errno==EINTR) continue;
@@ -206,9 +233,13 @@ int start_server(int portno, char *usb) {
             _exit(0);
         } else {
             free(message);
-            close(session_fd);
+            //close(session_fd);
         }
     }
+    //Exiting
+    free(message);
+    //close(session_fd);
+    t_print("Server STOPPED!\n");
 }
 
 int usage(char *argv[]){
