@@ -44,13 +44,14 @@ struct command_code{
 * cm: Command code. Used for quick comparison after commands
 * are parsed by command parser.
 */
+
 struct session_info{
-	int session_fd;								/* 4 B */
-	int client_id;								/* 4 B */
-	void *iobuffer; 							/* 8 B */
-	struct timeval heartbeat_timeout; 			/* 16 B */
-	char ip[INET_ADDRSTRLEN]; 					/* 16 B */
-	struct command_code cm;						/* 120 B */
+	int session_fd;					
+	int client_id;							
+	void *iobuffer; 							
+	struct timeval heartbeat_timeout; 		
+	char ip[INET_ADDRSTRLEN]; 					
+	struct command_code cm;					
 } __attribute__ ((packed));
 
 int s_read(struct session_info *s_info);

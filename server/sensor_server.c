@@ -6,8 +6,38 @@ static char *connections;
 static char *message;
 
 volatile sig_atomic_t done = 0;
+
+void handle_sigchld(int sig) {
+  while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
+}
+
+void main_terminate(int signum)
+{   
+    if(signum == 15){
+        t_print("[%d] SIGTERM received!\n", getpid());
+    }
+    if(signum == 2){
+        t_print("[%d] SIGINT received!\n", getpid());
+    }
+    t_print("Stopping server...\n");
+    done = 1;
+}
+
+void proc_terminate(int signum)
+{   
+    if(signum == 15){
+        t_print("[%d] SIGTERM received!\n", getpid());
+    }
+    if(signum == 2){
+        t_print("[%d] SIGINT received!\n", getpid());
+    }
+    done = 1;
+}
+
+
  
 int respond(struct session_info *s_info) {
+    /* READ is blocking */
     int read_status = s_read(s_info);
     if(read_status == -1){
         t_print("Read failed, disconnecting client\n");
@@ -16,6 +46,7 @@ int respond(struct session_info *s_info) {
         }
         return -1;
     }
+    t_print("Address of connections in PID: %d is: %d\n", getpid(), connections);
     int parse_status = parse_input(s_info);
 
     if(parse_status == -1){
@@ -61,6 +92,13 @@ int respond(struct session_info *s_info) {
 
 /* The session_info struct allocated on stack only */
 void setup_session(int session_fd) {
+
+    /* Registering the SIGINT handler */
+    struct sigaction sigint_action;
+    memset(&sigint_action, 0, sizeof(struct sigaction));
+    sigint_action.sa_handler = proc_terminate;
+    sigaction(SIGINT, &sigint_action, NULL);
+
     /* Initializing structure */
     struct session_info *s_info = malloc(sizeof(struct session_info)); 
         s_info->heartbeat_timeout.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
@@ -93,10 +131,9 @@ void setup_session(int session_fd) {
     /* 
     * Entering child process main loop 
     * Breaks (disconnects the client) if 
-    * respond == 0
+    * respond < 0
     */
-    while(1){
-        //ADD SIGTERM BEHAVIOUR HERE
+    while(!done){
         if(respond(s_info) < 0){
             break;
         }
@@ -106,21 +143,6 @@ void setup_session(int session_fd) {
     free(s_info);
 }
 
-void handle_sigchld(int sig) {
-  while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
-}
-
-void term(int signum)
-{   
-    if(signum == 15){
-        t_print("SIGTERM received!\n");
-    }
-    if(signum == 2){
-        t_print("SIGINT received!\n");
-    }
-    t_print("Stopping server...\n");
-    done = 1;
-}
 
 /* 
 * Main loop for the server.
@@ -142,13 +164,13 @@ void start_server(int portno, char *usb) {
     /* Registering the SIGINT handler */
     struct sigaction sigint_action;
     memset(&sigint_action, 0, sizeof(struct sigaction));
-    sigint_action.sa_handler = term;
+    sigint_action.sa_handler = main_terminate;
     sigaction(SIGINT, &sigint_action, NULL);
 
     /* Registering the SIGTERM handler */
     struct sigaction sigterm_action;
     memset(&sigterm_action, 0, sizeof(struct sigaction));
-    sigterm_action.sa_handler = term;
+    sigterm_action.sa_handler = main_terminate;
     sigaction(SIGTERM, &sigterm_action, NULL);
 
     /* Registering the SIGCHLD handler */
@@ -206,7 +228,7 @@ void start_server(int portno, char *usb) {
     }
     else
     {
-        connections = malloc(sizeof SERVER_MAX_CONNECTIONS*(sizeof(char)));
+        connections = malloc(SERVER_MAX_CONNECTIONS*(sizeof(char)));
         t_print("No serial display defined.\n");
     }
 
@@ -216,8 +238,11 @@ void start_server(int portno, char *usb) {
         connections[loop_counter] = '0';
     }
 
+    t_print("Address of connections in PID: %d is: %d\n", getpid(), connections);
+
+    int session_fd = 0;
     while (!done) {
-        int session_fd = accept(server_sockfd,0,0);
+        session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
             if (errno==EINTR) continue;
             die(90,"failed to accept connection (errno=%d)",errno);
@@ -228,18 +253,21 @@ void start_server(int portno, char *usb) {
         } else if (pid==0) {
             close(server_sockfd);
             setup_session(session_fd);
-            t_print("Closing up session (PID: %d)\n", getpid());
+            free(connections);
+            t_print("%d: Closing up session\n", getpid());
             close(session_fd);
             _exit(0);
         } else {
-            free(message);
-            //close(session_fd);
+            t_print("%d: Connection accepted\n", getpid());
+            close(session_fd);
         }
     }
-    //Exiting
-    free(message);
-    //close(session_fd);
-    t_print("Server STOPPED!\n");
+    if(usb != NULL){
+        free(message);
+    }
+    free(connections);
+    close(server_sockfd);
+    t_print("%d: Server STOPPED!\n", getpid());
 }
 
 int usage(char *argv[]){
@@ -288,7 +316,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    t_print("Sensor server starting...\n");
+    t_print("%d: Sensor server starting...\n", getpid());
     start_server(atoi(port_number), serial_display_path);
     exit(0);
 } 
