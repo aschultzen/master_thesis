@@ -1,7 +1,6 @@
 #ifndef NET_H
 #define NET_H
 
-//Strict C
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,35 +17,40 @@
 #include <arpa/inet.h>
 #include <sys/mman.h>
 
-// Mine
+/* My own header files */ 
 #include "utils.h"
 #include "protocol.h"
 
-/* MOVE TO DEFS.H?*/
 /* GENERAL */
-#define MAX_CONNECTIONS 10
-#define BUFFER_SIZE 512
+#define SERVER_MAX_CONNECTIONS 10
+#define SESSION_INFO_IO_BUFFER_SIZE 512
 #define CLIENT_MAX 10
 #define MONITOR_MAX 2
 #define CLIENT_TIMEOUT 5
 #define MONITOR_TIMEOUT 100
 #define DISPLAY_SIZE 8
-#define MAX_COMMAND_SIZE 20
-#define MAX_PARAMETER_SIZE 100
 
-struct comm{
-	int command_code;
+struct command_code{
+	int code;
 	char parameter[MAX_PARAMETER_SIZE];
 } __attribute__ ((packed));
 
-//Size 32 bytes
+/*
+* session_fd: The file descriptor for the session. 
+* client_id: The connected clients ID
+* iobuffer: A general purpose buffer for in and output
+* heartbeat_timeout: Number of seconds of inactivity before disconnect
+* ip: Clients IP Address.
+* cm: Command code. Used for quick comparison after commands
+* are parsed by command parser.
+*/
 struct session_info{
-	int session_fd;				/* 4 B */
-	int client_id;				/* 4 B */
-	void *iobuffer; 			/* 8 B */	// Deprecated?
-	struct timeval tv; 			/* 16 B */
-	char ip[INET_ADDRSTRLEN]; 	/* 16 B */
-	struct comm cm;				/* 120 B */
+	int session_fd;								/* 4 B */
+	int client_id;								/* 4 B */
+	void *iobuffer; 							/* 8 B */
+	struct timeval heartbeat_timeout; 			/* 16 B */
+	char ip[INET_ADDRSTRLEN]; 					/* 16 B */
+	struct command_code cm;						/* 120 B */
 } __attribute__ ((packed));
 
 int s_read(struct session_info *s_info);

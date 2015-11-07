@@ -1,7 +1,7 @@
 #include "net.h"
 
 int s_read(struct session_info *s_info) {
-    bzero(s_info->iobuffer,BUFFER_SIZE);
+    bzero(s_info->iobuffer,SESSION_INFO_IO_BUFFER_SIZE);
     return read(s_info->session_fd, s_info->iobuffer,255);
 }
 
@@ -27,19 +27,19 @@ int parse_input(struct session_info *s_info){
 	}
 
 	/* ZEROING */
-	bzero(&s_info->cm, sizeof(struct comm));
+	bzero(&s_info->cm, sizeof(struct command_code));
 
 	/* IDENTIFY */
-	if(strstr((char*)s_info->iobuffer, P_IDENTIFY ) == (s_info->iobuffer)){
-		int length = (strlen(s_info->iobuffer) - strlen(P_IDENTIFY) ) - 2; //2 = escape characters
-        memcpy(&s_info->cm.parameter, (char*)(s_info->iobuffer)+(strlen(P_IDENTIFY)*(sizeof(char))), length);
-        s_info->cm.command_code = C_IDENTIFY;
+	if(strstr((char*)s_info->iobuffer, PROTOCOL_IDENTIFY ) == (s_info->iobuffer)){
+		int length = (strlen(s_info->iobuffer) - strlen(PROTOCOL_IDENTIFY) ) - 2; //2 = escape characters
+        memcpy(&s_info->cm.parameter, (char*)(s_info->iobuffer)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
+        s_info->cm.code = CODE_IDENTIFY;
         return 1;
     }
 
     /* DISCONNECT */
-	if(strstr((char*)s_info->iobuffer, P_DISCONNECT ) == (s_info->iobuffer)){
-        s_info->cm.command_code = C_DISCONNECT;
+	if(strstr((char*)s_info->iobuffer, PROTOCOL_DISCONNECT ) == (s_info->iobuffer)){
+        s_info->cm.code = CODE_DISCONNECT;
         return 1;
     }
 
