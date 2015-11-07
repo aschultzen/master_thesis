@@ -2,8 +2,8 @@
 #include "serial.h"
 
 /* Declaration of shared memory variables */
-static char *connections;
-static char *message;
+static char *serial_display_connections;
+static char *serial_display_message;
 
 volatile sig_atomic_t done = 0;
 
@@ -42,11 +42,11 @@ int respond(struct session_info *s_info) {
     if(read_status == -1){
         t_print("Read failed, disconnecting client\n");
         if(s_info->client_id != -1){
-          connections[s_info->client_id] = '0';  
+          serial_display_connections[s_info->client_id] = '0';  
         }
         return -1;
     }
-    t_print("Address of connections in PID: %d is: %d\n", getpid(), connections);
+    t_print("Address of connections in PID: %d is: %d\n", getpid(), serial_display_connections);
     int parse_status = parse_input(s_info);
 
     if(parse_status == -1){
@@ -59,7 +59,7 @@ int respond(struct session_info *s_info) {
         if(s_info->cm.code == CODE_DISCONNECT){
             t_print("Client %d requested DISCONNECT.\n", s_info->client_id);
             s_write(s_info, PROTOCOL_OK, sizeof(PROTOCOL_OK));
-            connections[s_info->client_id] = '0';
+            serial_display_connections[s_info->client_id] = '0';
             return -1;
         }
         if(s_info->cm.code == CODE_IDENTIFY){
@@ -69,7 +69,7 @@ int respond(struct session_info *s_info) {
                 return 0;
             }
 
-            if(connections[id] == '1') {
+            if(serial_display_connections[id] == '1') {
                 s_info->client_id = -1;
                 s_write(s_info, "ID in use!\n", 11);
                 return 0;
@@ -77,7 +77,7 @@ int respond(struct session_info *s_info) {
 
             s_info->client_id = id;
             t_print("%s ID set to: %d\n",s_info->ip, s_info->client_id);
-            connections[s_info->client_id] = '1';
+            serial_display_connections[s_info->client_id] = '1';
             s_write(s_info, PROTOCOL_OK, sizeof(PROTOCOL_OK));
             return 0;
         }
@@ -149,11 +149,12 @@ void setup_session(int session_fd) {
 * Forks everytime a client connects 
 * and calls setup_session()
 */
-void start_server(int portno, char *usb) {
+void start_server(int port_number, char *serial_display_path) {
     /* Initializing variables */
-    //char *USB = "/dev/ttyACM0";
+    //char *serial_display_path = "/dev/ttyACM0";
     int server_sockfd;          
     struct sockaddr_in serv_addr;
+    pid_t process_table[MAX_CLIENTS];
 
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -186,11 +187,11 @@ void start_server(int portno, char *usb) {
     /* Initializing the server address struct:
     AF_INET = IPV4 Internet protocol
     INADDR_ANY = Accept connections to all IPs of the machine
-    htons(portno) = Endianess: network to host long(port number).*/
+    htons(port_number) = Endianess: network to host long(port number).*/
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(portno);
+    serv_addr.sin_port = htons(port_number);
 
     /* Assigns the address (serv_addr) to the socket
     referred to by server_sockfd. */
@@ -203,12 +204,12 @@ void start_server(int portno, char *usb) {
     listen(server_sockfd,SOMAXCONN);
 
     /* Forking out proc for serial com */
-    if(usb != NULL){
+    if(serial_display_path != NULL){
         /* Shared memory used for "IPC"*/
-        connections = mmap(NULL, sizeof SERVER_MAX_CONNECTIONS*(sizeof(char)), PROT_READ | PROT_WRITE, 
+        serial_display_connections = mmap(NULL, sizeof SERVER_MAX_CONNECTIONS*(sizeof(char)), PROT_READ | PROT_WRITE, 
                         MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-        message = mmap(NULL, sizeof DISPLAY_SIZE*(sizeof(char)), PROT_READ | PROT_WRITE, 
+        serial_display_message = mmap(NULL, sizeof DISPLAY_SIZE*(sizeof(char)), PROT_READ | PROT_WRITE, 
                         MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
         pid_t pid=fork();
@@ -216,29 +217,29 @@ void start_server(int portno, char *usb) {
             die(94, "failed to create child process (errno=%d)",errno);
         } else if (pid==0) {
             t_print("Serial COM started (PID: %d)\n", getpid());
-            open_serial(usb, connections);
+            open_serial(serial_display_path, serial_display_connections);
             t_print("Serial COM closed (PID: %d)\n", getpid());
             _exit(0);
         }
 
         int loop_counter;
         for(loop_counter = 0; loop_counter < DISPLAY_SIZE; loop_counter++){
-            message[loop_counter] = '0';
+            serial_display_message[loop_counter] = '0';
         }
     }
     else
     {
-        connections = malloc(SERVER_MAX_CONNECTIONS*(sizeof(char)));
+        serial_display_connections = malloc(SERVER_MAX_CONNECTIONS*(sizeof(char)));
         t_print("No serial display defined.\n");
     }
 
     /* Initializing connection table */
     int loop_counter;
         for(loop_counter = 0; loop_counter < SERVER_MAX_CONNECTIONS; loop_counter++){
-        connections[loop_counter] = '0';
+        serial_display_connections[loop_counter] = '0';
     }
 
-    t_print("Address of connections in PID: %d is: %d\n", getpid(), connections);
+    t_print("Address of serial_display_connections in PID: %d is: %d\n", getpid(), serial_display_connections);
 
     int session_fd = 0;
     while (!done) {
@@ -253,7 +254,7 @@ void start_server(int portno, char *usb) {
         } else if (pid==0) {
             close(server_sockfd);
             setup_session(session_fd);
-            free(connections);
+            free(serial_display_connections);
             t_print("%d: Closing up session\n", getpid());
             close(session_fd);
             _exit(0);
@@ -262,10 +263,10 @@ void start_server(int portno, char *usb) {
             close(session_fd);
         }
     }
-    if(usb != NULL){
-        free(message);
+    if(serial_display_path != NULL){
+        free(serial_display_message);
     }
-    free(connections);
+    free(serial_display_connections);
     close(server_sockfd);
     t_print("%d: Server STOPPED!\n", getpid());
 }
