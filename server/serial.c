@@ -1,5 +1,13 @@
 #include "serial.h"
 
+volatile sig_atomic_t serial_done = 0;
+
+void serial_handle_sig(int signum)
+{   
+    serial_done = 1;
+}
+
+
 int set_interface_attribs (int fd, int speed, int parity)
 {
         struct termios tty;
@@ -60,6 +68,18 @@ void set_blocking (int fd, int should_block)
 }
 
 void open_serial(char *portname, char *connections) {
+        /* Registering the SIGINT handler */
+        struct sigaction sigint_action;
+        memset(&sigint_action, 0, sizeof(struct sigaction));
+        sigint_action.sa_handler = serial_handle_sig;
+        sigaction(SIGINT, &sigint_action, NULL);
+
+        /* Registering the SIGTERM handler */
+        struct sigaction sigterm_action;
+        memset(&sigterm_action, 0, sizeof(struct sigaction));
+        sigterm_action.sa_handler = serial_handle_sig;
+        sigaction(SIGTERM, &sigterm_action, NULL);
+
         char in_buf [100];
         bzero(in_buf, 100*sizeof(char));
         int counter = 0;
@@ -80,7 +100,7 @@ void open_serial(char *portname, char *connections) {
 
         read (fd, in_buf, sizeof in_buf); 
 
-        while(1){
+        while(!serial_done){
                 counter = 0;
                 while(counter < 8){
                         if(connections[counter] != ref[counter]){

@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <features.h>
 #include <fcntl.h>
+#include <signal.h>
+
+//Mine
+#include "utils.h"
 
 void open_serial(char *portname, char *connections);
 
