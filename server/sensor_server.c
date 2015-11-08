@@ -11,7 +11,7 @@ void handle_sigchld(int sig) {
   while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
 }
 
-void main_terminate(int signum)
+void handle_sig(int signum)
 {   
     if(signum == 15){
         t_print("[%d] SIGTERM received!\n", getpid());
@@ -19,34 +19,19 @@ void main_terminate(int signum)
     if(signum == 2){
         t_print("[%d] SIGINT received!\n", getpid());
     }
-    t_print("Stopping server...\n");
+    t_print("%d: Stopping server...\n", getpid());
     done = 1;
 }
 
-void proc_terminate(int signum)
-{   
-    if(signum == 15){
-        t_print("[%d] SIGTERM received!\n", getpid());
-    }
-    if(signum == 2){
-        t_print("[%d] SIGINT received!\n", getpid());
-    }
-    done = 1;
-}
-
-
- 
 int respond(struct session_info *s_info) {
-    /* READ is blocking */
-    int read_status = s_read(s_info);
+    int read_status = s_read(s_info); /* Blocking */
     if(read_status == -1){
-        t_print("Read failed, disconnecting client\n");
+        t_print("Read failed or interrupted!\n");
         if(s_info->client_id != -1){
           serial_display_connections[s_info->client_id] = '0';  
         }
         return -1;
     }
-    t_print("Address of connections in PID: %d is: %d\n", getpid(), serial_display_connections);
     int parse_status = parse_input(s_info);
 
     if(parse_status == -1){
@@ -92,13 +77,6 @@ int respond(struct session_info *s_info) {
 
 /* The session_info struct allocated on stack only */
 void setup_session(int session_fd) {
-
-    /* Registering the SIGINT handler */
-    struct sigaction sigint_action;
-    memset(&sigint_action, 0, sizeof(struct sigaction));
-    sigint_action.sa_handler = proc_terminate;
-    sigaction(SIGINT, &sigint_action, NULL);
-
     /* Initializing structure */
     struct session_info *s_info = malloc(sizeof(struct session_info)); 
         s_info->heartbeat_timeout.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
@@ -165,13 +143,13 @@ void start_server(int port_number, char *serial_display_path) {
     /* Registering the SIGINT handler */
     struct sigaction sigint_action;
     memset(&sigint_action, 0, sizeof(struct sigaction));
-    sigint_action.sa_handler = main_terminate;
+    sigint_action.sa_handler = handle_sig;
     sigaction(SIGINT, &sigint_action, NULL);
 
     /* Registering the SIGTERM handler */
     struct sigaction sigterm_action;
     memset(&sigterm_action, 0, sizeof(struct sigaction));
-    sigterm_action.sa_handler = main_terminate;
+    sigterm_action.sa_handler = handle_sig;
     sigaction(SIGTERM, &sigterm_action, NULL);
 
     /* Registering the SIGCHLD handler */
@@ -184,17 +162,21 @@ void start_server(int port_number, char *serial_display_path) {
       exit(1);
     }
 
-    /* Initializing the server address struct:
-    AF_INET = IPV4 Internet protocol
-    INADDR_ANY = Accept connections to all IPs of the machine
-    htons(port_number) = Endianess: network to host long(port number).*/
+    /* 
+    * Initializing the server address struct:
+    * AF_INET = IPV4 Internet protocol
+    * INADDR_ANY = Accept connections to all IPs of the machine
+    * htons(port_number) = Endianess: network to host long(port number).
+    */
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(port_number);
 
-    /* Assigns the address (serv_addr) to the socket
-    referred to by server_sockfd. */
+    /* 
+    * Assigns the address (serv_addr) to the socket
+    * referred to by server_sockfd. 
+    */
     if (bind(server_sockfd, (struct sockaddr *) &serv_addr,
              sizeof(serv_addr)) < 0){
         die(80,"ERROR on binding");
@@ -239,8 +221,6 @@ void start_server(int port_number, char *serial_display_path) {
         serial_display_connections[loop_counter] = '0';
     }
 
-    t_print("Address of serial_display_connections in PID: %d is: %d\n", getpid(), serial_display_connections);
-
     int session_fd = 0;
     while (!done) {
         session_fd = accept(server_sockfd,0,0);
@@ -254,7 +234,6 @@ void start_server(int port_number, char *serial_display_path) {
         } else if (pid==0) {
             close(server_sockfd);
             setup_session(session_fd);
-            free(serial_display_connections);
             t_print("%d: Closing up session\n", getpid());
             close(session_fd);
             _exit(0);
@@ -263,10 +242,9 @@ void start_server(int port_number, char *serial_display_path) {
             close(session_fd);
         }
     }
-    if(serial_display_path != NULL){
-        free(serial_display_message);
+    if(serial_display_path == NULL){
+        free(serial_display_connections);
     }
-    free(serial_display_connections);
     close(server_sockfd);
     t_print("%d: Server STOPPED!\n", getpid());
 }
