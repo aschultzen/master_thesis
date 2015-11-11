@@ -7,49 +7,53 @@ static char *serial_display_message;
 
 volatile sig_atomic_t done = 0;
 
-void handle_sigchld(int sig) {
-  while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
+void handle_sigchld(int sig)
+{
+    while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
 }
 
 void handle_sig(int signum)
-{   
-    if(signum == 15){
+{
+    if(signum == 15) {
         t_print("[%d] SIGTERM received!\n", getpid());
     }
-    if(signum == 2){
+    if(signum == 2) {
         t_print("[%d] SIGINT received!\n", getpid());
     }
     t_print("%d: Stopping server...\n", getpid());
     done = 1;
 }
 
-int respond(struct session_info *s_info) {
+int respond(struct session_info *s_info)
+{
     int read_status = s_read(s_info); /* Blocking */
-    if(read_status == -1){
+    if(read_status == -1) {
         t_print("Read failed or interrupted!\n");
-        if(s_info->client_id != -1){
-          serial_display_connections[s_info->client_id] = '0';  
+        if(s_info->client_id != -1) {
+            serial_display_connections[s_info->client_id] = '0';
         }
         return -1;
     }
     int parse_status = parse_input(s_info);
 
-    if(parse_status == -1){
-        s_write(s_info, ERROR_ILLEGAL_MESSAGE_SIZE, sizeof(ERROR_ILLEGAL_MESSAGE_SIZE));
+    if(parse_status == -1) {
+        s_write(s_info, ERROR_ILLEGAL_MESSAGE_SIZE, 
+            sizeof(ERROR_ILLEGAL_MESSAGE_SIZE));
     }
-    if(parse_status == 0){
-        s_write(s_info, ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
+    if(parse_status == 0) {
+        s_write(s_info, ERROR_ILLEGAL_COMMAND, 
+            sizeof(ERROR_ILLEGAL_COMMAND));
     }
-    if(parse_status == 1){
-        if(s_info->cm.code == CODE_DISCONNECT){
+    if(parse_status == 1) {
+        if(s_info->cm.code == CODE_DISCONNECT) {
             t_print("Client %d requested DISCONNECT.\n", s_info->client_id);
             s_write(s_info, PROTOCOL_OK, sizeof(PROTOCOL_OK));
             serial_display_connections[s_info->client_id] = '0';
             return -1;
         }
-        if(s_info->cm.code == CODE_IDENTIFY){
+        if(s_info->cm.code == CODE_IDENTIFY) {
             int id = 0;
-            if(sscanf(s_info->cm.parameter, "%d", &id) == -1){
+            if(sscanf(s_info->cm.parameter, "%d", &id) == -1) {
                 s_write(s_info, ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
                 return 0;
             }
@@ -58,7 +62,7 @@ int respond(struct session_info *s_info) {
                 s_info->client_id = -1;
                 s_write(s_info, "ID in use!\n", 11);
                 return 0;
-            }   
+            }
 
             s_info->client_id = id;
             t_print("%s ID set to: %d\n",s_info->ip, s_info->client_id);
@@ -67,52 +71,55 @@ int respond(struct session_info *s_info) {
             return 0;
         }
 
-        if(s_info->client_id < 0){
+        if(s_info->client_id < 0) {
             s_write(s_info, ERROR_NO_ID, sizeof(ERROR_NO_ID));
-            return 0;  
+            return 0;
         }
     }
     return 0;
 }
 
 /* The session_info struct allocated on stack only */
-void setup_session(int session_fd) {
+void setup_session(int session_fd)
+{
     /* Initializing structure */
-    struct session_info *s_info = malloc(sizeof(struct session_info)); 
-        s_info->heartbeat_timeout.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
-        s_info->heartbeat_timeout.tv_usec = 0;
-        s_info->client_id = -1;
-        s_info->session_fd = session_fd;
-        s_info->iobuffer = calloc (SESSION_INFO_IO_BUFFER_SIZE, sizeof(void*));
-        if(s_info->iobuffer == NULL){
-            die(21, "Memory allocation failed!");
-        }
+    struct session_info *s_info = malloc(sizeof(struct session_info));
+    s_info->heartbeat_timeout.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
+    s_info->heartbeat_timeout.tv_usec = 0;
+    s_info->client_id = -1;
+    s_info->session_fd = session_fd;
+    s_info->iobuffer = calloc (SESSION_INFO_IO_BUFFER_SIZE, sizeof(void*));
+    if(s_info->iobuffer == NULL) {
+        die(21, "Memory allocation failed!");
+    }
 
     /* Setting socket timeout to default value */
     /* This doesn't always work for some reason, race condition? :/ */
-     if (setsockopt (s_info->session_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&s_info->heartbeat_timeout, sizeof(struct timeval)) < 0)
+    if (setsockopt (s_info->session_fd, SOL_SOCKET, 
+        SO_RCVTIMEO, (char *)&s_info->heartbeat_timeout, sizeof(struct timeval)) < 0) {
         die(36,"setsockopt failed\n");
+    }
 
-    /* 
-    * Fetching clients IP address and 
+    /*
+    * Fetching clients IP address and
     * storing it in s_info
     */
     struct sockaddr addr;
     addr.sa_family = AF_INET;
     socklen_t addr_len = sizeof(addr);
-    if(getpeername(session_fd, (struct sockaddr *) &addr, &addr_len)){
+    if(getpeername(session_fd, (struct sockaddr *) &addr, &addr_len)) {
         die(93,"getsocketname failed\n");
     }
     get_ip_str(&addr, s_info->ip,addr_len);
     t_print("Client connected from: %s\n", s_info->ip); // prints "192.0.2.33"
 
-    /* 
-    * Entering child process main loop 
-    * Breaks (disconnects the client) if 
+    /*
+    * Entering child process main loop
+    * Breaks (disconnects the client) if
     * respond < 0
     */
-    while(!done){
-        if(respond(s_info) < 0){
+    while(!done) {
+        if(respond(s_info) < 0) {
             break;
         }
     }
@@ -122,22 +129,23 @@ void setup_session(int session_fd) {
 }
 
 
-/* 
+/*
 * Main loop for the server.
-* Forks everytime a client connects 
+* Forks everytime a client connects
 * and calls setup_session()
 */
-void start_server(int port_number, char *serial_display_path) {
+void start_server(int port_number, char *serial_display_path)
+{
     /* Initializing variables */
     //char *serial_display_path = "/dev/ttyACM0";
-    int server_sockfd;          
+    int server_sockfd;
     struct sockaddr_in serv_addr;
     pid_t process_table[MAX_CLIENTS];
 
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_sockfd < 0){
-       die(62,"ERROR opening socket\n");
+    if (server_sockfd < 0) {
+        die(62,"ERROR opening socket\n");
     }
 
     /* Registering the SIGINT handler */
@@ -158,11 +166,11 @@ void start_server(int port_number, char *serial_display_path) {
     sigemptyset(&child_action.sa_mask);
     child_action.sa_flags = SA_RESTART | SA_NOCLDSTOP;
     if (sigaction(SIGCHLD, &child_action, 0) == -1) {
-      perror(0);
-      exit(1);
+        perror(0);
+        exit(1);
     }
 
-    /* 
+    /*
     * Initializing the server address struct:
     * AF_INET = IPV4 Internet protocol
     * INADDR_ANY = Accept connections to all IPs of the machine
@@ -173,26 +181,28 @@ void start_server(int port_number, char *serial_display_path) {
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(port_number);
 
-    /* 
+    /*
     * Assigns the address (serv_addr) to the socket
-    * referred to by server_sockfd. 
+    * referred to by server_sockfd.
     */
     if (bind(server_sockfd, (struct sockaddr *) &serv_addr,
-             sizeof(serv_addr)) < 0){
+             sizeof(serv_addr)) < 0) {
         die(80,"ERROR on binding");
-    } 
+    }
 
     /* Marking the connection for listening*/
     listen(server_sockfd,SOMAXCONN);
 
     /* Forking out proc for serial com */
-    if(serial_display_path != NULL){
+    if(serial_display_path != NULL) {
         /* Shared memory used for "IPC"*/
-        serial_display_connections = mmap(NULL, sizeof SERVER_MAX_CONNECTIONS*(sizeof(char)), PROT_READ | PROT_WRITE, 
-                        MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        serial_display_connections = mmap(NULL, 
+            sizeof SERVER_MAX_CONNECTIONS*(sizeof(char)), PROT_READ | PROT_WRITE,
+            MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-        serial_display_message = mmap(NULL, sizeof DISPLAY_SIZE*(sizeof(char)), PROT_READ | PROT_WRITE, 
-                        MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        serial_display_message = mmap(NULL, 
+            sizeof DISPLAY_SIZE*(sizeof(char)), PROT_READ | PROT_WRITE,
+             MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
         pid_t pid=fork();
         if (pid==-1) {
@@ -205,19 +215,17 @@ void start_server(int port_number, char *serial_display_path) {
         }
 
         int loop_counter;
-        for(loop_counter = 0; loop_counter < DISPLAY_SIZE; loop_counter++){
+        for(loop_counter = 0; loop_counter < DISPLAY_SIZE; loop_counter++) {
             serial_display_message[loop_counter] = '0';
         }
-    }
-    else
-    {
+    } else {
         serial_display_connections = malloc(SERVER_MAX_CONNECTIONS*(sizeof(char)));
         t_print("No serial display defined.\n");
     }
 
     /* Initializing connection table */
     int loop_counter;
-        for(loop_counter = 0; loop_counter < SERVER_MAX_CONNECTIONS; loop_counter++){
+    for(loop_counter = 0; loop_counter < SERVER_MAX_CONNECTIONS; loop_counter++) {
         serial_display_connections[loop_counter] = '0';
     }
 
@@ -242,15 +250,16 @@ void start_server(int port_number, char *serial_display_path) {
             close(session_fd);
         }
     }
-    if(serial_display_path == NULL){
+    if(serial_display_path == NULL) {
         free(serial_display_connections);
     }
     close(server_sockfd);
     t_print("%d: Server STOPPED!\n", getpid());
 }
 
-int usage(char *argv[]){
-    char description[] ={"Required argument:\n\t -p <PORT NUMBER>\n\nOptional:\n\t -s <PATH TO SERIAL DISPLAY>\n"}; 
+int usage(char *argv[])
+{
+    char description[] = {"Required argument:\n\t -p <PORT NUMBER>\n\nOptional:\n\t -s <PATH TO SERIAL DISPLAY>\n"};
     printf("Usage: %s [ARGS]\n\n", argv[0]);
     printf("Sensor_server: Server part of GPS Jamming/Spoofing system\n\n");
     printf("%s\n", description);
@@ -263,9 +272,9 @@ int main(int argc, char *argv[])
     char *port_number = NULL;
 
     /* getopt silent mode set */
-    opterr = 0; 
+    opterr = 0;
 
-    if(argc < 3){
+    if(argc < 3) {
         usage(argv);
         return 0;
     }
@@ -284,13 +293,13 @@ int main(int argc, char *argv[])
             break;
         }
     }
-    
-    if(port_number == NULL){
+
+    if(port_number == NULL) {
         printf("Missing parameters!\n");
     }
 
-    if(argc == 5){
-        if(argv[3][1] == 's'){
+    if(argc == 5) {
+        if(argv[3][1] == 's') {
             serial_display_path = argv[4];
         }
     }
@@ -298,4 +307,4 @@ int main(int argc, char *argv[])
     t_print("%d: Sensor server starting...\n", getpid());
     start_server(atoi(port_number), serial_display_path);
     exit(0);
-} 
+}
