@@ -1,3 +1,10 @@
+/*
+To do:
+
+    Dont use the serial_display_connections unless serial is used <- find a structure
+
+*/
+
 #include "sensor_server.h"
 #include "serial.h"
 
@@ -7,11 +14,13 @@ static char *serial_display_message;
 
 volatile sig_atomic_t done = 0;
 
+/* SIGCHLD Handler */
 void handle_sigchld(int sig)
 {
     while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
 }
 
+/* SIGTERM/INT Hanlder */
 void handle_sig(int signum)
 {
     if(signum == 15) {
@@ -140,7 +149,6 @@ void start_server(int port_number, char *serial_display_path)
     //char *serial_display_path = "/dev/ttyACM0";
     int server_sockfd;
     struct sockaddr_in serv_addr;
-    pid_t process_table[MAX_CLIENTS];
 
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);

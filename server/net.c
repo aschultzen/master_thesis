@@ -11,10 +11,25 @@ int s_write(struct session_info *s_info, char *message, int length)
     return write(s_info->session_fd, message, length);
 }
 
+int protocol_send(struct session_info *s_info, char *message)
+{
+    return s_write(s_info, message, sizeof(message));
+}
+
+
+
 /*
-* This function might be better placed somewhere else than in net.c!
+* Note: This function might be better placed somewhere else than in net.c!
 *
-* Parses input
+* Explanation:
+* ------------
+* Parses input from clients over IP network. Return value indicates status.
+* Uses the command_code struct to convey parameter and command code. 
+* The purpose of the parser was to make the server/client code less
+* cluttered and to make future protocol implementations easier. 
+* 
+* Return values:
+* ------------  
 * Returns -1 if size is wrong
 * Returns 0 if protocol is not followed
 * Returns 1 if all is ok

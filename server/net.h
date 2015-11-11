@@ -30,6 +30,12 @@
 #define MONITOR_TIMEOUT 100
 #define DISPLAY_SIZE 8
 
+/*
+* command_code struct is used by the parser
+* to convey an easy to compare command code, as well
+* as any parameter belonging to that command
+*/ 
+
 struct command_code{
 	int code;
 	char parameter[MAX_PARAMETER_SIZE];
@@ -57,6 +63,6 @@ struct session_info{
 int s_read(struct session_info *s_info);
 int s_write(struct session_info *s_info, char *message, int length);
 int parse_input(struct session_info *s_info);
-
+int protocol_send(struct session_info *s_info, char *message);
 
 #endif /* !NET_H */

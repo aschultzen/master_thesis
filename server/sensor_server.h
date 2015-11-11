@@ -7,4 +7,9 @@
 #include "net.h"
 #include "utils.h"
 
+struct client_table_entry{ 
+	int id;
+	pid_t pid;
+} __attribute__ ((packed));
+
 #endif /* !SENSOR_SERVER_H */

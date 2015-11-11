@@ -1,4 +1,4 @@
-SERVER_OBJS = sensor_server.o net.o utils.o serial.o
+SERVER_OBJS = sensor_server.o net.o utils.o serial.o linked_list.o
 CLIENT_OBJS = sensor_client.o net.o utils.o 
 
 CC = gcc
@@ -23,6 +23,9 @@ sensor_client.o : sensor_client.h sensor_client.c
 
 net.o : net.h utils.h net.c 
 	$(CC) $(CFLAGS) net.c
+
+linked_list.o : linked_list.h utils.h linked_list.c 
+	$(CC) $(CFLAGS) linked_list.c
 
 utils.o : utils.h utils.c
 	$(CC) $(CFLAGS) utils.c
