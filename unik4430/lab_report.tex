@@ -49,7 +49,7 @@ To gain an intuitive and visual understanding (of what?)
 \begin{itemize}
   \item Pendulum CNT-91, Frequency counter
   \item Rohde \& Scwarz 300AM, signal generator
-  \item Oscilloscope
+  \item Tektronix MD0-4000-6 Oscilloscope
   \item Stopwatch, generic
   \item CSAC, oscillator to measure
   \item Passive Hydrogen maser, frequency reference
@@ -64,8 +64,12 @@ To gain an intuitive and visual understanding (of what?)
   \subfloat[Oscilloscope capture 14:10:48]{\includegraphics[width=0.5\textwidth]{del_A_kjapp_CSAC2.png}\label{fig:f2}}
   \caption{Oscilloscope captures}
 \end{figure}
-Figure \ref{fig:f1} and \ref{fig:f2} is two screen shots taken from the oscilloscope. The yellow line is the Passive hydrogen maser, the blue is the CSAC. The oscilloscope is triggering on the input from the CSAC. The two images shows the yellow line moving towards the right, indicating that the CSAC is a bit fast. When set to trigger on the maser instead, the effect is reversed, the blue line moves towards the left. 
+Figure \ref{fig:f1} and \ref{fig:f2} is two screen shots taken from the oscilloscope. The yellow line is the Passive hydrogen maser, the blue is the CSAC. The oscilloscope is triggering on the input from the CSAC. 
 
+\subsection{Observations}
+The two images shows the yellow line moving towards the right, indicating that the CSAC is a bit fast. When set to trigger on the maser instead, the effect is reversed, the blue line moves towards the left. 
+
+\subsection{Measuring relative frequency error}
 The period for each of the signals are 100 ns. By measuring the time it took for the two signals to go from being in phase once to twice (in phase, out of phase, in phase again), a relative frequency error can be calculated:
 
 \begin{displaymath}
@@ -74,9 +78,26 @@ The period for each of the signals are 100 ns. By measuring the time it took for
 \newline
 It's worth noting that the phase-in-out-in time was measured using my wristwatch and that the accuracy of the measurement was anything but accurate. This is not a problem since the oscillators where measured with extremely high resolution.
 The same principle applies to the oscilloscope concerning its lack of external frequency reference.   
+\newpage
 
-\section{Part 2: Frequency counting: Resolution and trigger noise}
+\section{Part 2: Frequency counting: Resolution and trigger noise: BTB}
 The setup was reconfigured:
+\begin{center}
 \includegraphics[width=1 \textwidth]{lab_report_diagram_del2.pdf}
+\end{center}
 The signal generator now measures the maser (on input A) and uses it as reference. TimeView was then used to measure the frequency  on input A, doing 200 samples and 1 s interval.
+
+\subsection{Observations}
+\subsubsection{Trigger resolution}
+According to the User Manual for the CNT 9x Series, the resolution for Period A,B Back-to-Back is 50 ps rms. This should be evident when comparing the Allan Deviation at 1 s. PS! Jeg får ikke mine notater og data fra lab til å svinge helt. Spør Harald!
+
+\subsubsection{Types of noise}
+Igjen, prat med Harald. TimeLab og notatene er ikke like. Gjort noe feil?
+
+\subsubsection{Trigger level}
+When raising the trigger level from 0 V to 1.2 V, more noise is introduced. This is because the slope of the signal is steeper at 0 V than at 1.2 V. The lower slope results in a less accurate trigging. 
+
+\section{Part 2: Frequency counting: Resolution and trigger noise: TIE}
+Her veit jeg ikke hvordan jeg skal sette opp timelab for at det skal gi mening. 
+
 \end{document}                     
