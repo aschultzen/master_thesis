@@ -117,7 +117,15 @@ According to the User Manual for the CNT 9x Series, the resolution for Period A,
 When raising the trigger level from 0 V to 1.2 V, more noise is introduced. This is because the slope of the signal is steeper at 0 V than at 1.2 V (closer to the middle of the sine wave) This means the signal is passing the hysteresis window at lower speed. The lower slope results in a less accurate trigging. In a really noisy signal, the signal can pass the hysteresis window more than once, thus generating erroneous counts (see figure \ref{fig:hysteresis}). 
 
 \section{Part 2: Frequency counting: Resolution and trigger noise: TIE}
-One of the advantages of the Modified Allan Deviation relative to regular Allan variance, is the ability to separate white phase noise from flicker noise. As we saw earlier, the dominating noise introduced by our frequency counter, was white noise. This noise is possible to reduce by calculating a running average as shown by the blue line in figure \ref{fig:PHM_10MHz_allan_dev}. The pink line is drawn from the same data but without the averaging technique. When observing the Modified Allan Deviance (as shown in figure \ref{fig:PHM_10MHz_allan_dev}), it becomes apparent that the averaging has removed the white noise that earlier dominated. The flicker noise however, is still there as shown clearly at the 1 second mark. 
+One of the advantages of the Modified Allan Deviation relative to regular Allan variance, is the ability to separate white phase noise from flicker noise. As we saw earlier, the dominating noise introduced by our frequency counter, was white noise. This noise is possible to reduce by calculating a running average as shown by the blue line in figure \ref{fig:PHM_10MHz_allan_dev}. The pink line is drawn from the same data but without the averaging technique. When observing the Modified Allan Deviance (as shown in figure \ref{fig:PHM_10MHz_mod_allan_dev}), it becomes apparent that the averaging has removed the white noise that earlier dominated. The flicker noise however, is still there as clearly shown at the 1 second mark. 
+
+\begin{figure}[!htb]
+  \centering
+  \subfloat[Cut out of screen shot showing the frequency difference for the measurement.]{\includegraphics[width=0.5\textwidth]{tie_10mhz_phm_1ms_freq_diff_utklipp.png}\label{fig:freq_diff1}}
+  \hfill
+  \subfloat[Same cut out, but for the smoothed measurements. This measurement is clearly better.]{\includegraphics[width=0.5\textwidth]{tie_10mhz_phm_1ms_smooth_freq_diff_utklipp.png}\label{fig:freq_diff2}}
+\end{figure}
+As figure \ref{fig:freq_diff1} and \ref{fig:freq_diff2} shows, using an averaging technique when conducting measurements is obviously effective.
 
 \begin{figure}[!htb]
   \caption{TIE 10MHz PHM 1 ms sample time Allan Deviance.}
@@ -127,10 +135,10 @@ One of the advantages of the Modified Allan Deviation relative to regular Allan 
 \end{figure}
 
 \begin{figure}[!htb]
-  \caption{TIE 10MHz PHM 1 ms sample time Allan Deviance.}
+  \caption{TIE 10MHz PHM 1 ms sample time Modified Allan Deviance.}
   \centering
     \includegraphics[width=1\textwidth]{tie_10mhz_phm_1ms_modified_allan.png}
-    \label{fig:PHM_10MHz_allan_dev}
+    \label{fig:PHM_10MHz_mod_allan_dev}
 \end{figure}
 
 
