@@ -19,6 +19,9 @@
 \usepackage{enumitem}
 \usepackage{amsmath}
 
+\usepackage{setspace}
+\onehalfspacing
+
 \usepackage[
     backend=biber,
     style=numeric
@@ -42,8 +45,6 @@
 \begin{document}
 \maketitle
 \includegraphics[width=1 \textwidth]{lab_report_diagram.pdf}
-\section{Objective}
-To gain an intuitive and visual understanding (of what?)
 
 \section{Equipment}
 \begin{itemize}
@@ -89,29 +90,49 @@ The frequency counter now measures the maser (on input A) and uses it as referen
 
 \subsection{Observations}
 \subsubsection{Trigger resolution}
-According to the User Manual for the CNT 9x Series, the resolution for Period A,B Back-to-Back is 50 ps rms. By observing the Alla deviation for the measurement (\ref{fig:allan_dev1}) the same can be observed.
+According to the User Manual for the CNT 9x Series, the resolution for Period A,B Back-to-Back is 50 ps rms. By observing the Allan deviation for the measurement (\ref{fig:allan_dev1}) the same can be observed: At the 1 second mark, the Allan Deviation is 8.23E-11 (around 82,3 ps) which seems about right considering start and stop at 50 ps (each) rms. Considering the slope, we are dealing with white phase and flicker noise (-1 slope). When studying the Modified Allan deviation for the same data (\ref{fig:mod_allan_dev1}), it becomes clear that the dominant type of noise is white noise (-3/2 slope).
 
-\begin{figure}[!htb]
+\begin{figure}[]
   \caption{Allan deviation for 200 samples at 1 s sample rate of 10MHz from the Passive Hydrogen maser.}
   \centering
     \includegraphics[width=1\textwidth]{phm10mhz1s_allan.png}
     \label{fig:allan_dev1}
 \end{figure}
-At the 1 second mark, the Allan Deviation is 8.23E-11 (around 82,3 ps) which seems about right considering start and stop at 50 ps (each) rms. 
 
-\begin{figure}[!htb]
+\begin{figure}[]
   \caption{Modified Allan deviation for 200 samples at 1 s sample rate of 10MHz from the Passive Hydrogen maser.}
   \centering
     \includegraphics[width=1\textwidth]{phm10mhz1s_modified_allan.png}
     \label{fig:mod_allan_dev1}
 \end{figure}
-When observing the Modified Allan deviation for the same data (\ref{fig:mod_allan_dev1}), it becomes clear that the dominant type of noise is flicker noise (-1 slope).
 
 \newpage
 \subsubsection{Trigger level}
-When raising the trigger level from 0 V to 1.2 V, more noise is introduced. This is because the slope of the signal is steeper at 0 V than at 1.2 V. The lower slope results in a less accurate trigging. 
+\begin{wrapfigure}{c}{0.45\textwidth}
+  \centering
+  \includegraphics[width=0.40\textwidth]{hysteresis.pdf}
+  \caption{Trigger counting multiple times as noise passes the hysteresis window}
+    \label{fig:hysteresis}
+\end{wrapfigure}
+When raising the trigger level from 0 V to 1.2 V, more noise is introduced. This is because the slope of the signal is steeper at 0 V than at 1.2 V (closer to the middle of the sine wave) This means the signal is passing the hysteresis window at lower speed. The lower slope results in a less accurate trigging. In a really noisy signal, the signal can pass the hysteresis window more than once, thus generating erroneous counts (see figure \ref{fig:hysteresis}). 
 
 \section{Part 2: Frequency counting: Resolution and trigger noise: TIE}
+One of the advantages of the Modified Allan Deviation relative to regular Allan variance, is the ability to separate white phase noise from flicker noise. As we saw earlier, the dominating noise introduced by our frequency counter, was white noise. This noise is possible to reduce by calculating a running average as shown by the blue line in figure \ref{fig:PHM_10MHz_allan_dev}. The pink line is drawn from the same data but without the averaging technique. When observing the Modified Allan Deviance (as shown in figure \ref{fig:PHM_10MHz_allan_dev}), it becomes apparent that the averaging has removed the white noise that earlier dominated. The flicker noise however, is still there as shown clearly at the 1 second mark. 
+
+\begin{figure}[!htb]
+  \caption{TIE 10MHz PHM 1 ms sample time Allan Deviance.}
+  \centering
+    \includegraphics[width=1\textwidth]{tie_10mhz_phm_1ms_allan.png}
+    \label{fig:PHM_10MHz_allan_dev}
+\end{figure}
+
+\begin{figure}[!htb]
+  \caption{TIE 10MHz PHM 1 ms sample time Allan Deviance.}
+  \centering
+    \includegraphics[width=1\textwidth]{tie_10mhz_phm_1ms_modified_allan.png}
+    \label{fig:PHM_10MHz_allan_dev}
+\end{figure}
+
 
 
 \end{document}                     
