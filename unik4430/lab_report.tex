@@ -85,19 +85,33 @@ The setup was reconfigured:
 \begin{center}
 \includegraphics[width=1 \textwidth]{lab_report_diagram_del2.pdf}
 \end{center}
-The signal generator now measures the maser (on input A) and uses it as reference. TimeView was then used to measure the frequency  on input A, doing 200 samples and 1 s interval.
+The frequency counter now measures the maser (on input A) and uses it as reference. TimeView was then used to measure the frequency on input A, doing 200 samples with 1 s interval.
 
 \subsection{Observations}
 \subsubsection{Trigger resolution}
-According to the User Manual for the CNT 9x Series, the resolution for Period A,B Back-to-Back is 50 ps rms. This should be evident when comparing the Allan Deviation at 1 s. PS! Jeg får ikke mine notater og data fra lab til å svinge helt. Spør Harald!
+According to the User Manual for the CNT 9x Series, the resolution for Period A,B Back-to-Back is 50 ps rms. By observing the Alla deviation for the measurement (\ref{fig:allan_dev1}) the same can be observed.
 
-\subsubsection{Types of noise}
-Igjen, prat med Harald. TimeLab og notatene er ikke like. Gjort noe feil?
+\begin{figure}[!htb]
+  \caption{Allan deviation for 200 samples at 1 s sample rate of 10MHz from the Passive Hydrogen maser.}
+  \centering
+    \includegraphics[width=1\textwidth]{phm10mhz1s_allan.png}
+    \label{fig:allan_dev1}
+\end{figure}
+At the 1 second mark, the Allan Deviation is 8.23E-11 (around 82,3 ps) which seems about right considering start and stop at 50 ps (each) rms. 
 
+\begin{figure}[!htb]
+  \caption{Modified Allan deviation for 200 samples at 1 s sample rate of 10MHz from the Passive Hydrogen maser.}
+  \centering
+    \includegraphics[width=1\textwidth]{phm10mhz1s_modified_allan.png}
+    \label{fig:mod_allan_dev1}
+\end{figure}
+When observing the Modified Allan deviation for the same data (\ref{fig:mod_allan_dev1}), it becomes clear that the dominant type of noise is flicker noise (-1 slope).
+
+\newpage
 \subsubsection{Trigger level}
 When raising the trigger level from 0 V to 1.2 V, more noise is introduced. This is because the slope of the signal is steeper at 0 V than at 1.2 V. The lower slope results in a less accurate trigging. 
 
 \section{Part 2: Frequency counting: Resolution and trigger noise: TIE}
-Her veit jeg ikke hvordan jeg skal sette opp timelab for at det skal gi mening. 
+
 
 \end{document}                     
