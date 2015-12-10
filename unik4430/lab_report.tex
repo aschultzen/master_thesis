@@ -117,7 +117,7 @@ According to the User Manual for the CNT 9x Series, the resolution for Period A,
 When raising the trigger level from 0 V to 1.2 V, more noise is introduced. This is because the slope of the signal is steeper at 0 V than at 1.2 V (closer to the middle of the sine wave) This means the signal is passing the hysteresis window at lower speed. The lower slope results in a less accurate trigging. In a really noisy signal, the signal can pass the hysteresis window more than once, thus generating erroneous counts (see figure \ref{fig:hysteresis}). 
 
 \section{Part 2: Frequency counting: Resolution and trigger noise: TIE}
-One of the advantages of the Modified Allan Deviation relative to regular Allan variance, is the ability to separate white phase noise from flicker noise. As we saw earlier, the dominating noise introduced by our frequency counter, was white noise. This noise is possible to reduce by calculating a running average as shown by the blue line in figure \ref{fig:PHM_10MHz_allan_dev}. The pink line is drawn from the same data but without the averaging technique. When observing the Modified Allan Deviance (as shown in figure \ref{fig:PHM_10MHz_mod_allan_dev}), it becomes apparent that the averaging has removed the white noise that earlier dominated. The flicker noise however, is still there as clearly shown at the 1 second mark. 
+One of the advantages of the Modified Allan Deviation relative to regular Allan variance, is the ability to separate white phase noise from flicker noise. As we saw earlier, the dominating noise introduced by our frequency counter, was white noise. This noise is possible to reduce by calculating a running average as shown by the blue line in figure \ref{fig:PHM_10MHz_allan_dev}. The pink line is drawn from the same data but without the averaging technique. When observing the Modified Allan Deviance (as shown in figure \ref{fig:PHM_10MHz_mod_allan_dev}), it becomes apparent that the averaging has removed some of the white noise that earlier dominated. The flicker noise however, is still there as clearly shown at the 1 second mark. 
 
 \begin{figure}[!htb]
   \centering
@@ -125,22 +125,61 @@ One of the advantages of the Modified Allan Deviation relative to regular Allan 
   \hfill
   \subfloat[Same cut out, but for the smoothed measurements. This measurement is clearly better.]{\includegraphics[width=0.5\textwidth]{tie_10mhz_phm_1ms_smooth_freq_diff_utklipp.png}\label{fig:freq_diff2}}
 \end{figure}
-As figure \ref{fig:freq_diff1} and \ref{fig:freq_diff2} shows, using an averaging technique when conducting measurements is obviously effective.
+As figure \ref{fig:freq_diff1} and \ref{fig:freq_diff2} shows, using an averaging technique when conducting measurements is obviously effective against white phase noise.
 
 \begin{figure}[!htb]
-  \caption{TIE 10MHz PHM 1 ms sample time Allan Deviance.}
+  \caption{TIE 10MHz PHM 1 ms sample rate Allan Deviation.}
   \centering
     \includegraphics[width=1\textwidth]{tie_10mhz_phm_1ms_allan.png}
     \label{fig:PHM_10MHz_allan_dev}
 \end{figure}
 
 \begin{figure}[!htb]
-  \caption{TIE 10MHz PHM 1 ms sample time Modified Allan Deviance.}
+  \caption{TIE 10MHz PHM 1 ms sample rate Modified Allan Deviation.}
   \centering
     \includegraphics[width=1\textwidth]{tie_10mhz_phm_1ms_modified_allan.png}
     \label{fig:PHM_10MHz_mod_allan_dev}
 \end{figure}
 
+\newpage
+\section{Part 3: Frequency counting: Resolution and trigger noise: KHz and MHz}
+The setup was reset to it's initial configuration. 
+\begin{figure}[!htb]
+  \caption{Screen shot showing the frequency difference of fbtb 10MHz and 10Khz from the signal generator}
+  \centering
+    \includegraphics[width=1\textwidth]{freq_diff_del3.png}
+    \label{fig:freq_diff_3}
+\end{figure}
+As figure \ref{fig:freq_diff_3} suggests, our earlier measurements using a wristwatch to determine the relative frequency error seems to be correct. These measurements though naive, is pretty accurate relative to the offset that the signal generator was configured to apply (+6.66E-10). By studying the Allan Deviation and the Modified Allan Deviation for the measurement, it becomes clear that using a sample rate of 10 seconds as opposed to 1 s, results in a more accurate measurement. The reason for this is that the trigger error divided by time is reduced when doing fewer measurements. Once again, the "Achilles Heel" of the setup seems to be the frequency counter. 
+
+\begin{figure}[!htb]
+  \caption{FBTB 10MHz/10KHz signal generator at 1/10 s sample rate Allan Deviation.}
+  \centering
+    \includegraphics[width=1\textwidth]{fbtb_10mhzkhz_generator_allan.png}
+    \label{fig:sg_10x_allan_dev}
+\end{figure}
+
+\begin{figure}[!htb]
+  \caption{FBTB 10MHz/10Khz signal generator at 1/10 s sample rate Modified Allan Deviation.}
+  \centering
+    \includegraphics[width=1\textwidth]{fbtb_10mhzkhz_generator_mod_allan.png}
+    \label{fig:sg_10x_mod_allan_dev}
+\end{figure}
+
+Figure \ref{fig:sg_10x_mod_allan_dev} is a screen shot of the Modified Allan Deviation for the following measurements:
+\begin{itemize}
+  \item TIE 10 KHz 1 ms sample rate 1V (blue)
+  \item TIE 10 MHz 1 ms sample rate 5V (pink)
+  \item TIE 10 KHz 1 ms sample rate 1V Smoothed (for good measure) (green)
+\end{itemize}
+The figure seems to suggest that having an higher amplitude thus passing the hysteresis window faster, results in less flicker noise because the triggers job becomes easier. This is however just my theory as the lab experiment at this point was side tracked by a weird "bar-code" phenomena.
+
+\begin{figure}[!htb]
+  \caption{TIE measurements for 10 MHz/KHz 1 ms sample rate 1/5V Modified Allan Deviation}
+  \centering
+    \includegraphics[width=1\textwidth]{mod_allan_last_part3.png}
+    \label{fig:sg_10x_mod_allan_dev}
+\end{figure}
 
 
 \end{document}                     
