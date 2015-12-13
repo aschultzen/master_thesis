@@ -214,12 +214,20 @@ Figure \ref{fig:sg_10x_mod_allan_dev} is a screenshot of the Modified Allan Devi
   \item TIE 10 MHz 1 ms sample rate 5V (pink)
   \item TIE 10 KHz 1 ms sample rate 1V Smoothed (green)
 \end{itemize}
-As the figure suggests, the measurement taken at 10 MHz 5V (purple) is the most accurate. The CNT-9X manual specifies the Start/Stop trigger Error as the following:
+As the figure suggests, the measurement taken at 10 MHz 5V (purple) is the most accurate. The CNT-9X manual specifies the random uncertainty (rms) under normal mode as:
 
+\begin{displaymath}
+U_{rnd}=\frac{\sqrt{E_{q}^2 + 2\cdot(Start Trigger Error)^2}}{Measuring time}
+\end{displaymath}
+The Start Trigger Error (Ess) is defined as:
+\begin{displaymath}
+Ess = \sqrt{ E_{noise}^2 + E_{jitter}^2 }(s)
+\end{displaymath}
+The $E_{noise}$ is specified as:
 \begin{displaymath}
 E_{noise}\frac{\sqrt[]{V_{noise-input}^2 + V_{noise-signal}^2}}{inp.sign.slew rate(\frac{v}{s}) trig. point}(s)
 \end{displaymath}
-In other words, higher slew rate means less noise. The formula for calculating is given as $2\pi Vf$, thus for the 10 KHz 1 V amplitude signal:
+Now, because we are only interested in the counters characteristics, we can ignore $V_{noise-signal}$ and $E_{jitter}$. The formula for calculating the slew rate is given as $2\pi Vf$, thus for the 10 KHz 1 V amplitude signal:
 \begin{displaymath}
 2\pi\cdot1 V\cdot10\cdot10^3 Hz = 62831.853 V/s
 \end{displaymath}
@@ -227,7 +235,9 @@ And for the 10 MHz 5 V amplitude signal:
 \begin{displaymath}
 2\pi\cdot5 V\cdot10\cdot10^6 Hz = 314159265.358 V/s
 \end{displaymath}
-This is why the 10 MHz 5V signal is more accurately measured.
+
+
+
 
 \begin{figure}[!htb]
   \centering
