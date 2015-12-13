@@ -126,7 +126,7 @@ According to the User Manual for the CNT 9x Series, the resolution for Period A,
   \caption{Trigger counting multiple times as the noisy signal passes the hysteresis window}
     \label{fig:hysteresis}
 \end{wrapfigure}
-When raising the trigger level from 0 V to 1.2 V, more noise is introduced. This is because the slope of the signal is steeper at 0 V than at 1.2 V (closer to the middle of the sine wave) This means the signal is passing the hysteresis window at lower speed. The lower slope results in a less accurate trigging. In a really noisy signal, the signal can pass the hysteresis window more than once, thus generating erroneous counts (see figure \ref{fig:hysteresis}). 
+When raising the trigger level from 0 V to 1.2 V, more noise is introduced. This is because the slope of the signal is steeper at 0 V than at 1.2 V (closer to the middle of the sine wave) This means the signal is passing the hysteresis window at lower speed. The lower slope results in a less accurate trigging. In a really noisy signal, the signal can pass the hysteresis window more than once, thus generating erroneous counts (see figure \ref{fig:hysteresis}). This becomes evident when observing figure \ref{fig:PHM_10MHz_0V_1.2V_allan_dev} and \ref{fig:PHM_10MHz_0V_1.2V_freq_diff}. For the latter, figure \ref{fig:PHM_10MHz_0V_1.2V_freq_diff}, the spikes for the 1.2V plot shows the added uncertainty caused by the higher trigger level.
 
 \begin{figure}[!htb]
   \centering
