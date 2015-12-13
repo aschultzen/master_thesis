@@ -131,20 +131,20 @@ When raising the trigger level from 0 V to 1.2 V, more noise is introduced. This
 \begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{PHM10MHz-Ref-og-ChA-freq-btb-1s-200s-allan.png}
-    \label{fig:PHM_10MHz_0V_1.2V_allan_dev}
     \caption{FBTB PHM 10 MHz at 1 s sample rate 200s total Allan Deviation. Blue plot is for 1.2V and pink is 0V}
+        \label{fig:PHM_10MHz_0V_1.2V_allan_dev}
 \end{figure}
 
 \begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{PHM10MHz-Ref-og-ChA-freq-btb-1s-200s-frec_diff.png}
-    \label{fig:PHM_10MHz_0V_1.2V_freq_diff}
     \caption{FBTB PHM 10 MHz at 1 s sample rate 200s total Frequency Difference. Blue plot is for 1.2V and pink is 0V}
+        \label{fig:PHM_10MHz_0V_1.2V_freq_diff}
 \end{figure}
 
-
+\newpage
 \section{Part 2: Frequency counting: Resolution and trigger noise: TIE}
-One of the advantages of the Modified Allan Deviation relative to regular Allan variance, is the ability to separate white phase noise from flicker noise. As we saw earlier, the dominating noise introduced by our frequency counter, was white noise. The white noise is a consequence of the limited resolution of the timers trigger. Since the triggers only allows a measurement to be accurate to within a certain resolution (in our case, $\approx$ 70.71 ps) everything beyond this point is anyones guess and results in uncorrelated noise. We used TimeView to make a Time Interval Error measurement of 200 000 samples at 1 ms sampling time. We also used a "smooth" function in TimeView that calculates a running average of 1000 samples. When comparing Allan Deviation for the smoothed measurement with the Modified Allan Deviation for the measurement without, the two meet around 1 s. At this point, the smoothing interval is at it's end. It also reveals some of the underlying mechanics of the Modified Allan Deviation which is also realized by the use of averaging.
+One of the advantages of the Modified Allan Deviation relative to regular Allan variance, is the ability to separate white phase noise from flicker noise. As we saw earlier, the dominating noise introduced by our frequency counter, was white noise. The white noise is a consequence of the limited resolution of the timers trigger. Since the triggers only allows a measurement to be accurate to within a certain resolution (in our case, $\approx$ 70.71 ps) everything beyond this point is anyones guess and results in uncorrelated noise. We used TimeView to make a Time Interval Error measurement of 200 000 samples at 1 ms sampling time. We also used a "smooth" function in TimeView that calculates a running average of 1000 samples. When comparing Allan Deviation for the smoothed measurement with the Modified Allan Deviation for the measurement without, the two meet around 1 s. At this point, the smoothing interval is at it's end. It also reveals some of the underlying mechanics of the Modified Allan Deviation which is actually realized by the use of averaging (hence the similarity).
 
 \begin{figure}[!htb]
   \centering
@@ -157,15 +157,15 @@ As figure \ref{fig:freq_diff1} and \ref{fig:freq_diff2} shows, using an averagin
 \begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{tie_10mhz_phm_1ms_allan.png}
-    \label{fig:PHM_10MHz_allan_dev}
     \caption{TIE 10MHz PHM 1 ms sample rate Allan Deviation.}
+        \label{fig:PHM_10MHz_allan_dev}
 \end{figure}
 
 \begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{tie_10mhz_phm_1ms_modified_allan.png}
-    \label{fig:PHM_10MHz_mod_allan_dev}
     \caption{TIE 10MHz PHM 1 ms sample rate Modified Allan Deviation.}
+        \label{fig:PHM_10MHz_mod_allan_dev}
 \end{figure}
 
 \newpage
