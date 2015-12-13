@@ -50,7 +50,9 @@
 
 \begin{document}
 \maketitle
+\tableofcontents
 \includegraphics[width=1 \textwidth]{lab_report_diagram.pdf}
+
 
 \section{Equipment}
 \begin{itemize}
@@ -217,7 +219,7 @@ Figure \ref{fig:sg_10x_mod_allan_dev} is a screenshot of the Modified Allan Devi
 As the figure suggests, the measurement taken at 10 MHz 5V (purple) is the most accurate. The CNT-9X manual specifies the random uncertainty (rms) under normal mode as:
 
 \begin{displaymath}
-U_{rnd}=\frac{\sqrt{E_{q}^2 + 2\cdot(Start Trigger Error)^2}}{Measuring time}
+U_{rnd}=\frac{\sqrt{E_{q}^2 + 2\cdot(Ess)^2}}{Measuring time}
 \end{displaymath}
 The Start Trigger Error (Ess) is defined as:
 \begin{displaymath}
@@ -227,7 +229,7 @@ The $E_{noise}$ is specified as:
 \begin{displaymath}
 E_{noise}\frac{\sqrt[]{V_{noise-input}^2 + V_{noise-signal}^2}}{inp.sign.slew rate(\frac{v}{s}) trig. point}(s)
 \end{displaymath}
-Now, because we are only interested in the counters characteristics, we can ignore $V_{noise-signal}$ and $E_{jitter}$. The formula for calculating the slew rate is given as $2\pi Vf$, thus for the 10 KHz 1 V amplitude signal:
+Now, because we are only interested in the counters characteristics, we can ignore $V_{noise-signal}$ and $E_{jitter}$. The manual also defines $E_{q} = 66$ ps rms and worst case $V_{noise-input} = 500 \mu V$. The formula for calculating the slew rate is given as $2\pi Vf$, thus for the 10 KHz 1 V amplitude signal:
 \begin{displaymath}
 2\pi\cdot1 V\cdot10\cdot10^3 Hz = 62831.853 V/s
 \end{displaymath}
@@ -235,8 +237,29 @@ And for the 10 MHz 5 V amplitude signal:
 \begin{displaymath}
 2\pi\cdot5 V\cdot10\cdot10^6 Hz = 314159265.358 V/s
 \end{displaymath}
+\newline
+Calculating the random uncertainty for the 1V/10KHz signal:
 
+\begingroup
+\addtolength{\jot}{1em}
+\begin{align}
+E_{noise} = \frac{\sqrt{(500\cdot\sqrt{2})^2} + 0}{62831.853} = 0.011s\\
+Ess = \sqrt{ (0.011)^2 + 0 } = 0.011s \\
+Eq = 65\cdot10^{-12}\cdot\sqrt{2} = 9.122\cdot10^{-11}s \\
+(Eq)^2 = 8.449\cdot10^{-21} \\
+U_{rnd} = \frac{\sqrt{8.449\cdot10^{-21} + 2\cdot(0.011)^2}}{200} = 7.778\cdot10^{-5}s \\
+\end{align}
+\endgroup
 
+For the 5V/10MHz (reusing some of the steps):
+
+\begingroup
+\addtolength{\jot}{1em}
+\begin{align}
+E_{noise} = \frac{\sqrt{(500\cdot\sqrt{2})^2} + 0}{314159265.358} = 2.251\cdot10^{-6}s\\
+U_{rnd} = \frac{\sqrt{8.449\cdot10^{-21} + 2\cdot(2.251\cdot10^{-6})^2}}{200} = 1.592\cdot10^{-8}s
+\end{align}
+\endgroup
 
 
 \begin{figure}[!htb]
