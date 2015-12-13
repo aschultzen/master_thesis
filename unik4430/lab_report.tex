@@ -152,7 +152,7 @@ One of the advantages of the Modified Allan Deviation relative to regular Allan 
   \hfill
   \subfloat[Same cut out, but for the smoothed measurements. This measurement is clearly better.]{\includegraphics[width=0.5\textwidth]{tie_10mhz_phm_1ms_smooth_freq_diff_utklipp.png}\label{fig:freq_diff2}}
 \end{figure}
-As figure \ref{fig:freq_diff1} and \ref{fig:freq_diff2} shows, using an averaging technique when conducting measurements is obviously effective against white phase noise. It can however be a little too aggressive when the signal is noise heavy and the variations are small. 
+As figure \ref{fig:freq_diff1} and \ref{fig:freq_diff2} shows, using an averaging technique when conducting measurements is obviously effective against white phase noise. At 1 s the Allan Deviation for the smoothed measurement was 1.56E-11 and the raw measurement was 6.24E-11. Though this might seem impressive, the technique can however be a little too aggressive when the signal is noise heavy and the variations are small. 
 
 \begin{figure}[!htb]
   \centering
@@ -167,6 +167,21 @@ As figure \ref{fig:freq_diff1} and \ref{fig:freq_diff2} shows, using an averagin
     \caption{TIE 10MHz PHM 1 ms sample rate Modified Allan Deviation.}
         \label{fig:PHM_10MHz_mod_allan_dev}
 \end{figure}
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{part4_phase_diff.png}
+    \caption{TIE 10MHz PHM 1 ms sample rate Phase Difference.}
+        \label{fig:PHM_10MHz_phase_diff}
+\end{figure}
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{part4_freq_diff.png}
+    \caption{TIE 10MHz PHM 1 ms sample rate Frequency Difference.}
+        \label{fig:PHM_10MHz_frequency_diff}
+\end{figure}
+
 
 \newpage
 \section{Part 3: Frequency counting: Resolution and trigger noise: KHz and MHz}
