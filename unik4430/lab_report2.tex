@@ -51,7 +51,7 @@
 \section{Equipment}
 \begin{itemize}
   \item Jackson Labs GPS-300 v1.0 Prototype
-  \item Passive Hydrogen maser, frequency reference
+  \item PHM, Passive Hydrogen maser, frequency reference
   \item Pendulum CNT-91, Frequency counter
   \item Tektronix MD0-4000-6 Oscilloscope
   \item Z38XX Software
@@ -67,12 +67,29 @@
 \end{itemize}
 
 \section{Part 1: GPS disciplined oscillator}
-\begin{wrapfigure}{c}{1\textwidth}
+\begin{figure}[!htb]
   \centering
   \includegraphics[width=1\textwidth]{z38xx_EFC_oppstart.PNG} \label{fig:z38xx_oppstart}
   \caption[Z38XX screen shot] {The figure above shows a screen shot from the Z38XX software. The oscillator is all warmed up and ready to go.} 
-\end{wrapfigure} 
+\end{figure}
+
 \subsection{Observations}
-Figure \ref{fig:z38xx_oppstart} shows that the GPS receiver on the GPS-300 has a total of 13 satellites visible and that it is currently tracking 11, which is more than sufficient for timing purposes. It is also reasonable to assume that it has finished warming up considering how dramatic the readings where and how they are now.
+Figure \ref{fig:z38xx_oppstart} shows that the GPS receiver on the GPS-300 has a total of 13 satellites visible and that it is currently tracking 11, which is more than sufficient for timing purposes. It is also reasonable to assume that it has finished warming up considering how dramatic the readings where and how they are now. 
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{z38xx_EFC_oppvarmet_zoom.PNG}
+    \label{fig:Z38XX_gpsdo12}
+      \caption{Screenshot of Z38XX showing all the collected data, including the warm-up.}
+\end{figure}
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{timelab_gpsdo1.png}
+    \label{fig:TimeLab_gpsdo1}
+      \caption{Screen shot from TimeLab showing the data collected from the same time as in the figure over but measured with the CNT-91 timer.}
+\end{figure}
+
+When comparing the figure \ref{fig:Z38XX_gpsdo12} and \ref{fig:TimeLab_gpsdo1} it's important to remember that they have a completely different reference. The CNT-91 timer uses the PHM as a reference while the GPS-300 uses GPS. GPS signals are extremely noisy compared to a PHM. The timer on the GPS-300 is also likely sup-bar compared to the CNT-91.  
 
 \end{document}                     

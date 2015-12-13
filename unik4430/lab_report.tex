@@ -66,21 +66,21 @@
 \section{Part A, frequency characterization}
 \begin{figure}[!htb]
   \centering
-  \subfloat[Oscilloscope capture 14:10:41]{\includegraphics[width=0.5\textwidth]{del_A_kjapp_CSAC.png}\label{fig:f1}}
+  \subfloat[Oscilloscope capture 14:10:41]{\includegraphics[width=0.5\textwidth]{tek00000.png}\label{fig:f1}}
   \hfill
-  \subfloat[Oscilloscope capture 14:10:48]{\includegraphics[width=0.5\textwidth]{del_A_kjapp_CSAC2.png}\label{fig:f2}}
+  \subfloat[Oscilloscope capture 14:10:48]{\includegraphics[width=0.5\textwidth]{tek00001.png}\label{fig:f2}}
   \caption{Oscilloscope captures}
 \end{figure}
-Figure \ref{fig:f1} and \ref{fig:f2} is two screen shots taken from the oscilloscope. The yellow line is the Passive hydrogen maser, the blue is the from the signal generator. The oscilloscope is triggering on the input from the signal generator. 
+Figure \ref{fig:f1} and \ref{fig:f2} is two screenshots taken from the oscilloscope. The yellow line is the Passive hydrogen maser, the blue is the from the signal generator. The oscilloscope is triggering on the input from the signal generator. 
 
 \subsection{Observations}
-The two images shows the yellow line moving towards the right. The reason the yellow line is moving to the right, is because the frequency of the signal from the generator is higher and therefor "arrives earlier" than the signal from the maser. When set to trigger on the maser instead, the effect is reversed, the blue line moves towards the left. The generator is in other words, a little fast. 
+The two images shows the yellow line moving towards the right. The reason the yellow line is moving to the right, is because the frequency of the signal from the generator is higher and therefor "arrives earlier" than the signal from the maser. When set to trigger on the maser instead, the effect is reversed, the blue line moves towards the left. The generator is in other words, a little fast. How fast you say? Each dotted square on the plot equals 20 ns. The squares are then divided into 5 parts at 4 ns each. During the 7 seconds that separate the two screenshots, the signal from the signal generator advanced by roughly $\frac{1.5}{5}square$  which gives an error of 6 ns. 
 
 \subsection{Measuring relative frequency error}
 The period for each of the signals are 100 ns. By measuring the time it took for the two signals to go from being in phase once to twice (in phase, out of phase, in phase again), a relative frequency error can be calculated:
 
 \begin{displaymath}
-\frac{period}{phase-in-out-in} = \frac{100 ns}{160 s} = 0,625 ns/s
+\frac{period}{phase-in-out-in} = \frac{100 ns}{160 s} = 0.625 ns/s
 \end{displaymath}
 \newline
 It's worth noting that the phase-in-out-in time was measured using my wristwatch and that the accuracy of the measurement was anything but accurate. This is not a problem since the oscillators where measured with extremely high resolution.
@@ -96,10 +96,10 @@ The frequency counter now measures the maser (on input A) and uses it as referen
 
 \subsection{Observations}
 \subsubsection{Trigger resolution}
-According to the User Manual for the CNT 9x Series, the resolution for Period A,B Back-to-Back is 50 ps rms. By observing the Allan deviation for the measurement (\ref{fig:allan_dev1}) the same can be observed: At the 1 second mark, the Allan Deviation is 8.23E-11 (around 82,3 ps) which seems about right considering:
+According to the User Manual for the CNT 9x Series, the resolution for Period A,B Back-to-Back is 50 ps rms. By observing the Allan deviation for the measurement (\ref{fig:allan_dev1}) the same can be observed: At the 1 second mark, the Allan Deviation is 8.23E-11 (around 82.3 ps) which seems about right considering:
 
 \begin{displaymath}
- 50 ps\sqrt{2}\approx 70,71 ps
+ 50 ps\sqrt{2}\approx 70.71 ps
 \end{displaymath}
 
  Observing the slope, we are dealing with either white phase and or flicker noise (-1 slope). When studying the Modified Allan deviation for the same data (\ref{fig:mod_allan_dev1}), it becomes clear that the dominant type of noise is white noise (-3/2 slope).
@@ -128,12 +128,27 @@ According to the User Manual for the CNT 9x Series, the resolution for Period A,
 \end{wrapfigure}
 When raising the trigger level from 0 V to 1.2 V, more noise is introduced. This is because the slope of the signal is steeper at 0 V than at 1.2 V (closer to the middle of the sine wave) This means the signal is passing the hysteresis window at lower speed. The lower slope results in a less accurate trigging. In a really noisy signal, the signal can pass the hysteresis window more than once, thus generating erroneous counts (see figure \ref{fig:hysteresis}). 
 
-\section{Part 2: Frequency counting: Resolution and trigger noise: TIE}
-One of the advantages of the Modified Allan Deviation relative to regular Allan variance, is the ability to separate white phase noise from flicker noise. As we saw earlier, the dominating noise introduced by our frequency counter, was white noise. The white noise is a consequence of the limited resolution of the timers trigger. Since the triggers only allows a measurement to be accurate to within a certain resolution (in our case, \approx 70,71 ps) everything beyond this point is anyones guess and results in uncorrelated noise. We used TimeView to make a Time Interval Error measurement of 200 000 samples at 1 ms sampling time. We also used a "smooth" function in TimeView that calculates a running average of 1000 samples. When comparing Allan Deviation for the smoothed measurement with the Modified Allan Deviation for the measurement without, the two meet around 1 s. At this point, the smoothing interval is at it's end. It also reveals some of the underlying mechanics of the Modified Allan Deviation which is also realized by the use of averaging.
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{PHM10MHz-Ref-og-ChA-freq-btb-1s-200s-allan.png}
+    \label{fig:PHM_10MHz_0V_1.2V_allan_dev}
+    \caption{FBTB PHM 10 MHz at 1 s sample rate 200s total Allan Deviation. Blue plot is for 1.2V and pink is 0V}
+\end{figure}
 
 \begin{figure}[!htb]
   \centering
-  \subfloat[Cut out of screen shot showing the frequency difference for the measurement.]{\includegraphics[width=0.5\textwidth]{tie_10mhz_phm_1ms_freq_diff_utklipp.png}\label{fig:freq_diff1}}
+    \includegraphics[width=1\textwidth]{PHM10MHz-Ref-og-ChA-freq-btb-1s-200s-frec_diff.png}
+    \label{fig:PHM_10MHz_0V_1.2V_freq_diff}
+    \caption{FBTB PHM 10 MHz at 1 s sample rate 200s total Frequency Difference. Blue plot is for 1.2V and pink is 0V}
+\end{figure}
+
+
+\section{Part 2: Frequency counting: Resolution and trigger noise: TIE}
+One of the advantages of the Modified Allan Deviation relative to regular Allan variance, is the ability to separate white phase noise from flicker noise. As we saw earlier, the dominating noise introduced by our frequency counter, was white noise. The white noise is a consequence of the limited resolution of the timers trigger. Since the triggers only allows a measurement to be accurate to within a certain resolution (in our case, $\approx$ 70.71 ps) everything beyond this point is anyones guess and results in uncorrelated noise. We used TimeView to make a Time Interval Error measurement of 200 000 samples at 1 ms sampling time. We also used a "smooth" function in TimeView that calculates a running average of 1000 samples. When comparing Allan Deviation for the smoothed measurement with the Modified Allan Deviation for the measurement without, the two meet around 1 s. At this point, the smoothing interval is at it's end. It also reveals some of the underlying mechanics of the Modified Allan Deviation which is also realized by the use of averaging.
+
+\begin{figure}[!htb]
+  \centering
+  \subfloat[Cut out of screenshot showing the frequency difference for the measurement.]{\includegraphics[width=0.5\textwidth]{tie_10mhz_phm_1ms_freq_diff_utklipp.png}\label{fig:freq_diff1}}
   \hfill
   \subfloat[Same cut out, but for the smoothed measurements. This measurement is clearly better.]{\includegraphics[width=0.5\textwidth]{tie_10mhz_phm_1ms_smooth_freq_diff_utklipp.png}\label{fig:freq_diff2}}
 \end{figure}
@@ -159,7 +174,7 @@ The setup was reset to it's initial configuration.
 \begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{freq_diff_del3.png}
-   \caption{Screen shot showing the frequency difference of fbtb 10MHz and 10Khz from the signal generator}
+   \caption{Screenshot showing the frequency difference of fbtb 10MHz and 10Khz from the signal generator}
   \label{fig:freq_diff_3}
 \end{figure}
 As figure \ref{fig:freq_diff_3} suggests, our earlier measurements using a wristwatch to determine the relative frequency error seems to be correct. These measurements though naive, is pretty accurate relative to the offset that the signal generator was configured to apply (+6.66E-10). By studying the Allan Deviation and the Modified Allan Deviation for the measurement, it becomes clear that using a sample rate of 10 seconds as opposed to 1 s, results in a more accurate measurement. The reason for this is that the trigger error divided by time is reduced when doing fewer measurements. Once again, the "Achilles Heel" of the setup seems to be the frequency counter. 
@@ -178,19 +193,32 @@ As figure \ref{fig:freq_diff_3} suggests, our earlier measurements using a wrist
       \label{fig:sg_10x_mod_allan_dev}
 \end{figure}
 
-Figure \ref{fig:sg_10x_mod_allan_dev} is a screen shot of the Modified Allan Deviation for the following measurements:
+Figure \ref{fig:sg_10x_mod_allan_dev} is a screenshot of the Modified Allan Deviation for the following measurements:
 \begin{itemize}
   \item TIE 10 KHz 1 ms sample rate 1V (blue)
   \item TIE 10 MHz 1 ms sample rate 5V (pink)
   \item TIE 10 KHz 1 ms sample rate 1V Smoothed (green)
 \end{itemize}
-The figure seems to suggest that having an higher amplitude thus passing the hysteresis window faster, results in less flicker noise because the triggers job becomes easier. This is however just my theory as the lab experiment at this point was side tracked by a weird "bar-code" phenomena.
+As the figure suggests, the measurement taken at 10 MHz 5V (purple) is the most accurate. The CNT-9X manual specifies the Start/Stop trigger Error as the following:
+
+\begin{displaymath}
+E_{noise}\frac{\sqrt[]{V_{noise-input}^2 + V_{noise-signal}^2}}{inp.sign.slew rate(\frac{v}{s}) trig. point}(s)
+\end{displaymath}
+In other words, higher slew rate means less noise. The formula for calculating is given as $2\pi Vf$, thus for the 10 KHz 1 V amplitude signal:
+\begin{displaymath}
+2\pi\cdot1 V\cdot10\cdot10^3 Hz = 62831.853 V/s
+\end{displaymath}
+And for the 10 MHz 5 V amplitude signal:
+\begin{displaymath}
+2\pi\cdot5 V\cdot10\cdot10^6 Hz = 314159265.358 V/s
+\end{displaymath}
+This is why the 10 MHz 5V signal is more accurately measured.
 
 \begin{figure}[!htb]
-  \caption{TIE measurements for 10 MHz/KHz 1 ms sample rate 1/5V Modified Allan Deviation}
   \centering
     \includegraphics[width=1\textwidth]{mod_allan_last_part3.png}
     \label{fig:15Vsg_10x_mod_allan_dev}
+      \caption{TIE measurements for 10 MHz/KHz 1 ms sample rate 1/5V Modified Allan Deviation}
 \end{figure}
 
 \end{document}                     
