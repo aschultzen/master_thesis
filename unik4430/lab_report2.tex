@@ -69,8 +69,9 @@
 \section{Part 1: GPS disciplined oscillator}
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=1\textwidth]{z38xx_EFC_oppstart.PNG} \label{fig:z38xx_oppstart}
+  \includegraphics[width=1\textwidth]{z38xx_EFC_oppstart.PNG}
   \caption[Z38XX screen shot] {The figure above shows a screen shot from the Z38XX software. The oscillator is all warmed up and ready to go.} 
+  \label{fig:z38xx_oppstart}
 \end{figure}
 
 \subsection{Observations}
@@ -79,17 +80,50 @@ Figure \ref{fig:z38xx_oppstart} shows that the GPS receiver on the GPS-300 has a
 \begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{z38xx_EFC_oppvarmet_zoom.PNG}
-    \label{fig:Z38XX_gpsdo12}
       \caption{Screenshot of Z38XX showing all the collected data, including the warm-up.}
+      \label{fig:Z38XX_gpsdo12}
+\end{figure}
+
+When comparing the figure \ref{fig:part1_spm3_fbtb_phase_diff} and \ref{fig:part1_spm3_x38_phase_diff} it becomes obvious that the counter on the GPS-300 board is less accurate than our setup and therefore measures a little optimistic. It's important to remember that it has got a completely different reference. The CNT-91 timer uses the PHM as a reference while the GPS-300 uses GPS. GPS signals are extremely noisy compared to a PHM. The timer on the GPS-300 is also likely sub-par compared to the CNT-91. 
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{part1_spm3_fbtb_phase_diff.png}
+      \caption{Phase difference for the GPS-300 measured using the CNT-91 counter}
+          \label{fig:part1_spm3_fbtb_phase_diff}
 \end{figure}
 
 \begin{figure}[!htb]
   \centering
-    \includegraphics[width=1\textwidth]{timelab_gpsdo1.png}
-    \label{fig:TimeLab_gpsdo1}
-      \caption{Screen shot from TimeLab showing the data collected from the same time as in the figure over but measured with the CNT-91 timer.}
+    \includegraphics[width=1\textwidth]{part1_spm3_x38_phase_diff.png}
+      \caption{Phase difference for the GPS-300 measured using the internal counter}
+          \label{fig:part1_spm3_x38_phase_diff}
 \end{figure}
 
-When comparing the figure \ref{fig:Z38XX_gpsdo12} and \ref{fig:TimeLab_gpsdo1} it's important to remember that they have a completely different reference. The CNT-91 timer uses the PHM as a reference while the GPS-300 uses GPS. GPS signals are extremely noisy compared to a PHM. The timer on the GPS-300 is also likely sup-bar compared to the CNT-91.  
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{part1_spm4_modified_allan.png}
+      \caption{Modified Allan Deviation for GPS-300 measured by the internal counter (pink) and CNT-91 (blue))}
+          \label{fig:part1_spm4_modified_allan}
+\end{figure}
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{part1_spm4_allan.png}
+      \caption{Allan Deviation for GPS-300 measured by the internal counter (pink and CNT-91 (blue))}
+          \label{fig:part1_spm4_allan}
+\end{figure}
+
+
+Figure \ref{fig:tek00006.png} is a screenshot from the oscilloscope and shows both the GPS-300 and the PHM, trigging at the PHM (yellow). One observation that could be made was the signal from the GPS-300 seemed to be oscillating in a typical PID manner. It should be noted that the GPS-300 had to cope with the increase in temperature as we occupied the room.    
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{tek00006.png}
+      \caption{screenshot from the oscilloscope and shows both the GPS-300 and the PHM, trigging at the PHM (yellow)}
+          \label{fig:tek00006.png}
+\end{figure}
+
+\section{Part 2: Free-range oscillator}
 
 \end{document}                     
