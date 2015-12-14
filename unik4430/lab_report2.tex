@@ -19,6 +19,9 @@
 \usepackage{enumitem}
 \usepackage{amsmath}
 
+\usepackage{setspace}
+\onehalfspacing
+
 \usepackage[
     backend=biber,
     style=numeric
@@ -84,8 +87,6 @@ Figure \ref{fig:z38xx_oppstart} shows that the GPS receiver on the GPS-300 has a
       \label{fig:Z38XX_gpsdo12}
 \end{figure}
 
-When comparing the figure \ref{fig:part1_spm3_fbtb_phase_diff} and \ref{fig:part1_spm3_x38_phase_diff} it becomes obvious that the counter on the GPS-300 board is less accurate than our setup and therefore measures a little optimistic. It's important to remember that it has got a completely different reference. The CNT-91 timer uses the PHM as a reference while the GPS-300 uses GPS. GPS signals are extremely noisy compared to a PHM. The timer on the GPS-300 is also likely sub-par compared to the CNT-91. 
-
 \begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{part1_spm3_fbtb_phase_diff.png}
@@ -100,6 +101,8 @@ When comparing the figure \ref{fig:part1_spm3_fbtb_phase_diff} and \ref{fig:part
           \label{fig:part1_spm3_x38_phase_diff}
 \end{figure}
 
+When comparing the figure \ref{fig:part1_spm3_fbtb_phase_diff} showing phase difference from a frequency back-to-back  measurement done with our setup and figure \ref{fig:part1_spm3_x38_phase_diff} showing the phase difference measured by the internal counter on the GPS-300, it becomes obvious that the counter on the GPS-300 board is less accurate than our setup and therefore measures a little optimistic. The reason is that it has got a completely different and better reference. The CNT-91 timer uses the PHM as a reference while the GPS-300 uses GPS. GPS signals are extremely noisy compared to a PHM. The timer on the GPS-300 is also likely sub-par compared to the CNT-91. 
+
 \begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{part1_spm4_modified_allan.png}
@@ -110,20 +113,53 @@ When comparing the figure \ref{fig:part1_spm3_fbtb_phase_diff} and \ref{fig:part
 \begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{part1_spm4_allan.png}
-      \caption{Allan Deviation for GPS-300 measured by the internal counter (pink and CNT-91 (blue))}
+      \caption{Allan Deviation for GPS-300 measured by the internal counter (pink) and CNT-91 (blue)}
           \label{fig:part1_spm4_allan}
 \end{figure}
 
-
-Figure \ref{fig:tek00006.png} is a screenshot from the oscilloscope and shows both the GPS-300 and the PHM, trigging at the PHM (yellow). One observation that could be made was the signal from the GPS-300 seemed to be oscillating in a typical PID manner. It should be noted that the GPS-300 had to cope with the increase in temperature as we occupied the room.    
+When comparing the measurement done by GPS-300's internal counter with our setup in the context of both regular (figure \ref{fig:part1_spm4_modified_allan}) and Modified Allan Deviation (figure \ref{fig:part1_spm4_allan}), it's clear that the measurement on our setup is the correct one. 
 
 \begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{tek00006.png}
       \caption{screenshot from the oscilloscope and shows both the GPS-300 and the PHM, trigging at the PHM (yellow)}
-          \label{fig:tek00006.png}
+          \label{fig:tek00006}
 \end{figure}
 
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{part1_spm5_freq_diff.png}
+      \caption{GPS-300 1s sample rate frequency back-to-back, frequency difference}
+          \label{fig:part1_spm5_freq_diff}
+\end{figure}
+
+% spm5 %
+Figure \ref{fig:tek00006} is a screenshot of the oscilloscope and shows both the GPS-300 and the PHM, trigging at the PHM (yellow). Upon observation of the oscilloscope, a PID like oscillation effect could be observed. When studying the figure \ref{fig:part1_spm5_freq_diff} showing the frequency difference made from a measurement done with our setup, this effect becomes more visible. One way to picture it, is that movement along the X-axis on the oscilloscope correlates to "movement" along the the Y-axis on figure \ref{fig:part1_spm5_freq_diff}. 
+
+% spm6 %
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{del_1_spm6_allan.png}
+      \caption{Allan Deviation. TIE 100$\mu$s for GPS-300 in both Locked (green), Holdover (red) and PHM (light-blue). The measurement for Locked GPS-300 is smoothed over 1000 pts.}
+          \label{fig:del_1_spm6_allan}
+\end{figure}
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{del_1_spm6_mod_allan.png}
+      \caption{Modified Allan Deviation. TIE 100$\mu$s for GPS-300 in both Locked (green), Holdover (red) and PHM (light-blue). The measurement for Locked GPS-300 is smoothed over 1000 pts}
+          \label{fig:del_1_spm6_mod_allan}
+\end{figure}
+Figure \ref{fig:del_1_spm6_mod_allan} and \ref{fig:del_1_spm6_allan} shows the Modified and regular Allan Deviation for three measurements all done with our setup:
+\begin{itemize}
+  \item TIE 100$\mu$s sample rate, PHM (light-blue)
+  \item TIE 100$\mu$s sample rate, GPS-300 in holdover mode (red)
+  \item TIE 100$\mu$s sample rate, GPS-300 in locked (GPS disciplined mode) smoothed over 1000 points (green)
+\end{itemize}
+Note! I don't get it! Something about the maser being the correct one? Also the Modified allan shows that they meet 0.1 second (or after 1000 points) which has something to do with smoothing. Hvorfor er alle målingene våre med smooth og ikke uten? Hvorfor er noen med fbtb og andre med TIE? Det gjør det jævlig vanskelig å sammenlikne!
+
 \section{Part 2: Free-range oscillator}
+
+
 
 \end{document}                     
