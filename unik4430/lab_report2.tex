@@ -78,7 +78,7 @@
 \end{figure}
 
 \subsection{Observations}
-Figure \ref{fig:z38xx_oppstart} is a screenshot taken from the Z38XX software. The blue plot shows PPS TI (current GPSR time interval difference from UTC or GPS) and the red is the current EFC (Electronic Frequency Control) tuning value. The bar on the bottom of the window shown in the figure, shows that the GPS receiver on the GPS-300 has a total of 13 satellites visible and that it is currently tracking 11, which is more than sufficient for timing purposes. Judging by how stable the EFC have become and how the PPS TI seems to have settled around zero, it is reasonable to assume that the oscillator is warmed up. Note also the fall in EFC in figure \ref{fig:Z38XX_gpsdo12} after we occupied the room and the temperature increased. This increase in temperature has to be compensated for.
+Figure \ref{fig:z38xx_oppstart} is a screenshot taken from the Z38XX software. The blue plot shows GPSR 1 pps time interval and the red is the current EFC (Electronic Frequency Control) tuning value. The bar on the bottom of the window shown in the figure (pointed to by the red arrow on the bottom), shows that the GPS receiver on the GPS-300 has a total of 13 satellites visible and that it is currently tracking 11, which is more than sufficient for timing purposes. Judging by how stable the EFC have become and how the PPS TI seems to have settled around zero, it is reasonable to assume that the oscillator is warmed up. Note also the fall in EFC in figure \ref{fig:Z38XX_gpsdo12} after we occupied the room and the temperature increased. This increase in temperature has to be compensated for.
 
 \begin{figure}[!htb]
   \centering
@@ -135,7 +135,7 @@ When comparing the figure \ref{fig:part1_spm3_fbtb_phase_diff} showing phase dif
 When comparing the measurement done by GPS-300's internal counter with the measurement done by our setup in the context of both regular (figure \ref{fig:part1_spm4_modified_allan}) and Modified Allan Deviation (figure \ref{fig:part1_spm4_allan}), steering, the lack of a high quality reference and counter, results in a incorrect and optimistic measurement (blue plot figure \ref{fig:part1_spm4_modified_allan} and \ref{fig:part1_spm4_allan}) as discussed earlier.  
 
 % spm5 %
-Figure \ref{fig:tek00006} is a screenshot of the oscilloscope and shows both the GPS-300 and the PHM, trigging at the PHM (yellow). Upon observation of the oscilloscope, a PID like oscillation effect could be observed. When studying the figure h\ref{fig:part1_spm5_freq_diff} showing the frequency difference made from a measurement done with our setup, this effect becomes more visible. One way to picture it, is that movement along the X-axis on the oscilloscope correlates to "movement" along the the Y-axis on figure \ref{fig:part1_spm5_freq_diff}. 
+Figure \ref{fig:tek00006} is a screenshot of the oscilloscope and shows both the GPS-300 and the PHM, trigging at the PHM (yellow). Upon observation of the oscilloscope, the signal seemed to moving back and forth in a erratic fashion until it was steadily corrected as if it was controlled by a PID controller. When studying the figure h\ref{fig:part1_spm5_freq_diff} showing the frequency difference made from a measurement done with our setup, this effect becomes more visible. One way to picture it, is that movement along the X-axis on the oscilloscope correlates to "movement" along the the Y-axis on figure \ref{fig:part1_spm5_freq_diff}. 
 
 % spm6 %
 
@@ -146,7 +146,7 @@ Figure \ref{fig:del_1_spm6_mod_allan} and \ref{fig:del_1_spm6_allan} shows the M
   \item TIE 100$\mu$s sample rate, GPS-300 in holdover mode (red)
   \item TIE 100$\mu$s sample rate, GPS-300 in locked (GPS disciplined mode) smoothed over 1000 points (green)
 \end{itemize}
-Because of the 1000 point smoothing (green), not much can be said about the stability before 0.1 s. When comparing with the plot for the PHM, it becomes clear that any instability after 0.1 s is not because of the measurement setup, but rather the oscillator itself. However, by using the smoothing method, we are able to obtain resolution that would not be possible because of limitations in the measuring setup, already at 0.1 s instead of $approx$1.6s. By looking at the Modified Allan Deviation for the PHM, the limit of what you could hope to achieve in terms of resolution is revealed. This is because of how the Modified Allan Deviation is calculated by using a running average. This is also what makes it possible to separate white noise from flicker noise since white noise is uncorrelated and therefore possible to reduce by calculating an average.   
+Because of the 1000 point smoothing (green), not much can be said about the stability for intervals shorter than 0.1 s. When comparing with the plot for the PHM, it becomes clear that any instability in observation intervals longer than 0.1 s is not because of the measurement setup, but rather the oscillator itself. However, by using the smoothing method, we are able to obtain resolution that would not be possible because of limitations in the measuring setup at shorter intervals than 0.1 s instead of $approx$1.6s. By looking at the Modified Allan Deviation for the PHM, the limit of what you could hope to achieve in terms of resolution is revealed. This is because of how the Modified Allan Deviation is calculated by using a running average. This is also what makes it possible to separate white noise from flicker noise since white noise is uncorrelated and therefore possible to reduce by calculating an average.   
 
 Comparing with Symmetricom's own Allan Deviation, the GPS-300 actually performs better than their specifications. At 1 s, we measured 4.42E-11 as opposed to $\approx$ 9.00E-11. At 10 s, we measured 5.20E-11 and they $\approx$6.00E-10.
 
@@ -188,8 +188,7 @@ When comparing the Allan Deviation for the measurement taken with and without GP
           \label{fig:del_2_spm2_fbtb_blaas_finger}
 \end{figure}
 
-Figure \ref{fig:del_2_spm2_fbtb_blaas_finger} shows what happens when you heat the oscillator up or cool it down. The first peak is when i put my finger on it and and the dip is when i blew air on it. The next peak and dip is from the same, but now the temperature compensation seems to have picked up the change, hence the last deep dip. The bottom-line is that the frequency increases as temperature drops and frequency decreases as temperature rises. 
-After putting GPS-300 into holdover mode which means it is no longer disciplined by the GPS chip on the board, i measured it going from holdover and into locked mode using both out setup, (figure \ref{fig:del_2_spm3_fra_holdover_to_locked}) and the internal counter (figure \ref{fig:del_2_spm3_fra_holdover_to_locked_z38}). Unfortunately, there is an error in the figure \ref{fig:del_2_spm3_fra_holdover_to_locked} where the wrong sample interval has been used. It should have been 10 s instead of 1. However, it still shows how the internal counter has been a little optimistic as mentioned earlier. 
+Figure \ref{fig:del_2_spm2_fbtb_blaas_finger} shows what happens when you heat the oscillator up or cool it down. The first peak is when i put my finger on it (thus heating it up) and the dip is when i blew air on it. The next peak and dip is from the same, but now the temperature compensation seems to have picked up the change, hence the last deep dip. The bottom-line is that the frequency increases as temperature increases. After putting GPS-300 into holdover mode which means it is no longer disciplined by the GPS chip on the board, i measured it going from holdover and into locked mode using both out setup, (figure \ref{fig:del_2_spm3_fra_holdover_to_locked}) and the internal counter (figure \ref{fig:del_2_spm3_fra_holdover_to_locked_z38}). Unfortunately, there is an error in the figure \ref{fig:del_2_spm3_fra_holdover_to_locked} where the wrong sample interval has been used. It should have been 10 s instead of 1. However, it still shows how the internal counter has been a little optimistic as mentioned earlier. 
 
 \begin{figure}[!htb]
   \centering
@@ -207,7 +206,7 @@ After putting GPS-300 into holdover mode which means it is no longer disciplined
 
 
 \section{Part 3: Stability parameters}
-The GPS-300 GPSTXO has a set of parameters related to it's PID loop. By adjusting these parameters, the PID can be adjusted or tuned. When i was experimenting with stability parameters, i discovered (not surprisingly) that some of the parameters had a greater effect than others. In hindsight it's pretty obvious that i should have experimented a little more with the PHASECO and EFCD and perhaps have tried different values in order to provoke the typical response for that part of parameter. The values was set back to default between each measurement and the unit was in Locked mode the whole time. A base line is included in all the figures. This baseline is just a measurement done prior to the experimenting.
+The GPS-300 GPSTXO has a set of parameters related to it's PID loop. By adjusting these parameters, the PID can be adjusted or tuned. When i was experimenting with stability parameters, i discovered (not surprisingly) that some of the parameters had a greater effect than others. In hindsight it's pretty obvious that i should have experimented a little more with the PHASECO and EFCD and perhaps have tried different values in order to provoke the typical response for that part of parameter. The values was set back to default between each measurement and the unit was in Locked mode the whole time. A base line is included in all the figures. All measurements was made using the CNT-91 with the PMH as reference. This baseline is just a measurement done prior to the experimenting.
 
 \subsection{EFCS}
 The EFCS parameter is the proportional part of the PID loop. It is according to the manual typically set between 0.7 to 6.0. Figure \ref{fig:EFCS} shows what happens when it was set to 20. When proportional gain is set this high, it overshoots dramatically and begins to oscillate.
@@ -248,9 +247,5 @@ Not strictly part of the PID. The SLOP sets the sign of the slope between the EF
       \caption{TIE 100$\mu$s sample rate 100s total, phase difference for base line (blue) and for when stability parameter SLOP = NEG}
           \label{fig:SLOP}
 \end{figure}
-
-
-
-
 
 \end{document}                     
