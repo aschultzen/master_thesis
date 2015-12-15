@@ -150,7 +150,7 @@ Because of the 1000 point smoothing (green), not much can be said about the stab
 
 Comparing with Symmetricom's own Allan Deviation, the GPS-300 actually performs better than their estimation. At 1 s, we measured 4.42E-11 as opposed to $\approx$ 9.00E-11. At 10 s, we measured 5.20E-11 and they $\approx$6.00E-10.
 
-\begin{figure}[!Htb]
+\begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{del_1_spm6_allan.png}
       \caption{Allan Deviation. TIE 100$\mu$s for GPS-300 in both Locked (green), Holdover (red) and PHM (light-blue). The measurement for Locked GPS-300 is smoothed over 1000 pts.}
@@ -163,8 +163,21 @@ Comparing with Symmetricom's own Allan Deviation, the GPS-300 actually performs 
       \caption{Modified Allan Deviation. TIE 100$\mu$s for GPS-300 in both Locked (green), Holdover (red) and PHM (light-blue). The measurement for Locked GPS-300 is smoothed over 1000 pts}
           \label{fig:del_1_spm6_mod_allan}
 \end{figure}
+
 \section{Part 2: Free-range oscillator}
 
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{del_2_spm1_phase_diff.png}
+      \caption{FBTB 1 s, Phase difference for GPS-300 during holdover mode (blue) and locked mode (pink).}
+          \label{fig:del_2_spm1_phase_diff}
+\end{figure}
 
-
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{del_2_spm1_allan_dev.png}
+      \caption{FBTB 1 s, Allan Deviation for GPS-300 during holdover mode (blue) and locked mode (pink).}
+          \label{fig:del_2_spm1_allan_dev}
+\end{figure}
+When comparing the Allan Deviation for the measurement taken with and without GPS lock (figure \ref{fig:del_2_spm1_allan_dev}), one can observe that the long term stability is better when in locked mode. This is not a surprise, but when observing the plot for the oscillator when in Holdover mode, one can see that the short term stability is better than when disciplined. One could perhaps argue that the oscillator stability in locked mode would benefit from a longer time constant (between GPS synch), but this depends on the temperature variations of the environment of which it is operating. In the lab where this experiment was exercised, the temperature is much more stable than one could hope to encounter "in the wild".
 \end{document}                     
