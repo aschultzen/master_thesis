@@ -207,5 +207,50 @@ After putting GPS-300 into holdover mode which means it is no longer disciplined
 
 
 \section{Part 3: Stability parameters}
+The GPS-300 GPSTXO has a set of parameters related to it's PID loop. By adjusting these parameters, the PID can be adjusted or tuned. When i was experimenting with stability parameters, i discovered (not surprisingly) that some of the parameters had a greater effect than others. In hindsight it's pretty obvious that i should have experimented a little more with the PHASECO and EFCD and perhaps have tried different values in order to provoke the typical response for that part of parameter. The values was set back to default between each measurement and the unit was in Locked mode the whole time. A base line is included in all the figures. This baseline is just a measurement done prior to the experimenting.
+
+\subsection{EFCS}
+The EFCS parameter is the proportional part of the PID loop. It is according to the manual typically set between 0.7 to 6.0. Figure \ref{fig:EFCS} shows what happens when it was set to 20. When proportional gain is set this high, it overshoots dramatically and begins to oscillate.
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{EFCS.png}
+      \caption{TIE 100$\mu$s sample rate 100s total, phase difference for base line (blue) and for when stability parameter EFCS = 20}
+          \label{fig:EFCS}
+\end{figure}
+
+\subsection{PHASE}
+The PHASECO sets the Integral part of the PID loop. I set it to 100 and made the measurement as seen in figure \ref{fig:PHASE}. Typical values are between 10 and 30. Since it is set so high, it overshoots and restricts the loop from reaching the set point. 
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{PHASE.png}
+      \caption{TIE 100$\mu$s sample rate 100s total, phase difference for base line (blue) and for when stability parameter PHASECO = 100}
+          \label{fig:PHASE}
+\end{figure}
+
+\subsection{EFCD}
+The EFCD is the Dampening part of the PID loop. I set it to 20 and made the measurement as seen in figure \ref{fig:EFCD}. If the P part (EFCS) of the PID had been set higher, the effect might have been more visible. The noise seemed to be decrease compared to the base line.
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{EFCD.png}
+      \caption{TIE 100$\mu$s sample rate 100s total, phase difference for base line (blue) and for when stability parameter EFCD = 20}
+          \label{fig:EFCD}
+\end{figure}
+
+\subsection{SLOP}
+Not strictly part of the PID. The SLOP sets the sign of the slope between the EFC and the TCXO's frequency variation. By default, it's set to positive. Setting it to negative will completely wreck the stability of the oscillator in a very short time. When the loop tries to counter an error but applies a correction with the wrong slope, the error will become worse and worse for every correction. No matter how hard the loop tries to fix the error, it will only get worse since the sign is wrong. 
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{SLOP.png}
+      \caption{TIE 100$\mu$s sample rate 100s total, phase difference for base line (blue) and for when stability parameter SLOP = NEG}
+          \label{fig:SLOP}
+\end{figure}
+
+
+
+
 
 \end{document}                     
