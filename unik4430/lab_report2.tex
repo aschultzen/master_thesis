@@ -117,8 +117,6 @@ When comparing the figure \ref{fig:part1_spm3_fbtb_phase_diff} showing phase dif
           \label{fig:part1_spm4_allan}
 \end{figure}
 
-When comparing the measurement done by GPS-300's internal counter with our setup in the context of both regular (figure \ref{fig:part1_spm4_modified_allan}) and Modified Allan Deviation (figure \ref{fig:part1_spm4_allan}), it's clear that the measurement on our setup is the correct one. 
-
 \begin{figure}[!htb]
   \centering
     \includegraphics[width=1\textwidth]{tek00006.png}
@@ -133,11 +131,26 @@ When comparing the measurement done by GPS-300's internal counter with our setup
           \label{fig:part1_spm5_freq_diff}
 \end{figure}
 
+\newpage
+When comparing the measurement done by GPS-300's internal counter with our setup in the context of both regular (figure \ref{fig:part1_spm4_modified_allan}) and Modified Allan Deviation (figure \ref{fig:part1_spm4_allan}), it's clear that the measurement on our setup is the correct one. 
+
 % spm5 %
 Figure \ref{fig:tek00006} is a screenshot of the oscilloscope and shows both the GPS-300 and the PHM, trigging at the PHM (yellow). Upon observation of the oscilloscope, a PID like oscillation effect could be observed. When studying the figure \ref{fig:part1_spm5_freq_diff} showing the frequency difference made from a measurement done with our setup, this effect becomes more visible. One way to picture it, is that movement along the X-axis on the oscilloscope correlates to "movement" along the the Y-axis on figure \ref{fig:part1_spm5_freq_diff}. 
 
 % spm6 %
-\begin{figure}[!htb]
+
+\newpage
+Figure \ref{fig:del_1_spm6_mod_allan} and \ref{fig:del_1_spm6_allan} shows the Modified and regular Allan Deviation for three measurements all done with our setup:
+\begin{itemize}
+  \item TIE 100$\mu$s sample rate, PHM (light-blue)
+  \item TIE 100$\mu$s sample rate, GPS-300 in holdover mode (red)
+  \item TIE 100$\mu$s sample rate, GPS-300 in locked (GPS disciplined mode) smoothed over 1000 points (green)
+\end{itemize}
+Because of the 1000 point smoothing (green), not much can be said about the stability before 0.1 s. When comparing with the plot for the PHM, it becomes clear that any instability after 0.1 s is not because of the measurement setup, but rather the oscillator itself. However, by using the smoothing method, we are able to obtain resolution that would not be possible because of limitations in the measuring setup, already at 0.1 s instead of $approx$1.6s. By looking at the Modified Allan Deviation for the PHM, the limit of what you could hope to achieve in terms of resolution is revealed. This is because of how the Modified Allan Deviation is calculated by using a running average. This is also what makes it possible to separate white noise from flicker noise since white noise is uncorrelated and therefore possible to reduce by calculating an average.   
+
+Comparing with Symmetricom's own Allan Deviation, the GPS-300 actually performs better than their estimation. At 1 s, we measured 4.42E-11 as opposed to $\approx$ 9.00E-11. At 10 s, we measured 5.20E-11 and they $\approx$6.00E-10.
+
+\begin{figure}[!Htb]
   \centering
     \includegraphics[width=1\textwidth]{del_1_spm6_allan.png}
       \caption{Allan Deviation. TIE 100$\mu$s for GPS-300 in both Locked (green), Holdover (red) and PHM (light-blue). The measurement for Locked GPS-300 is smoothed over 1000 pts.}
@@ -150,14 +163,6 @@ Figure \ref{fig:tek00006} is a screenshot of the oscilloscope and shows both the
       \caption{Modified Allan Deviation. TIE 100$\mu$s for GPS-300 in both Locked (green), Holdover (red) and PHM (light-blue). The measurement for Locked GPS-300 is smoothed over 1000 pts}
           \label{fig:del_1_spm6_mod_allan}
 \end{figure}
-Figure \ref{fig:del_1_spm6_mod_allan} and \ref{fig:del_1_spm6_allan} shows the Modified and regular Allan Deviation for three measurements all done with our setup:
-\begin{itemize}
-  \item TIE 100$\mu$s sample rate, PHM (light-blue)
-  \item TIE 100$\mu$s sample rate, GPS-300 in holdover mode (red)
-  \item TIE 100$\mu$s sample rate, GPS-300 in locked (GPS disciplined mode) smoothed over 1000 points (green)
-\end{itemize}
-Note! I don't get it! Something about the maser being the correct one? Also the Modified allan shows that they meet 0.1 second (or after 1000 points) which has something to do with smoothing. Hvorfor er alle målingene våre med smooth og ikke uten? Hvorfor er noen med fbtb og andre med TIE? Det gjør det jævlig vanskelig å sammenlikne!
-
 \section{Part 2: Free-range oscillator}
 
 
