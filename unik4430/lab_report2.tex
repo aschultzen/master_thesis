@@ -180,4 +180,32 @@ Comparing with Symmetricom's own Allan Deviation, the GPS-300 actually performs 
           \label{fig:del_2_spm1_allan_dev}
 \end{figure}
 When comparing the Allan Deviation for the measurement taken with and without GPS lock (figure \ref{fig:del_2_spm1_allan_dev}), one can observe that the long term stability is better when in locked mode. This is not a surprise, but when observing the plot for the oscillator when in Holdover mode, one can see that the short term stability is better than when disciplined. One could perhaps argue that the oscillator short term stability in locked mode would benefit from a longer time constant (between GPS synch), but this depends on the temperature variations of the environment of which it is operating. In the lab where this experiment was exercised, the temperature is much more stable than one could hope to encounter "in the wild".
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{del_2_spm2_fbtb_blaas_finger.png}
+      \caption{Figure is showing variance in frequency from heating up and cooling down the oscillator by touching and blowing on it.}
+          \label{fig:del_2_spm2_fbtb_blaas_finger}
+\end{figure}
+
+Figure \ref{fig:del_2_spm2_fbtb_blaas_finger} shows what happens when you heat the oscillator up or cool it down. The first peak is when i put my finger on it and and the dip is when i blew air on it. The next peak and dip is from the same, but now the temperature compensation seems to have picked up the change, hence the last deep dip. The bottom-line is that the frequency increases as temperature drops, and decreases as temperature rises. 
+After putting GPS-300 into holdover mode which means it is no longer disciplined by the GPS chip on the board, i measured it going from holdover and into locked mode using both out setup, (figure \ref{fig:del_2_spm3_fra_holdover_to_locked}) and the internal counter (figure \ref{fig:del_2_spm3_fra_holdover_to_locked_z38}). Unfortunately, there is an error in the figure \ref{fig:del_2_spm3_fra_holdover_to_locked} where the wrong sample interval has been used. It should have been 10 s instead of 1. However, it still shows how the internal counter has been a little optimistic as mentioned earlier. 
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{del_2_spm3_fra_holdover_to_locked.png}
+      \caption{Figure is showing GPS-300 going from holdover mode to locked. Measurement was made by CNT-91 frequency counter. Note! The presentation of this measurement in TimeLab is made using the wrong sample interval, it should be 10s and not 1s. This only affects the x axis.}
+          \label{fig:del_2_spm3_fra_holdover_to_locked}
+\end{figure}
+
+\begin{figure}[!htb]
+  \centering
+    \includegraphics[width=1\textwidth]{del_2_spm3_fra_holdover_to_locked_z38.png}
+      \caption{Figure is showing GPS-300 going from holdover mode to locked. Measurement was made by the internal counter on GPS-300.}
+          \label{fig:del_2_spm3_fra_holdover_to_locked_z38}
+\end{figure}
+
+
+\section{Part 3: Stability parameters}
+
 \end{document}                     
