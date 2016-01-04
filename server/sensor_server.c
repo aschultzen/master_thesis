@@ -137,6 +137,20 @@ void setup_session(int session_fd)
     free(s_info);
 }
 
+static void append(struct client_table_entry* ptr, pid_t i_pid)           
+{
+  struct client_table_entry* tmp;
+  tmp = (struct client_table_entry*)malloc(sizeof(struct client_table_entry));
+  if(!tmp) {
+    perror("malloc");
+    exit(1);
+  }
+  tmp->id = 1;
+  tmp->pid = i_pid;
+  list_add_tail( &(tmp->list), &(ptr->list) );
+}
+
+
 
 /*
 * Main loop for the server.
@@ -149,6 +163,11 @@ void start_server(int port_number, char *serial_display_path)
     //char *serial_display_path = "/dev/ttyACM0";
     int server_sockfd;
     struct sockaddr_in serv_addr;
+
+    struct client_table_entry client_list;
+    struct client_table_entry* client_list_iterate; 
+
+    INIT_LIST_HEAD(&client_list.list);
 
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -239,6 +258,11 @@ void start_server(int port_number, char *serial_display_path)
 
     int session_fd = 0;
     while (!done) {
+        //Show what's in the list
+        list_for_each_entry(client_list_iterate, &client_list.list, list) {
+            printf("%d %d\n", client_list_iterate->id, client_list_iterate->pid);
+        }
+
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
             if (errno==EINTR) continue;
@@ -255,6 +279,7 @@ void start_server(int port_number, char *serial_display_path)
             _exit(0);
         } else {
             t_print("%d: Connection accepted\n", getpid());
+            append(&client_list,pid);
             close(session_fd);
         }
     }

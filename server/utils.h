@@ -8,6 +8,8 @@
 #include <string.h>
 #include <time.h>
 
+#include "list.h"
+
 void die (int line_number, const char * format, ...);
 char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen);
 void t_print(const char* format, ...);
