@@ -30,13 +30,6 @@
 #define MONITOR_TIMEOUT 100
 #define DISPLAY_SIZE 8
 
-struct client_table_entry{ 
-	struct list_head list;
-	int id;
-	pid_t pid;
-	char ip[INET_ADDRSTRLEN]; 
-} __attribute__ ((packed));
-
 /*
 * command_code struct is used by the parser
 * to convey an easy to compare command code, as well
@@ -62,8 +55,7 @@ struct session_info{
 	int session_fd;					
 	int client_id;							
 	void *iobuffer; 							
-	struct timeval heartbeat_timeout; 		
-	char ip[INET_ADDRSTRLEN]; 					
+	struct timeval heartbeat_timeout; 							
 	struct command_code cm;					
 } __attribute__ ((packed));
 

@@ -8,19 +8,71 @@ To do:
 #include "sensor_server.h"
 #include "serial.h"
 
+struct client_table_entry client_list;
+
 /* Declaration of shared memory variables */
 static char *serial_display_connections;
 static char *serial_display_message;
 
 volatile sig_atomic_t done = 0;
 
-/* SIGCHLD Handler */
-void handle_sigchld(int sig)
+void show_list()
 {
-    while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
+    if(! list_empty(&client_list) ){
+        struct client_table_entry* client_list_iterate;
+        printf("\n");
+        t_print("CONNECTED CLIENTS\n");
+        t_print("========================================\n");
+        list_for_each_entry(client_list_iterate, &client_list.list, list) {
+            t_print("ID: %d, PID: %d, IP:%s\n", client_list_iterate->id, client_list_iterate->pid, client_list_iterate->ip);
+        }
+        t_print("========================================\n\n");
+    }else{
+        t_print("No clients connected yet..\n");
+    }
 }
 
-/* SIGTERM/INT Hanlder */
+void remove_from_list(pid_t pid)
+{
+    struct client_table_entry* client_list_iterate;
+    struct client_table_entry* temp_remove;
+    list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list.list, list) {
+        if(client_list_iterate->pid == pid){
+            list_del(client_list_iterate);
+            free(client_list_iterate);
+        }
+    }
+}
+
+static void append_to_list(struct client_table_entry* ptr, pid_t i_pid, char *ip)           
+{
+  struct client_table_entry* tmp;
+  tmp = (struct client_table_entry*)malloc(sizeof(struct client_table_entry));
+  if(!tmp) {
+    perror("malloc");
+    exit(1);
+  }
+  tmp->id = 1;
+  tmp->pid = i_pid;
+  strncpy(tmp->ip, ip, INET_ADDRSTRLEN);
+  list_add_tail( &(tmp->list), &(ptr->list) );
+}
+
+/* SIGCHLD Handler */
+void handle_sigchld(int signum)
+{
+    pid_t pid;
+    int   status;
+    while ((pid = waitpid(-1, &status, WNOHANG)) != -1)
+    {
+        if(pid > 0){
+            t_print("SIGCHLD HANDLER: Removing PROC %d\n", pid);
+            remove_from_list(pid);
+        }
+    }
+}
+
+/* SIGTERM/INT Handler */
 void handle_sig(int signum)
 {
     if(signum == 15) {
@@ -42,7 +94,8 @@ int respond(struct session_info *s_info)
             serial_display_connections[s_info->client_id] = '0';
         }
         return -1;
-    }
+    };
+
     int parse_status = parse_input(s_info);
 
     if(parse_status == -1) {
@@ -61,8 +114,10 @@ int respond(struct session_info *s_info)
             return -1;
         }
         if(s_info->cm.code == CODE_IDENTIFY) {
+            t_print("IDENTIFY received\n");
             int id = 0;
-            if(sscanf(s_info->cm.parameter, "%d", &id) == -1) {
+
+            if(sscanf(s_info->cm.parameter, "%d", &id) == -1) {;
                 s_write(s_info, ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
                 return 0;
             }
@@ -74,7 +129,7 @@ int respond(struct session_info *s_info)
             }
 
             s_info->client_id = id;
-            t_print("%s ID set to: %d\n",s_info->ip, s_info->client_id);
+            t_print("ID set to: %d\n", s_info->client_id);
             serial_display_connections[s_info->client_id] = '1';
             s_write(s_info, PROTOCOL_OK, sizeof(PROTOCOL_OK));
             return 0;
@@ -110,23 +165,11 @@ void setup_session(int session_fd)
     }
 
     /*
-    * Fetching clients IP address and
-    * storing it in s_info
-    */
-    struct sockaddr addr;
-    addr.sa_family = AF_INET;
-    socklen_t addr_len = sizeof(addr);
-    if(getpeername(session_fd, (struct sockaddr *) &addr, &addr_len)) {
-        die(93,"getsocketname failed\n");
-    }
-    get_ip_str(&addr, s_info->ip,addr_len);
-    t_print("Client connected from: %s\n", s_info->ip); // prints "192.0.2.33"
-
-    /*
     * Entering child process main loop
     * Breaks (disconnects the client) if
     * respond < 0
     */
+
     while(!done) {
         if(respond(s_info) < 0) {
             break;
@@ -136,21 +179,6 @@ void setup_session(int session_fd)
     free(s_info->iobuffer);
     free(s_info);
 }
-
-static void append(struct client_table_entry* ptr, pid_t i_pid)           
-{
-  struct client_table_entry* tmp;
-  tmp = (struct client_table_entry*)malloc(sizeof(struct client_table_entry));
-  if(!tmp) {
-    perror("malloc");
-    exit(1);
-  }
-  tmp->id = 1;
-  tmp->pid = i_pid;
-  list_add_tail( &(tmp->list), &(ptr->list) );
-}
-
-
 
 /*
 * Main loop for the server.
@@ -164,8 +192,7 @@ void start_server(int port_number, char *serial_display_path)
     int server_sockfd;
     struct sockaddr_in serv_addr;
 
-    struct client_table_entry client_list;
-    struct client_table_entry* client_list_iterate; 
+    //struct client_table_entry client_list; 
 
     INIT_LIST_HEAD(&client_list.list);
 
@@ -258,11 +285,7 @@ void start_server(int port_number, char *serial_display_path)
 
     int session_fd = 0;
     while (!done) {
-        //Show what's in the list
-        list_for_each_entry(client_list_iterate, &client_list.list, list) {
-            printf("%d %d\n", client_list_iterate->id, client_list_iterate->pid);
-        }
-
+        show_list();
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
             if (errno==EINTR) continue;
@@ -274,12 +297,15 @@ void start_server(int port_number, char *serial_display_path)
         } else if (pid==0) {
             close(server_sockfd);
             setup_session(session_fd);
-            t_print("%d: Closing up session\n", getpid());
+            t_print("PROC %d: Closing up session\n", getpid());
+            //free(serial_display_connections);
             close(session_fd);
             _exit(0);
         } else {
             t_print("%d: Connection accepted\n", getpid());
-            append(&client_list,pid);
+            char ip[INET_ADDRSTRLEN];
+            get_ip_str(session_fd, ip);
+            append_to_list(&client_list,pid,ip);
             close(session_fd);
         }
     }

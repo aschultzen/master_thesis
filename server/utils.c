@@ -14,7 +14,7 @@ void die (int line_number, const char * format, ...)
 * Extracts IP adress from sockaddr struct.
 * Supports both IPV4 and IPV6
 */
-char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
+void extract_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
 {
     switch(sa->sa_family) {
         case AF_INET:
@@ -29,10 +29,18 @@ char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
 
         default:
             strncpy(s, "Unknown AF", maxlen);
-            return NULL;
     }
+}
 
-    return s;
+void get_ip_str(int session_fd, char *ip)
+{
+    struct sockaddr addr;
+    addr.sa_family = AF_INET;
+    socklen_t addr_len = sizeof(addr);
+    if(getpeername(session_fd, (struct sockaddr *) &addr, &addr_len)) {
+        die(93,"getsocketname failed\n");
+    }
+    extract_ip_str(&addr,ip, addr_len);
 }
 
 /* 
