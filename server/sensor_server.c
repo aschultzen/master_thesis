@@ -1,7 +1,7 @@
 #include "sensor_server.h"
 #include "serial.h"
 
-static struct client_table_entry client_list;
+static struct client_table_entry *client_list;
 
 /* Declaration of shared memory variables */
 static char *serial_display_connections;
@@ -11,12 +11,12 @@ volatile sig_atomic_t done = 0;
 
 void show_list()
 {
-    if(! list_empty(&client_list.list) ){
+    if(! list_empty(&client_list->list) ){
         struct client_table_entry* client_list_iterate;
         printf("\n");
         t_print("CONNECTED CLIENTS\n");
         t_print("========================================\n");
-        list_for_each_entry(client_list_iterate, &client_list.list, list) {
+        list_for_each_entry(client_list_iterate, &client_list->list, list) {
             t_print("ID: %d, PID: %d, IP:%s\n", client_list_iterate->id, client_list_iterate->pid, client_list_iterate->ip);
         }
         t_print("========================================\n\n");
@@ -29,10 +29,10 @@ void remove_from_list(pid_t pid)
 {
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* temp_remove;
-    list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list.list, list) {
+    list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
         if(client_list_iterate->pid == pid){
             list_del(&client_list_iterate->list);
-            free(client_list_iterate);
+            munmap(client_list_iterate, sizeof(struct client_table_entry));
         }
     }
 }
@@ -40,10 +40,7 @@ void remove_from_list(pid_t pid)
 static void append_to_list(struct client_table_entry* ptr, pid_t i_pid, char *ip)           
 {
   struct client_table_entry* tmp;
-  tmp = (struct client_table_entry*)malloc(sizeof(struct client_table_entry));
-  //tmp = mmap(NULL, 
-  //          (struct client_table_entry*)malloc(sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE,
-  //          MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+  tmp = mmap(NULL, sizeof(struct client_table_entry), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
   if(!tmp) {
     perror("malloc");
     exit(1);
@@ -188,9 +185,9 @@ void start_server(int port_number, char *serial_display_path)
     int server_sockfd;
     struct sockaddr_in serv_addr;
 
-    //struct client_table_entry client_list; 
+    client_list = mmap(NULL, sizeof(struct client_table_entry), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-    INIT_LIST_HEAD(&client_list.list);
+    INIT_LIST_HEAD(&client_list->list);
 
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -294,18 +291,20 @@ void start_server(int port_number, char *serial_display_path)
             close(server_sockfd);
             setup_session(session_fd);
             t_print("PROC %d: Closing up session\n", getpid());
+            free(serial_display_connections);
             close(session_fd);
             _exit(0);
         } else {
             t_print("%d: Connection accepted\n", getpid());
             char ip[INET_ADDRSTRLEN];
             get_ip_str(session_fd, ip);
-            append_to_list(&client_list,pid,ip);
+            append_to_list(client_list,pid,ip);
             close(session_fd);
         }
     }
     if(serial_display_path == NULL) {
         free(serial_display_connections);
+        munmap(client_list, sizeof(struct client_table_entry));
     }
     close(server_sockfd);
     t_print("%d: Server STOPPED!\n", getpid());

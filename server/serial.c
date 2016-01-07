@@ -64,6 +64,13 @@ void set_blocking (int fd, int should_block)
         printf ("error %d setting term attributes", errno);
 }
 
+/* 
+* As of 7.1.16 this is broken since both
+* static char *serial_display_connections;
+* static char *serial_display_message;
+* where both removed. There is however, a new structure
+* that should be usable. 
+*/
 void open_serial(char *portname, char *connections)
 {
     /* Registering the SIGINT handler */
