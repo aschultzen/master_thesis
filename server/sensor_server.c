@@ -7,7 +7,7 @@ volatile sig_atomic_t done = 0;
 
 void show_list()
 {
-    if(! list_empty(&client_list->list) ){
+    if(! list_empty(&client_list->list) ) {
         struct client_table_entry* client_list_iterate;
         printf("\n");
         t_print("CONNECTED CLIENTS\n");
@@ -16,7 +16,7 @@ void show_list()
             t_print("ID: %d, PID: %d, IP:%s\n", client_list_iterate->client_id, client_list_iterate->pid, client_list_iterate->ip);
         }
         t_print("========================================\n\n");
-    }else{
+    } else {
         t_print("No clients connected.\n");
     }
 }
@@ -26,7 +26,7 @@ void remove_client(pid_t pid)
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* temp_remove;
     list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
-        if(client_list_iterate->pid == pid){
+        if(client_list_iterate->pid == pid) {
             list_del(&client_list_iterate->list);
             munmap(client_list_iterate, sizeof(struct client_table_entry));
         }
@@ -34,16 +34,16 @@ void remove_client(pid_t pid)
     show_list();
 }
 
-struct client_table_entry* create_client(struct client_table_entry* ptr)           
+struct client_table_entry* create_client(struct client_table_entry* ptr)
 {
-  struct client_table_entry* tmp;
-  tmp = mmap(NULL, sizeof(struct client_table_entry), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-  if(!tmp) {
-    perror("malloc");
-    exit(1);
-  }
-  list_add_tail( &(tmp->list), &(ptr->list) );
-  return tmp;
+    struct client_table_entry* tmp;
+    tmp = mmap(NULL, sizeof(struct client_table_entry), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if(!tmp) {
+        perror("malloc");
+        exit(1);
+    }
+    list_add_tail( &(tmp->list), &(ptr->list) );
+    return tmp;
 }
 
 /* SIGCHLD Handler */
@@ -53,7 +53,7 @@ void handle_sigchld(int signum)
     int   status;
     while ((pid = waitpid(-1, &status, WNOHANG)) != -1)
     {
-        if(pid > 0){
+        if(pid > 0) {
             t_print("SIGCHLD HANDLER: Removing PROC %d\n", pid);
             remove_client(pid);
         }
@@ -84,12 +84,12 @@ int respond(struct client_table_entry *cte)
     int parse_status = parse_input(cte);
 
     if(parse_status == -1) {
-        s_write(cte, ERROR_ILLEGAL_MESSAGE_SIZE, 
-            sizeof(ERROR_ILLEGAL_MESSAGE_SIZE));
+        s_write(cte, ERROR_ILLEGAL_MESSAGE_SIZE,
+                sizeof(ERROR_ILLEGAL_MESSAGE_SIZE));
     }
     if(parse_status == 0) {
-        s_write(cte, ERROR_ILLEGAL_COMMAND, 
-            sizeof(ERROR_ILLEGAL_COMMAND));
+        s_write(cte, ERROR_ILLEGAL_COMMAND,
+                sizeof(ERROR_ILLEGAL_COMMAND));
     }
     if(parse_status == 1) {
         if(cte->cm.code == CODE_DISCONNECT) {
@@ -101,25 +101,20 @@ int respond(struct client_table_entry *cte)
             t_print("IDENTIFY received\n");
             int id = 0;
 
-            if(sscanf(cte->cm.parameter, "%d", &id) == -1) {;
+            if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
+                ;
                 s_write(cte, ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
                 return 0;
             }
 
             struct client_table_entry* client_list_iterate;
             list_for_each_entry(client_list_iterate, &client_list->list, list) {
-                if(client_list_iterate->client_id == id){
+                if(client_list_iterate->client_id == id) {
                     cte->client_id = -1;
                     s_write(cte, "ID in use!\n", 11);
                     return 0;
                 }
             }
-
-            /*if(serial_display_connections[id] == '1') {
-                cte->client_id = -1;
-                s_write(cte, "ID in use!\n", 11);
-                return 0;
-            }*/
 
             cte->client_id = id;
             t_print("ID set to: %d\n", cte->client_id);
@@ -158,8 +153,8 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
 
     /* Setting socket timeout to default value */
     /* This doesn't always work for some reason, race condition? :/ */
-    if (setsockopt (new_client->session_fd, SOL_SOCKET, 
-        SO_RCVTIMEO, (char *)&new_client->heartbeat_timeout, sizeof(struct timeval)) < 0) {
+    if (setsockopt (new_client->session_fd, SOL_SOCKET,
+                    SO_RCVTIMEO, (char *)&new_client->heartbeat_timeout, sizeof(struct timeval)) < 0) {
         die(36,"setsockopt failed\n");
     }
 
