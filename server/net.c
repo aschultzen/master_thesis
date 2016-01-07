@@ -1,19 +1,19 @@
 #include "net.h"
 
-int s_read(struct session_info *s_info)
+int s_read(struct client_table_entry *cte)
 {
-    bzero(s_info->iobuffer,SESSION_INFO_IO_BUFFER_SIZE);
-    return read(s_info->session_fd, s_info->iobuffer,255);
+    bzero(cte->iobuffer,SESSION_INFO_IO_BUFFER_SIZE);
+    return read(cte->session_fd, cte->iobuffer,255);
 }
 
-int s_write(struct session_info *s_info, char *message, int length)
+int s_write(struct client_table_entry *cte, char *message, int length)
 {
-    return write(s_info->session_fd, message, length);
+    return write(cte->session_fd, message, length);
 }
 
-int protocol_send(struct session_info *s_info, char *message)
+int protocol_send(struct client_table_entry *cte, char *message)
 {
-    return s_write(s_info, message, sizeof(message));
+    return s_write(cte, message, sizeof(message));
 }
 
 
@@ -34,32 +34,32 @@ int protocol_send(struct session_info *s_info, char *message)
 * Returns 0 if protocol is not followed
 * Returns 1 if all is ok
 */
-int parse_input(struct session_info *s_info)
+int parse_input(struct client_table_entry *cte)
 {
     /* Input too big */
-    if(strlen(s_info->iobuffer) > (MAX_PARAMETER_SIZE + MAX_COMMAND_SIZE) + 2) {
+    if(strlen(cte->iobuffer) > (MAX_PARAMETER_SIZE + MAX_COMMAND_SIZE) + 2) {
         return -1;
     }
 
     /* Input too small */
-    if(strlen(s_info->iobuffer) < (MIN_PARAMETER_SIZE + MIN_COMMAND_SIZE) + 2) {
+    if(strlen(cte->iobuffer) < (MIN_PARAMETER_SIZE + MIN_COMMAND_SIZE) + 2) {
         return -1;
     }
 
     /* ZEROING */
-    bzero(&s_info->cm, sizeof(struct command_code));
+    bzero(&cte->cm, sizeof(struct command_code));
 
     /* IDENTIFY */
-    if(strstr((char*)s_info->iobuffer, PROTOCOL_IDENTIFY ) == (s_info->iobuffer)) {
-        int length = (strlen(s_info->iobuffer) - strlen(PROTOCOL_IDENTIFY) ) - 2; //2 = escape characters
-        memcpy(&s_info->cm.parameter, (char*)(s_info->iobuffer)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
-        s_info->cm.code = CODE_IDENTIFY;
+    if(strstr((char*)cte->iobuffer, PROTOCOL_IDENTIFY ) == (cte->iobuffer)) {
+        int length = (strlen(cte->iobuffer) - strlen(PROTOCOL_IDENTIFY) ) - 2; //2 = escape characters
+        memcpy(&cte->cm.parameter, (char*)(cte->iobuffer)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
+        cte->cm.code = CODE_IDENTIFY;
         return 1;
     }
 
     /* DISCONNECT */
-    if(strstr((char*)s_info->iobuffer, PROTOCOL_DISCONNECT ) == (s_info->iobuffer)) {
-        s_info->cm.code = CODE_DISCONNECT;
+    if(strstr((char*)cte->iobuffer, PROTOCOL_DISCONNECT ) == (cte->iobuffer)) {
+        cte->cm.code = CODE_DISCONNECT;
         return 1;
     }
 

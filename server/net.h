@@ -41,6 +41,17 @@ struct command_code{
 	char parameter[MAX_PARAMETER_SIZE];
 } __attribute__ ((packed));
 
+struct client_table_entry{ 
+	struct list_head list;
+	pid_t pid;
+	int session_fd;					
+	int client_id;							
+	void *iobuffer; 							
+	struct timeval heartbeat_timeout; 							
+	struct command_code cm;	
+	char ip[INET_ADDRSTRLEN]; 
+} __attribute__ ((packed));
+
 /*
 * session_fd: The file descriptor for the session. 
 * client_id: The connected clients ID
@@ -59,9 +70,9 @@ struct session_info{
 	struct command_code cm;					
 } __attribute__ ((packed));
 
-int s_read(struct session_info *s_info);
-int s_write(struct session_info *s_info, char *message, int length);
-int parse_input(struct session_info *s_info);
-int protocol_send(struct session_info *s_info, char *message);
+int s_read(struct client_table_entry *cte);
+int s_write(struct client_table_entry *cte, char *message, int length);
+int parse_input(struct client_table_entry *cte);
+int protocol_send(struct client_table_entry *cte, char *message);
 
 #endif /* !NET_H */

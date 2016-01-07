@@ -1,6 +1,6 @@
 #include "serial.h"
 
-volatile sig_atomic_t serial_done = 0;
+volatile sig_atomic_t serial_done;
 
 void serial_handle_sig(int signum)
 {
@@ -71,7 +71,7 @@ void set_blocking (int fd, int should_block)
 * where both removed. There is however, a new structure
 * that should be usable. 
 */
-void open_serial(char *portname, char *connections)
+void open_serial(char *portname, struct client_table_entry *ect)
 {
     /* Registering the SIGINT handler */
     struct sigaction sigint_action;
@@ -84,6 +84,8 @@ void open_serial(char *portname, char *connections)
     memset(&sigterm_action, 0, sizeof(struct sigaction));
     sigterm_action.sa_handler = serial_handle_sig;
     sigaction(SIGTERM, &sigterm_action, NULL);
+
+    /*
 
     char in_buf [100];
     bzero(in_buf, 100*sizeof(char));
@@ -118,4 +120,5 @@ void open_serial(char *portname, char *connections)
             usleep(SERIAL_SLEEP);
         }
     }
+    */
 }

@@ -3,10 +3,6 @@
 
 static struct client_table_entry *client_list;
 
-/* Declaration of shared memory variables */
-static char *serial_display_connections;
-static char *serial_display_message;
-
 volatile sig_atomic_t done = 0;
 
 void show_list()
@@ -17,7 +13,7 @@ void show_list()
         t_print("CONNECTED CLIENTS\n");
         t_print("========================================\n");
         list_for_each_entry(client_list_iterate, &client_list->list, list) {
-            t_print("ID: %d, PID: %d, IP:%s\n", client_list_iterate->id, client_list_iterate->pid, client_list_iterate->ip);
+            t_print("ID: %d, PID: %d, IP:%s\n", client_list_iterate->client_id, client_list_iterate->pid, client_list_iterate->ip);
         }
         t_print("========================================\n\n");
     }else{
@@ -25,7 +21,7 @@ void show_list()
     }
 }
 
-void remove_from_list(pid_t pid)
+void remove_client(pid_t pid)
 {
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* temp_remove;
@@ -37,7 +33,7 @@ void remove_from_list(pid_t pid)
     }
 }
 
-static void append_to_list(struct client_table_entry* ptr, pid_t i_pid, char *ip)           
+struct client_table_entry* create_client(struct client_table_entry* ptr)           
 {
   struct client_table_entry* tmp;
   tmp = mmap(NULL, sizeof(struct client_table_entry), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -45,10 +41,8 @@ static void append_to_list(struct client_table_entry* ptr, pid_t i_pid, char *ip
     perror("malloc");
     exit(1);
   }
-  tmp->id = 1;
-  tmp->pid = i_pid;
-  strncpy(tmp->ip, ip, INET_ADDRSTRLEN);
   list_add_tail( &(tmp->list), &(ptr->list) );
+  return tmp;
 }
 
 /* SIGCHLD Handler */
@@ -60,7 +54,7 @@ void handle_sigchld(int signum)
     {
         if(pid > 0){
             t_print("SIGCHLD HANDLER: Removing PROC %d\n", pid);
-            remove_from_list(pid);
+            remove_client(pid);
         }
     }
 }
@@ -78,58 +72,53 @@ void handle_sig(int signum)
     done = 1;
 }
 
-int respond(struct session_info *s_info)
+int respond(struct client_table_entry *cte)
 {
-    int read_status = s_read(s_info); /* Blocking */
+    int read_status = s_read(cte); /* Blocking */
     if(read_status == -1) {
         t_print("Read failed or interrupted!\n");
-        if(s_info->client_id != -1) {
-            serial_display_connections[s_info->client_id] = '0';
-        }
         return -1;
-    };
+    }
 
-    int parse_status = parse_input(s_info);
+    int parse_status = parse_input(cte);
 
     if(parse_status == -1) {
-        s_write(s_info, ERROR_ILLEGAL_MESSAGE_SIZE, 
+        s_write(cte, ERROR_ILLEGAL_MESSAGE_SIZE, 
             sizeof(ERROR_ILLEGAL_MESSAGE_SIZE));
     }
     if(parse_status == 0) {
-        s_write(s_info, ERROR_ILLEGAL_COMMAND, 
+        s_write(cte, ERROR_ILLEGAL_COMMAND, 
             sizeof(ERROR_ILLEGAL_COMMAND));
     }
     if(parse_status == 1) {
-        if(s_info->cm.code == CODE_DISCONNECT) {
-            t_print("Client %d requested DISCONNECT.\n", s_info->client_id);
-            s_write(s_info, PROTOCOL_OK, sizeof(PROTOCOL_OK));
-            serial_display_connections[s_info->client_id] = '0';
+        if(cte->cm.code == CODE_DISCONNECT) {
+            t_print("Client %d requested DISCONNECT.\n", cte->client_id);
+            s_write(cte, PROTOCOL_OK, sizeof(PROTOCOL_OK));
             return -1;
         }
-        if(s_info->cm.code == CODE_IDENTIFY) {
+        if(cte->cm.code == CODE_IDENTIFY) {
             t_print("IDENTIFY received\n");
             int id = 0;
 
-            if(sscanf(s_info->cm.parameter, "%d", &id) == -1) {;
-                s_write(s_info, ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
+            if(sscanf(cte->cm.parameter, "%d", &id) == -1) {;
+                s_write(cte, ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
                 return 0;
             }
 
-            if(serial_display_connections[id] == '1') {
-                s_info->client_id = -1;
-                s_write(s_info, "ID in use!\n", 11);
+            /*if(serial_display_connections[id] == '1') {
+                cte->client_id = -1;
+                s_write(cte, "ID in use!\n", 11);
                 return 0;
-            }
+            }*/
 
-            s_info->client_id = id;
-            t_print("ID set to: %d\n", s_info->client_id);
-            serial_display_connections[s_info->client_id] = '1';
-            s_write(s_info, PROTOCOL_OK, sizeof(PROTOCOL_OK));
+            cte->client_id = id;
+            t_print("ID set to: %d\n", cte->client_id);
+            s_write(cte, PROTOCOL_OK, sizeof(PROTOCOL_OK));
             return 0;
         }
 
-        if(s_info->client_id < 0) {
-            s_write(s_info, ERROR_NO_ID, sizeof(ERROR_NO_ID));
+        if(cte->client_id < 0) {
+            s_write(cte, ERROR_NO_ID, sizeof(ERROR_NO_ID));
             return 0;
         }
     }
@@ -137,23 +126,30 @@ int respond(struct session_info *s_info)
 }
 
 /* The session_info struct allocated on stack only */
-void setup_session(int session_fd)
+void setup_session(int session_fd, struct client_table_entry *new_client)
 {
+    /* Setting the IP adress */
+    char ip[INET_ADDRSTRLEN];
+    get_ip_str(session_fd, ip);
+
+    /* Setting the PID */
+    new_client->pid = getpid();
+    strncpy(new_client->ip, ip, INET_ADDRSTRLEN);
+
     /* Initializing structure */
-    struct session_info *s_info = malloc(sizeof(struct session_info));
-    s_info->heartbeat_timeout.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
-    s_info->heartbeat_timeout.tv_usec = 0;
-    s_info->client_id = -1;
-    s_info->session_fd = session_fd;
-    s_info->iobuffer = calloc (SESSION_INFO_IO_BUFFER_SIZE, sizeof(void*));
-    if(s_info->iobuffer == NULL) {
+    new_client->heartbeat_timeout.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
+    new_client->heartbeat_timeout.tv_usec = 0;
+    new_client->client_id = -1;
+    new_client->session_fd = session_fd;
+    new_client->iobuffer = calloc (SESSION_INFO_IO_BUFFER_SIZE, sizeof(void*));
+    if(new_client->iobuffer == NULL) {
         die(21, "Memory allocation failed!");
     }
 
     /* Setting socket timeout to default value */
     /* This doesn't always work for some reason, race condition? :/ */
-    if (setsockopt (s_info->session_fd, SOL_SOCKET, 
-        SO_RCVTIMEO, (char *)&s_info->heartbeat_timeout, sizeof(struct timeval)) < 0) {
+    if (setsockopt (new_client->session_fd, SOL_SOCKET, 
+        SO_RCVTIMEO, (char *)&new_client->heartbeat_timeout, sizeof(struct timeval)) < 0) {
         die(36,"setsockopt failed\n");
     }
 
@@ -164,13 +160,12 @@ void setup_session(int session_fd)
     */
 
     while(!done) {
-        if(respond(s_info) < 0) {
+        if(respond(new_client) < 0) {
             break;
         }
     }
     /* Freeing resources */
-    free(s_info->iobuffer);
-    free(s_info);
+    free(new_client->iobuffer);
 }
 
 /*
@@ -242,38 +237,17 @@ void start_server(int port_number, char *serial_display_path)
 
     /* Forking out proc for serial com */
     if(serial_display_path != NULL) {
-        /* Shared memory used for "IPC"*/
-        serial_display_connections = mmap(NULL, 
-            sizeof SERVER_MAX_CONNECTIONS*(sizeof(char)), PROT_READ | PROT_WRITE,
-            MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-
-        serial_display_message = mmap(NULL, 
-            sizeof DISPLAY_SIZE*(sizeof(char)), PROT_READ | PROT_WRITE,
-             MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-
         pid_t pid=fork();
         if (pid==-1) {
             die(94, "failed to create child process (errno=%d)",errno);
         } else if (pid==0) {
             t_print("Serial COM started (PID: %d)\n", getpid());
-            open_serial(serial_display_path, serial_display_connections);
+            open_serial(serial_display_path, client_list);
             t_print("Serial COM closed (PID: %d)\n", getpid());
             _exit(0);
         }
-
-        int loop_counter;
-        for(loop_counter = 0; loop_counter < DISPLAY_SIZE; loop_counter++) {
-            serial_display_message[loop_counter] = '0';
-        }
     } else {
-        serial_display_connections = malloc(SERVER_MAX_CONNECTIONS*(sizeof(char)));
         t_print("No serial display defined.\n");
-    }
-
-    /* Initializing connection table */
-    int loop_counter;
-    for(loop_counter = 0; loop_counter < SERVER_MAX_CONNECTIONS; loop_counter++) {
-        serial_display_connections[loop_counter] = '0';
     }
 
     int session_fd = 0;
@@ -284,28 +258,23 @@ void start_server(int port_number, char *serial_display_path)
             if (errno==EINTR) continue;
             die(90,"failed to accept connection (errno=%d)",errno);
         }
+        struct client_table_entry *new_client = create_client(client_list);
         pid_t pid=fork();
         if (pid==-1) {
             die(94, "failed to create child process (errno=%d)",errno);
+            //WHAT HAPPENS WITH THE LIST WHEN FORK FAILS? DEAL WITH IT.
         } else if (pid==0) {
             close(server_sockfd);
-            setup_session(session_fd);
+            setup_session(session_fd, new_client);
             t_print("PROC %d: Closing up session\n", getpid());
-            free(serial_display_connections);
             close(session_fd);
             _exit(0);
         } else {
             t_print("%d: Connection accepted\n", getpid());
-            char ip[INET_ADDRSTRLEN];
-            get_ip_str(session_fd, ip);
-            append_to_list(client_list,pid,ip);
             close(session_fd);
         }
     }
-    if(serial_display_path == NULL) {
-        free(serial_display_connections);
-        munmap(client_list, sizeof(struct client_table_entry));
-    }
+    munmap(client_list, sizeof(struct client_table_entry));
     close(server_sockfd);
     t_print("%d: Server STOPPED!\n", getpid());
 }
