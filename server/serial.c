@@ -73,6 +73,8 @@ void set_blocking (int fd, int should_block)
 */
 void open_serial(char *portname, struct client_table_entry *ect)
 {
+    serial_done = 0;
+
     /* Registering the SIGINT handler */
     struct sigaction sigint_action;
     memset(&sigint_action, 0, sizeof(struct sigaction));
@@ -85,40 +87,28 @@ void open_serial(char *portname, struct client_table_entry *ect)
     sigterm_action.sa_handler = serial_handle_sig;
     sigaction(SIGTERM, &sigterm_action, NULL);
 
-    /*
-
-    char in_buf [100];
-    bzero(in_buf, 100*sizeof(char));
-    int counter = 0;
-    char ref[8] = {'f','f','f','f','f','f','f','f'};
-
-    unsigned char led_on[] = "0 0 LED";
-
     int fd = open (portname, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (fd < 0) {
         printf ("error %d opening %s: %s\n", errno, portname, strerror (errno));
     }
 
-    set_interface_attribs (fd, B9600, 0);  // set speed to 115,200 bps, 8n1 (no parity)
+    /*unsigned char led_on[] = "1 1 LED";
+
+    char in_buf [100];
+    bzero(in_buf, 100*sizeof(char));
+
+    set_interface_attribs (fd, B9600, 0);
     set_blocking (fd, 1);
 
-    sleep(1);
+    sleep(serial_done);
 
     read (fd, in_buf, sizeof in_buf);
+    struct client_table_entry* client_list_iterate;
+    client_list_iterate = ect;
 
     while(!serial_done) {
-        counter = 0;
-        while(counter < 8) {
-            if(connections[counter] != ref[counter]) {
-                ref[counter] = connections[counter];
-                led_on[0] = '0' + counter;
-                led_on[2] = connections[counter]; //Setting STATE
-                write( fd, led_on, sizeof(led_on) -1);
-
-            }
-            ++counter;
-            usleep(SERIAL_SLEEP);
-        }
-    }
-    */
+        usleep(SERIAL_SLEEP);
+    }*/
 }
+    
+

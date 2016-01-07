@@ -17,7 +17,7 @@
 
 void open_serial(char *portname, struct client_table_entry *ect);
 
-#define SERIAL_SLEEP 200000	/* Sleep duration between checks on */
+#define SERIAL_SLEEP 2000000	/* Sleep duration between checks on */
 							/* shared variables */
 
 #endif /* !SERIAL_H */

@@ -17,7 +17,7 @@ void show_list()
         }
         t_print("========================================\n\n");
     }else{
-        t_print("No clients connected yet..\n");
+        t_print("No clients connected.\n");
     }
 }
 
@@ -31,6 +31,7 @@ void remove_client(pid_t pid)
             munmap(client_list_iterate, sizeof(struct client_table_entry));
         }
     }
+    show_list();
 }
 
 struct client_table_entry* create_client(struct client_table_entry* ptr)           
@@ -105,6 +106,15 @@ int respond(struct client_table_entry *cte)
                 return 0;
             }
 
+            struct client_table_entry* client_list_iterate;
+            list_for_each_entry(client_list_iterate, &client_list->list, list) {
+                if(client_list_iterate->client_id == id){
+                    cte->client_id = -1;
+                    s_write(cte, "ID in use!\n", 11);
+                    return 0;
+                }
+            }
+
             /*if(serial_display_connections[id] == '1') {
                 cte->client_id = -1;
                 s_write(cte, "ID in use!\n", 11);
@@ -159,6 +169,8 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     * respond < 0
     */
 
+    /* Show list */
+    show_list();
     while(!done) {
         if(respond(new_client) < 0) {
             break;
@@ -244,6 +256,7 @@ void start_server(int port_number, char *serial_display_path)
             t_print("Serial COM started (PID: %d)\n", getpid());
             open_serial(serial_display_path, client_list);
             t_print("Serial COM closed (PID: %d)\n", getpid());
+            //SIGINT is "stopped" here!
             _exit(0);
         }
     } else {
@@ -252,7 +265,6 @@ void start_server(int port_number, char *serial_display_path)
 
     int session_fd = 0;
     while (!done) {
-        show_list();
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
             if (errno==EINTR) continue;
@@ -326,7 +338,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    t_print("%d: Sensor server starting...\n");
+    t_print("%d: Sensor server starting...\n", getpid());
     start_server(atoi(port_number), serial_display_path);
     exit(0);
 }

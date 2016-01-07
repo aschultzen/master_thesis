@@ -30,8 +30,5 @@ utils.o : utils.h list.h utils.c
 serial.o : serial.h serial.c
 	$(CC) $(CFLAGS) serial.c
 
-#db.o : db.h db.c
-#	$(CC) $(CFLAGS) db.c
-
 clean:
 	\rm *.o
