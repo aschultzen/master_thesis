@@ -1,14 +1,7 @@
-/*
-To do:
-
-    Dont use the serial_display_connections unless serial is used <- find a structure
-
-*/
-
 #include "sensor_server.h"
 #include "serial.h"
 
-struct client_table_entry client_list;
+static struct client_table_entry client_list;
 
 /* Declaration of shared memory variables */
 static char *serial_display_connections;
@@ -18,7 +11,7 @@ volatile sig_atomic_t done = 0;
 
 void show_list()
 {
-    if(! list_empty(&client_list) ){
+    if(! list_empty(&client_list.list) ){
         struct client_table_entry* client_list_iterate;
         printf("\n");
         t_print("CONNECTED CLIENTS\n");
@@ -38,7 +31,7 @@ void remove_from_list(pid_t pid)
     struct client_table_entry* temp_remove;
     list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list.list, list) {
         if(client_list_iterate->pid == pid){
-            list_del(client_list_iterate);
+            list_del(&client_list_iterate->list);
             free(client_list_iterate);
         }
     }
@@ -48,6 +41,9 @@ static void append_to_list(struct client_table_entry* ptr, pid_t i_pid, char *ip
 {
   struct client_table_entry* tmp;
   tmp = (struct client_table_entry*)malloc(sizeof(struct client_table_entry));
+  //tmp = mmap(NULL, 
+  //          (struct client_table_entry*)malloc(sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE,
+  //          MAP_SHARED | MAP_ANONYMOUS, -1, 0);
   if(!tmp) {
     perror("malloc");
     exit(1);
@@ -298,7 +294,6 @@ void start_server(int port_number, char *serial_display_path)
             close(server_sockfd);
             setup_session(session_fd);
             t_print("PROC %d: Closing up session\n", getpid());
-            //free(serial_display_connections);
             close(session_fd);
             _exit(0);
         } else {
@@ -363,7 +358,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    t_print("%d: Sensor server starting...\n", getpid());
+    t_print("%d: Sensor server starting...\n");
     start_server(atoi(port_number), serial_display_path);
     exit(0);
 }
