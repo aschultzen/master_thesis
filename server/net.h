@@ -25,6 +25,7 @@
 #define SERVER_MAX_CONNECTIONS 10
 #define SESSION_INFO_IO_BUFFER_SIZE 512
 #define MAX_CLIENTS 10
+#define ID_MAX 1000	//Highest ID number allowed
 #define MONITOR_MAX 2
 #define CLIENT_TIMEOUT 5
 #define MONITOR_TIMEOUT 100
