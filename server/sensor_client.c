@@ -7,21 +7,29 @@ int identify(int session_fd, int id)
     //Converting from int to string
     char id_str[5];
     bzero(id_str, 5);
-    sprintf(id_str, "%d", id);
+    sprintf(id_str, " %d", id); //Notice the space in the second parameter.
 
     //Declaring message string
     char identify_message[sizeof(PROTOCOL_IDENTIFY) + sizeof(id_str) + 1];
 
+    //copying
     memcpy(identify_message, PROTOCOL_IDENTIFY, sizeof(PROTOCOL_IDENTIFY));
-    memcpy((identify_message)+(sizeof(PROTOCOL_IDENTIFY)) + 1,id_str, sizeof(id_str));
+    memcpy(&identify_message[8],id_str, sizeof(id_str));
 
-
-    t_print("Add of im: %p, add of offset %p\n",identify_message,((identify_message)+(sizeof(PROTOCOL_IDENTIFY))) +1);
-    t_print("id_str STRING:%s\n", id_str);
-    t_print("IDENTIFY STRING:%s\n", identify_message);
-    t_print("Size of string: %d\n", sizeof(identify_message));
-
-    //return write(session_fd, identify_message, 12);
+    write(session_fd, identify_message, sizeof(identify_message));
+    
+    char iobuffer[100];
+    while ( (read(session_fd, iobuffer, sizeof(iobuffer)-1)) > 0) {
+        if(strstr((char*)iobuffer, PROTOCOL_OK ) == (iobuffer)) 
+        {
+            t_print("It's ok!\n");
+        }
+        else
+        {
+            t_print("it's not\n");
+        }
+    }
+    return 0;    
 }
 
 int start_client(int portno, char* ip, int id)
@@ -48,7 +56,7 @@ int start_client(int portno, char* ip, int id)
     }
 
     if( connect(session_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        printf("Connection failed!");
+        printf("Connection failed!\n");
         return 1;
     }
 

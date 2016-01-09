@@ -46,6 +46,7 @@ struct client_table_entry* create_client(struct client_table_entry* ptr)
     return tmp;
 }
 
+
 /* SIGCHLD Handler */
 void handle_sigchld(int signum)
 {
@@ -53,9 +54,13 @@ void handle_sigchld(int signum)
     int   status;
     while ((pid = waitpid(-1, &status, WNOHANG)) != -1)
     {
+        t_print("WAITPID: %d\n", pid);
         if(pid > 0) {
             t_print("SIGCHLD HANDLER: Removing PROC %d\n", pid);
             remove_client(pid);
+        }
+        if(pid == 0){
+            break;
         }
     }
 }
@@ -102,7 +107,6 @@ int respond(struct client_table_entry *cte)
             int id = 0;
 
             if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
-                ;
                 s_write(cte, ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
                 return 0;
             }
@@ -260,6 +264,7 @@ void start_server(int port_number, char *serial_display_path)
 
     int session_fd = 0;
     while (!done) {
+        t_print("Waiting for connections...\n");
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
             if (errno==EINTR) continue;

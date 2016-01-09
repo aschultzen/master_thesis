@@ -51,7 +51,7 @@ int parse_input(struct client_table_entry *cte)
 
     /* IDENTIFY */
     if(strstr((char*)cte->iobuffer, PROTOCOL_IDENTIFY ) == (cte->iobuffer)) {
-        int length = (strlen(cte->iobuffer) - strlen(PROTOCOL_IDENTIFY) ) - 2; //2 = escape characters
+        int length = (strlen(cte->iobuffer) - strlen(PROTOCOL_IDENTIFY) );
         memcpy(&cte->cm.parameter, (char*)(cte->iobuffer)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
         cte->cm.code = CODE_IDENTIFY;
         return 1;
