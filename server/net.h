@@ -30,6 +30,7 @@
 #define CLIENT_TIMEOUT 5
 #define MONITOR_TIMEOUT 100
 #define DISPLAY_SIZE 8
+#define CONNECTION_ATTEMPTS_MAX 10
 
 /*
 * command_code struct is used by the parser
