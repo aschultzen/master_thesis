@@ -23,7 +23,7 @@
 
 /* GENERAL */
 #define SERVER_MAX_CONNECTIONS 10
-#define SESSION_INFO_IO_BUFFER_SIZE 512
+#define SESSION_INFO_IO_BUFFER_SIZE MAX_PARAMETER_SIZE
 #define MAX_CLIENTS 10
 #define ID_MAX 1000	//Highest ID number allowed
 #define MONITOR_MAX 2
@@ -40,7 +40,7 @@
 
 struct command_code{
 	int code;
-	char parameter[MAX_PARAMETER_SIZE];
+	void *parameter;
 } __attribute__ ((packed));
 
 struct client_table_entry{ 

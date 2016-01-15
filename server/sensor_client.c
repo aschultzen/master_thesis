@@ -19,25 +19,22 @@ int identify(int session_fd, int id)
     memcpy(&identify_message[8],id_str, sizeof(id_str));
 
     write(session_fd, identify_message, sizeof(identify_message));
-    
+
     char iobuffer[100];
     while ( (read_status = read(session_fd, iobuffer, sizeof(iobuffer)-1)) > 0) {
-        if(strstr((char*)iobuffer, PROTOCOL_OK ) == (iobuffer)) 
-        {
+        if(strstr((char*)iobuffer, PROTOCOL_OK ) == (iobuffer)) {
             // ID not used. Accepting.
             t_print("ID %d accepted by server.\n", id);
-            return 1;
-        }
-        else
-        {
+            return 0;
+        } else {
             // ID in use. Rejected.
             t_print("ID %d rejected by server, already in use.\n", id);
-            return 0;
+            return -1;
         }
-    } 
+    }
     // Something happened during read.
-    // read() returns -1 at error 
-    return read_status; 
+    // read() returns -1 at error
+    return read_status;
 }
 
 int create_connection(char *iobuffer, struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno)
@@ -48,7 +45,7 @@ int create_connection(char *iobuffer, struct sockaddr_in *serv_addr, int *sessio
     }
 
     memset(serv_addr, '0', sizeof(*serv_addr));
- 
+
     serv_addr->sin_family = AF_INET;
     serv_addr->sin_port = htons(portno);
 
@@ -75,8 +72,8 @@ int start_client(int portno, char* ip, int id)
 
     memset(iobuffer, '0',sizeof(iobuffer));
 
-    while(connection_attempts <= CONNECTION_ATTEMPTS_MAX){
-        if(create_connection(iobuffer, &serv_addr, &session_fd, ip, portno) == 0){
+    while(connection_attempts <= CONNECTION_ATTEMPTS_MAX) {
+        if(create_connection(iobuffer, &serv_addr, &session_fd, ip, portno) == 0) {
             t_print("Connected to server!\n");
             break;
         }
@@ -85,7 +82,7 @@ int start_client(int portno, char* ip, int id)
         connection_attempts++;
     }
 
-    if( identify(session_fd, id) == -1 ){
+    if( identify(session_fd, id) == -1 ) {
         exit(0);
     }
 
@@ -138,7 +135,7 @@ int main(int argc, char *argv[])
             usage(argv);
         }
     }
-    if(client_id == 0 || client_id > ID_MAX){
+    if(client_id == 0 || client_id > ID_MAX) {
         printf("Client ID can not be less than 1 or more than %d!\n", ID_MAX);
         exit(0);
     }

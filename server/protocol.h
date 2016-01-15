@@ -3,7 +3,7 @@
 
 /* CONSTRAINS */
 #define MAX_COMMAND_SIZE 20
-#define MAX_PARAMETER_SIZE 100
+#define MAX_PARAMETER_SIZE 2048 //2 KiB for good measure 	
 
 #define MIN_COMMAND_SIZE 3
 #define MIN_PARAMETER_SIZE 0
@@ -14,6 +14,7 @@
 #define PROTOCOL_IDENTIFY "IDENTIFY"
 #define PROTOCOL_STORE "STORE"
 #define PROTOCOL_OK "OK\n"
+#define PROTOCOL_NMEA "NMEA"
 
 /* COMMAND CODES */
 /* Used by respond() */
@@ -21,6 +22,7 @@
 #define CODE_GET_TIME 2
 #define CODE_IDENTIFY 3
 #define CODE_STORE 4
+#define CODE_NMEA 5
 
 /* ERRORS*/
 #define ERROR_ILLEGAL_COMMAND "ILLEGAL COMMAND\n"

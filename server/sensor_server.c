@@ -39,7 +39,7 @@ struct client_table_entry* create_client(struct client_table_entry* ptr)
     struct client_table_entry* tmp;
     tmp = mmap(NULL, sizeof(struct client_table_entry), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     if(!tmp) {
-        perror("malloc");
+        perror("mmap failed");
         exit(1);
     }
     list_add_tail( &(tmp->list), &(ptr->list) );
@@ -52,15 +52,14 @@ void handle_sigchld(int signum)
 {
     pid_t pid;
     int   status;
-    while ((pid = waitpid(-1, &status, WNOHANG)) != -1)
-    {
-        t_print("WAITPID: %d\n", pid);
+    while ((pid = waitpid(-1, &status, WNOHANG)) != -1) {
+        if(pid == 0) {
+            break;
+        }
+
         if(pid > 0) {
             t_print("SIGCHLD HANDLER: Removing PROC %d\n", pid);
             remove_client(pid);
-        }
-        if(pid == 0){
-            break;
         }
     }
 }
@@ -103,7 +102,6 @@ int respond(struct client_table_entry *cte)
             return -1;
         }
         if(cte->cm.code == CODE_IDENTIFY) {
-            t_print("IDENTIFY received\n");
             int id = 0;
 
             if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
@@ -115,13 +113,14 @@ int respond(struct client_table_entry *cte)
             list_for_each_entry(client_list_iterate, &client_list->list, list) {
                 if(client_list_iterate->client_id == id) {
                     cte->client_id = -1;
+                    t_print("[%s] bounced! ID %d already in use.\n", cte->ip,id);
                     s_write(cte, "ID in use!\n", 11);
-                    return 0;
+                    return -1;
                 }
             }
 
             cte->client_id = id;
-            t_print("ID set to: %d\n", cte->client_id);
+            t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
             s_write(cte, PROTOCOL_OK, sizeof(PROTOCOL_OK));
             return 0;
         }
@@ -155,6 +154,11 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
         die(21, "Memory allocation failed!");
     }
 
+    new_client->cm.parameter = calloc (MAX_PARAMETER_SIZE, sizeof(void*));
+    if(new_client->cm.parameter == NULL) {
+        die(21, "Memory allocation failed!");
+    }
+
     /* Setting socket timeout to default value */
     /* This doesn't always work for some reason, race condition? :/ */
     if (setsockopt (new_client->session_fd, SOL_SOCKET,
@@ -176,6 +180,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
         }
     }
     /* Freeing resources */
+    free(new_client->cm.parameter);
     free(new_client->iobuffer);
 }
 

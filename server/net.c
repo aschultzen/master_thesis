@@ -16,8 +16,6 @@ int protocol_send(struct client_table_entry *cte, char *message)
     return s_write(cte, message, sizeof(message));
 }
 
-
-
 /*
 * Note: This function might be better placed somewhere else than in net.c!
 *
@@ -34,28 +32,36 @@ int protocol_send(struct client_table_entry *cte, char *message)
 * Returns 0 if protocol is not followed
 * Returns 1 if all is ok
 */
+
 int parse_input(struct client_table_entry *cte)
 {
-    /* Input too big */
+    /* INPUT TO BIG */
     if(strlen(cte->iobuffer) > (MAX_PARAMETER_SIZE + MAX_COMMAND_SIZE) + 2) {
         return -1;
     }
 
-    /* Input too small */
+    /* INPUT TO SMALL */
     if(strlen(cte->iobuffer) < (MIN_PARAMETER_SIZE + MIN_COMMAND_SIZE) + 2) {
         return -1;
     }
 
-    /* ZEROING */
-    bzero(&cte->cm, sizeof(struct command_code));
+    /* ZEROING COMMAND CODE*/
+    cte->cm.code = 0;
 
     /* IDENTIFY */
     if(strstr((char*)cte->iobuffer, PROTOCOL_IDENTIFY ) == (cte->iobuffer)) {
         int length = (strlen(cte->iobuffer) - strlen(PROTOCOL_IDENTIFY) );
-        memcpy(&cte->cm.parameter, (char*)(cte->iobuffer)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
+        memcpy((char*)cte->cm.parameter, (char*)(cte->iobuffer)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
         cte->cm.code = CODE_IDENTIFY;
         return 1;
     }
+
+    /* NMEA */
+    if(strstr((char*)cte->iobuffer, PROTOCOL_NMEA ) == (cte->iobuffer)) {
+        cte->cm.code = CODE_NMEA;
+        t_print("%s\n", cte->iobuffer);
+        return 1;
+    }    
 
     /* DISCONNECT */
     if(strstr((char*)cte->iobuffer, PROTOCOL_DISCONNECT ) == (cte->iobuffer)) {
