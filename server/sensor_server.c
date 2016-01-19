@@ -13,12 +13,42 @@ void show_list()
         t_print("CONNECTED CLIENTS\n");
         t_print("========================================\n");
         list_for_each_entry(client_list_iterate, &client_list->list, list) {
-            t_print("ID: %d, PID: %d, IP:%s\n", client_list_iterate->client_id, client_list_iterate->pid, client_list_iterate->ip);
+            t_print("ID: %d, PID: %d, IP:%s TYPE %d\n",
+            client_list_iterate->client_id, 
+            client_list_iterate->pid, 
+            client_list_iterate->ip, 
+            client_list_iterate->client_type);
         }
         t_print("========================================\n\n");
     } else {
         t_print("No clients connected.\n");
     }
+}
+
+void send_list(struct client_table_entry *cte){
+    char buffer [1000];
+    int snprintf_status = 0;
+    char *c_type = "SENSOR";
+
+    struct client_table_entry* client_list_iterate;
+    struct client_table_entry* n;
+    s_write(cte, "\n", 1);
+    s_write(cte, "CLIENT TABLE\n", 13);
+    s_write(cte, "========================================\n", 42);
+    list_for_each_entry_safe(client_list_iterate, n,&client_list->list, list) {
+        
+        if(client_list_iterate->client_type == MONITOR){
+            c_type = "MONITOR";
+        }
+
+        snprintf_status = snprintf( buffer, 1000, "ID: %d, PID: %d, IP:%s TYPE: %s\n", 
+        client_list_iterate->client_id, 
+        client_list_iterate->pid, 
+        client_list_iterate->ip, 
+        c_type);
+    }
+    s_write(cte, buffer, snprintf_status);
+    s_write(cte, "========================================\n\n", 44);
 }
 
 void remove_client(pid_t pid)
@@ -31,13 +61,15 @@ void remove_client(pid_t pid)
             munmap(client_list_iterate, sizeof(struct client_table_entry));
         }
     }
-    show_list();
+        show_list();
 }
 
 struct client_table_entry* create_client(struct client_table_entry* ptr)
 {
+    t_print("[%d] Creating a new node for client...\n", getpid());
     struct client_table_entry* tmp;
-    tmp = mmap(NULL, sizeof(struct client_table_entry), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    t_print("Size of client_list struct: %d\n", sizeof(struct client_table_entry));
+    tmp = mmap(NULL, sizeof(struct client_table_entry), PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     if(!tmp) {
         perror("mmap failed");
         exit(1);
@@ -58,8 +90,8 @@ void handle_sigchld(int signum)
         }
 
         if(pid > 0) {
-            t_print("SIGCHLD HANDLER: Removing PROC %d\n", pid);
             remove_client(pid);
+            t_print("Process %d reaped.\n", pid);
         }
     }
 }
@@ -73,7 +105,7 @@ void handle_sig(int signum)
     if(signum == 2) {
         t_print("[%d] SIGINT received!\n", getpid());
     }
-    t_print("%d: Stopping server...\n", getpid());
+    t_print("Stopping server...\n", getpid());
     done = 1;
 }
 
@@ -112,20 +144,31 @@ int respond(struct client_table_entry *cte)
             struct client_table_entry* client_list_iterate;
             list_for_each_entry(client_list_iterate, &client_list->list, list) {
                 if(client_list_iterate->client_id == id) {
-                    cte->client_id = -1;
+                    cte->client_id = 0;
                     t_print("[%s] bounced! ID %d already in use.\n", cte->ip,id);
                     s_write(cte, "ID in use!\n", 11);
                     return -1;
                 }
             }
 
+            if(id < 0){
+                cte->client_type = MONITOR;
+            }
+            else{
+                cte->client_type = SENSOR;
+            }
             cte->client_id = id;
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
             s_write(cte, PROTOCOL_OK, sizeof(PROTOCOL_OK));
             return 0;
         }
 
-        if(cte->client_id < 0) {
+        if(cte->cm.code == CODE_LISTCLIENTS) {
+            //send_list(cte);
+            show_list();
+        }
+
+        if(cte->client_id == 0) {
             s_write(cte, ERROR_NO_ID, sizeof(ERROR_NO_ID));
             return 0;
         }
@@ -147,8 +190,13 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     /* Initializing structure */
     new_client->heartbeat_timeout.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
     new_client->heartbeat_timeout.tv_usec = 0;
-    new_client->client_id = -1;
+    new_client->client_id = 0;
     new_client->session_fd = session_fd;
+
+    memset(&new_client->iobuffer, 0, IO_BUFFER_SIZE*sizeof(char));
+    memset(&new_client->cm.parameter, 0, MAX_PARAMETER_SIZE*sizeof(char));
+
+    /*
     new_client->iobuffer = calloc (SESSION_INFO_IO_BUFFER_SIZE, sizeof(void*));
     if(new_client->iobuffer == NULL) {
         die(21, "Memory allocation failed!");
@@ -158,6 +206,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     if(new_client->cm.parameter == NULL) {
         die(21, "Memory allocation failed!");
     }
+    */
 
     /* Setting socket timeout to default value */
     /* This doesn't always work for some reason, race condition? :/ */
@@ -171,8 +220,6 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     * Breaks (disconnects the client) if
     * respond < 0
     */
-
-    /* Show list */
     show_list();
     while(!done) {
         if(respond(new_client) < 0) {
@@ -180,8 +227,8 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
         }
     }
     /* Freeing resources */
-    free(new_client->cm.parameter);
-    free(new_client->iobuffer);
+    //free(new_client->cm.parameter);
+    //free(new_client->iobuffer);
 }
 
 /*
@@ -268,6 +315,7 @@ void start_server(int port_number, char *serial_display_path)
     }
 
     int session_fd = 0;
+    t_print("[%d] Server is running. Accepting connections.\n", getpid());
     while (!done) {
         t_print("Waiting for connections...\n");
         session_fd = accept(server_sockfd,0,0);
@@ -283,17 +331,17 @@ void start_server(int port_number, char *serial_display_path)
         } else if (pid==0) {
             close(server_sockfd);
             setup_session(session_fd, new_client);
-            t_print("PROC %d: Closing up session\n", getpid());
             close(session_fd);
+            t_print("[%d] Disconnected\n", getpid());
             _exit(0);
         } else {
-            t_print("%d: Connection accepted\n", getpid());
+            t_print("Connection accepted\n");
             close(session_fd);
         }
     }
     munmap(client_list, sizeof(struct client_table_entry));
     close(server_sockfd);
-    t_print("%d: Server STOPPED!\n", getpid());
+    t_print("Server STOPPED!\n", getpid());
 }
 
 int usage(char *argv[])
@@ -343,7 +391,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    t_print("%d: Sensor server starting...\n", getpid());
+    t_print("Sensor server starting...\n", getpid());
     start_server(atoi(port_number), serial_display_path);
     exit(0);
 }

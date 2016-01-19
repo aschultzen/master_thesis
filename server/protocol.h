@@ -15,6 +15,7 @@
 #define PROTOCOL_STORE "STORE"
 #define PROTOCOL_OK "OK\n"
 #define PROTOCOL_NMEA "NMEA"
+#define PROTOCOL_LISTCLIENTS "LISTCLIENTS"
 
 /* COMMAND CODES */
 /* Used by respond() */
@@ -23,10 +24,18 @@
 #define CODE_IDENTIFY 3
 #define CODE_STORE 4
 #define CODE_NMEA 5
+#define CODE_LISTCLIENTS 6
 
 /* ERRORS*/
 #define ERROR_ILLEGAL_COMMAND "ILLEGAL COMMAND\n"
 #define ERROR_NO_ID "CLIENT NOT IDENTIFIED\n"
 #define ERROR_ID_IN_USE "ID IN USE\n"
 #define ERROR_ILLEGAL_MESSAGE_SIZE "ILLEGAL MESSAGE SIZE\n"
+
+enum client_type
+{
+    SENSOR,
+    MONITOR
+};
+
 #endif /* !PROTOCOL_H */

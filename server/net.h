@@ -23,7 +23,7 @@
 
 /* GENERAL */
 #define SERVER_MAX_CONNECTIONS 10
-#define SESSION_INFO_IO_BUFFER_SIZE MAX_PARAMETER_SIZE
+#define IO_BUFFER_SIZE MAX_PARAMETER_SIZE
 #define MAX_CLIENTS 10
 #define ID_MAX 1000	//Highest ID number allowed
 #define MONITOR_MAX 2
@@ -40,21 +40,13 @@
 
 struct command_code{
 	int code;
-	void *parameter;
-} __attribute__ ((packed));
-
-struct client_table_entry{ 
-	struct list_head list;
-	pid_t pid;
-	int session_fd;					
-	int client_id;							
-	void *iobuffer; 							
-	struct timeval heartbeat_timeout; 							
-	struct command_code cm;	
-	char ip[INET_ADDRSTRLEN]; 
+	//void *parameter;
+	char parameter[MAX_PARAMETER_SIZE];
 } __attribute__ ((packed));
 
 /*
+* list_head list: The head in the list of clients
+* pid: Process ID for the client connection (See "fork")
 * session_fd: The file descriptor for the session. 
 * client_id: The connected clients ID
 * iobuffer: A general purpose buffer for in and output
@@ -64,12 +56,17 @@ struct client_table_entry{
 * are parsed by command parser.
 */
 
-struct session_info{
+struct client_table_entry{ 
+	struct list_head list;
+	pid_t pid;
 	int session_fd;					
 	int client_id;							
-	void *iobuffer; 							
+	//void *iobuffer;
+	char iobuffer[IO_BUFFER_SIZE]; 
+	int client_type;							
 	struct timeval heartbeat_timeout; 							
-	struct command_code cm;					
+	struct command_code cm;	
+	char ip[INET_ADDRSTRLEN]; 
 } __attribute__ ((packed));
 
 int s_read(struct client_table_entry *cte);

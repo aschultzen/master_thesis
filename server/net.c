@@ -2,8 +2,8 @@
 
 int s_read(struct client_table_entry *cte)
 {
-    bzero(cte->iobuffer,SESSION_INFO_IO_BUFFER_SIZE);
-    return read(cte->session_fd, cte->iobuffer,255);
+    bzero(cte->iobuffer,IO_BUFFER_SIZE);
+    return read(cte->session_fd, cte->iobuffer,IO_BUFFER_SIZE);
 }
 
 int s_write(struct client_table_entry *cte, char *message, int length)
@@ -51,8 +51,14 @@ int parse_input(struct client_table_entry *cte)
     /* IDENTIFY */
     if(strstr((char*)cte->iobuffer, PROTOCOL_IDENTIFY ) == (cte->iobuffer)) {
         int length = (strlen(cte->iobuffer) - strlen(PROTOCOL_IDENTIFY) );
-        memcpy((char*)cte->cm.parameter, (char*)(cte->iobuffer)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter, (cte->iobuffer)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
         cte->cm.code = CODE_IDENTIFY;
+        return 1;
+    }
+
+    /* LISTCLIENTS */
+    if(strstr((char*)cte->iobuffer, PROTOCOL_LISTCLIENTS ) == (cte->iobuffer)) {
+        cte->cm.code = CODE_LISTCLIENTS;
         return 1;
     }
 

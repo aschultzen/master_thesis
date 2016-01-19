@@ -3,6 +3,19 @@
 #include "protocol.h"
 #include "utils.h"
 
+char *nmea_string = 
+"NMEA $GPRMC,134116.00,A,5957.80516,N,01043.82047,E,0.874,,150116,,,A*72\
+$GPVTG,,T,,M,0.874,N,1.619,K,A*27\
+$GPGGA,134116.00,5957.80516,N,01043.82047,E,1,06,2.00,194.6,M,38.5,M,,*57\
+$GPGSA,A,3,05,02,09,06,23,16,,,,,,,4.36,2.00,3.87*03\
+$GPGSV,4,1,13,02,26,240,32,05,48,287,33,06,05,204,12,07,67,144,*7A\
+$GPGSV,4,2,13,09,48,097,16,13,10,262,,16,21,032,07,20,05,312,*71\
+$GPGSV,4,3,13,23,14,092,14,26,04,012,07,29,07,314,,30,44,190,*73\
+$GPGSV,4,4,13,33,18,209,*49\
+$GPGLL,5957.80516,N,01043.82047,E,134116.00,A,A*62 \
+$GPTXT,01,01,01,NMEA unknown msg*58";
+int nmea_string_length = 560;
+
 int identify(int session_fd, int id)
 {
     //Converting from int to string
@@ -86,8 +99,9 @@ int start_client(int portno, char* ip, int id)
         exit(0);
     }
 
-    while ( (n = read(session_fd, iobuffer, sizeof(iobuffer)-1)) > 0) {
-        //
+    while (1) {
+        write(session_fd, nmea_string, nmea_string_length);
+        sleep(1);
     }
 
     if(n < 0) {
