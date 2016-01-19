@@ -31,14 +31,15 @@ void send_list(struct client_table_entry *cte){
     char *c_type = "SENSOR";
 
     struct client_table_entry* client_list_iterate;
-    struct client_table_entry* n;
     s_write(cte, "\n", 1);
     s_write(cte, "CLIENT TABLE\n", 13);
     s_write(cte, "========================================\n", 42);
-    list_for_each_entry_safe(client_list_iterate, n,&client_list->list, list) {
+    list_for_each_entry(client_list_iterate,&client_list->list, list) {
         
         if(client_list_iterate->client_type == MONITOR){
             c_type = "MONITOR";
+        }else{
+           c_type = "SENSOR"; 
         }
 
         snprintf_status = snprintf( buffer, 1000, "ID: %d, PID: %d, IP:%s TYPE: %s\n", 
@@ -46,8 +47,8 @@ void send_list(struct client_table_entry *cte){
         client_list_iterate->pid, 
         client_list_iterate->ip, 
         c_type);
+        s_write(cte, buffer, snprintf_status);
     }
-    s_write(cte, buffer, snprintf_status);
     s_write(cte, "========================================\n\n", 44);
 }
 
@@ -58,22 +59,20 @@ void remove_client(pid_t pid)
     list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
         if(client_list_iterate->pid == pid) {
             list_del(&client_list_iterate->list);
-            munmap(client_list_iterate, sizeof(struct client_table_entry));
         }
     }
-        show_list();
 }
 
 struct client_table_entry* create_client(struct client_table_entry* ptr)
 {
     t_print("[%d] Creating a new node for client...\n", getpid());
     struct client_table_entry* tmp;
-    t_print("Size of client_list struct: %d\n", sizeof(struct client_table_entry));
-    tmp = mmap(NULL, sizeof(struct client_table_entry), PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    if(!tmp) {
-        perror("mmap failed");
-        exit(1);
-    }
+    t_print("Size of client_table_entry %d\n", sizeof(struct client_table_entry));
+    t_print("client_list address %p\n", client_list);
+    t_print("Calculated new address for node %p\n", (client_list + number_of_clients));
+
+    tmp = (client_list + number_of_clients);
+
     list_add_tail( &(tmp->list), &(ptr->list) );
     return tmp;
 }
@@ -91,7 +90,7 @@ void handle_sigchld(int signum)
 
         if(pid > 0) {
             remove_client(pid);
-            t_print("Process %d reaped.\n", pid);
+            t_print("Process %d reaped. Status: %d\n", pid, status);
         }
     }
 }
@@ -164,8 +163,8 @@ int respond(struct client_table_entry *cte)
         }
 
         if(cte->cm.code == CODE_LISTCLIENTS) {
-            //send_list(cte);
             show_list();
+            send_list(cte);
         }
 
         if(cte->client_id == 0) {
@@ -196,18 +195,6 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     memset(&new_client->iobuffer, 0, IO_BUFFER_SIZE*sizeof(char));
     memset(&new_client->cm.parameter, 0, MAX_PARAMETER_SIZE*sizeof(char));
 
-    /*
-    new_client->iobuffer = calloc (SESSION_INFO_IO_BUFFER_SIZE, sizeof(void*));
-    if(new_client->iobuffer == NULL) {
-        die(21, "Memory allocation failed!");
-    }
-
-    new_client->cm.parameter = calloc (MAX_PARAMETER_SIZE, sizeof(void*));
-    if(new_client->cm.parameter == NULL) {
-        die(21, "Memory allocation failed!");
-    }
-    */
-
     /* Setting socket timeout to default value */
     /* This doesn't always work for some reason, race condition? :/ */
     if (setsockopt (new_client->session_fd, SOL_SOCKET,
@@ -220,7 +207,6 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     * Breaks (disconnects the client) if
     * respond < 0
     */
-    show_list();
     while(!done) {
         if(respond(new_client) < 0) {
             break;
@@ -243,7 +229,7 @@ void start_server(int port_number, char *serial_display_path)
     int server_sockfd;
     struct sockaddr_in serv_addr;
 
-    client_list = mmap(NULL, sizeof(struct client_table_entry), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    client_list = mmap(NULL, (MAX_CLIENTS * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
     INIT_LIST_HEAD(&client_list->list);
 

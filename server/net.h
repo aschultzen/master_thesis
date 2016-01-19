@@ -1,11 +1,15 @@
 #ifndef NET_H
 #define NET_H
 
+#define _GNU_SOURCE 1
+#include <unistd.h>
+#include <sys/mman.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -15,7 +19,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <arpa/inet.h>
-#include <sys/mman.h>
+//#include <sys/mman.h>
 
 /* My own header files */ 
 #include "utils.h"
