@@ -24,7 +24,7 @@ sensor_client.o : sensor_client.h sensor_client.c
 net.o : net.h utils.h net.c 
 	$(CC) $(CFLAGS) net.c
 
-utils.o : utils.h list.h utils.c
+utils.o : utils.h list.h utils.c config.h
 	$(CC) $(CFLAGS) utils.c
 
 serial.o : serial.h serial.c

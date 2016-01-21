@@ -24,9 +24,9 @@
 #include "protocol.h"
 
 /* GENERAL */
-#define SERVER_MAX_CONNECTIONS 10 //Deprecated
+#define SERVER_MAX_CONNECTIONS 10
 #define IO_BUFFER_SIZE MAX_PARAMETER_SIZE
-#define MAX_CLIENTS 1
+#define MAX_CLIENTS 10
 #define ID_MAX 1000	//Highest ID number allowed
 #define MONITOR_MAX 2
 #define CLIENT_TIMEOUT 5
@@ -35,18 +35,8 @@
 #define CONNECTION_ATTEMPTS_MAX 10
 
 /*
-* command_code struct is used by the parser
-* to convey an easy to compare command code, as well
-* as any parameter belonging to that command
-*/ 
-
-struct command_code{
-	int code;
-	//void *parameter;
-	char parameter[MAX_PARAMETER_SIZE];
-} __attribute__ ((packed));
-
-/*
+* CLIENT TABLE STRUCT 
+*
 * list_head list: The head in the list of clients
 * pid: Process ID for the client connection (See "fork")
 * session_fd: The file descriptor for the session. 
@@ -63,7 +53,6 @@ struct client_table_entry{
 	pid_t pid;
 	int session_fd;					
 	int client_id;							
-	//void *iobuffer;
 	char iobuffer[IO_BUFFER_SIZE]; 
 	int client_type;							
 	struct timeval heartbeat_timeout; 							

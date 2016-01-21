@@ -34,7 +34,7 @@ void send_list(struct client_table_entry *cte){
     struct client_table_entry* client_list_iterate;
     s_write(cte, "\n", 1);
     s_write(cte, "CLIENT TABLE\n", 13);
-    s_write(cte, "========================================\n", 42);
+    s_write(cte, "=============================================\n", 47);
     list_for_each_entry(client_list_iterate,&client_list->list, list) {
         
         if(client_list_iterate->client_type == MONITOR){
@@ -50,7 +50,7 @@ void send_list(struct client_table_entry *cte){
         c_type);
         s_write(cte, buffer, snprintf_status);
     }
-    s_write(cte, "========================================\n\n", 44);
+    s_write(cte, "=============================================\n\n", 48);
 }
 
 void remove_client(pid_t pid)
@@ -67,6 +67,7 @@ void remove_client(pid_t pid)
 
 struct client_table_entry* create_client(struct client_table_entry* ptr)
 {
+    number_of_clients++;
     struct client_table_entry* tmp;
     tmp = (client_list + number_of_clients);
     list_add_tail( &(tmp->list), &(ptr->list) );
@@ -158,14 +159,13 @@ int respond(struct client_table_entry *cte)
             return 0;
         }
 
-        if(cte->cm.code == CODE_LISTCLIENTS) {
-            show_list();
-            send_list(cte);
-        }
-
         if(cte->client_id == 0) {
             s_write(cte, ERROR_NO_ID, sizeof(ERROR_NO_ID));
             return 0;
+        }
+
+        if(cte->cm.code == CODE_LISTCLIENTS) {
+            send_list(cte);
         }
     }
     return 0;
@@ -225,8 +225,18 @@ void start_server(int port_number, char *serial_display_path)
     int server_sockfd;
     struct sockaddr_in serv_addr;
 
-    client_list = mmap(NULL, (MAX_CLIENTS * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    /* Loading config */
+    struct config cfg;
+    int load_config_status = load_config(&cfg, CONFIG_FILE_PATH);
 
+    /* Falling back to default if load_config fails */
+    if(load_config_status == 0){
+        t_print("Config loaded!\n");
+        client_list = mmap(NULL, (cfg.config_server_max_connections * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    }else{
+        t_print("Failed to load config! Config file corrupt or missing entries.\n");
+        client_list = mmap(NULL, (MAX_CLIENTS * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    }
     INIT_LIST_HEAD(&client_list->list);
 
     /* Initialize socket */
@@ -274,7 +284,9 @@ void start_server(int port_number, char *serial_display_path)
     */
     if (bind(server_sockfd, (struct sockaddr *) &serv_addr,
              sizeof(serv_addr)) < 0) {
-        die(80,"ERROR on binding");
+        //die(80,"ERROR on binding");
+        t_print("%d: ERROR on binding\n", 80);
+        exit(1);
     }
 
     /* Marking the connection for listening*/
@@ -322,7 +334,6 @@ void start_server(int port_number, char *serial_display_path)
                 _exit(0);
             } else {
                 t_print("Connection accepted\n");
-                number_of_clients++;
                 close(session_fd);
             }
         }

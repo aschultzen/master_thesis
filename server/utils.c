@@ -32,6 +32,9 @@ void extract_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
     }
 }
 
+/* 
+* Extracts IP from session file descriptor
+*/
 void get_ip_str(int session_fd, char *ip)
 {
     struct sockaddr addr;
@@ -47,7 +50,8 @@ void get_ip_str(int session_fd, char *ip)
 * Print with timestamp:
 * Example : [01.01.01 - 10:10:10] [<Some string>]
 */
-void t_print(const char* format, ...){
+void t_print(const char* format, ...)
+{
 	char buffer[100];
 	time_t rawtime;
 	struct tm *info;
@@ -60,3 +64,61 @@ void t_print(const char* format, ...){
     vfprintf(stdout, format, argptr);
     va_end(argptr);
 }
+
+/* 
+* Loads config. 
+* Returns: -1 fail | 0 success
+*/
+int load_config(struct config *cfg, char *path)
+{
+    FILE *config_file;
+    long file_size;
+    char *input_buffer;
+    char temp_buffer[100];
+    int status = 0;
+
+    config_file=fopen(path, "r");
+    if(!config_file){
+        t_print("config_loader(): Failed to load config file, aborting.\n");
+        return -1;
+    }
+
+    fseek(config_file , 0L , SEEK_END);
+    file_size = ftell(config_file);
+    rewind(config_file);
+
+    /* Alocating memory for the file buffer */
+    input_buffer = calloc( 1, file_size+1 );
+    if(!input_buffer){
+      fclose(config_file);
+      t_print("config_loader(): Memory allocation failed, aborting.\n");
+      return -1; 
+    } 
+
+    /* Get the file into the buffer */
+    if(fread( input_buffer , file_size, 1 , config_file) != 1){
+        fclose(config_file);
+        free(input_buffer);
+        t_print("config_loader(): Read failed, aborting\n");
+        return -1;
+    }   
+
+    char *ptr = strstr(input_buffer, CONFIG_SERVER_MAX_CONNECTIONS );
+    if(ptr != NULL){
+        int length = strlen(ptr) - strlen(CONFIG_SERVER_MAX_CONNECTIONS);
+        memcpy(temp_buffer, ptr+(strlen(CONFIG_SERVER_MAX_CONNECTIONS)*(sizeof(char))), length);
+        status = sscanf(temp_buffer, "%d", &cfg->config_server_max_connections);
+    }
+
+    if(status == EOF || status == 0){
+        fclose(config_file);
+        free(input_buffer);
+        return -1;
+    }
+
+    fclose(config_file);
+    free(input_buffer);
+    return 0;
+}
+
+
