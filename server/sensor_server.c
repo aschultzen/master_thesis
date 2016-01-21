@@ -2,6 +2,7 @@
 #include "serial.h"
 
 static struct client_table_entry *client_list;
+static int number_of_clients;
 
 volatile sig_atomic_t done = 0;
 
@@ -61,18 +62,13 @@ void remove_client(pid_t pid)
             list_del(&client_list_iterate->list);
         }
     }
+    number_of_clients--;
 }
 
 struct client_table_entry* create_client(struct client_table_entry* ptr)
 {
-    t_print("[%d] Creating a new node for client...\n", getpid());
     struct client_table_entry* tmp;
-    t_print("Size of client_table_entry %d\n", sizeof(struct client_table_entry));
-    t_print("client_list address %p\n", client_list);
-    t_print("Calculated new address for node %p\n", (client_list + number_of_clients));
-
     tmp = (client_list + number_of_clients);
-
     list_add_tail( &(tmp->list), &(ptr->list) );
     return tmp;
 }
@@ -301,7 +297,7 @@ void start_server(int port_number, char *serial_display_path)
     }
 
     int session_fd = 0;
-    t_print("[%d] Server is running. Accepting connections.\n", getpid());
+    t_print("Server is running. Accepting connections.\n");
     while (!done) {
         t_print("Waiting for connections...\n");
         session_fd = accept(server_sockfd,0,0);
@@ -309,20 +305,26 @@ void start_server(int port_number, char *serial_display_path)
             if (errno==EINTR) continue;
             die(90,"failed to accept connection (errno=%d)",errno);
         }
-        struct client_table_entry *new_client = create_client(client_list);
-        pid_t pid=fork();
-        if (pid==-1) {
-            die(94, "failed to create child process (errno=%d)",errno);
-            //WHAT HAPPENS WITH THE LIST WHEN FORK FAILS? DEAL WITH IT.
-        } else if (pid==0) {
-            close(server_sockfd);
-            setup_session(session_fd, new_client);
+        if(number_of_clients == MAX_CLIENTS){
+            write(session_fd, ERROR_MAX_CLIENTS_REACHED, sizeof(ERROR_MAX_CLIENTS_REACHED));
             close(session_fd);
-            t_print("[%d] Disconnected\n", getpid());
-            _exit(0);
-        } else {
-            t_print("Connection accepted\n");
-            close(session_fd);
+        }else{
+            struct client_table_entry *new_client = create_client(client_list);
+            pid_t pid=fork();
+            if (pid==-1) {
+                die(94, "failed to create child process (errno=%d)",errno);
+                //WHAT HAPPENS WITH THE LIST WHEN FORK FAILS? DEAL WITH IT.
+            } else if (pid==0) {
+                close(server_sockfd);
+                setup_session(session_fd, new_client);
+                close(session_fd);
+                t_print("[%d] Disconnected\n", getpid());
+                _exit(0);
+            } else {
+                t_print("Connection accepted\n");
+                number_of_clients++;
+                close(session_fd);
+            }
         }
     }
     munmap(client_list, sizeof(struct client_table_entry));

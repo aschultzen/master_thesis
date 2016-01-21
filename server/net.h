@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-//#include <unistd.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -19,16 +18,15 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <arpa/inet.h>
-//#include <sys/mman.h>
 
 /* My own header files */ 
 #include "utils.h"
 #include "protocol.h"
 
 /* GENERAL */
-#define SERVER_MAX_CONNECTIONS 10
+#define SERVER_MAX_CONNECTIONS 10 //Deprecated
 #define IO_BUFFER_SIZE MAX_PARAMETER_SIZE
-#define MAX_CLIENTS 10
+#define MAX_CLIENTS 1
 #define ID_MAX 1000	//Highest ID number allowed
 #define MONITOR_MAX 2
 #define CLIENT_TIMEOUT 5
