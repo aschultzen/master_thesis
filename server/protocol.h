@@ -33,13 +33,28 @@
 #define ERROR_ILLEGAL_MESSAGE_SIZE "ILLEGAL MESSAGE SIZE\n"
 #define ERROR_MAX_CLIENTS_REACHED "CONNECTION REJECTED: MAXIMUM NUMBER OF CLIENTS REACHED\n"
 
+/* NMEA SENTENCES */
+#define GGA "$GPGGA"
+#define GSA "$GPGSA"
+#define SENTENCE_LENGTH 100
+
+/* 
+* NMEA Struct
+* This might be misplaced!
+* 
+*/
+
+struct nmea_container{
+	char gga[SENTENCE_LENGTH];
+};
+
+
 /* 
 * Roles of client, either SENSOR or MONITOR. 
 * A monitor is only used to monitor the programs state.
 */
 
-enum client_type
-{
+enum client_type{
     SENSOR,
     MONITOR
 };

@@ -45,7 +45,7 @@ int parse_input(struct client_table_entry *cte)
         return -1;
     }
 
-    /* ZEROING COMMAND CODE*/
+    /* ZEROING COMMAND CODE */
     cte->cm.code = 0;
 
     /* IDENTIFY */
@@ -65,7 +65,13 @@ int parse_input(struct client_table_entry *cte)
     /* NMEA */
     if(strstr((char*)cte->iobuffer, PROTOCOL_NMEA ) == (cte->iobuffer)) {
         cte->cm.code = CODE_NMEA;
-        t_print("%s\n", cte->iobuffer);
+        /* Fetch GGA */
+        char *gga_start = strstr(cte->iobuffer, GGA);
+        char *gsa_start = strstr(cte->iobuffer, GSA);
+        memcpy(cte->nmea.gga, gga_start, gsa_start - gga_start);
+        int checksum = calc_nmea_checksum(cte->nmea.gga);
+        //t_print("Checksum result: %d\n", checksum);
+
         return 1;
     }    
 

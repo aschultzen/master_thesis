@@ -57,7 +57,8 @@ struct client_table_entry{
 	int client_type;							
 	struct timeval heartbeat_timeout; 							
 	struct command_code cm;	
-	char ip[INET_ADDRSTRLEN]; 
+	char ip[INET_ADDRSTRLEN];
+	struct nmea_container nmea; 
 } __attribute__ ((packed));
 
 int s_read(struct client_table_entry *cte);

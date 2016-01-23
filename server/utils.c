@@ -103,7 +103,7 @@ int load_config(struct config *cfg, char *path)
         return -1;
     }   
 
-    char *ptr = strstr(input_buffer, CONFIG_SERVER_MAX_CONNECTIONS );
+    char *ptr = strstr(input_buffer,CONFIG_SERVER_MAX_CONNECTIONS);
     if(ptr != NULL){
         int length = strlen(ptr) - strlen(CONFIG_SERVER_MAX_CONNECTIONS);
         memcpy(temp_buffer, ptr+(strlen(CONFIG_SERVER_MAX_CONNECTIONS)*(sizeof(char))), length);
@@ -119,6 +119,52 @@ int load_config(struct config *cfg, char *path)
     fclose(config_file);
     free(input_buffer);
     return 0;
+}
+
+//$GPGGA,134116.00,5957.80516,N,01043.82047,E,1,06,2.00,194.6,M,38.5,M,,*57
+
+int calc_nmea_checksum(char *s) {
+    char checksum = 0;
+    int i;
+    int received_checksum = 0;
+    int calculated_checksum = 0;
+
+
+    /* Substring to iterate over */
+    char substring[100] = {0};
+
+    /* Finding end (*) and calculate length */
+    char *substring_end = strstr(s, "*");
+    int length = substring_end - (s+1);
+
+    /* Copying the substring */
+    memcpy(substring, s+1, length);
+
+    /* Calculating checksum */
+    for(i = 0; i < length; i++){
+        checksum = checksum ^ substring[i];
+    }
+
+    /* Reusing substring buffer */
+    sprintf(substring, "%x\n", checksum);
+
+    /* Converting calculated checksum to int */
+    sscanf(substring, "%d", &calculated_checksum);
+
+    /* Fetching received checksum */
+    memcpy(substring, substring_end+1, strlen(s));
+
+    /* Converting received checksum to int*/
+    sscanf(substring, "%d", &received_checksum);
+
+    /* Comparing checksum */
+    if(received_checksum == calculated_checksum){
+        return 0;    
+    }
+    else{
+        return -1;
+    }
+    
 }
 
 

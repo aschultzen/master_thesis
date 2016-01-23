@@ -15,5 +15,6 @@ void die (int line_number, const char * format, ...);
 void get_ip_str(int session_fd, char *ip);
 void t_print(const char* format, ...);
 int load_config(struct config *cfg, char *path);
+int calc_nmea_checksum(char *s);
 
 #endif /* !UTILS_H */
