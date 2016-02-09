@@ -13,6 +13,8 @@ import os
 
 # Something should be done about these!
 config = configparser.ConfigParser()    # Global variable for configparser.
+global_start_mjd
+global_stop_mjd
 
 # BUG: Does not care if file is
 # bigger than memory. Could cause
@@ -129,16 +131,37 @@ def get_today_mjd():
     today = datetime.datetime.utcnow()
     return jdutil.jd_to_mjd(jdutil.datetime_to_jd(today)) 
 
+    ## Make some sort of safe here:
+    ## If a new MJD range has begun:
+    ##      Sleep for an entire hour
+    ##      Keep using the old one one more time
+    ##      Let it go
 def calculate_file_name():
     start_mjd = ( int(int(get_today_mjd()) / 60) * 60 )
     stop_mjd = start_mjd + 59;
+    
+    ## A new era has begun
+    if(start_mjd != global_start_mjd):
+        ## Sleep for 2 hours
+        time.sleep((60*60)*2) 
+        ## Use the old mjd for one last time to make sure
+        filename = config['files']['file_prefix'] + " " + str(global_start_mjd) + " - " + str(global_stop_mjd) + ".dat"
+        ## Update the global values
+        global_start_mjd = start_mjd
+        global_stop_mjd = stop_mjd
+        return filename
+
     filename = config['files']['file_prefix'] + " " + str(start_mjd) + " - " + str(stop_mjd) + ".dat"
     return filename
 
+    ## Returns a formatted string with the correct filename for the
+    ## current time period (mjd)
 def get_full_path():
     calculate_file_name()
     return str(config['files']['folder'] + calculate_file_name())
 
+    ## Get the mjd value for the last line in the DB.
+    ## If no mjd is found, the function returns -1 
 def get_last_db_line_mjd():
     dbc = dbConnect()
     cursor = dbc.cursor(buffered=True)
@@ -151,7 +174,8 @@ def get_last_db_line_mjd():
     else:
         return -1
     
-    ## Changed open with to 'r'
+    ## Find new lines in the text file that has not
+    ## yet been uploaded to the base
 def find_new_lines(db_last_mjd):
     file_full_path = get_full_path()
     last_db_mjd = str(db_last_mjd)
@@ -193,7 +217,7 @@ def main_routine():
                 if(len(new_lines) > 0):
                     dbInsert(new_lines)
             else:
-                t_print("The DB is empty. Inserting the whole file")
+                t_print("This file is not yet inserted to DB. Inserting the whole file")
                 insert_file(get_full_path())
 
         seconds = "{0:.2f}".format(float(time.time() - time_start))
