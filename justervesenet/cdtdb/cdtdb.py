@@ -2,6 +2,14 @@
 # Used Python v.3.4.3
 # and mysql-connector-python-2.0.4-py3.4
 
+# Bug fix notes:
+# 9/2 - 16 : 11:30 - 14:00
+#
+# Just do a simple check to see if the era has changed since startup. Use a variable outside the loop that
+# gets initialized at startup and check for every iteration to see whether or not the era has changed. If the
+# era has changed, make sure the last era has been properly inserted and the sleep for 1-2 hours. This is 
+# probably the easiest way to do it. 
+
 import ctypes
 import mysql.connector
 import configparser
@@ -13,12 +21,14 @@ import os
 
 # Something should be done about these!
 config = configparser.ConfigParser()    # Global variable for configparser.
-global_start_mjd
-global_stop_mjd
-
+start_mjd = 0
 # BUG: Does not care if file is
 # bigger than memory. Could cause
 # "memoutofbound"
+
+def get_start_mjd():
+    start_mjd = ( int(int(get_today_mjd()) / 60) * 60 )
+    return start_mjd
 
 def insert_file(path):
     result = open(path, 'r')
@@ -137,20 +147,8 @@ def get_today_mjd():
     ##      Keep using the old one one more time
     ##      Let it go
 def calculate_file_name():
-    start_mjd = ( int(int(get_today_mjd()) / 60) * 60 )
+    start_mjd = get_start_mjd()
     stop_mjd = start_mjd + 59;
-    
-    ## A new era has begun
-    if(start_mjd != global_start_mjd):
-        ## Sleep for 2 hours
-        time.sleep((60*60)*2) 
-        ## Use the old mjd for one last time to make sure
-        filename = config['files']['file_prefix'] + " " + str(global_start_mjd) + " - " + str(global_stop_mjd) + ".dat"
-        ## Update the global values
-        global_start_mjd = start_mjd
-        global_stop_mjd = stop_mjd
-        return filename
-
     filename = config['files']['file_prefix'] + " " + str(start_mjd) + " - " + str(stop_mjd) + ".dat"
     return filename
 
