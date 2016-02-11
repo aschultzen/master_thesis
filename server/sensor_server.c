@@ -218,10 +218,9 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
 * Forks everytime a client connects
 * and calls setup_session()
 */
-void start_server(int port_number, char *serial_display_path)
+void start_server(int port_number)
 {
     /* Initializing variables */
-    //char *serial_display_path = "/dev/ttyACM0";
     int server_sockfd;
     struct sockaddr_in serv_addr;
 
@@ -292,22 +291,6 @@ void start_server(int port_number, char *serial_display_path)
     /* Marking the connection for listening*/
     listen(server_sockfd,SOMAXCONN);
 
-    /* Forking out proc for serial com */
-    if(serial_display_path != NULL) {
-        pid_t pid=fork();
-        if (pid==-1) {
-            die(94, "failed to create child process (errno=%d)",errno);
-        } else if (pid==0) {
-            t_print("Serial COM started (PID: %d)\n", getpid());
-            open_serial(serial_display_path, client_list);
-            t_print("Serial COM closed (PID: %d)\n", getpid());
-            //SIGINT is "stopped" here!
-            _exit(0);
-        }
-    } else {
-        t_print("No serial display defined.\n");
-    }
-
     int session_fd = 0;
     t_print("Server is running. Accepting connections.\n");
     while (!done) {
@@ -345,7 +328,7 @@ void start_server(int port_number, char *serial_display_path)
 
 int usage(char *argv[])
 {
-    char description[] = {"Required argument:\n\t -p <PORT NUMBER>\n\nOptional:\n\t -s <PATH TO SERIAL DISPLAY>\n"};
+    char description[] = {"Required argument:\n\t -p <PORT NUMBER>\n\n"};
     printf("Usage: %s [ARGS]\n\n", argv[0]);
     printf("Sensor_server: Server part of GPS Jamming/Spoofing system\n\n");
     printf("%s\n", description);
@@ -354,7 +337,6 @@ int usage(char *argv[])
 
 int main(int argc, char *argv[])
 {
-    char *serial_display_path = NULL;
     char *port_number = NULL;
 
     /* getopt silent mode set */
@@ -384,13 +366,7 @@ int main(int argc, char *argv[])
         printf("Missing parameters!\n");
     }
 
-    if(argc == 5) {
-        if(argv[3][1] == 's') {
-            serial_display_path = argv[4];
-        }
-    }
-
     t_print("Sensor server starting...\n", getpid());
-    start_server(atoi(port_number), serial_display_path);
+    start_server(atoi(port_number));
     exit(0);
 }

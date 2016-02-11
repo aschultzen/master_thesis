@@ -1,5 +1,5 @@
 SERVER_OBJS = sensor_server.o net.o utils.o serial.o
-CLIENT_OBJS = sensor_client.o net.o utils.o 
+CLIENT_OBJS = sensor_client.o net.o utils.o serial.o
 
 CC = gcc
 DEBUG = -g

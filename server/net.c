@@ -69,9 +69,9 @@ int parse_input(struct client_table_entry *cte)
         char *gga_start = strstr(cte->iobuffer, GGA);
         char *gsa_start = strstr(cte->iobuffer, GSA);
         memcpy(cte->nmea.gga, gga_start, gsa_start - gga_start);
-        int checksum = calc_nmea_checksum(cte->nmea.gga);
+        /* Uncomment for debug */
+        //int checksum = calc_nmea_checksum(cte->nmea.gga);
         //t_print("Checksum result: %d\n", checksum);
-
         return 1;
     }    
 

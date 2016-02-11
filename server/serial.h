@@ -13,9 +13,9 @@
 
 //Mine
 #include "utils.h"
-#include "net.h"
+#include "protocol.h"
 
-void open_serial(char *portname, struct client_table_entry *ect);
+void open_serial(char *portname);
 
 #define SERIAL_SLEEP 2000000	/* Sleep duration between checks on */
 							/* shared variables */

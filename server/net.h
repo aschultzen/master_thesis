@@ -47,7 +47,6 @@
 * cm: Command code. Used for quick comparison after commands
 * are parsed by command parser.
 */
-
 struct client_table_entry{ 
 	struct list_head list;
 	pid_t pid;

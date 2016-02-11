@@ -1,7 +1,13 @@
+/* Notes:
+* Create a method that takes fd and nmea struct as parameter and 
+* fills it out.
+*/
+
 #include "sensor_client.h"
 #include "net.h"
 #include "protocol.h"
 #include "utils.h"
+#include "serial.h"
 
 char *nmea_string = 
 "NMEA $GPRMC,134116.00,A,5957.80516,N,01043.82047,E,0.874,,150116,,,A*72\
@@ -33,9 +39,9 @@ int identify(int session_fd, int id)
 
     write(session_fd, identify_message, sizeof(identify_message));
 
-    char iobuffer[100];
-    while ( (read_status = read(session_fd, iobuffer, sizeof(iobuffer)-1)) > 0) {
-        if(strstr((char*)iobuffer, PROTOCOL_OK ) == (iobuffer)) {
+    char buffer[100];
+    while ( (read_status = read(session_fd, buffer, sizeof(buffer)-1)) > 0) {
+        if(strstr((char*)buffer, PROTOCOL_OK ) == (buffer)) {
             // ID not used. Accepting.
             t_print("ID %d accepted by server.\n", id);
             return 0;
@@ -50,7 +56,7 @@ int identify(int session_fd, int id)
     return read_status;
 }
 
-int create_connection(char *iobuffer, struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno)
+int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno)
 {
     if((*session_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         printf("Could not create socket\n");
@@ -77,37 +83,61 @@ int create_connection(char *iobuffer, struct sockaddr_in *serv_addr, int *sessio
 
 int start_client(int portno, char* ip, int id)
 {
-    int n = 0;
-    char iobuffer[1024];
+    char buffer[1024];
+    memset(buffer, '0',sizeof(buffer));
+
+    struct termios tty;
+    memset (&tty, 0, sizeof tty);
+
     struct sockaddr_in serv_addr;
-    int session_fd = 1;
+    int session_fd = 0;
     int connection_attempts = 1;
 
-    memset(iobuffer, '0',sizeof(iobuffer));
+    open_serial("/dev/ttyACM0");
 
+    /* Establishing connection to GPS receiver 
+    int gps_serial = open_serial("/dev/ttyACM0", &tty);
+    if(gps_serial == -1){
+        t_print("Connection to GPS receiver failed! Exiting...\n");
+        exit(0);
+    }
+    else{
+        t_print("Connection to GPS receiver established!\n");
+    }*/
+
+    /* Establishing connection to server */
     while(connection_attempts <= CONNECTION_ATTEMPTS_MAX) {
-        if(create_connection(iobuffer, &serv_addr, &session_fd, ip, portno) == 0) {
+        if(create_connection(&serv_addr, &session_fd, ip, portno) == 0) {
             t_print("Connected to server!\n");
             break;
         }
-        t_print("Connection attempt %d failed. Code %d\n", connection_attempts,n);
+        t_print("Connection attempt %d failed. Code %d\n", connection_attempts);
         sleep(1);
         connection_attempts++;
     }
 
+    /* Identifying client for server */
     if( identify(session_fd, id) == -1 ) {
         exit(0);
     }
+
+    /*memset(buffer, '0',sizeof(buffer));
+    int status = read(gps_serial, buffer, 1024);
+    if(status < 0){
+        t_print("Read from GPS failed: %d\n", status);
+    }
+    else{
+        printf("READ DATA: %s\n", buffer);
+    }*/
+
+    // Open serial, wait(?) for it to produce something/get ready
+    // Goal here is to fetch as much as possible as often as possible.
+    // Start with GGA
 
     while (1) {
         write(session_fd, nmea_string, nmea_string_length);
         sleep(1);
     }
-
-    if(n < 0) {
-        printf("\n Read error \n");
-    }
-
     return 0;
 }
 

@@ -43,17 +43,14 @@
 * This might be misplaced!
 * 
 */
-
 struct nmea_container{
 	char gga[SENTENCE_LENGTH];
 };
-
 
 /* 
 * Roles of client, either SENSOR or MONITOR. 
 * A monitor is only used to monitor the programs state.
 */
-
 enum client_type{
     SENSOR,
     MONITOR
@@ -64,7 +61,6 @@ enum client_type{
 * to convey an easy to compare command code, as well
 * as any parameter belonging to that command
 */ 
-
 struct command_code{
 	int code;
 	char parameter[MAX_PARAMETER_SIZE];

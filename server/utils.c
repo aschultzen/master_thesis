@@ -121,8 +121,6 @@ int load_config(struct config *cfg, char *path)
     return 0;
 }
 
-//$GPGGA,134116.00,5957.80516,N,01043.82047,E,1,06,2.00,194.6,M,38.5,M,,*57
-
 int calc_nmea_checksum(char *s) {
     char checksum = 0;
     int i;
