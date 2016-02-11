@@ -81,10 +81,71 @@ int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, 
     return 0;
 }
 
+int extract_nmea(int gps_serial, struct nmea_container *nmea_c)
+{
+    char buffer[200];
+    int position = 0;
+    memset(buffer, '\0',sizeof(buffer));
+
+    bool rmc = false;
+    bool gga = false;
+
+    // Get a load of THIS timebomb!! 
+    while(1){
+        while(position < 100) {
+            read(gps_serial, buffer+position, 1);           // Note you should be checking the result
+            if( buffer[position] == '\n' ) break;
+            position++;
+        }    
+
+        if(strstr(buffer, RMC ) != NULL){
+            memcpy(nmea_c->rmc, buffer, position+1);
+            nmea_c->rmc[position + 2] = '\0';
+            rmc = true;
+        }
+
+        if(strstr(buffer, GGA ) != NULL){
+            memcpy(nmea_c->gga, buffer, position+1);
+            nmea_c->rmc[position + 2] = '\0';
+            gga = true;
+        }
+
+        if(rmc && gga){
+            break;
+        }
+        position = 0;
+    }
+}
+
+int send_nmea(int session_fd, struct nmea_container *nmea_c)
+{
+    char buffer[100];
+    memset(buffer, '\0',sizeof(buffer));
+    int nmea_prefix_length = 5;
+    memcpy(buffer, "NMEA ", nmea_prefix_length);
+
+    /* RMC */
+    int rmc_length = strlen(nmea_c->rmc);
+    memcpy( buffer+nmea_prefix_length, nmea_c->rmc, rmc_length );
+    buffer[nmea_prefix_length + rmc_length + 1] = '\n';
+    write(session_fd, buffer, rmc_length + nmea_prefix_length);
+
+    /* To seperate, this is sooo bad! :(*/
+    usleep(100);
+
+    /* GGA */
+    int gga_length = strlen(nmea_c->gga);
+    memcpy( buffer+nmea_prefix_length, nmea_c->gga, gga_length );
+    buffer[nmea_prefix_length + gga_length + 1] = '\n';
+    write(session_fd, buffer, gga_length + nmea_prefix_length);
+
+    return 0;
+}
+
 int start_client(int portno, char* ip, int id)
 {
     char buffer[1024];
-    memset(buffer, '0',sizeof(buffer));
+    memset(buffer, '0',sizeof (buffer));
 
     struct termios tty;
     memset (&tty, 0, sizeof tty);
@@ -93,17 +154,18 @@ int start_client(int portno, char* ip, int id)
     int session_fd = 0;
     int connection_attempts = 1;
 
-    open_serial("/dev/ttyACM0");
+    struct nmea_container nmea_c;
+    memset(&nmea_c, 0, sizeof(nmea_c));
 
-    /* Establishing connection to GPS receiver 
-    int gps_serial = open_serial("/dev/ttyACM0", &tty);
+    /* Establishing connection to GPS receiver */
+    int gps_serial = open_serial("/dev/ttyACM0", GPS);
     if(gps_serial == -1){
         t_print("Connection to GPS receiver failed! Exiting...\n");
         exit(0);
     }
     else{
         t_print("Connection to GPS receiver established!\n");
-    }*/
+    }
 
     /* Establishing connection to server */
     while(connection_attempts <= CONNECTION_ATTEMPTS_MAX) {
@@ -121,22 +183,9 @@ int start_client(int portno, char* ip, int id)
         exit(0);
     }
 
-    /*memset(buffer, '0',sizeof(buffer));
-    int status = read(gps_serial, buffer, 1024);
-    if(status < 0){
-        t_print("Read from GPS failed: %d\n", status);
-    }
-    else{
-        printf("READ DATA: %s\n", buffer);
-    }*/
-
-    // Open serial, wait(?) for it to produce something/get ready
-    // Goal here is to fetch as much as possible as often as possible.
-    // Start with GGA
-
     while (1) {
-        write(session_fd, nmea_string, nmea_string_length);
-        sleep(1);
+        extract_nmea(gps_serial, &nmea_c);
+        send_nmea(session_fd, &nmea_c);
     }
     return 0;
 }

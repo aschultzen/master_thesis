@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <arpa/inet.h>
+#include <stdbool.h>
 
 /* My own header files */ 
 #include "utils.h"

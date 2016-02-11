@@ -34,8 +34,9 @@
 #define ERROR_MAX_CLIENTS_REACHED "CONNECTION REJECTED: MAXIMUM NUMBER OF CLIENTS REACHED\n"
 
 /* NMEA SENTENCES */
-#define GGA "$GPGGA"
-#define GSA "$GPGSA"
+#define GGA "$GNGGA"
+#define GSA "$GNGSA"
+#define RMC "$GNRMC"
 #define SENTENCE_LENGTH 100
 
 /* 
@@ -45,6 +46,7 @@
 */
 struct nmea_container{
 	char gga[SENTENCE_LENGTH];
+	char rmc[SENTENCE_LENGTH];
 };
 
 /* 

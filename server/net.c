@@ -65,13 +65,15 @@ int parse_input(struct client_table_entry *cte)
     /* NMEA */
     if(strstr((char*)cte->iobuffer, PROTOCOL_NMEA ) == (cte->iobuffer)) {
         cte->cm.code = CODE_NMEA;
-        /* Fetch GGA */
-        char *gga_start = strstr(cte->iobuffer, GGA);
-        char *gsa_start = strstr(cte->iobuffer, GSA);
-        memcpy(cte->nmea.gga, gga_start, gsa_start - gga_start);
-        /* Uncomment for debug */
-        //int checksum = calc_nmea_checksum(cte->nmea.gga);
-        //t_print("Checksum result: %d\n", checksum);
+        
+        /* Fetch RMC */
+        //if(strstr(cte->iobuffer, RMC ) != NULL){
+        //    memcpy(cte->nmea.rmc, cte->iobuffer, strlen(cte->iobuffer));
+        //}
+
+        t_print("Length of string: %d\n", strlen(cte->iobuffer));
+        printf(cte->iobuffer);
+        memset(cte->iobuffer, '\0',MAX_PARAMETER_SIZE);
         return 1;
     }    
 
