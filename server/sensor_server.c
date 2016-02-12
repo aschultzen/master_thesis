@@ -43,11 +43,12 @@ void send_list(struct client_table_entry *cte){
            c_type = "SENSOR"; 
         }
 
-        snprintf_status = snprintf( buffer, 1000, "ID: %d, PID: %d, IP:%s TYPE: %s\n", 
+        snprintf_status = snprintf( buffer, 1000, "ID: %d, PID: %d, IP:%s TYPE: %s AGE: %f\n", 
         client_list_iterate->client_id, 
         client_list_iterate->pid, 
         client_list_iterate->ip, 
-        c_type);
+        c_type,
+        difftime(time(NULL),client_list_iterate->timestamp) );
         s_write(cte, buffer, snprintf_status);
     }
     s_write(cte, "=============================================\n\n", 48);
@@ -180,6 +181,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
 
     /* Setting the PID */
     new_client->pid = getpid();
+    new_client->timestamp = time(NULL);
     strncpy(new_client->ip, ip, INET_ADDRSTRLEN);
 
     /* Initializing structure */

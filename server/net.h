@@ -59,6 +59,7 @@ struct client_table_entry{
 	struct command_code cm;	
 	char ip[INET_ADDRSTRLEN];
 	struct nmea_container nmea; 
+	time_t timestamp;
 } __attribute__ ((packed));
 
 int s_read(struct client_table_entry *cte);
