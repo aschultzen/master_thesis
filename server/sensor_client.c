@@ -9,19 +9,6 @@
 #include "utils.h"
 #include "serial.h"
 
-char *nmea_string = 
-"NMEA $GPRMC,134116.00,A,5957.80516,N,01043.82047,E,0.874,,150116,,,A*72\
-$GPVTG,,T,,M,0.874,N,1.619,K,A*27\
-$GPGGA,134116.00,5957.80516,N,01043.82047,E,1,06,2.00,194.6,M,38.5,M,,*57\
-$GPGSA,A,3,05,02,09,06,23,16,,,,,,,4.36,2.00,3.87*03\
-$GPGSV,4,1,13,02,26,240,32,05,48,287,33,06,05,204,12,07,67,144,*7A\
-$GPGSV,4,2,13,09,48,097,16,13,10,262,,16,21,032,07,20,05,312,*71\
-$GPGSV,4,3,13,23,14,092,14,26,04,012,07,29,07,314,,30,44,190,*73\
-$GPGSV,4,4,13,33,18,209,*49\
-$GPGLL,5957.80516,N,01043.82047,E,134116.00,A,A*62 \
-$GPTXT,01,01,01,NMEA unknown msg*58";
-int nmea_string_length = 560;
-
 int identify(int session_fd, int id)
 {
     //Converting from int to string
@@ -81,7 +68,7 @@ int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, 
     return 0;
 }
 
-int extract_nmea(int gps_serial, struct nmea_container *nmea_c)
+void extract_nmea(int gps_serial, struct nmea_container *nmea_c)
 {
     char buffer[200];
     int position = 0;
@@ -93,7 +80,7 @@ int extract_nmea(int gps_serial, struct nmea_container *nmea_c)
     // Get a load of THIS timebomb!! 
     while(1){
         while(position < 100) {
-            read(gps_serial, buffer+position, 1);           // Note you should be checking the result
+            read(gps_serial, buffer+position, 1);
             if( buffer[position] == '\n' ) break;
             position++;
         }    
@@ -119,25 +106,32 @@ int extract_nmea(int gps_serial, struct nmea_container *nmea_c)
 
 int send_nmea(int session_fd, struct nmea_container *nmea_c)
 {
-    char buffer[100];
+    /* The buffer size is dimensioned thinking that one sentence = 100B */
+    char buffer[200];
     memset(buffer, '\0',sizeof(buffer));
-    int nmea_prefix_length = 5;
-    memcpy(buffer, "NMEA ", nmea_prefix_length);
+    int nmea_prefix_length = 6;
+    memcpy(buffer, "NMEA \n", nmea_prefix_length);
+    int total_length = 0;
+    int newline_length = 1;
 
     /* RMC */
     int rmc_length = strlen(nmea_c->rmc);
     memcpy( buffer+nmea_prefix_length, nmea_c->rmc, rmc_length );
-    buffer[nmea_prefix_length + rmc_length + 1] = '\n';
-    write(session_fd, buffer, rmc_length + nmea_prefix_length);
+    //buffer[nmea_prefix_length + rmc_length + newline_length] = '\n';
 
-    /* To seperate, this is sooo bad! :(*/
-    usleep(100);
+    /* Updating total length */
+    total_length = rmc_length + nmea_prefix_length; //+ newline_length;
 
     /* GGA */
     int gga_length = strlen(nmea_c->gga);
-    memcpy( buffer+nmea_prefix_length, nmea_c->gga, gga_length );
-    buffer[nmea_prefix_length + gga_length + 1] = '\n';
-    write(session_fd, buffer, gga_length + nmea_prefix_length);
+    memcpy( buffer+total_length, nmea_c->gga, gga_length );
+    buffer[total_length + gga_length + newline_length] = '\n';
+
+    /* Updating total length */
+    total_length += gga_length + newline_length;
+
+    /* Writing to socket (server) */
+    write(session_fd, buffer, total_length);
 
     return 0;
 }

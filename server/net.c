@@ -65,15 +65,21 @@ int parse_input(struct client_table_entry *cte)
     /* NMEA */
     if(strstr((char*)cte->iobuffer, PROTOCOL_NMEA ) == (cte->iobuffer)) {
         cte->cm.code = CODE_NMEA;
-        
         /* Fetch RMC */
-        //if(strstr(cte->iobuffer, RMC ) != NULL){
-        //    memcpy(cte->nmea.rmc, cte->iobuffer, strlen(cte->iobuffer));
-        //}
-
-        t_print("Length of string: %d\n", strlen(cte->iobuffer));
-        printf(cte->iobuffer);
-        memset(cte->iobuffer, '\0',MAX_PARAMETER_SIZE);
+        char *rmc_start = strstr(cte->iobuffer, RMC);
+        char *gga_start = strstr(cte->iobuffer, GGA);
+        memcpy(cte->nmea.rmc, rmc_start, gga_start - rmc_start);
+        memcpy(cte->nmea.gga, gga_start, ( strlen(cte->iobuffer) - (rmc_start - cte->iobuffer) - (gga_start - rmc_start)));
+        
+        int rmc_checksum = calc_nmea_checksum(cte->nmea.rmc);
+        int gga_checksum = calc_nmea_checksum(cte->nmea.gga);
+        if(rmc_checksum == 0 && gga_checksum == 0){
+            t_print("RMC and GGA received, checksum verified!\n");
+        }
+        else
+        {
+            t_print("RMC and GGA received, checksum failed!\n");
+        }
         return 1;
     }    
 
