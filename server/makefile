@@ -1,11 +1,11 @@
-SERVER_OBJS = sensor_server.o net.o utils.o serial.o
+SERVER_OBJS = sensor_server.o net.o utils.o serial.o session.o
 CLIENT_OBJS = sensor_client.o net.o utils.o serial.o
 
 CC = gcc
 DEBUG = -g
 
 CFLAGS = -Wall -c $(DEBUG) -std=gnu99 -pedantic -O2
-#CFLAGS = -Wall -c $(DEBUG) -march=armv7-a -mtune=arm7 -I/usr/include/mysql
+#CFLAGS = -Wall -c $(DEBUG) -march=armv7-a -mtune=arm7
 
 LFLAGS = -Wall $(DEBUG)
 
@@ -29,6 +29,9 @@ utils.o : utils.h list.h utils.c config.h
 
 serial.o : serial.h serial.c
 	$(CC) $(CFLAGS) serial.c
+
+session.o : session.h session.c sensor_server.h
+	$(CC) $(CFLAGS) session.c
 
 clean:
 	\rm *.o

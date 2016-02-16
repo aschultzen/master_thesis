@@ -1,15 +1,10 @@
-/* Notes:
-* Create a method that takes fd and nmea struct as parameter and 
-* fills it out.
-*/
-
 #include "sensor_client.h"
 #include "net.h"
 #include "protocol.h"
 #include "utils.h"
 #include "serial.h"
 
-int identify(int session_fd, int id)
+static int identify(int session_fd, int id)
 {
     //Converting from int to string
     char id_str[5];
@@ -43,7 +38,7 @@ int identify(int session_fd, int id)
     return read_status;
 }
 
-int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno)
+static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno)
 {
     if((*session_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         printf("Could not create socket\n");
@@ -68,7 +63,7 @@ int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, 
     return 0;
 }
 
-void extract_nmea(int gps_serial, struct nmea_container *nmea_c)
+static void extract_nmea(int gps_serial, struct nmea_container *nmea_c)
 {
     char buffer[200];
     int position = 0;
@@ -104,7 +99,7 @@ void extract_nmea(int gps_serial, struct nmea_container *nmea_c)
     }
 }
 
-int send_nmea(int session_fd, struct nmea_container *nmea_c)
+static int send_nmea(int session_fd, struct nmea_container *nmea_c)
 {
     /* The buffer size is dimensioned thinking that one sentence = 100B */
     char buffer[200];
@@ -136,7 +131,7 @@ int send_nmea(int session_fd, struct nmea_container *nmea_c)
     return 0;
 }
 
-int start_client(int portno, char* ip, int id)
+static int start_client(int portno, char* ip, int id)
 {
     char buffer[1024];
     memset(buffer, '0',sizeof (buffer));
@@ -184,7 +179,7 @@ int start_client(int portno, char* ip, int id)
     return 0;
 }
 
-int usage(char *argv[])
+static int usage(char *argv[])
 {
     printf("Usage: %s -s <SERVER IP> -p <SERVER PORT> -i <CLIENT ID>\n", argv[0]);
     return 0;
