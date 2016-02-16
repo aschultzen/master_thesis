@@ -8,7 +8,7 @@ CFLAGS = -Wall -c $(DEBUG) -std=gnu99 -pedantic -O3
 
 cpu := $(shell uname -m)
 
-ifeq ($(OS),armv71)
+ifeq ($(cpu),armv7l)
 	CFLAGS = -Wall -c $(DEBUG) -march=armv7-a -mtune=arm7 -fsigned-char
 endif
 
