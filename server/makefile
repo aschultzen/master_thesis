@@ -4,8 +4,14 @@ CLIENT_OBJS = sensor_client.o net.o utils.o serial.o
 CC = gcc
 DEBUG = -g
 
-CFLAGS = -Wall -c $(DEBUG) -std=gnu99 -pedantic -O2
-#CFLAGS = -Wall -c $(DEBUG) -march=armv7-a -mtune=arm7 -fsigned-char
+CFLAGS = -Wall -c $(DEBUG) -std=gnu99 -pedantic -O3
+
+cpu := $(shell uname -m)
+
+ifeq ($(OS),armv71)
+	CFLAGS = -Wall -c $(DEBUG) -march=armv7-a -mtune=arm7 -fsigned-char
+endif
+
 
 LFLAGS = -Wall $(DEBUG)
 
