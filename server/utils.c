@@ -41,7 +41,7 @@ void get_ip_str(int session_fd, char *ip)
     addr.sa_family = AF_INET;
     socklen_t addr_len = sizeof(addr);
     if(getpeername(session_fd, (struct sockaddr *) &addr, &addr_len)) {
-        die(93,"getsocketname failed\n");
+        die(44,"getsocketname failed\n");
     }
     extract_ip_str(&addr,ip, addr_len);
 }
