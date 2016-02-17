@@ -26,7 +26,7 @@ static void send_list(struct client_table_entry *cte){
         client_list_iterate->client_id);
         s_write(cte, buffer, snprintf_status);
     }
-    s_write(cte, "=============================================================\n", 64);
+    s_write(cte, "=============================================================\n", 63);
 }
 
 /* Responds to client action */

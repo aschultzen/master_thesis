@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "serial.h"
 
+/* Identify the client for the server */
 static int identify(int session_fd, int id)
 {
     //Converting from int to string
@@ -38,6 +39,7 @@ static int identify(int session_fd, int id)
     return read_status;
 }
 
+/* Create connection to server */
 static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno)
 {
     if((*session_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -63,7 +65,8 @@ static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, cha
     return 0;
 }
 
-static void extract_nmea(int gps_serial, struct nmea_container *nmea_c)
+/* Get chosen NMEA from GPS receiver */
+static void receive_nmea(int gps_serial, struct nmea_container *nmea_c)
 {
     char buffer[200];
     int position = 0;
@@ -72,7 +75,7 @@ static void extract_nmea(int gps_serial, struct nmea_container *nmea_c)
     bool rmc = false;
     bool gga = false;
 
-    // Get a load of THIS timebomb!! 
+    /* Get a load of THIS timebomb!! */
     while(1){
         while(position < 100) {
             read(gps_serial, buffer+position, 1);
@@ -99,6 +102,7 @@ static void extract_nmea(int gps_serial, struct nmea_container *nmea_c)
     }
 }
 
+/* Send received NMEA data to server */
 static int send_nmea(int session_fd, struct nmea_container *nmea_c)
 {
     /* The buffer size is dimensioned thinking that one sentence = 100B */
@@ -173,7 +177,7 @@ static int start_client(int portno, char* ip, int id)
     }
 
     while (1) {
-        extract_nmea(gps_serial, &nmea_c);
+        receive_nmea(gps_serial, &nmea_c);
         send_nmea(session_fd, &nmea_c);
     }
     return 0;

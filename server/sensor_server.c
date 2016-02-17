@@ -1,8 +1,16 @@
 #include "sensor_server.h"
 #include "serial.h"
 
+/* Used by server only */
 static int number_of_clients;
+
+/* Mutex used when operating on the client list */     
+sem_t *client_list_mutex;
+
+/* Used by sig handlers */
 volatile sig_atomic_t done;
+
+/* Pointer to shared memory containing the client list */
 struct client_table_entry *client_list;
 
 /* Used by server to show connected clients. Deprecated? */
@@ -26,25 +34,31 @@ static void show_list(){
 }
 
 /* Removes a client with the given PID */
-static void remove_client(pid_t pid)
-{
+static void remove_client(pid_t pid, sem_t *mutex)
+{      
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* temp_remove;
+
+    sem_wait(mutex);
     list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
         if(client_list_iterate->pid == pid) {
             list_del(&client_list_iterate->list);
         }
     }
     number_of_clients--;
+    sem_post(mutex);
 }
 
 /* Creates an entry in the client list structure and returns a pointer to it*/
-static struct client_table_entry* create_client(struct client_table_entry* ptr)
+static struct client_table_entry* create_client(struct client_table_entry* ptr, sem_t *mutex)
 {
+    sem_wait(mutex);
     number_of_clients++;
     struct client_table_entry* tmp;
     tmp = (client_list + number_of_clients);
     list_add_tail( &(tmp->list), &(ptr->list) );
+    sem_post(mutex);
+
     return tmp;
 }
 
@@ -59,7 +73,7 @@ static void handle_sigchld(int signum)
         }
 
         if(pid > 0) {
-            remove_client(pid);
+            remove_client(pid, client_list_mutex);
             t_print("Process %d reaped. Status: %d\n", pid, status);
         }
     }
@@ -102,6 +116,16 @@ static void start_server(int port_number)
         client_list = mmap(NULL, (MAX_CLIENTS * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     }
     INIT_LIST_HEAD(&client_list->list);
+
+    /* Initialize semaphore used to control access to client list */
+    client_list_mutex = sem_open(CLIENT_LIST_SEM_NAME,O_CREAT,0644,1);
+
+    if(client_list_mutex == SEM_FAILED)
+    {
+      t_print("Unable to create semaphore, exiting...\n");
+      sem_unlink(CLIENT_LIST_SEM_NAME);
+      exit(1);
+    }
 
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -148,7 +172,6 @@ static void start_server(int port_number)
     */
     if (bind(server_sockfd, (struct sockaddr *) &serv_addr,
              sizeof(serv_addr)) < 0) {
-        //die(80,"ERROR on binding");
         t_print("%d: ERROR on binding\n", 80);
         exit(1);
     }
@@ -169,7 +192,7 @@ static void start_server(int port_number)
             write(session_fd, ERROR_MAX_CLIENTS_REACHED, sizeof(ERROR_MAX_CLIENTS_REACHED));
             close(session_fd);
         }else{
-            struct client_table_entry *new_client = create_client(client_list);
+            struct client_table_entry *new_client = create_client(client_list, client_list_mutex);
             pid_t pid=fork();
             if (pid==-1) {
                 die(94, "failed to create child process (errno=%d)",errno);
@@ -188,6 +211,7 @@ static void start_server(int port_number)
     }
     munmap(client_list, sizeof(struct client_table_entry));
     close(server_sockfd);
+    sem_close(client_list_mutex);
     t_print("Server STOPPED!\n", getpid());
 }
 

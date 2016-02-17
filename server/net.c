@@ -81,6 +81,7 @@ int parse_input(struct client_table_entry *cte)
             t_print("RMC and GGA received, checksum failed!\n");
         }
         cte->timestamp = time(NULL);
+        
         return 1;
     }    
 
