@@ -58,6 +58,7 @@ static void print_server_data(struct client_table_entry *cte, struct server_data
 /* Responds to client action */
 static int respond(struct client_table_entry *cte)
 {
+    s_write(cte, ">", 1);
     int read_status = s_read(cte); /* Blocking */
     if(read_status == -1) {
         t_print("Read failed or interrupted!\n");
@@ -78,6 +79,7 @@ static int respond(struct client_table_entry *cte)
         if(cte->cm.code == CODE_DISCONNECT) {
             t_print("Client %d requested DISCONNECT.\n", cte->client_id);
             s_write(cte, PROTOCOL_OK, sizeof(PROTOCOL_OK));
+            s_write(cte, PROTOCOL_GOODBYE, sizeof(PROTOCOL_GOODBYE));
             return -1;
         }
         if(cte->cm.code == CODE_IDENTIFY) {

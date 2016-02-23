@@ -1,14 +1,11 @@
 #include "sensor_server.h"
 #include "serial.h"
 
-/* Used by server only */
-static int number_of_clients;
-
 /* Server data and stats */
 struct server_data *s_data;
 
-/* Mutex used when operating on the client list */     
-sem_t *client_list_mutex;
+/* Shared synchro elements */
+struct server_synchro *s_synch;
 
 /* Used by sig handlers */
 volatile sig_atomic_t done;
@@ -16,8 +13,9 @@ volatile sig_atomic_t done;
 /* Pointer to shared memory containing the client list */
 struct client_table_entry *client_list;
 
-/* Used by server to show connected clients. Deprecated? */
-static void show_list(){
+/* Used by server to show connected clients. */
+static void show_list() __attribute__ ((unused));
+static void show_list() {
     if(! list_empty(&client_list->list) ) {
         struct client_table_entry* client_list_iterate;
         printf("\n");
@@ -37,30 +35,30 @@ static void show_list(){
 }
 
 /* Removes a client with the given PID */
-static void remove_client(pid_t pid, sem_t *mutex)
+static void remove_client(pid_t pid)
 {      
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* temp_remove;
 
-    sem_wait(mutex);
+    sem_wait(&(s_synch->client_list_mutex));
     list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
         if(client_list_iterate->pid == pid) {
             list_del(&client_list_iterate->list);
         }
     }
     s_data->number_of_clients--;
-    sem_post(mutex);
+    sem_post(&(s_synch->client_list_mutex));
 }
 
 /* Creates an entry in the client list structure and returns a pointer to it*/
-static struct client_table_entry* create_client(struct client_table_entry* ptr, sem_t *mutex)
+static struct client_table_entry* create_client(struct client_table_entry* ptr)
 {
-    sem_wait(mutex);
+    sem_wait(&(s_synch->client_list_mutex));
     s_data->number_of_clients++;
     struct client_table_entry* tmp;
     tmp = (client_list + s_data->number_of_clients);
     list_add_tail( &(tmp->list), &(ptr->list) );
-    sem_post(mutex);
+    sem_post(&(s_synch->client_list_mutex));
 
     return tmp;
 }
@@ -76,7 +74,7 @@ static void handle_sigchld(int signum)
         }
 
         if(pid > 0) {
-            remove_client(pid, client_list_mutex);
+            remove_client(pid);
             t_print("Process %d reaped. Status: %d\n", pid, status);
         }
     }
@@ -127,14 +125,16 @@ static void start_server(int port_number)
     s_data->pid = getpid();
     s_data->started = time(NULL);
 
+    /* Init shared semaphores and sync elements */
+    s_synch = mmap(NULL, sizeof(struct server_synchro), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    sem_init(&(s_synch->ready_mutex), 1, 1);
+    sem_init(&(s_synch->client_list_mutex), 1, 1);
 
-    /* Initialize semaphore used to control access to client list */
-    client_list_mutex = sem_open(CLIENT_LIST_SEM_NAME,O_CREAT,0644,1);
-
-    if(client_list_mutex == SEM_FAILED)
+    if( &(s_synch->ready_mutex) == SEM_FAILED || &(s_synch->client_list_mutex) == SEM_FAILED)
     {
-      t_print("Unable to create semaphore, exiting...\n");
+      t_print("Unable to create semaphores, exiting...\n");
       sem_unlink(CLIENT_LIST_SEM_NAME);
+      sem_unlink(READY_SEM_NAME);
       exit(1);
     }
 
@@ -203,7 +203,7 @@ static void start_server(int port_number)
             write(session_fd, ERROR_MAX_CLIENTS_REACHED, sizeof(ERROR_MAX_CLIENTS_REACHED));
             close(session_fd);
         }else{
-            struct client_table_entry *new_client = create_client(client_list, client_list_mutex);
+            struct client_table_entry *new_client = create_client(client_list);
             pid_t pid=fork();
             if (pid==-1) {
                 die(94, "failed to create child process (errno=%d)",errno);
@@ -220,9 +220,13 @@ static void start_server(int port_number)
             }
         }
     }
+    /* Freeing and closing */
     munmap(client_list, sizeof(struct client_table_entry));
+    munmap(s_data, sizeof(struct server_data));
+    sem_close(&(s_synch->ready_mutex));
+    sem_close(&(s_synch->client_list_mutex));
+    munmap(s_synch, sizeof(struct server_synchro));
     close(server_sockfd);
-    sem_close(client_list_mutex);
     t_print("Server STOPPED!\n", getpid());
 }
 

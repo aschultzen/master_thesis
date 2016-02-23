@@ -91,11 +91,17 @@ int parse_input(struct client_table_entry *cte)
         return 1;
     }    
 
+    /* EXIT */
+    if(strstr((char*)cte->iobuffer, PROTOCOL_EXIT ) == (cte->iobuffer)) {
+        cte->cm.code = CODE_DISCONNECT;
+        return 1;
+    }
+
     /* DISCONNECT */
     if(strstr((char*)cte->iobuffer, PROTOCOL_DISCONNECT ) == (cte->iobuffer)) {
         cte->cm.code = CODE_DISCONNECT;
         return 1;
-    }
+    }    
 
     return 0;
 }
