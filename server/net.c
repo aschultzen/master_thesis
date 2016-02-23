@@ -56,9 +56,15 @@ int parse_input(struct client_table_entry *cte)
         return 1;
     }
 
-    /* LISTCLIENTS */
-    if(strstr((char*)cte->iobuffer, PROTOCOL_LISTCLIENTS ) == (cte->iobuffer)) {
-        cte->cm.code = CODE_LISTCLIENTS;
+    /* PRINTCLIENTS */
+    if(strstr((char*)cte->iobuffer, PROTOCOL_PRINTCLIENTS ) == (cte->iobuffer)) {
+        cte->cm.code = CODE_PRINTCLIENTS;
+        return 1;
+    }
+
+    /* PRINTSERVER */
+    if(strstr((char*)cte->iobuffer, PROTOCOL_PRINTSERVER ) == (cte->iobuffer)) {
+        cte->cm.code = CODE_PRINTSERVER;
         return 1;
     }
 

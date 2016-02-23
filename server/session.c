@@ -1,7 +1,9 @@
 #include "session.h"
 
+
+
 /* Sends a formatted string containing info about connected clients */
-static void send_list(struct client_table_entry *cte){
+static void print_clients(struct client_table_entry *cte){
     char buffer [1000];
     int snprintf_status = 0;
     char *c_type = "SENSOR";
@@ -26,6 +28,30 @@ static void send_list(struct client_table_entry *cte){
         client_list_iterate->client_id);
         s_write(cte, buffer, snprintf_status);
     }
+    s_write(cte, "=============================================================\n", 63);
+}
+
+/* Sends a formatted string containing server info */
+static void print_server_data(struct client_table_entry *cte, struct server_data *s_data){
+    char buffer [1000];
+    int snprintf_status = 0;
+
+    struct tm *loctime;
+    loctime = localtime (&s_data->started);
+
+    s_write(cte, "\n", 1);
+    s_write(cte, "SERVER DATA\n", 12);
+    s_write(cte, "=============================================================\n", 63);
+        
+    snprintf_status = snprintf( buffer, 1000, 
+        "PID: %d\nNumber of clients: %d\nMax clients: %d\nStarted: %sVersion: %s\n", 
+        s_data->pid, 
+        s_data->number_of_clients,
+        s_data->max_clients,
+        asctime (loctime), 
+        s_data->version);
+
+    s_write(cte, buffer, snprintf_status);
     s_write(cte, "=============================================================\n", 63);
 }
 
@@ -89,8 +115,12 @@ static int respond(struct client_table_entry *cte)
             return 0;
         }
 
-        if(cte->cm.code == CODE_LISTCLIENTS) {
-            send_list(cte);
+        if(cte->cm.code == CODE_PRINTCLIENTS) {
+            print_clients(cte);
+        }
+
+        if(cte->cm.code == CODE_PRINTSERVER) {
+            print_server_data(cte, s_data);
         }
     }
     return 0;

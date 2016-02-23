@@ -4,6 +4,9 @@
 /* Used by server only */
 static int number_of_clients;
 
+/* Server data and stats */
+struct server_data *s_data;
+
 /* Mutex used when operating on the client list */     
 sem_t *client_list_mutex;
 
@@ -45,7 +48,7 @@ static void remove_client(pid_t pid, sem_t *mutex)
             list_del(&client_list_iterate->list);
         }
     }
-    number_of_clients--;
+    s_data->number_of_clients--;
     sem_post(mutex);
 }
 
@@ -53,9 +56,9 @@ static void remove_client(pid_t pid, sem_t *mutex)
 static struct client_table_entry* create_client(struct client_table_entry* ptr, sem_t *mutex)
 {
     sem_wait(mutex);
-    number_of_clients++;
+    s_data->number_of_clients++;
     struct client_table_entry* tmp;
-    tmp = (client_list + number_of_clients);
+    tmp = (client_list + s_data->number_of_clients);
     list_add_tail( &(tmp->list), &(ptr->list) );
     sem_post(mutex);
 
@@ -116,6 +119,14 @@ static void start_server(int port_number)
         client_list = mmap(NULL, (MAX_CLIENTS * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     }
     INIT_LIST_HEAD(&client_list->list);
+
+    /* Create and initialize shared memory for server data */
+    s_data = mmap(NULL, sizeof(struct server_data), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    s_data->max_clients = cfg.config_server_max_connections;
+    bcopy(PROGRAM_VERSION, s_data->version,4);
+    s_data->pid = getpid();
+    s_data->started = time(NULL);
+
 
     /* Initialize semaphore used to control access to client list */
     client_list_mutex = sem_open(CLIENT_LIST_SEM_NAME,O_CREAT,0644,1);
@@ -188,7 +199,7 @@ static void start_server(int port_number)
             if (errno==EINTR) continue;
             die(90,"failed to accept connection (errno=%d)",errno);
         }
-        if(number_of_clients == MAX_CLIENTS){
+        if(s_data->number_of_clients == MAX_CLIENTS){
             write(session_fd, ERROR_MAX_CLIENTS_REACHED, sizeof(ERROR_MAX_CLIENTS_REACHED));
             close(session_fd);
         }else{

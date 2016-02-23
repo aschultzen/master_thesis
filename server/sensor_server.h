@@ -17,8 +17,19 @@ extern volatile sig_atomic_t done;
 
 /* Used in the session source code */
 extern struct client_table_entry *client_list;
+extern struct server_data *s_data;
+
+#define PROGRAM_VERSION "0.1a"
 
 /* Name of client list semaphore */
 #define CLIENT_LIST_SEM_NAME "CLSN"
+
+struct server_data{
+	int number_of_clients;	/* Number of clients currently connected */
+	time_t started;			/* When the server was started */
+	pid_t pid;
+	int max_clients;
+	char version[4];
+} __attribute__ ((packed));
 
 #endif /* !SENSOR_SERVER_H */

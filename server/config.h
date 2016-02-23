@@ -3,7 +3,6 @@
 
 /* Config file entries mappings */
 #define CONFIG_SERVER_MAX_CONNECTIONS "max_clients:"
-
 #define CONFIG_FILE_PATH "config.ini"
 
 /* 
