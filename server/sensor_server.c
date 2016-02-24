@@ -15,7 +15,8 @@ struct client_table_entry *client_list;
 
 /* Used by server to show connected clients. */
 static void show_list() __attribute__ ((unused));
-static void show_list() {
+static void show_list()
+{
     if(! list_empty(&client_list->list) ) {
         struct client_table_entry* client_list_iterate;
         printf("\n");
@@ -23,10 +24,10 @@ static void show_list() {
         t_print("========================================\n");
         list_for_each_entry(client_list_iterate, &client_list->list, list) {
             t_print("ID: %d, PID: %d, IP:%s TYPE %d\n",
-            client_list_iterate->client_id, 
-            client_list_iterate->pid, 
-            client_list_iterate->ip, 
-            client_list_iterate->client_type);
+                    client_list_iterate->client_id,
+                    client_list_iterate->pid,
+                    client_list_iterate->ip,
+                    client_list_iterate->client_type);
         }
         t_print("========================================\n\n");
     } else {
@@ -36,7 +37,7 @@ static void show_list() {
 
 /* Removes a client with the given PID */
 static void remove_client(pid_t pid)
-{      
+{
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* temp_remove;
 
@@ -109,10 +110,10 @@ static void start_server(int port_number)
     int load_config_status = load_config(&cfg, CONFIG_FILE_PATH);
 
     /* Falling back to default if load_config fails */
-    if(load_config_status == 0){
+    if(load_config_status == 0) {
         t_print("Config loaded!\n");
         client_list = mmap(NULL, (cfg.config_server_max_connections * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    }else{
+    } else {
         t_print("Failed to load config! Config file corrupt or missing entries.\n");
         client_list = mmap(NULL, (MAX_CLIENTS * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     }
@@ -130,12 +131,11 @@ static void start_server(int port_number)
     sem_init(&(s_synch->ready_mutex), 1, 1);
     sem_init(&(s_synch->client_list_mutex), 1, 1);
 
-    if( &(s_synch->ready_mutex) == SEM_FAILED || &(s_synch->client_list_mutex) == SEM_FAILED)
-    {
-      t_print("Unable to create semaphores, exiting...\n");
-      sem_unlink(CLIENT_LIST_SEM_NAME);
-      sem_unlink(READY_SEM_NAME);
-      exit(1);
+    if( &(s_synch->ready_mutex) == SEM_FAILED || &(s_synch->client_list_mutex) == SEM_FAILED) {
+        t_print("Unable to create semaphores, exiting...\n");
+        sem_close(&(s_synch->ready_mutex));
+        sem_close(&(s_synch->client_list_mutex));
+        exit(1);
     }
 
     /* Initialize socket */
@@ -199,10 +199,10 @@ static void start_server(int port_number)
             if (errno==EINTR) continue;
             die(90,"failed to accept connection (errno=%d)",errno);
         }
-        if(s_data->number_of_clients == MAX_CLIENTS){
+        if(s_data->number_of_clients == MAX_CLIENTS) {
             write(session_fd, ERROR_MAX_CLIENTS_REACHED, sizeof(ERROR_MAX_CLIENTS_REACHED));
             close(session_fd);
-        }else{
+        } else {
             struct client_table_entry *new_client = create_client(client_list);
             pid_t pid=fork();
             if (pid==-1) {

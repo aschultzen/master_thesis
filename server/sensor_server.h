@@ -22,10 +22,6 @@ extern struct server_synchro *s_synch;
 
 #define PROGRAM_VERSION "0.1a"
 
-/* Name of client list semaphore */
-#define CLIENT_LIST_SEM_NAME "CLSN"
-#define READY_SEM_NAME "RSN"
-
 /* Server info shared with processes */
 struct server_data{
 	int number_of_clients;	/* Number of clients currently connected */

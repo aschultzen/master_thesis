@@ -60,6 +60,7 @@ struct client_table_entry{
 	char ip[INET_ADDRSTRLEN];
 	struct nmea_container nmea; 
 	time_t timestamp;
+	int checksum_passed;
 } __attribute__ ((packed));
 
 int s_read(struct client_table_entry *cte);

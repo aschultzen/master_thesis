@@ -1,9 +1,23 @@
 #include "session.h"
 
-
+static int nmea_ready()
+{
+    s_synch->ready_counter++;
+    if(s_synch->ready_counter == s_data->number_of_clients)
+    {
+        /* Zeroing out the counter, we are ready */
+        s_synch->ready_counter = 0;
+        return 1;
+    }
+    else 
+    {
+        return 0;
+    }
+}
 
 /* Sends a formatted string containing info about connected clients */
-static void print_clients(struct client_table_entry *cte){
+static void print_clients(struct client_table_entry *cte)
+{
     char buffer [1000];
     int snprintf_status = 0;
     char *c_type = "SENSOR";
@@ -13,26 +27,27 @@ static void print_clients(struct client_table_entry *cte){
     s_write(cte, "CLIENT TABLE\n", 13);
     s_write(cte, "=============================================================\n", 63);
     list_for_each_entry(client_list_iterate,&client_list->list, list) {
-        
-        if(client_list_iterate->client_type == MONITOR){
+
+        if(client_list_iterate->client_type == MONITOR) {
             c_type = "MONITOR";
-        }else{
-           c_type = "SENSOR"; 
+        } else {
+            c_type = "SENSOR";
         }
 
-        snprintf_status = snprintf( buffer, 1000, "PID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d\n", 
-        client_list_iterate->pid, 
-        client_list_iterate->ip, 
-        (int)difftime(time(NULL),client_list_iterate->timestamp), 
-        c_type,
-        client_list_iterate->client_id);
+        snprintf_status = snprintf( buffer, 1000, "PID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d\n",
+                                    client_list_iterate->pid,
+                                    client_list_iterate->ip,
+                                    (int)difftime(time(NULL),client_list_iterate->timestamp),
+                                    c_type,
+                                    client_list_iterate->client_id);
         s_write(cte, buffer, snprintf_status);
     }
     s_write(cte, "=============================================================\n", 63);
 }
 
 /* Sends a formatted string containing server info */
-static void print_server_data(struct client_table_entry *cte, struct server_data *s_data){
+static void print_server_data(struct client_table_entry *cte, struct server_data *s_data)
+{
     char buffer [1000];
     int snprintf_status = 0;
 
@@ -42,14 +57,14 @@ static void print_server_data(struct client_table_entry *cte, struct server_data
     s_write(cte, "\n", 1);
     s_write(cte, "SERVER DATA\n", 12);
     s_write(cte, "=============================================================\n", 63);
-        
-    snprintf_status = snprintf( buffer, 1000, 
-        "PID: %d\nNumber of clients: %d\nMax clients: %d\nStarted: %sVersion: %s\n", 
-        s_data->pid, 
-        s_data->number_of_clients,
-        s_data->max_clients,
-        asctime (loctime), 
-        s_data->version);
+
+    snprintf_status = snprintf( buffer, 1000,
+                                "PID: %d\nNumber of clients: %d\nMax clients: %d\nStarted: %sVersion: %s\n",
+                                s_data->pid,
+                                s_data->number_of_clients,
+                                s_data->max_clients,
+                                asctime (loctime),
+                                s_data->version);
 
     s_write(cte, buffer, snprintf_status);
     s_write(cte, "=============================================================\n", 63);
@@ -58,7 +73,11 @@ static void print_server_data(struct client_table_entry *cte, struct server_data
 /* Responds to client action */
 static int respond(struct client_table_entry *cte)
 {
-    s_write(cte, ">", 1);
+    /* Only print ">" if client is monitor */
+    if(cte->client_id < 0){
+        s_write(cte, ">", 1);  
+    }
+
     int read_status = s_read(cte); /* Blocking */
     if(read_status == -1) {
         t_print("Read failed or interrupted!\n");
@@ -100,10 +119,9 @@ static int respond(struct client_table_entry *cte)
                 }
             }
 
-            if(id < 0){
+            if(id < 0) {
                 cte->client_type = MONITOR;
-            }
-            else{
+            } else {
                 cte->client_type = SENSOR;
             }
             cte->client_id = id;
@@ -123,6 +141,23 @@ static int respond(struct client_table_entry *cte)
 
         if(cte->cm.code == CODE_PRINTSERVER) {
             print_server_data(cte, s_data);
+        }
+
+        if(cte->cm.code == CODE_NMEA) {
+            int rmc_checksum = calc_nmea_checksum(cte->nmea.rmc);
+            int gga_checksum = calc_nmea_checksum(cte->nmea.gga);
+            if(rmc_checksum == 0 && gga_checksum == 0) {
+                cte->timestamp = time(NULL);
+                cte->checksum_passed = 1;
+            } else {
+                cte->checksum_passed = 0;
+                t_print("RMC and GGA received, checksum failed!\n");
+            }
+            sem_wait(&(s_synch->ready_mutex));
+            if(nmea_ready()){
+                analyze();
+            }
+            sem_post(&(s_synch->ready_mutex));
         }
     }
     return 0;

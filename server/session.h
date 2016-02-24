@@ -2,6 +2,7 @@
 #define SESSION_H
 
 #include "sensor_server.h"
+#include "analyzer.h"
 
 void setup_session(int session_fd, struct client_table_entry *new_client);
 
