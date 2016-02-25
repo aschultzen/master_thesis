@@ -4,6 +4,7 @@
 
 # Bug fix notes:
 # 9/2 - 16 : 11:30 - 14:00
+# 25/2 - 16 : 14:00
 #
 # Just do a simple check to see if the era has changed since startup. Use a variable outside the loop that
 # gets initialized at startup and check for every iteration to see whether or not the era has changed. If the
@@ -198,8 +199,9 @@ def disable_file_insert():
         sys.stdout.write(line)
 
 def main_routine():
+    initConfig()
+    
     while(True):
-        initConfig()
         print("\n")
 
         t_print("Starting up...")
