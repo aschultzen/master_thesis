@@ -4,6 +4,7 @@
 
 # Bug fix notes:
 # 9/2 - 16 : 11:30 - 14:00
+# 25/2 - 16 : 14:00 - 15:30
 #
 # Just do a simple check to see if the era has changed since startup. Use a variable outside the loop that
 # gets initialized at startup and check for every iteration to see whether or not the era has changed. If the
@@ -19,12 +20,7 @@ import time
 import jdutil
 import os
 
-# Something should be done about these!
 config = configparser.ConfigParser()    # Global variable for configparser.
-start_mjd = 0
-# BUG: Does not care if file is
-# bigger than memory. Could cause
-# "memoutofbound"
 
 def get_start_mjd():
     start_mjd = ( int(int(get_today_mjd()) / 60) * 60 )
@@ -141,11 +137,6 @@ def get_today_mjd():
     today = datetime.datetime.utcnow()
     return jdutil.jd_to_mjd(jdutil.datetime_to_jd(today)) 
 
-    ## Make some sort of safe here:
-    ## If a new MJD range has begun:
-    ##      Sleep for an entire hour
-    ##      Keep using the old one one more time
-    ##      Let it go
 def calculate_file_name():
     start_mjd = get_start_mjd()
     stop_mjd = start_mjd + 59;
@@ -199,21 +190,28 @@ def disable_file_insert():
 
 def main_routine():
     while(True):
-        initConfig()
         print("\n")
-
+        initConfig()
         t_print("Starting up...")
         time_start = time.time()
+
+        # Check if file insert mode is enabled. 
         if(config['modes']['file_insert'] == "yes"):
                 insert_file(config['files']['insert_mode_path'])
                 disable_file_insert()
 
+        # If not, continue as always.
         else:
+            # Get last mjd from the DB
             last_mjd = get_last_db_line_mjd()
+
+            # If the DB is not empty
             if(last_mjd != -1):
                 new_lines = find_new_lines(last_mjd)
                 if(len(new_lines) > 0):
                     dbInsert(new_lines)
+
+            # If the DB is empty
             else:
                 t_print("This file is not yet inserted to DB. Inserting the whole file")
                 insert_file(get_full_path())
