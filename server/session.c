@@ -15,6 +15,62 @@ static int nmea_ready()
     }
 }
 
+
+/* 
+* Used to extract words from between two delimiters
+* delim_num_1 -> The number of the first delimiter, ex.3
+* delim_num_2 -> The number of the second delimiter, ex.5
+* delimiter -> The character to be used as a delimiter
+* buffer -> To transport the string
+*/
+static int word_extractor(int delim_num_1, int delim_num_2, char delimiter, char *buffer, int buffsize, char *string, int str_len)
+{
+    int i;
+    int delim_counter = 0;
+    int buffer_index = 0;
+
+    bzero(buffer, buffsize);
+
+    for(i = 0; i < str_len; i++){
+        /* Second delim (end) reached, stopping. */
+        if(delim_counter == delim_num_2){
+            return 0;
+        }
+
+        if(string[i] == delimiter){
+            delim_counter++;
+        }
+        else{
+            /* The first delim is reached */
+            if(delim_counter >= delim_num_1){
+                buffer[buffer_index] = string[i];
+                buffer_index++;
+            }  
+        }
+    }
+    /* Reached end of string without encountering delim_num_2 */
+    return -1;
+}
+
+/* Extract position data from NMEA */
+static void extract_pos(struct client_table_entry *cte)
+{
+    int buffsize = 100;
+    char buffer[buffsize];
+
+    /* Extracting latitude */
+    word_extractor(LATITUDE_START,LATITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
+    cte->nmea.lat_current = atof(buffer);
+
+    /* Extracting longitude */
+    word_extractor(LONGITUDE_START,LONGITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
+    cte->nmea.lon_current = atof(buffer);
+
+    /* Extracting altitude */
+    word_extractor(ALTITUDE_START,ALTITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_gga, strlen(cte->nmea.raw_gga));
+    cte->nmea.alt_current = atof(buffer);
+}
+
 /* Sends a formatted string containing info about connected clients */
 static void print_clients(struct client_table_entry *cte)
 {
@@ -50,7 +106,6 @@ static void print_server_data(struct client_table_entry *cte, struct server_data
 {
     char buffer [1000];
     int snprintf_status = 0;
-
     struct tm *loctime;
     loctime = localtime (&s_data->started);
 
@@ -144,18 +199,21 @@ static int respond(struct client_table_entry *cte)
         }
 
         if(cte->cm.code == CODE_NMEA) {
-            int rmc_checksum = calc_nmea_checksum(cte->nmea.rmc);
-            int gga_checksum = calc_nmea_checksum(cte->nmea.gga);
+            int rmc_checksum = calc_nmea_checksum(cte->nmea.raw_rmc);
+            int gga_checksum = calc_nmea_checksum(cte->nmea.raw_gga);
             if(rmc_checksum == 0 && gga_checksum == 0) {
                 cte->timestamp = time(NULL);
                 cte->checksum_passed = 1;
+                extract_pos(cte);
+                //Calculate average();
             } else {
                 cte->checksum_passed = 0;
                 t_print("RMC and GGA received, checksum failed!\n");
             }
+
             sem_wait(&(s_synch->ready_mutex));
             if(nmea_ready()){
-                analyze();
+                //analyze();
             }
             sem_post(&(s_synch->ready_mutex));
         }

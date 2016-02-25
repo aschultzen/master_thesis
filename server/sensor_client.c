@@ -7,16 +7,16 @@
 /* Identify the client for the server */
 static int identify(int session_fd, int id)
 {
-    //Converting from int to string
+    /* Converting from int to string */
     char id_str[5];
     bzero(id_str, 5);
     sprintf(id_str, " %d", id); //Notice the space in the second parameter.
     int read_status = 0;
 
-    //Declaring message string
+    /* Declaring message string */
     char identify_message[sizeof(PROTOCOL_IDENTIFY) + sizeof(id_str) + 1];
 
-    //copying
+    /* copying */
     memcpy(identify_message, PROTOCOL_IDENTIFY, sizeof(PROTOCOL_IDENTIFY));
     memcpy(&identify_message[8],id_str, sizeof(id_str));
 
@@ -25,17 +25,16 @@ static int identify(int session_fd, int id)
     char buffer[100];
     while ( (read_status = read(session_fd, buffer, sizeof(buffer)-1)) > 0) {
         if(strstr((char*)buffer, PROTOCOL_OK ) == (buffer)) {
-            // ID not used. Accepting.
+            /* ID not used. Accepting. */
             t_print("ID %d accepted by server.\n", id);
             return 0;
         } else {
-            // ID in use. Rejected.
+            /* ID in use. Rejected. */
             t_print("ID %d rejected by server, already in use.\n", id);
             return -1;
         }
     }
-    // Something happened during read.
-    // read() returns -1 at error
+    /* Something happened during read. read() returns -1 at error */
     return read_status;
 }
 
@@ -58,7 +57,6 @@ static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, cha
     }
 
     if( connect(*session_fd, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) < 0) {
-        t_print("Connection failed\n");
         return 1;
     }
 
@@ -84,14 +82,14 @@ static void receive_nmea(int gps_serial, struct nmea_container *nmea_c)
         }    
 
         if(strstr(buffer, RMC ) != NULL){
-            memcpy(nmea_c->rmc, buffer, position+1);
-            nmea_c->rmc[position + 2] = '\0';
+            memcpy(nmea_c->raw_rmc, buffer, position+1);
+            nmea_c->raw_rmc[position + 2] = '\0';
             rmc = true;
         }
 
         if(strstr(buffer, GGA ) != NULL){
-            memcpy(nmea_c->gga, buffer, position+1);
-            nmea_c->rmc[position + 2] = '\0';
+            memcpy(nmea_c->raw_gga, buffer, position+1);
+            nmea_c->raw_rmc[position + 2] = '\0';
             gga = true;
         }
 
@@ -114,16 +112,16 @@ static int send_nmea(int session_fd, struct nmea_container *nmea_c)
     int newline_length = 1;
 
     /* RMC */
-    int rmc_length = strlen(nmea_c->rmc);
-    memcpy( buffer+nmea_prefix_length, nmea_c->rmc, rmc_length );
+    int rmc_length = strlen(nmea_c->raw_rmc);
+    memcpy( buffer+nmea_prefix_length, nmea_c->raw_rmc, rmc_length );
     //buffer[nmea_prefix_length + rmc_length + newline_length] = '\n';
 
     /* Updating total length */
     total_length = rmc_length + nmea_prefix_length; //+ newline_length;
 
     /* GGA */
-    int gga_length = strlen(nmea_c->gga);
-    memcpy( buffer+total_length, nmea_c->gga, gga_length );
+    int gga_length = strlen(nmea_c->raw_gga);
+    memcpy( buffer+total_length, nmea_c->raw_gga, gga_length );
     buffer[total_length + gga_length + newline_length] = '\n';
 
     /* Updating total length */
@@ -146,6 +144,7 @@ static int start_client(int portno, char* ip, int id)
     struct sockaddr_in serv_addr;
     int session_fd = 0;
     int connection_attempts = 1;
+    int con_status;
 
     struct nmea_container nmea_c;
     memset(&nmea_c, 0, sizeof(nmea_c));
@@ -162,11 +161,12 @@ static int start_client(int portno, char* ip, int id)
 
     /* Establishing connection to server */
     while(connection_attempts <= CONNECTION_ATTEMPTS_MAX) {
-        if(create_connection(&serv_addr, &session_fd, ip, portno) == 0) {
+        con_status = create_connection(&serv_addr, &session_fd, ip, portno);
+        if(con_status == 0) {
             t_print("Connected to server!\n");
             break;
         }
-        t_print("Connection attempt %d failed. Code %d\n", connection_attempts);
+        t_print("Connection attempt %d failed. Code %d\n", connection_attempts, con_status);
         sleep(1);
         connection_attempts++;
     }

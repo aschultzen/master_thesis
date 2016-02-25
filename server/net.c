@@ -74,8 +74,8 @@ int parse_input(struct client_table_entry *cte)
         /* Fetch RMC */
         char *rmc_start = strstr(cte->iobuffer, RMC);
         char *gga_start = strstr(cte->iobuffer, GGA);
-        memcpy(cte->nmea.rmc, rmc_start, gga_start - rmc_start);
-        memcpy(cte->nmea.gga, gga_start, ( strlen(cte->iobuffer) - (rmc_start - cte->iobuffer) - (gga_start - rmc_start)));
+        memcpy(cte->nmea.raw_rmc, rmc_start, gga_start - rmc_start);
+        memcpy(cte->nmea.raw_gga, gga_start, ( strlen(cte->iobuffer) - (rmc_start - cte->iobuffer) - (gga_start - rmc_start)));
         return 1;
     }    
 

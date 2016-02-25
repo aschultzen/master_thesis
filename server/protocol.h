@@ -43,14 +43,40 @@
 #define RMC "$GNRMC"
 #define SENTENCE_LENGTH 100
 
+/* NMEA SENTENCES DELIMITER POSITIONS */
+# define ALTITUDE_START 9
+# define LATITUDE_START 3
+# define LONGITUDE_START 5
+
+
 /* 
 * NMEA Struct
 * This might be misplaced!
 * 
+* low -> Lowest recorded value
+* high -> Highest recorded value
+* current -> Current value
+* The values are used to filter out false positives.
 */
 struct nmea_container{
-	char gga[SENTENCE_LENGTH];
-	char rmc[SENTENCE_LENGTH];
+	/* Raw data */
+	char raw_gga[SENTENCE_LENGTH];
+	char raw_rmc[SENTENCE_LENGTH];
+
+	/* Latitude */
+	double lat_low;
+	double lat_high;
+	double lat_current;
+
+	/* Longitude */
+	double lon_low;
+	double lon_high;
+	double lon_current;
+
+	/* Altitude */
+	double alt_low;
+	double alt_high;
+	double alt_current;
 };
 
 /* 
