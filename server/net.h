@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <arpa/inet.h>
+#include <stdbool.h>
 
 /* My own header files */ 
 #include "utils.h"
@@ -47,7 +48,6 @@
 * cm: Command code. Used for quick comparison after commands
 * are parsed by command parser.
 */
-
 struct client_table_entry{ 
 	struct list_head list;
 	pid_t pid;
@@ -59,6 +59,8 @@ struct client_table_entry{
 	struct command_code cm;	
 	char ip[INET_ADDRSTRLEN];
 	struct nmea_container nmea; 
+	time_t timestamp;
+	int checksum_passed;
 } __attribute__ ((packed));
 
 int s_read(struct client_table_entry *cte);

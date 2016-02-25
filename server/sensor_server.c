@@ -1,12 +1,21 @@
 #include "sensor_server.h"
 #include "serial.h"
 
-static struct client_table_entry *client_list;
-static int number_of_clients;
+/* Server data and stats */
+struct server_data *s_data;
 
-volatile sig_atomic_t done = 0;
+/* Shared synchro elements */
+struct server_synchro *s_synch;
 
-void show_list()
+/* Used by sig handlers */
+volatile sig_atomic_t done;
+
+/* Pointer to shared memory containing the client list */
+struct client_table_entry *client_list;
+
+/* Used by server to show connected clients. */
+static void show_list() __attribute__ ((unused));
+static void show_list()
 {
     if(! list_empty(&client_list->list) ) {
         struct client_table_entry* client_list_iterate;
@@ -15,10 +24,10 @@ void show_list()
         t_print("========================================\n");
         list_for_each_entry(client_list_iterate, &client_list->list, list) {
             t_print("ID: %d, PID: %d, IP:%s TYPE %d\n",
-            client_list_iterate->client_id, 
-            client_list_iterate->pid, 
-            client_list_iterate->ip, 
-            client_list_iterate->client_type);
+                    client_list_iterate->client_id,
+                    client_list_iterate->pid,
+                    client_list_iterate->ip,
+                    client_list_iterate->client_type);
         }
         t_print("========================================\n\n");
     } else {
@@ -26,57 +35,37 @@ void show_list()
     }
 }
 
-void send_list(struct client_table_entry *cte){
-    char buffer [1000];
-    int snprintf_status = 0;
-    char *c_type = "SENSOR";
-
-    struct client_table_entry* client_list_iterate;
-    s_write(cte, "\n", 1);
-    s_write(cte, "CLIENT TABLE\n", 13);
-    s_write(cte, "=============================================\n", 47);
-    list_for_each_entry(client_list_iterate,&client_list->list, list) {
-        
-        if(client_list_iterate->client_type == MONITOR){
-            c_type = "MONITOR";
-        }else{
-           c_type = "SENSOR"; 
-        }
-
-        snprintf_status = snprintf( buffer, 1000, "ID: %d, PID: %d, IP:%s TYPE: %s\n", 
-        client_list_iterate->client_id, 
-        client_list_iterate->pid, 
-        client_list_iterate->ip, 
-        c_type);
-        s_write(cte, buffer, snprintf_status);
-    }
-    s_write(cte, "=============================================\n\n", 48);
-}
-
-void remove_client(pid_t pid)
+/* Removes a client with the given PID */
+static void remove_client(pid_t pid)
 {
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* temp_remove;
+
+    sem_wait(&(s_synch->client_list_mutex));
     list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
         if(client_list_iterate->pid == pid) {
             list_del(&client_list_iterate->list);
         }
     }
-    number_of_clients--;
+    s_data->number_of_clients--;
+    sem_post(&(s_synch->client_list_mutex));
 }
 
-struct client_table_entry* create_client(struct client_table_entry* ptr)
+/* Creates an entry in the client list structure and returns a pointer to it*/
+static struct client_table_entry* create_client(struct client_table_entry* ptr)
 {
-    number_of_clients++;
+    sem_wait(&(s_synch->client_list_mutex));
+    s_data->number_of_clients++;
     struct client_table_entry* tmp;
-    tmp = (client_list + number_of_clients);
+    tmp = (client_list + s_data->number_of_clients);
     list_add_tail( &(tmp->list), &(ptr->list) );
+    sem_post(&(s_synch->client_list_mutex));
+
     return tmp;
 }
 
-
 /* SIGCHLD Handler */
-void handle_sigchld(int signum)
+static void handle_sigchld(int signum)
 {
     pid_t pid;
     int   status;
@@ -93,7 +82,7 @@ void handle_sigchld(int signum)
 }
 
 /* SIGTERM/INT Handler */
-void handle_sig(int signum)
+static void handle_sig(int signum)
 {
     if(signum == 15) {
         t_print("[%d] SIGTERM received!\n", getpid());
@@ -105,139 +94,49 @@ void handle_sig(int signum)
     done = 1;
 }
 
-int respond(struct client_table_entry *cte)
-{
-    int read_status = s_read(cte); /* Blocking */
-    if(read_status == -1) {
-        t_print("Read failed or interrupted!\n");
-        return -1;
-    }
-
-    int parse_status = parse_input(cte);
-
-    if(parse_status == -1) {
-        s_write(cte, ERROR_ILLEGAL_MESSAGE_SIZE,
-                sizeof(ERROR_ILLEGAL_MESSAGE_SIZE));
-    }
-    if(parse_status == 0) {
-        s_write(cte, ERROR_ILLEGAL_COMMAND,
-                sizeof(ERROR_ILLEGAL_COMMAND));
-    }
-    if(parse_status == 1) {
-        if(cte->cm.code == CODE_DISCONNECT) {
-            t_print("Client %d requested DISCONNECT.\n", cte->client_id);
-            s_write(cte, PROTOCOL_OK, sizeof(PROTOCOL_OK));
-            return -1;
-        }
-        if(cte->cm.code == CODE_IDENTIFY) {
-            int id = 0;
-
-            if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
-                s_write(cte, ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
-                return 0;
-            }
-
-            struct client_table_entry* client_list_iterate;
-            list_for_each_entry(client_list_iterate, &client_list->list, list) {
-                if(client_list_iterate->client_id == id) {
-                    cte->client_id = 0;
-                    t_print("[%s] bounced! ID %d already in use.\n", cte->ip,id);
-                    s_write(cte, "ID in use!\n", 11);
-                    return -1;
-                }
-            }
-
-            if(id < 0){
-                cte->client_type = MONITOR;
-            }
-            else{
-                cte->client_type = SENSOR;
-            }
-            cte->client_id = id;
-            t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
-            s_write(cte, PROTOCOL_OK, sizeof(PROTOCOL_OK));
-            return 0;
-        }
-
-        if(cte->client_id == 0) {
-            s_write(cte, ERROR_NO_ID, sizeof(ERROR_NO_ID));
-            return 0;
-        }
-
-        if(cte->cm.code == CODE_LISTCLIENTS) {
-            send_list(cte);
-        }
-    }
-    return 0;
-}
-
-/* The session_info struct allocated on stack only */
-void setup_session(int session_fd, struct client_table_entry *new_client)
-{
-    /* Setting the IP adress */
-    char ip[INET_ADDRSTRLEN];
-    get_ip_str(session_fd, ip);
-
-    /* Setting the PID */
-    new_client->pid = getpid();
-    strncpy(new_client->ip, ip, INET_ADDRSTRLEN);
-
-    /* Initializing structure */
-    new_client->heartbeat_timeout.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
-    new_client->heartbeat_timeout.tv_usec = 0;
-    new_client->client_id = 0;
-    new_client->session_fd = session_fd;
-
-    memset(&new_client->iobuffer, 0, IO_BUFFER_SIZE*sizeof(char));
-    memset(&new_client->cm.parameter, 0, MAX_PARAMETER_SIZE*sizeof(char));
-
-    /* Setting socket timeout to default value */
-    /* This doesn't always work for some reason, race condition? :/ */
-    if (setsockopt (new_client->session_fd, SOL_SOCKET,
-                    SO_RCVTIMEO, (char *)&new_client->heartbeat_timeout, sizeof(struct timeval)) < 0) {
-        die(36,"setsockopt failed\n");
-    }
-
-    /*
-    * Entering child process main loop
-    * Breaks (disconnects the client) if
-    * respond < 0
-    */
-    while(!done) {
-        if(respond(new_client) < 0) {
-            break;
-        }
-    }
-    /* Freeing resources */
-    //free(new_client->cm.parameter);
-    //free(new_client->iobuffer);
-}
-
 /*
 * Main loop for the server.
-* Forks everytime a client connects
-* and calls setup_session()
+* Forks everytime a client connects and calls setup_session()
 */
-void start_server(int port_number, char *serial_display_path)
+static void start_server(int port_number)
 {
     /* Initializing variables */
-    //char *serial_display_path = "/dev/ttyACM0";
     int server_sockfd;
     struct sockaddr_in serv_addr;
+    done = 0;
 
     /* Loading config */
     struct config cfg;
     int load_config_status = load_config(&cfg, CONFIG_FILE_PATH);
 
     /* Falling back to default if load_config fails */
-    if(load_config_status == 0){
+    if(load_config_status == 0) {
         t_print("Config loaded!\n");
         client_list = mmap(NULL, (cfg.config_server_max_connections * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    }else{
+    } else {
         t_print("Failed to load config! Config file corrupt or missing entries.\n");
         client_list = mmap(NULL, (MAX_CLIENTS * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     }
     INIT_LIST_HEAD(&client_list->list);
+
+    /* Create and initialize shared memory for server data */
+    s_data = mmap(NULL, sizeof(struct server_data), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    s_data->max_clients = cfg.config_server_max_connections;
+    bcopy(PROGRAM_VERSION, s_data->version,4);
+    s_data->pid = getpid();
+    s_data->started = time(NULL);
+
+    /* Init shared semaphores and sync elements */
+    s_synch = mmap(NULL, sizeof(struct server_synchro), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    sem_init(&(s_synch->ready_mutex), 1, 1);
+    sem_init(&(s_synch->client_list_mutex), 1, 1);
+
+    if( &(s_synch->ready_mutex) == SEM_FAILED || &(s_synch->client_list_mutex) == SEM_FAILED) {
+        t_print("Unable to create semaphores, exiting...\n");
+        sem_close(&(s_synch->ready_mutex));
+        sem_close(&(s_synch->client_list_mutex));
+        exit(1);
+    }
 
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -284,29 +183,12 @@ void start_server(int port_number, char *serial_display_path)
     */
     if (bind(server_sockfd, (struct sockaddr *) &serv_addr,
              sizeof(serv_addr)) < 0) {
-        //die(80,"ERROR on binding");
         t_print("%d: ERROR on binding\n", 80);
         exit(1);
     }
 
     /* Marking the connection for listening*/
     listen(server_sockfd,SOMAXCONN);
-
-    /* Forking out proc for serial com */
-    if(serial_display_path != NULL) {
-        pid_t pid=fork();
-        if (pid==-1) {
-            die(94, "failed to create child process (errno=%d)",errno);
-        } else if (pid==0) {
-            t_print("Serial COM started (PID: %d)\n", getpid());
-            open_serial(serial_display_path, client_list);
-            t_print("Serial COM closed (PID: %d)\n", getpid());
-            //SIGINT is "stopped" here!
-            _exit(0);
-        }
-    } else {
-        t_print("No serial display defined.\n");
-    }
 
     int session_fd = 0;
     t_print("Server is running. Accepting connections.\n");
@@ -317,10 +199,10 @@ void start_server(int port_number, char *serial_display_path)
             if (errno==EINTR) continue;
             die(90,"failed to accept connection (errno=%d)",errno);
         }
-        if(number_of_clients == MAX_CLIENTS){
+        if(s_data->number_of_clients == MAX_CLIENTS) {
             write(session_fd, ERROR_MAX_CLIENTS_REACHED, sizeof(ERROR_MAX_CLIENTS_REACHED));
             close(session_fd);
-        }else{
+        } else {
             struct client_table_entry *new_client = create_client(client_list);
             pid_t pid=fork();
             if (pid==-1) {
@@ -338,14 +220,19 @@ void start_server(int port_number, char *serial_display_path)
             }
         }
     }
+    /* Freeing and closing */
     munmap(client_list, sizeof(struct client_table_entry));
+    munmap(s_data, sizeof(struct server_data));
+    sem_close(&(s_synch->ready_mutex));
+    sem_close(&(s_synch->client_list_mutex));
+    munmap(s_synch, sizeof(struct server_synchro));
     close(server_sockfd);
     t_print("Server STOPPED!\n", getpid());
 }
 
-int usage(char *argv[])
+static int usage(char *argv[])
 {
-    char description[] = {"Required argument:\n\t -p <PORT NUMBER>\n\nOptional:\n\t -s <PATH TO SERIAL DISPLAY>\n"};
+    char description[] = {"Required argument:\n\t -p <PORT NUMBER>\n\n"};
     printf("Usage: %s [ARGS]\n\n", argv[0]);
     printf("Sensor_server: Server part of GPS Jamming/Spoofing system\n\n");
     printf("%s\n", description);
@@ -354,7 +241,6 @@ int usage(char *argv[])
 
 int main(int argc, char *argv[])
 {
-    char *serial_display_path = NULL;
     char *port_number = NULL;
 
     /* getopt silent mode set */
@@ -384,13 +270,7 @@ int main(int argc, char *argv[])
         printf("Missing parameters!\n");
     }
 
-    if(argc == 5) {
-        if(argv[3][1] == 's') {
-            serial_display_path = argv[4];
-        }
-    }
-
     t_print("Sensor server starting...\n", getpid());
-    start_server(atoi(port_number), serial_display_path);
+    start_server(atoi(port_number));
     exit(0);
 }

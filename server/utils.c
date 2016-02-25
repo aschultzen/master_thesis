@@ -41,7 +41,7 @@ void get_ip_str(int session_fd, char *ip)
     addr.sa_family = AF_INET;
     socklen_t addr_len = sizeof(addr);
     if(getpeername(session_fd, (struct sockaddr *) &addr, &addr_len)) {
-        die(93,"getsocketname failed\n");
+        die(44,"getsocketname failed\n");
     }
     extract_ip_str(&addr,ip, addr_len);
 }
@@ -120,8 +120,6 @@ int load_config(struct config *cfg, char *path)
     free(input_buffer);
     return 0;
 }
-
-//$GPGGA,134116.00,5957.80516,N,01043.82047,E,1,06,2.00,194.6,M,38.5,M,,*57
 
 int calc_nmea_checksum(char *s) {
     char checksum = 0;

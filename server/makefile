@@ -1,22 +1,27 @@
-SERVER_OBJS = sensor_server.o net.o utils.o serial.o
-CLIENT_OBJS = sensor_client.o net.o utils.o 
+SERVER_OBJS = sensor_server.o net.o utils.o serial.o session.o analyzer.o
+CLIENT_OBJS = sensor_client.o net.o utils.o serial.o
 
 CC = gcc
 DEBUG = -g
 
-CFLAGS = -Wall -c $(DEBUG) -std=gnu99 -pedantic -O2
-#CFLAGS = -Wall -c $(DEBUG) -march=armv7-a -mtune=arm7 -I/usr/include/mysql
+CFLAGS = -Wall -c $(DEBUG) -std=gnu99 -pedantic -O3
+
+cpu := $(shell uname -m)
+
+ifeq ($(cpu),armv7l)
+	CFLAGS = -Wall -c $(DEBUG) -march=armv7-a -mtune=arm7 -fsigned-char
+endif
 
 LFLAGS = -Wall $(DEBUG)
 
 server : $(SERVER_OBJS)
-	$(CC) $(LFLAGS) $(SERVER_OBJS) -o server
+	$(CC) $(LFLAGS) $(SERVER_OBJS) -o server -lpthread
 
 client : $(CLIENT_OBJS)
 	$(CC) $(LFLAGS) $(CLIENT_OBJS) -o client
 
 sensor_server.o : sensor_server.h net.h sensor_server.c
-	$(CC) $(CFLAGS) sensor_server.c
+	$(CC) $(CFLAGS) sensor_server.c 
 
 sensor_client.o : sensor_client.h sensor_client.c
 	$(CC) $(CFLAGS) sensor_client.c
@@ -29,6 +34,12 @@ utils.o : utils.h list.h utils.c config.h
 
 serial.o : serial.h serial.c
 	$(CC) $(CFLAGS) serial.c
+
+session.o : session.h session.c sensor_server.h
+	$(CC) $(CFLAGS) session.c 
+
+analyzer.o : analyzer.h analyzer.c sensor_server.h
+	$(CC) $(CFLAGS) analyzer.c
 
 clean:
 	\rm *.o

@@ -56,30 +56,40 @@ int parse_input(struct client_table_entry *cte)
         return 1;
     }
 
-    /* LISTCLIENTS */
-    if(strstr((char*)cte->iobuffer, PROTOCOL_LISTCLIENTS ) == (cte->iobuffer)) {
-        cte->cm.code = CODE_LISTCLIENTS;
+    /* PRINTCLIENTS */
+    if(strstr((char*)cte->iobuffer, PROTOCOL_PRINTCLIENTS ) == (cte->iobuffer)) {
+        cte->cm.code = CODE_PRINTCLIENTS;
+        return 1;
+    }
+
+    /* PRINTSERVER */
+    if(strstr((char*)cte->iobuffer, PROTOCOL_PRINTSERVER ) == (cte->iobuffer)) {
+        cte->cm.code = CODE_PRINTSERVER;
         return 1;
     }
 
     /* NMEA */
     if(strstr((char*)cte->iobuffer, PROTOCOL_NMEA ) == (cte->iobuffer)) {
         cte->cm.code = CODE_NMEA;
-        /* Fetch GGA */
+        /* Fetch RMC */
+        char *rmc_start = strstr(cte->iobuffer, RMC);
         char *gga_start = strstr(cte->iobuffer, GGA);
-        char *gsa_start = strstr(cte->iobuffer, GSA);
-        memcpy(cte->nmea.gga, gga_start, gsa_start - gga_start);
-        int checksum = calc_nmea_checksum(cte->nmea.gga);
-        //t_print("Checksum result: %d\n", checksum);
-
+        memcpy(cte->nmea.rmc, rmc_start, gga_start - rmc_start);
+        memcpy(cte->nmea.gga, gga_start, ( strlen(cte->iobuffer) - (rmc_start - cte->iobuffer) - (gga_start - rmc_start)));
         return 1;
     }    
+
+    /* EXIT */
+    if(strstr((char*)cte->iobuffer, PROTOCOL_EXIT ) == (cte->iobuffer)) {
+        cte->cm.code = CODE_DISCONNECT;
+        return 1;
+    }
 
     /* DISCONNECT */
     if(strstr((char*)cte->iobuffer, PROTOCOL_DISCONNECT ) == (cte->iobuffer)) {
         cte->cm.code = CODE_DISCONNECT;
         return 1;
-    }
+    }    
 
     return 0;
 }

@@ -13,11 +13,13 @@
 
 //Mine
 #include "utils.h"
-#include "net.h"
+#include "protocol.h"
 
-void open_serial(char *portname, struct client_table_entry *ect);
+typedef enum e_serial_device {
+	GPS,
+	CSAC
+}serial_device;
 
-#define SERIAL_SLEEP 2000000	/* Sleep duration between checks on */
-							/* shared variables */
+int open_serial(char *portname, serial_device device);
 
 #endif /* !SERIAL_H */
