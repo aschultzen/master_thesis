@@ -19,6 +19,7 @@ extern volatile sig_atomic_t done;
 extern struct client_table_entry *client_list;
 extern struct server_data *s_data;
 extern struct server_synchro *s_synch;
+extern struct config *cfg;
 
 #define PROGRAM_VERSION "0.1a"
 
@@ -27,7 +28,6 @@ struct server_data{
 	int number_of_clients;	/* Number of clients currently connected */
 	time_t started;			/* When the server was started */
 	pid_t pid;
-	int max_clients;
 	char version[4];
 } __attribute__ ((packed));
 

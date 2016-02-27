@@ -71,6 +71,58 @@ static void extract_pos(struct client_table_entry *cte)
     cte->nmea.alt_current = atof(buffer);
 }
 
+static void check_warm_up(struct client_table_entry *cte)
+{
+    if(cte->warmup_started){
+        double elapsed = difftime(time(NULL), cte->warmup_started);
+        double percent = (elapsed / cfg->warm_up_seconds) * 100;
+
+        if((int)percent % 10 == 0){
+            t_print("Client %d Warming up, %d%%\n", cte->client_id, (int)percent);
+        }
+
+        if(elapsed >= cfg->warm_up_seconds){
+            t_print("Client %d, warm-up finished!\n", cte->client_id);
+            cte->warmup = 0;
+        }
+    }
+    else
+    {
+        cte->warmup_started = time(NULL);
+    }
+}
+
+/* Updating "extreme" values */
+static void warm_up(struct client_table_entry *cte)
+{
+    /* Updating latitude */
+    if(cte->nmea.lat_current > cte->nmea.lat_high){
+        cte->nmea.lat_high = cte->nmea.lat_current;
+    }
+
+    if(cte->nmea.lat_current < cte->nmea.lat_low){
+        cte->nmea.lat_low = cte->nmea.lat_current;
+    }
+
+    /* Updating longitude */
+    if(cte->nmea.lon_current > cte->nmea.lon_high){
+        cte->nmea.lon_high = cte->nmea.lon_current;
+    }
+
+    if(cte->nmea.lon_current < cte->nmea.lon_low){
+        cte->nmea.lon_low = cte->nmea.lon_current;
+    }
+
+    /* Updating altitude */
+    if(cte->nmea.alt_current > cte->nmea.alt_high){
+        cte->nmea.alt_high = cte->nmea.alt_current;
+    }
+
+    if(cte->nmea.alt_current < cte->nmea.alt_low){
+        cte->nmea.alt_low = cte->nmea.alt_current;
+    }
+}
+
 /* Sends a formatted string containing info about connected clients */
 static void print_clients(struct client_table_entry *cte)
 {
@@ -117,7 +169,7 @@ static void print_server_data(struct client_table_entry *cte, struct server_data
                                 "PID: %d\nNumber of clients: %d\nMax clients: %d\nStarted: %sVersion: %s\n",
                                 s_data->pid,
                                 s_data->number_of_clients,
-                                s_data->max_clients,
+                                cfg->max_clients,
                                 asctime (loctime),
                                 s_data->version);
 
@@ -205,20 +257,55 @@ static int respond(struct client_table_entry *cte)
                 cte->timestamp = time(NULL);
                 cte->checksum_passed = 1;
                 extract_pos(cte);
-                //Calculate average();
+                if(cte->warmup){
+                    check_warm_up(cte);
+                    warm_up(cte);
+                }
             } else {
                 cte->checksum_passed = 0;
                 t_print("RMC and GGA received, checksum failed!\n");
             }
 
-            sem_wait(&(s_synch->ready_mutex));
-            if(nmea_ready()){
-                //analyze();
+            /* If the client is finished with warming up */
+        
+            /* 
+            * NOTE! This means that no data will be analyzed
+            * before all the sensors are ready
+            */
+            if(!cte->warmup){
+                sem_wait(&(s_synch->ready_mutex));
+
+                if(nmea_ready()){
+                    analyze();
+                }else{
+                    t_print("Not ready!\n");
+                }
+                sem_post(&(s_synch->ready_mutex));
+                check_result();
             }
-            sem_post(&(s_synch->ready_mutex));
         }
     }
     return 0;
+}
+
+/* 
+* Used to set extremes values to their opposite.
+* This way, the comparison check in warm_up() is "true" 
+* even tough they are checked for the first time 
+*/
+static void init_nmea(struct client_table_entry *cte)
+{
+
+    /* Setting low values */
+    cte->nmea.lat_low = 9999.9999;
+    cte->nmea.lon_low = 9999.9999;
+    cte->nmea.alt_low = 9999.9999;
+
+    /* Setting the high values */
+    cte->nmea.lat_high = -9999.9999;
+    cte->nmea.lon_high = -9999.9999;
+    cte->nmea.alt_high = -9999.9999;
+
 }
 
 /* Setups the clients structure and initializes data */
@@ -238,6 +325,14 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->heartbeat_timeout.tv_usec = 0;
     new_client->client_id = 0;
     new_client->session_fd = session_fd;
+    new_client->moved = 0;
+
+    /* Marked for warm up */
+    new_client->warmup = 1;
+    new_client->warmup_started = 0;
+
+
+    init_nmea(new_client);
 
     memset(&new_client->iobuffer, 0, IO_BUFFER_SIZE*sizeof(char));
     memset(&new_client->cm.parameter, 0, MAX_PARAMETER_SIZE*sizeof(char));

@@ -13,6 +13,9 @@ volatile sig_atomic_t done;
 /* Pointer to shared memory containing the client list */
 struct client_table_entry *client_list;
 
+/* Pointer to shared memory containing config */
+struct config *cfg;
+
 /* Used by server to show connected clients. */
 static void show_list() __attribute__ ((unused));
 static void show_list()
@@ -106,22 +109,21 @@ static void start_server(int port_number)
     done = 0;
 
     /* Loading config */
-    struct config cfg;
-    int load_config_status = load_config(&cfg, CONFIG_FILE_PATH);
+    cfg = mmap(NULL, sizeof(struct config), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    int load_config_status = load_config(cfg, CONFIG_FILE_PATH);
 
     /* Falling back to default if load_config fails */
     if(load_config_status == 0) {
         t_print("Config loaded!\n");
-        client_list = mmap(NULL, (cfg.config_server_max_connections * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        client_list = mmap(NULL, (cfg->max_clients * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     } else {
-        t_print("Failed to load config! Config file corrupt or missing entries.\n");
-        client_list = mmap(NULL, (MAX_CLIENTS * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        t_print("Failed to load config! Config file corrupt or missing entries.\nSample file:\n\nmax_clients: 10\nwarm_up: 120\n");
+        exit(0);
     }
     INIT_LIST_HEAD(&client_list->list);
 
     /* Create and initialize shared memory for server data */
     s_data = mmap(NULL, sizeof(struct server_data), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    s_data->max_clients = cfg.config_server_max_connections;
     bcopy(PROGRAM_VERSION, s_data->version,4);
     s_data->pid = getpid();
     s_data->started = time(NULL);
@@ -199,7 +201,7 @@ static void start_server(int port_number)
             if (errno==EINTR) continue;
             die(90,"failed to accept connection (errno=%d)",errno);
         }
-        if(s_data->number_of_clients == MAX_CLIENTS) {
+        if(s_data->number_of_clients == cfg->max_clients) {
             write(session_fd, ERROR_MAX_CLIENTS_REACHED, sizeof(ERROR_MAX_CLIENTS_REACHED));
             close(session_fd);
         } else {

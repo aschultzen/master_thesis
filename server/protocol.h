@@ -48,7 +48,6 @@
 # define LATITUDE_START 3
 # define LONGITUDE_START 5
 
-
 /* 
 * NMEA Struct
 * This might be misplaced!

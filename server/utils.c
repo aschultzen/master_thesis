@@ -103,11 +103,26 @@ int load_config(struct config *cfg, char *path)
         return -1;
     }   
 
+    /* Retrieving max connections from config */
     char *ptr = strstr(input_buffer,CONFIG_SERVER_MAX_CONNECTIONS);
     if(ptr != NULL){
         int length = strlen(ptr) - strlen(CONFIG_SERVER_MAX_CONNECTIONS);
         memcpy(temp_buffer, ptr+(strlen(CONFIG_SERVER_MAX_CONNECTIONS)*(sizeof(char))), length);
-        status = sscanf(temp_buffer, "%d", &cfg->config_server_max_connections);
+        status = sscanf(temp_buffer, "%d", &cfg->max_clients);
+    }
+
+    if(status == EOF || status == 0){
+        fclose(config_file);
+        free(input_buffer);
+        return -1;
+    }
+
+    /* Retrieving warm_up from config */
+    ptr = strstr(input_buffer,CONFIG_SERVER_WARM_UP);
+    if(ptr != NULL){
+        int length = strlen(ptr) - strlen(CONFIG_SERVER_WARM_UP);
+        memcpy(temp_buffer, ptr+(strlen(CONFIG_SERVER_WARM_UP)*(sizeof(char))), length);
+        status = sscanf(temp_buffer, "%d", &cfg->warm_up_seconds);
     }
 
     if(status == EOF || status == 0){

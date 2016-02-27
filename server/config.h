@@ -3,6 +3,7 @@
 
 /* Config file entries mappings */
 #define CONFIG_SERVER_MAX_CONNECTIONS "max_clients:"
+#define CONFIG_SERVER_WARM_UP "warm_up:"
 #define CONFIG_FILE_PATH "config.ini"
 
 /* 
@@ -13,7 +14,8 @@
 */
 
 struct config {
-	int config_server_max_connections;
+	int max_clients;
+	int warm_up_seconds;
 } __attribute__ ((packed));
 
 #endif /* !CONFIG_H */

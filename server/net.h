@@ -25,9 +25,7 @@
 #include "protocol.h"
 
 /* GENERAL */
-#define SERVER_MAX_CONNECTIONS 10
 #define IO_BUFFER_SIZE MAX_PARAMETER_SIZE
-#define MAX_CLIENTS 10
 #define ID_MAX 1000	//Highest ID number allowed
 #define MONITOR_MAX 2
 #define CLIENT_TIMEOUT 5
@@ -61,6 +59,9 @@ struct client_table_entry{
 	struct nmea_container nmea; 
 	time_t timestamp;
 	int checksum_passed;
+	int warmup;
+	time_t warmup_started;
+	int moved;
 } __attribute__ ((packed));
 
 int s_read(struct client_table_entry *cte);
