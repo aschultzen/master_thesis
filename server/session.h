@@ -6,4 +6,6 @@
 
 void setup_session(int session_fd, struct client_table_entry *new_client);
 
+
+
 #endif /* !SESSION_H */

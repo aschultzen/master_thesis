@@ -180,4 +180,38 @@ int calc_nmea_checksum(char *s) {
     
 }
 
+/* 
+* Used to extract words from between two delimiters
+* delim_num_1 -> The number of the first delimiter, ex.3
+* delim_num_2 -> The number of the second delimiter, ex.5
+* delimiter -> The character to be used as a delimiter
+* buffer -> To transport the string
+*/
+int word_extractor(int delim_num_1, int delim_num_2, char delimiter, char *buffer, int buffsize, char *string, int str_len)
+{
+    int i;
+    int delim_counter = 0;
+    int buffer_index = 0;
 
+    bzero(buffer, buffsize);
+
+    for(i = 0; i < str_len; i++){
+        /* Second delim (end) reached, stopping. */
+        if(delim_counter == delim_num_2){
+            return 0;
+        }
+
+        if(string[i] == delimiter){
+            delim_counter++;
+        }
+        else{
+            /* The first delim is reached */
+            if(delim_counter >= delim_num_1){
+                buffer[buffer_index] = string[i];
+                buffer_index++;
+            }  
+        }
+    }
+    /* Reached end of string without encountering delim_num_2 */
+    return -1;
+}

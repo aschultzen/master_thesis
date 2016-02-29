@@ -1,8 +1,4 @@
 #include "sensor_client.h"
-#include "net.h"
-#include "protocol.h"
-#include "utils.h"
-#include "serial.h"
 
 /* Identify the client for the server */
 static int identify(int session_fd, int id)

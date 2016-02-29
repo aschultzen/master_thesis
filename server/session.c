@@ -15,43 +15,6 @@ static int nmea_ready()
     }
 }
 
-
-/* 
-* Used to extract words from between two delimiters
-* delim_num_1 -> The number of the first delimiter, ex.3
-* delim_num_2 -> The number of the second delimiter, ex.5
-* delimiter -> The character to be used as a delimiter
-* buffer -> To transport the string
-*/
-static int word_extractor(int delim_num_1, int delim_num_2, char delimiter, char *buffer, int buffsize, char *string, int str_len)
-{
-    int i;
-    int delim_counter = 0;
-    int buffer_index = 0;
-
-    bzero(buffer, buffsize);
-
-    for(i = 0; i < str_len; i++){
-        /* Second delim (end) reached, stopping. */
-        if(delim_counter == delim_num_2){
-            return 0;
-        }
-
-        if(string[i] == delimiter){
-            delim_counter++;
-        }
-        else{
-            /* The first delim is reached */
-            if(delim_counter >= delim_num_1){
-                buffer[buffer_index] = string[i];
-                buffer_index++;
-            }  
-        }
-    }
-    /* Reached end of string without encountering delim_num_2 */
-    return -1;
-}
-
 /* Extract position data from NMEA */
 static void extract_pos(struct client_table_entry *cte)
 {
@@ -250,6 +213,21 @@ static int respond(struct client_table_entry *cte)
             print_server_data(cte, s_data);
         }
 
+        if(cte->cm.code == CODE_KICK) {
+            int id = atoi(cte->cm.parameter);
+            if(!id){
+                s_write(cte, "ILLEGAL KICK REQUEST\n", 22);
+            }else{
+               struct client_table_entry* kick_cand = get_client_by_id(id);
+               if(kick_cand != NULL){
+                    close(kick_cand->session_fd);
+               }
+               else{
+                s_write(cte, "NO SUCH CLIENT\n\n", 15);
+               }
+            }
+        }
+
         if(cte->cm.code == CODE_NMEA) {
             int rmc_checksum = calc_nmea_checksum(cte->nmea.raw_rmc);
             int gga_checksum = calc_nmea_checksum(cte->nmea.raw_gga);
@@ -330,7 +308,6 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     /* Marked for warm up */
     new_client->warmup = 1;
     new_client->warmup_started = 0;
-
 
     init_nmea(new_client);
 

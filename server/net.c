@@ -68,6 +68,15 @@ int parse_input(struct client_table_entry *cte)
         return 1;
     }
 
+    /* KICK */
+    if(strstr((char*)cte->iobuffer, PROTOCOL_KICK ) == (cte->iobuffer)) {
+        int length = (strlen(cte->iobuffer) - strlen(PROTOCOL_KICK) );
+        memcpy(cte->cm.parameter, (cte->iobuffer)+(strlen(PROTOCOL_KICK)*(sizeof(char))), length);
+        cte->cm.code = CODE_KICK;
+        t_print("Told to kick %s", cte->cm.parameter);
+        return 1;
+    }
+
     /* NMEA */
     if(strstr((char*)cte->iobuffer, PROTOCOL_NMEA ) == (cte->iobuffer)) {
         cte->cm.code = CODE_NMEA;

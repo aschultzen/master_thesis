@@ -23,6 +23,7 @@
 /* My own header files */ 
 #include "utils.h"
 #include "protocol.h"
+#include "nmea.h"
 
 /* GENERAL */
 #define IO_BUFFER_SIZE MAX_PARAMETER_SIZE
@@ -32,6 +33,16 @@
 #define MONITOR_TIMEOUT 100
 #define DISPLAY_SIZE 8
 #define CONNECTION_ATTEMPTS_MAX 10
+
+/*
+* command_code struct is used by the parser
+* to convey an easy to compare command code, as well
+* as any parameter belonging to that command
+*/ 
+struct command_code{
+	int code;
+	char parameter[MAX_PARAMETER_SIZE];
+} __attribute__ ((packed));
 
 /*
 * CLIENT TABLE STRUCT 

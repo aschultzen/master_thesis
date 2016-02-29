@@ -38,8 +38,31 @@ static void show_list()
     }
 }
 
+struct client_table_entry* get_client_by_id(int id)
+{
+    struct client_table_entry* client_list_iterate;
+    struct client_table_entry* temp;
+    int found = 0;
+
+    sem_wait(&(s_synch->client_list_mutex));
+    list_for_each_entry_safe(client_list_iterate, temp, &client_list->list, list) {
+        if(client_list_iterate->client_id == id) {
+            found = 1;
+            break;
+        }
+    }
+    sem_post(&(s_synch->client_list_mutex));
+    if(found){
+        return client_list_iterate;
+    }
+    else{
+        return NULL;
+    }
+
+}
+
 /* Removes a client with the given PID */
-static void remove_client(pid_t pid)
+static void remove_client_by_pid(pid_t pid)
 {
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* temp_remove;
@@ -47,6 +70,22 @@ static void remove_client(pid_t pid)
     sem_wait(&(s_synch->client_list_mutex));
     list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
         if(client_list_iterate->pid == pid) {
+            list_del(&client_list_iterate->list);
+        }
+    }
+    s_data->number_of_clients--;
+    sem_post(&(s_synch->client_list_mutex));
+}
+
+/* Removes a client with the given ID */
+void remove_client_by_id(int id)
+{
+    struct client_table_entry* client_list_iterate;
+    struct client_table_entry* temp_remove;
+
+    sem_wait(&(s_synch->client_list_mutex));
+    list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
+        if(client_list_iterate->client_id == id) {
             list_del(&client_list_iterate->list);
         }
     }
@@ -78,7 +117,7 @@ static void handle_sigchld(int signum)
         }
 
         if(pid > 0) {
-            remove_client(pid);
+            remove_client_by_pid(pid);
             t_print("Process %d reaped. Status: %d\n", pid, status);
         }
     }

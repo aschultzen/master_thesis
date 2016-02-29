@@ -8,6 +8,7 @@
 // Mine
 #include "net.h"
 #include "session.h"
+#include "nmea.h"
 
 /* 
 * Made extern because the sessions should
@@ -23,6 +24,9 @@ extern struct config *cfg;
 
 #define PROGRAM_VERSION "0.1a"
 
+void remove_client_by_id(int id);
+struct client_table_entry* get_client_by_id(int id);
+
 /* Server info shared with processes */
 struct server_data{
 	int number_of_clients;	/* Number of clients currently connected */
@@ -37,5 +41,14 @@ struct server_synchro{
 	sem_t client_list_mutex;
 	volatile int ready_counter;
 } __attribute__ ((packed));
+
+/* 
+* Roles of client, either SENSOR or MONITOR. 
+* A monitor is only used to monitor the programs state.
+*/
+enum client_type{
+    SENSOR,
+    MONITOR
+};
 
 #endif /* !SENSOR_SERVER_H */
