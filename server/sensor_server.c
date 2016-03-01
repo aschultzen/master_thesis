@@ -1,5 +1,4 @@
 #include "sensor_server.h"
-#include "serial.h"
 
 /* Server data and stats */
 struct server_data *s_data;

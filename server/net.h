@@ -27,57 +27,19 @@
 
 /* GENERAL */
 #define IO_BUFFER_SIZE MAX_PARAMETER_SIZE
-#define ID_MAX 1000	//Highest ID number allowed
+#define ID_MAX 1000	/* Highest ID number allowed */
 #define MONITOR_MAX 2
 #define CLIENT_TIMEOUT 5
 #define MONITOR_TIMEOUT 100
 #define DISPLAY_SIZE 8
 #define CONNECTION_ATTEMPTS_MAX 10
 
-/*
-* command_code struct is used by the parser
-* to convey an easy to compare command code, as well
-* as any parameter belonging to that command
-*/ 
-struct command_code{
-	int code;
-	char parameter[MAX_PARAMETER_SIZE];
-} __attribute__ ((packed));
-
-/*
-* CLIENT TABLE STRUCT 
-*
-* list_head list: The head in the list of clients
-* pid: Process ID for the client connection (See "fork")
-* session_fd: The file descriptor for the session. 
-* client_id: The connected clients ID
-* iobuffer: A general purpose buffer for in and output
-* heartbeat_timeout: Number of seconds of inactivity before disconnect
-* ip: Clients IP Address.
-* cm: Command code. Used for quick comparison after commands
-* are parsed by command parser.
-*/
-struct client_table_entry{ 
-	struct list_head list;
-	pid_t pid;
-	int session_fd;					
-	int client_id;							
+struct transmission_s{
+	int session_fd;
 	char iobuffer[IO_BUFFER_SIZE]; 
-	int client_type;							
-	struct timeval heartbeat_timeout; 							
-	struct command_code cm;	
-	char ip[INET_ADDRSTRLEN];
-	struct nmea_container nmea; 
-	time_t timestamp;
-	int checksum_passed;
-	int warmup;
-	time_t warmup_started;
-	int moved;
 } __attribute__ ((packed));
 
-int s_read(struct client_table_entry *cte);
-int s_write(struct client_table_entry *cte, char *message, int length);
-int parse_input(struct client_table_entry *cte);
-int protocol_send(struct client_table_entry *cte, char *message);
+int s_read(struct transmission_s *tsm);
+int s_write(struct transmission_s *tsm, char *message, int length);
 
 #endif /* !NET_H */

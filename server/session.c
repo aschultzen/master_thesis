@@ -94,9 +94,9 @@ static void print_clients(struct client_table_entry *cte)
     char *c_type = "SENSOR";
 
     struct client_table_entry* client_list_iterate;
-    s_write(cte, "\n", 1);
-    s_write(cte, "CLIENT TABLE\n", 13);
-    s_write(cte, "=============================================================\n", 63);
+    s_write(&(cte->transmission), "\n", 1);
+    s_write(&(cte->transmission), "CLIENT TABLE\n", 13);
+    s_write(&(cte->transmission), "=============================================================\n", 63);
     list_for_each_entry(client_list_iterate,&client_list->list, list) {
 
         if(client_list_iterate->client_type == MONITOR) {
@@ -111,9 +111,9 @@ static void print_clients(struct client_table_entry *cte)
                                     (int)difftime(time(NULL),client_list_iterate->timestamp),
                                     c_type,
                                     client_list_iterate->client_id);
-        s_write(cte, buffer, snprintf_status);
+        s_write(&(cte->transmission), buffer, snprintf_status);
     }
-    s_write(cte, "=============================================================\n", 63);
+    s_write(&(cte->transmission), "=============================================================\n", 63);
 }
 
 /* Sends a formatted string containing server info */
@@ -124,9 +124,9 @@ static void print_server_data(struct client_table_entry *cte, struct server_data
     struct tm *loctime;
     loctime = localtime (&s_data->started);
 
-    s_write(cte, "\n", 1);
-    s_write(cte, "SERVER DATA\n", 12);
-    s_write(cte, "=============================================================\n", 63);
+    s_write(&(cte->transmission), "\n", 1);
+    s_write(&(cte->transmission), "SERVER DATA\n", 12);
+    s_write(&(cte->transmission), "=============================================================\n", 63);
 
     snprintf_status = snprintf( buffer, 1000,
                                 "PID: %d\nNumber of clients: %d\nMax clients: %d\nStarted: %sVersion: %s\n",
@@ -136,8 +136,93 @@ static void print_server_data(struct client_table_entry *cte, struct server_data
                                 asctime (loctime),
                                 s_data->version);
 
-    s_write(cte, buffer, snprintf_status);
-    s_write(cte, "=============================================================\n", 63);
+    s_write(&(cte->transmission), buffer, snprintf_status);
+    s_write(&(cte->transmission), "=============================================================\n", 63);
+}
+
+/*
+* Explanation:
+* ------------
+* Parses input from clients over IP network. Return value indicates status.
+* Uses the command_code struct to convey parameter and command code. 
+* The purpose of the parser was to make the server/client code less
+* cluttered and to make future protocol implementations easier. 
+* 
+* Return values:
+* ------------  
+* Returns -1 if size is wrong
+* Returns 0 if protocol is not followed
+* Returns 1 if all is ok
+*/
+
+int parse_input(struct client_table_entry *cte)
+{
+    /* INPUT TO BIG */
+    if(strlen(cte->transmission.iobuffer) > (MAX_PARAMETER_SIZE + MAX_COMMAND_SIZE) + 2) {
+        return -1;
+    }
+
+    /* INPUT TO SMALL */
+    if(strlen(cte->transmission.iobuffer) < (MIN_PARAMETER_SIZE + MIN_COMMAND_SIZE) + 2) {
+        return -1;
+    }
+
+    /* ZEROING COMMAND CODE */
+    cte->cm.code = 0;
+
+    /* IDENTIFY */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_IDENTIFY ) == (cte->transmission.iobuffer)) {
+        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_IDENTIFY) );
+        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
+        cte->cm.code = CODE_IDENTIFY;
+        return 1;
+    }
+
+    /* PRINTCLIENTS */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTCLIENTS ) == (cte->transmission.iobuffer)) {
+        cte->cm.code = CODE_PRINTCLIENTS;
+        return 1;
+    }
+
+    /* PRINTSERVER */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTSERVER ) == (cte->transmission.iobuffer)) {
+        cte->cm.code = CODE_PRINTSERVER;
+        return 1;
+    }
+
+    /* KICK */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_KICK ) == (cte->transmission.iobuffer)) {
+        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_KICK) );
+        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_KICK)*(sizeof(char))), length);
+        cte->cm.code = CODE_KICK;
+        t_print("Told to kick %s", cte->cm.parameter);
+        return 1;
+    }
+
+    /* NMEA */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_NMEA ) == (cte->transmission.iobuffer)) {
+        cte->cm.code = CODE_NMEA;
+        /* Fetch RMC */
+        char *rmc_start = strstr(cte->transmission.iobuffer, RMC);
+        char *gga_start = strstr(cte->transmission.iobuffer, GGA);
+        memcpy(cte->nmea.raw_rmc, rmc_start, gga_start - rmc_start);
+        memcpy(cte->nmea.raw_gga, gga_start, ( strlen(cte->transmission.iobuffer) - (rmc_start - cte->transmission.iobuffer) - (gga_start - rmc_start)));
+        return 1;
+    }    
+
+    /* EXIT */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_EXIT ) == (cte->transmission.iobuffer)) {
+        cte->cm.code = CODE_DISCONNECT;
+        return 1;
+    }
+
+    /* DISCONNECT */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DISCONNECT ) == (cte->transmission.iobuffer)) {
+        cte->cm.code = CODE_DISCONNECT;
+        return 1;
+    }    
+
+    return 0;
 }
 
 /* Responds to client action */
@@ -145,10 +230,10 @@ static int respond(struct client_table_entry *cte)
 {
     /* Only print ">" if client is monitor */
     if(cte->client_id < 0){
-        s_write(cte, ">", 1);  
+        s_write(&(cte->transmission), ">", 1);  
     }
 
-    int read_status = s_read(cte); /* Blocking */
+    int read_status = s_read(&(cte->transmission)); /* Blocking */
     if(read_status == -1) {
         t_print("Read failed or interrupted!\n");
         return -1;
@@ -157,25 +242,25 @@ static int respond(struct client_table_entry *cte)
     int parse_status = parse_input(cte);
 
     if(parse_status == -1) {
-        s_write(cte, ERROR_ILLEGAL_MESSAGE_SIZE,
+        s_write(&(cte->transmission), ERROR_ILLEGAL_MESSAGE_SIZE,
                 sizeof(ERROR_ILLEGAL_MESSAGE_SIZE));
     }
     if(parse_status == 0) {
-        s_write(cte, ERROR_ILLEGAL_COMMAND,
+        s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND,
                 sizeof(ERROR_ILLEGAL_COMMAND));
     }
     if(parse_status == 1) {
         if(cte->cm.code == CODE_DISCONNECT) {
             t_print("Client %d requested DISCONNECT.\n", cte->client_id);
-            s_write(cte, PROTOCOL_OK, sizeof(PROTOCOL_OK));
-            s_write(cte, PROTOCOL_GOODBYE, sizeof(PROTOCOL_GOODBYE));
+            s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
+            s_write(&(cte->transmission), PROTOCOL_GOODBYE, sizeof(PROTOCOL_GOODBYE));
             return -1;
         }
         if(cte->cm.code == CODE_IDENTIFY) {
             int id = 0;
 
             if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
-                s_write(cte, ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
+                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
                 return 0;
             }
 
@@ -184,7 +269,7 @@ static int respond(struct client_table_entry *cte)
                 if(client_list_iterate->client_id == id) {
                     cte->client_id = 0;
                     t_print("[%s] bounced! ID %d already in use.\n", cte->ip,id);
-                    s_write(cte, "ID in use!\n", 11);
+                    s_write(&(cte->transmission), "ID in use!\n", 11);
                     return -1;
                 }
             }
@@ -196,12 +281,12 @@ static int respond(struct client_table_entry *cte)
             }
             cte->client_id = id;
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
-            s_write(cte, PROTOCOL_OK, sizeof(PROTOCOL_OK));
+            s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
             return 0;
         }
 
         if(cte->client_id == 0) {
-            s_write(cte, ERROR_NO_ID, sizeof(ERROR_NO_ID));
+            s_write(&(cte->transmission), ERROR_NO_ID, sizeof(ERROR_NO_ID));
             return 0;
         }
 
@@ -216,14 +301,14 @@ static int respond(struct client_table_entry *cte)
         if(cte->cm.code == CODE_KICK) {
             int id = atoi(cte->cm.parameter);
             if(!id){
-                s_write(cte, "ILLEGAL KICK REQUEST\n", 22);
+                s_write(&(cte->transmission), "ILLEGAL KICK REQUEST\n", 22);
             }else{
                struct client_table_entry* kick_cand = get_client_by_id(id);
                if(kick_cand != NULL){
-                    close(kick_cand->session_fd);
+                    close(kick_cand->transmission.session_fd);
                }
                else{
-                s_write(cte, "NO SUCH CLIENT\n\n", 15);
+                s_write(&(cte->transmission), "NO SUCH CLIENT\n\n", 15);
                }
             }
         }
@@ -302,7 +387,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->heartbeat_timeout.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
     new_client->heartbeat_timeout.tv_usec = 0;
     new_client->client_id = 0;
-    new_client->session_fd = session_fd;
+    new_client->transmission.session_fd = session_fd;
     new_client->moved = 0;
 
     /* Marked for warm up */
@@ -311,12 +396,12 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
 
     init_nmea(new_client);
 
-    memset(&new_client->iobuffer, 0, IO_BUFFER_SIZE*sizeof(char));
+    memset(&new_client->transmission.iobuffer, 0, IO_BUFFER_SIZE*sizeof(char));
     memset(&new_client->cm.parameter, 0, MAX_PARAMETER_SIZE*sizeof(char));
 
     /* Setting socket timeout to default value */
     /* This doesn't always work for some reason, race condition? :/ */
-    if (setsockopt (new_client->session_fd, SOL_SOCKET,
+    if (setsockopt (new_client->transmission.session_fd, SOL_SOCKET,
                     SO_RCVTIMEO, (char *)&new_client->heartbeat_timeout, sizeof(struct timeval)) < 0) {
         die(36,"setsockopt failed\n");
     }
