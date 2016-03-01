@@ -15,28 +15,6 @@ struct client_table_entry *client_list;
 /* Pointer to shared memory containing config */
 struct config *cfg;
 
-/* Used by server to show connected clients. */
-static void show_list() __attribute__ ((unused));
-static void show_list()
-{
-    if(! list_empty(&client_list->list) ) {
-        struct client_table_entry* client_list_iterate;
-        printf("\n");
-        t_print("CONNECTED CLIENTS\n");
-        t_print("========================================\n");
-        list_for_each_entry(client_list_iterate, &client_list->list, list) {
-            t_print("ID: %d, PID: %d, IP:%s TYPE %d\n",
-                    client_list_iterate->client_id,
-                    client_list_iterate->pid,
-                    client_list_iterate->ip,
-                    client_list_iterate->client_type);
-        }
-        t_print("========================================\n\n");
-    } else {
-        t_print("No clients connected.\n");
-    }
-}
-
 struct client_table_entry* get_client_by_id(int id)
 {
     struct client_table_entry* client_list_iterate;
@@ -117,7 +95,7 @@ static void handle_sigchld(int signum)
 
         if(pid > 0) {
             remove_client_by_pid(pid);
-            t_print("Process %d reaped. Status: %d\n", pid, status);
+            t_print(PROCESS_REAPED, pid, status);
         }
     }
 }
@@ -126,12 +104,12 @@ static void handle_sigchld(int signum)
 static void handle_sig(int signum)
 {
     if(signum == 15) {
-        t_print("[%d] SIGTERM received!\n", getpid());
+        t_print(SIGTERM_RECEIVED, getpid());
     }
     if(signum == 2) {
-        t_print("[%d] SIGINT received!\n", getpid());
+        t_print(SIGINT_RECEIVED, getpid());
     }
-    t_print("Stopping server...\n", getpid());
+    t_print(STOPPING_SERVER, getpid());
     done = 1;
 }
 
@@ -152,10 +130,10 @@ static void start_server(int port_number)
 
     /* Falling back to default if load_config fails */
     if(load_config_status == 0) {
-        t_print("Config loaded!\n");
+        t_print(CONFIG_LOADED);
         client_list = mmap(NULL, (cfg->max_clients * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     } else {
-        t_print("Failed to load config! Config file corrupt or missing entries.\nSample file:\n\nmax_clients: 10\nwarm_up: 120\n");
+        t_print(ERROR_CONFIG_LOAD_FAILED);
         exit(0);
     }
     INIT_LIST_HEAD(&client_list->list);
@@ -172,7 +150,7 @@ static void start_server(int port_number)
     sem_init(&(s_synch->client_list_mutex), 1, 1);
 
     if( &(s_synch->ready_mutex) == SEM_FAILED || &(s_synch->client_list_mutex) == SEM_FAILED) {
-        t_print("Unable to create semaphores, exiting...\n");
+        t_print(ERROR_SEMAPHORE_CREATION_FAILED);
         sem_close(&(s_synch->ready_mutex));
         sem_close(&(s_synch->client_list_mutex));
         exit(1);
@@ -181,7 +159,7 @@ static void start_server(int port_number)
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sockfd < 0) {
-        die(62,"ERROR opening socket\n");
+        die(62,ERROR_SOCKET_OPEN_FAILED);
     }
 
     /* Registering the SIGINT handler */
@@ -223,7 +201,7 @@ static void start_server(int port_number)
     */
     if (bind(server_sockfd, (struct sockaddr *) &serv_addr,
              sizeof(serv_addr)) < 0) {
-        t_print("%d: ERROR on binding\n", 80);
+        t_print(ERROR_SOCKET_BINDING, port_number);
         exit(1);
     }
 
@@ -231,13 +209,14 @@ static void start_server(int port_number)
     listen(server_sockfd,SOMAXCONN);
 
     int session_fd = 0;
-    t_print("Server is running. Accepting connections.\n");
+    t_print(SERVER_RUNNING);
     while (!done) {
-        t_print("Waiting for connections...\n");
+        t_print(WAITING_FOR_CONNECTIONS);
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
-            if (errno==EINTR) continue;
-            die(90,"failed to accept connection (errno=%d)",errno);
+            if (errno==EINTR){
+                t_print(ERROR_CONNECTION_ACCEPT,errno);
+            }
         }
         if(s_data->number_of_clients == cfg->max_clients) {
             write(session_fd, ERROR_MAX_CLIENTS_REACHED, sizeof(ERROR_MAX_CLIENTS_REACHED));
@@ -246,16 +225,16 @@ static void start_server(int port_number)
             struct client_table_entry *new_client = create_client(client_list);
             pid_t pid=fork();
             if (pid==-1) {
-                die(94, "failed to create child process (errno=%d)",errno);
-                //WHAT HAPPENS WITH THE LIST WHEN FORK FAILS? DEAL WITH IT.
+                t_print(ERROR_FAILED_FORK, errno);
+                /* WHAT HAPPENS WITH THE LIST WHEN FORK FAILS? DEAL WITH IT.*/
             } else if (pid==0) {
                 close(server_sockfd);
                 setup_session(session_fd, new_client);
                 close(session_fd);
-                t_print("[%d] Disconnected\n", getpid());
+                t_print(CLIENT_DISCONNECTED, getpid());
                 _exit(0);
             } else {
-                t_print("Connection accepted\n");
+                t_print(CON_ACCEPTED);
                 close(session_fd);
             }
         }
@@ -267,15 +246,14 @@ static void start_server(int port_number)
     sem_close(&(s_synch->client_list_mutex));
     munmap(s_synch, sizeof(struct server_synchro));
     close(server_sockfd);
-    t_print("Server STOPPED!\n", getpid());
+    t_print(SERVER_STOPPED);
 }
 
 static int usage(char *argv[])
 {
-    char description[] = {"Required argument:\n\t -p <PORT NUMBER>\n\n"};
-    printf("Usage: %s [ARGS]\n\n", argv[0]);
-    printf("Sensor_server: Server part of GPS Jamming/Spoofing system\n\n");
-    printf("%s\n", description);
+    printf(USAGE_USAGE, argv[0]);
+    printf(USAGE_PROGRAM_INTRO);
+    printf(USAGE_DESCRIPTION);
     return 0;
 }
 
@@ -307,10 +285,10 @@ int main(int argc, char *argv[])
     }
 
     if(port_number == NULL) {
-        printf("Missing parameters!\n");
+        printf(ERROR_MISSING_PARAMS);
     }
 
-    t_print("Sensor server starting...\n", getpid());
+    t_print(SERVER_STARTING);
     start_server(atoi(port_number));
     exit(0);
 }

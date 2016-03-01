@@ -6,4 +6,6 @@
 void analyze();
 void check_result();
 
+#define ALARM "[ ALARM ] Client %d was moved!\n"
+
 #endif /* !ANALYZER_H */

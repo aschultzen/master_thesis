@@ -7,7 +7,7 @@ void check_result()
 
 	list_for_each_entry_safe(client_list_iterate, safe,&client_list->list, list) {
 		if(client_list_iterate->moved == 1){
-			t_print("[ ALARM ] Client %d was moved!\n", client_list_iterate->client_id);
+			t_print(ALARM, client_list_iterate->client_id);
 		}
     }	
 }
