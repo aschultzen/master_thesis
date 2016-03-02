@@ -3,7 +3,7 @@
 static int nmea_ready()
 {
     s_synch->ready_counter++;
-    if(s_synch->ready_counter == s_data->number_of_clients)
+    if(s_synch->ready_counter == s_data->number_of_sensors)
     {
         /* Zeroing out the counter, we are ready */
         s_synch->ready_counter = 0;
@@ -94,9 +94,9 @@ static void print_clients(struct client_table_entry *cte)
     char *c_type = "SENSOR";
 
     struct client_table_entry* client_list_iterate;
-    s_write(&(cte->transmission), "\n", 1);
-    s_write(&(cte->transmission), "CLIENT TABLE\n", 13);
-    s_write(&(cte->transmission), "=============================================================\n", 63);
+    s_write(&(cte->transmission), NEW_LINE, sizeof(NEW_LINE));
+    s_write(&(cte->transmission), CLIENT_TABLE_LABEL, sizeof(CLIENT_TABLE_LABEL));
+    s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
     list_for_each_entry(client_list_iterate,&client_list->list, list) {
 
         if(client_list_iterate->client_type == MONITOR) {
@@ -105,15 +105,26 @@ static void print_clients(struct client_table_entry *cte)
             c_type = "SENSOR";
         }
 
-        snprintf_status = snprintf( buffer, 1000, "PID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d\n",
+        if(cte->client_id == client_list_iterate->client_id){
+             snprintf_status = snprintf( buffer, 1000, BOLD_GRN_BLK "PID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d\n" RESET,
                                     client_list_iterate->pid,
                                     client_list_iterate->ip,
                                     (int)difftime(time(NULL),client_list_iterate->timestamp),
                                     c_type,
                                     client_list_iterate->client_id);
+        }
+        else{
+             snprintf_status = snprintf( buffer, 1000, "PID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d\n" ,
+                                    client_list_iterate->pid,
+                                    client_list_iterate->ip,
+                                    (int)difftime(time(NULL),client_list_iterate->timestamp),
+                                    c_type,
+                                    client_list_iterate->client_id);
+        }
+       
         s_write(&(cte->transmission), buffer, snprintf_status);
     }
-    s_write(&(cte->transmission), "=============================================================\n", 63);
+    s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
 }
 
 /* Sends a formatted string containing server info */
@@ -124,20 +135,21 @@ static void print_server_data(struct client_table_entry *cte, struct server_data
     struct tm *loctime;
     loctime = localtime (&s_data->started);
 
-    s_write(&(cte->transmission), "\n", 1);
-    s_write(&(cte->transmission), "SERVER DATA\n", 12);
-    s_write(&(cte->transmission), "=============================================================\n", 63);
+    s_write(&(cte->transmission), NEW_LINE, sizeof(NEW_LINE));
+    s_write(&(cte->transmission), SERVER_TABLE_LABEL, sizeof(SERVER_TABLE_LABEL));
+    s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
 
     snprintf_status = snprintf( buffer, 1000,
-                                "PID: %d\nNumber of clients: %d\nMax clients: %d\nStarted: %sVersion: %s\n",
+                                "PID: %d\nNumber of clients: %d\nNumber of sensors: %d\nMax clients: %d\nStarted: %sVersion: %s\n",
                                 s_data->pid,
                                 s_data->number_of_clients,
+                                s_data->number_of_sensors,
                                 cfg->max_clients,
                                 asctime (loctime),
                                 s_data->version);
 
     s_write(&(cte->transmission), buffer, snprintf_status);
-    s_write(&(cte->transmission), "=============================================================\n", 63);
+    s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
 }
 
 /*
@@ -278,6 +290,9 @@ static int respond(struct client_table_entry *cte)
                 cte->client_type = MONITOR;
             } else {
                 cte->client_type = SENSOR;
+                sem_wait(&(s_synch->client_list_mutex));
+                    s_data->number_of_sensors++;
+                sem_post(&(s_synch->client_list_mutex));
             }
             cte->client_id = id;
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
@@ -305,7 +320,12 @@ static int respond(struct client_table_entry *cte)
             }else{
                struct client_table_entry* kick_cand = get_client_by_id(id);
                if(kick_cand != NULL){
-                    close(kick_cand->transmission.session_fd);
+                    sem_wait(&(s_synch->client_list_mutex));
+                        sem_wait(&(s_synch->ready_mutex));
+                            t_print("Instructed to kick %d with pid %d\n", kick_cand->client_id, kick_cand->pid);
+                            close(kick_cand->transmission.session_fd);
+                        sem_post(&(s_synch->ready_mutex));
+                    sem_post(&(s_synch->client_list_mutex));
                }
                else{
                 s_write(&(cte->transmission), "NO SUCH CLIENT\n\n", 15);

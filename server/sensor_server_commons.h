@@ -3,6 +3,7 @@
 
 #include "net.h"
 #include <semaphore.h>
+#include "colors.h"
 
 /* STRUCTS */
 
@@ -50,6 +51,7 @@ struct client_table_entry{
 /* Server info shared with processes */
 struct server_data{
 	int number_of_clients;	/* Number of clients currently connected */
+	int number_of_sensors;	/* Number of sensors, subset of clients */
 	time_t started;			/* When the server was started */
 	pid_t pid;
 	char version[4];

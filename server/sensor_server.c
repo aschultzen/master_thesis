@@ -35,7 +35,6 @@ struct client_table_entry* get_client_by_id(int id)
     else{
         return NULL;
     }
-
 }
 
 /* Removes a client with the given PID */
@@ -47,6 +46,9 @@ static void remove_client_by_pid(pid_t pid)
     sem_wait(&(s_synch->client_list_mutex));
     list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
         if(client_list_iterate->pid == pid) {
+            if(client_list_iterate->client_id > 0){
+                s_data->number_of_sensors--;
+            }
             list_del(&client_list_iterate->list);
         }
     }
@@ -214,9 +216,8 @@ static void start_server(int port_number)
         t_print(WAITING_FOR_CONNECTIONS);
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
-            if (errno==EINTR){
+            if (errno==EINTR) continue;
                 t_print(ERROR_CONNECTION_ACCEPT,errno);
-            }
         }
         if(s_data->number_of_clients == cfg->max_clients) {
             write(session_fd, ERROR_MAX_CLIENTS_REACHED, sizeof(ERROR_MAX_CLIENTS_REACHED));
