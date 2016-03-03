@@ -45,6 +45,7 @@ struct client_table_entry{
 	int checksum_passed;
 	int warmup;
 	int moved;
+	int marked_for_kick;
  	char ip[INET_ADDRSTRLEN];
 } __attribute__ ((packed));
 

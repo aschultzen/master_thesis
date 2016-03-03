@@ -32,6 +32,7 @@
 #define CLIENT_DISCONNECTED "[%d] Disconnected\n"
 #define SERVER_STOPPED "Server STOPPED!\n"
 #define SERVER_STARTING "Sensor server starting...\n"
+#define CLIENT_KICKED "Client was kicked\n"
 
 /* USAGE() STRINGS */
 #define USAGE_DESCRIPTION "Required argument:\n\t -p <PORT NUMBER>\n\n"

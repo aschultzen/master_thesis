@@ -1,5 +1,9 @@
 #include "session.h"
 
+/* 
+* Used by spawned client processes to "mark" that their NMEA
+* data is ready for processing. Works as a barrier in a way.
+*/
 static int nmea_ready()
 {
     s_synch->ready_counter++;
@@ -34,6 +38,7 @@ static void extract_pos(struct client_table_entry *cte)
     cte->nmea.alt_current = atof(buffer);
 }
 
+/* Check if a client is still warming up */
 static void check_warm_up(struct client_table_entry *cte)
 {
     if(cte->warmup_started){
@@ -83,6 +88,21 @@ static void warm_up(struct client_table_entry *cte)
 
     if(cte->nmea.alt_current < cte->nmea.alt_low){
         cte->nmea.alt_low = cte->nmea.alt_current;
+    }
+}
+
+static void kick_client(struct transmission_s *tsm, int client_id)
+{
+    struct client_table_entry* kick_cand = get_client_by_id(client_id);
+    if(kick_cand != NULL){
+        sem_wait(&(s_synch->client_list_mutex));
+            sem_wait(&(s_synch->ready_mutex));
+                kick_cand->marked_for_kick = 1;
+                s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
+            sem_post(&(s_synch->ready_mutex));
+        sem_post(&(s_synch->client_list_mutex));
+    }else{
+        s_write(tsm, ERROR_KICK_NO_CLIENT, sizeof(ERROR_KICK_NO_CLIENT));
     }
 }
 
@@ -152,14 +172,18 @@ static void print_server_data(struct client_table_entry *cte, struct server_data
     s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
 }
 
+static void print_help(struct transmission_s *tsm)
+{
+    s_write(tsm, HELP, sizeof(HELP));
+    s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
+}
+
 /*
 * Explanation:
 * ------------
-* Parses input from clients over IP network. Return value indicates status.
+* Parses input from clients. Return value indicates status.
 * Uses the command_code struct to convey parameter and command code. 
-* The purpose of the parser was to make the server/client code less
-* cluttered and to make future protocol implementations easier. 
-* 
+*
 * Return values:
 * ------------  
 * Returns -1 if size is wrong
@@ -232,7 +256,14 @@ int parse_input(struct client_table_entry *cte)
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DISCONNECT ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_DISCONNECT;
         return 1;
-    }    
+    } 
+
+    /* HELP */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_HELP ) == (cte->transmission.iobuffer)) {
+        cte->cm.code = CODE_HELP;
+        return 1;
+    } 
+
 
     return 0;
 }
@@ -248,6 +279,10 @@ static int respond(struct client_table_entry *cte)
     int read_status = s_read(&(cte->transmission)); /* Blocking */
     if(read_status == -1) {
         t_print("Read failed or interrupted!\n");
+        return -1;
+    }
+
+    if(cte->marked_for_kick){
         return -1;
     }
 
@@ -268,6 +303,11 @@ static int respond(struct client_table_entry *cte)
             s_write(&(cte->transmission), PROTOCOL_GOODBYE, sizeof(PROTOCOL_GOODBYE));
             return -1;
         }
+
+        if(cte->cm.code == CODE_HELP) {
+            print_help(&(cte->transmission));
+        }
+
         if(cte->cm.code == CODE_IDENTIFY) {
             int id = 0;
 
@@ -318,18 +358,7 @@ static int respond(struct client_table_entry *cte)
             if(!id){
                 s_write(&(cte->transmission), "ILLEGAL KICK REQUEST\n", 22);
             }else{
-               struct client_table_entry* kick_cand = get_client_by_id(id);
-               if(kick_cand != NULL){
-                    sem_wait(&(s_synch->client_list_mutex));
-                        sem_wait(&(s_synch->ready_mutex));
-                            t_print("Instructed to kick %d with pid %d\n", kick_cand->client_id, kick_cand->pid);
-                            close(kick_cand->transmission.session_fd);
-                        sem_post(&(s_synch->ready_mutex));
-                    sem_post(&(s_synch->client_list_mutex));
-               }
-               else{
-                s_write(&(cte->transmission), "NO SUCH CLIENT\n\n", 15);
-               }
+                kick_client(&(cte->transmission),id);
             }
         }
 
@@ -409,10 +438,12 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->client_id = 0;
     new_client->transmission.session_fd = session_fd;
     new_client->moved = 0;
+    new_client->marked_for_kick = 0;
 
     /* Marked for warm up */
     new_client->warmup = 1;
     new_client->warmup_started = 0;
+
 
     init_nmea(new_client);
 

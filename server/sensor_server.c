@@ -232,6 +232,9 @@ static void start_server(int port_number)
                 close(server_sockfd);
                 setup_session(session_fd, new_client);
                 close(session_fd);
+                if(new_client->marked_for_kick){
+                    t_print(CLIENT_KICKED, getpid());
+                }
                 t_print(CLIENT_DISCONNECTED, getpid());
                 _exit(0);
             } else {
