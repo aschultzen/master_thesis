@@ -201,7 +201,6 @@ static void print_location(struct transmission_s *tsm, int client_id)
         }else if(nc.lat_disturbed > 0){
             lat_modifier = BOLD_RED_BLK;
         }else{
-            t_print("lat_low\n");
             lat_modifier = BOLD_CYN_BLK;
         }
 
@@ -210,7 +209,6 @@ static void print_location(struct transmission_s *tsm, int client_id)
         }else if(nc.lon_disturbed > 0){
             lon_modifier = BOLD_RED_BLK;
         }else{
-            t_print("lon_low\n");
             lon_modifier = BOLD_CYN_BLK;
         }
 
@@ -219,7 +217,6 @@ static void print_location(struct transmission_s *tsm, int client_id)
         }else if(nc.alt_disturbed > 0){
             alt_modifier = BOLD_RED_BLK;
         }else{
-            t_print("alt_low\n");
             alt_modifier = BOLD_CYN_BLK;
         }
 
@@ -228,6 +225,20 @@ static void print_location(struct transmission_s *tsm, int client_id)
                                     lon_modifier, nc.lon_current,reset, low_modifier,nc.lon_low,reset, high_modifier,nc.lon_high,reset,
                                     alt_modifier, nc.alt_current,reset, low_modifier,nc.alt_low,reset, high_modifier,nc.alt_high,reset);
     s_write(tsm, buffer, snprintf_status);
+    }else{
+        s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+    }    
+}
+
+/* Restart WARMUP procedure */
+static void warmup(struct transmission_s *tsm, int client_id)
+{
+ struct client_table_entry* candidate = get_client_by_id(client_id);
+    if(candidate != NULL){
+        candidate->warmup = 1;
+        candidate->warmup_started = time(NULL);
+        t_print("Sensor %d warmup restarted!\n", client_id);
+        s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
     }else{
         s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
     }    
@@ -269,11 +280,19 @@ int parse_input(struct client_table_entry *cte)
         return 1;
     }
 
-    /* GET_LOCATION */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_GET_LOCATION ) == (cte->transmission.iobuffer)) {
-        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_GET_LOCATION) );
-        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_GET_LOCATION)*(sizeof(char))), length);
-        cte->cm.code = CODE_GET_LOCATION;
+    /* PRINT_LOCATION */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINT_LOCATION ) == (cte->transmission.iobuffer)) {
+        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINT_LOCATION) );
+        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_PRINT_LOCATION)*(sizeof(char))), length);
+        cte->cm.code = CODE_PRINT_LOCATION;
+        return 1;
+    } 
+
+    /* WARMUP */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_WARMUP ) == (cte->transmission.iobuffer)) {
+        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_WARMUP) );
+        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_WARMUP)*(sizeof(char))), length);
+        cte->cm.code = CODE_WARMUP;
         return 1;
     } 
 
@@ -403,7 +422,7 @@ static int respond(struct client_table_entry *cte)
             return 0;
         }
 
-        if(cte->cm.code == CODE_GET_LOCATION) {
+        if(cte->cm.code == CODE_PRINT_LOCATION) {
             int id = 0;
 
             if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
@@ -412,6 +431,16 @@ static int respond(struct client_table_entry *cte)
             }
             print_location(&(cte->transmission), id);
         }
+
+        if(cte->cm.code == CODE_WARMUP) {
+            int id = 0;
+
+            if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
+                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
+                return 0;
+            }
+            warmup(&(cte->transmission), id);
+        }        
 
         if(cte->client_id == 0) {
             s_write(&(cte->transmission), ERROR_NO_ID, sizeof(ERROR_NO_ID));
