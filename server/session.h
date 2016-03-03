@@ -9,7 +9,7 @@
 #define CLIENT_TABLE_LABEL "CLIENT TABLE\n"
 #define SERVER_TABLE_LABEL "SERVER DATA\n"
 #define NEW_LINE "\n"
-#define PRINT_LOCATION_HEADER "      CURRENT      MIN          MAX\n"
+#define PRINT_LOCATION_HEADER "      CURRENT        MIN          MAX\n"
 
 /* ERRORS */
 #define ERROR_NO_CLIENT "ERROR: NO SUCH CLIENT\n"

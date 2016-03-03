@@ -4,8 +4,8 @@
 #include "sensor_server.h"
     
 void analyze();
-void check_result();
 
-#define ALARM "[ ALARM ] Client %d was moved!\n"
+#define ALARM_MOVED "[ ALARM ] Client %d was moved!\n"
+#define ALARM_RETURNED "[ ALARM ] Client %d has returned!\n"
 
 #endif /* !ANALYZER_H */

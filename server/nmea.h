@@ -12,6 +12,10 @@
 # define LATITUDE_START 3
 # define LONGITUDE_START 5
 
+#define SAFE 0
+#define HIGH 1
+#define LOW -1
+
 struct nmea_container{
 	/* Raw data */
 	char raw_gga[SENTENCE_LENGTH];
@@ -21,16 +25,19 @@ struct nmea_container{
 	double lat_low;
 	double lat_high;
 	double lat_current;
+	int lat_disturbed;
 
 	/* Longitude */
 	double lon_low;
 	double lon_high;
 	double lon_current;
+	int lon_disturbed;
 
 	/* Altitude */
 	double alt_low;
 	double alt_high;
 	double alt_current;
+	int alt_disturbed;
 };
 
 #endif /* !NMEA_H */

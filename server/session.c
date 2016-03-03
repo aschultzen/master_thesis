@@ -112,6 +112,7 @@ static void print_clients(struct client_table_entry *cte)
     char buffer [1000];
     int snprintf_status = 0;
     char *c_type = "SENSOR";
+    char *modifier = "";
 
     struct client_table_entry* client_list_iterate;
     s_write(&(cte->transmission), NEW_LINE, sizeof(NEW_LINE));
@@ -126,21 +127,17 @@ static void print_clients(struct client_table_entry *cte)
         }
 
         if(cte->client_id == client_list_iterate->client_id){
-             snprintf_status = snprintf( buffer, 1000, BOLD_GRN_BLK "PID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d\n" RESET,
+            modifier = BOLD_GRN_BLK;
+        }else{
+            modifier = RESET;
+        }
+        snprintf_status = snprintf( buffer, 1000, "%sPID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d\n" RESET,
+                                    modifier,
                                     client_list_iterate->pid,
                                     client_list_iterate->ip,
                                     (int)difftime(time(NULL),client_list_iterate->timestamp),
                                     c_type,
                                     client_list_iterate->client_id);
-        }
-        else{
-             snprintf_status = snprintf( buffer, 1000, "PID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d\n" ,
-                                    client_list_iterate->pid,
-                                    client_list_iterate->ip,
-                                    (int)difftime(time(NULL),client_list_iterate->timestamp),
-                                    c_type,
-                                    client_list_iterate->client_id);
-        }
        
         s_write(&(cte->transmission), buffer, snprintf_status);
     }
@@ -182,15 +179,54 @@ static void print_location(struct transmission_s *tsm, int client_id)
 {
     char buffer [1000];
     int snprintf_status = 0;
+
+    char *lat_modifier;
+    char *lon_modifier;
+    char *alt_modifier;
+
+    char *high_modifier = BOLD_BLK_RED;
+    char *low_modifier = BOLD_WHT_CYN;
+
+    char *reset = RESET;
+
     struct nmea_container nc;
     struct client_table_entry* candidate = get_client_by_id(client_id);
     if(candidate != NULL){
         nc = candidate->nmea;
         s_write(tsm, PRINT_LOCATION_HEADER, sizeof(PRINT_LOCATION_HEADER));
-        snprintf_status = snprintf( buffer, 1000, "LAT: %f  %f  %f\nLON: %f  %f  %f\nALT: %f  %f  %f\n",
-                                    nc.lat_current, nc.lat_low, nc.lat_high,
-                                    nc.lon_current, nc.lon_low, nc.lon_high,
-                                    nc.alt_current, nc.alt_low, nc.alt_high);
+
+        /*Determining colors*/
+        if(!nc.lat_disturbed){
+            lat_modifier = BOLD_GRN_BLK;
+        }else if(nc.lat_disturbed > 0){
+            lat_modifier = BOLD_RED_BLK;
+        }else{
+            t_print("lat_low\n");
+            lat_modifier = BOLD_CYN_BLK;
+        }
+
+        if(!nc.lon_disturbed){
+            lon_modifier = BOLD_GRN_BLK;
+        }else if(nc.lon_disturbed > 0){
+            lon_modifier = BOLD_RED_BLK;
+        }else{
+            t_print("lon_low\n");
+            lon_modifier = BOLD_CYN_BLK;
+        }
+
+        if(!nc.alt_disturbed){
+            alt_modifier = BOLD_GRN_BLK;
+        }else if(nc.alt_disturbed > 0){
+            alt_modifier = BOLD_RED_BLK;
+        }else{
+            t_print("alt_low\n");
+            alt_modifier = BOLD_CYN_BLK;
+        }
+
+        snprintf_status = snprintf( buffer, 1000, "LAT: %s%f%s  %s%f%s  %s%f%s\nLON: %s%f%s  %s%f%s  %s%f%s\nALT: %s %f%s  %s %f%s  %s %f%s\n",
+                                    lat_modifier,nc.lat_current,reset, low_modifier,nc.lat_low,reset, high_modifier,nc.lat_high,reset,
+                                    lon_modifier, nc.lon_current,reset, low_modifier,nc.lon_low,reset, high_modifier,nc.lon_high,reset,
+                                    alt_modifier, nc.alt_current,reset, low_modifier,nc.alt_low,reset, high_modifier,nc.alt_high,reset);
     s_write(tsm, buffer, snprintf_status);
     }else{
         s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
@@ -430,7 +466,6 @@ static int respond(struct client_table_entry *cte)
                     t_print("Not ready!\n");
                 }
                 sem_post(&(s_synch->ready_mutex));
-                check_result();
             }
         }
     }
@@ -448,12 +483,12 @@ static void init_nmea(struct client_table_entry *cte)
     /* Setting low values */
     cte->nmea.lat_low = 9999.999999;
     cte->nmea.lon_low = 9999.999999;
-    cte->nmea.alt_low = 9999.999999;
+    cte->nmea.alt_low = 999.999999;
 
     /* Setting the high values */
     cte->nmea.lat_high = -9999.999999;
     cte->nmea.lon_high = -9999.999999;
-    cte->nmea.alt_high = -9999.999999;
+    cte->nmea.alt_high = -999.999999;
 
 }
 
