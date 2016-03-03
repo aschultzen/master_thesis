@@ -9,9 +9,10 @@
 #define CLIENT_TABLE_LABEL "CLIENT TABLE\n"
 #define SERVER_TABLE_LABEL "SERVER DATA\n"
 #define NEW_LINE "\n"
+#define PRINT_LOCATION_HEADER "      CURRENT      MIN          MAX\n"
 
 /* ERRORS */
-#define ERROR_KICK_NO_CLIENT "ERROR: NO SUCH CLIENT\n"
+#define ERROR_NO_CLIENT "ERROR: NO SUCH CLIENT\n"
 
 /* HELP */
 #define HELP	"\n"\
@@ -30,6 +31,7 @@
   				"---------------------------------------------------------------------------\n"\
   				"  GETTIME	INTEGER	   Prints time solved from CLIENT ID\n"\
   				"---------------------------------------------------------------------------\n"\
+
 
 void setup_session(int session_fd, struct client_table_entry *new_client);
 

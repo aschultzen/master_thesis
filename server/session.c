@@ -102,7 +102,7 @@ static void kick_client(struct transmission_s *tsm, int client_id)
             sem_post(&(s_synch->ready_mutex));
         sem_post(&(s_synch->client_list_mutex));
     }else{
-        s_write(tsm, ERROR_KICK_NO_CLIENT, sizeof(ERROR_KICK_NO_CLIENT));
+        s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
     }
 }
 
@@ -178,6 +178,25 @@ static void print_help(struct transmission_s *tsm)
     s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
 }
 
+static void print_location(struct transmission_s *tsm, int client_id)
+{
+    char buffer [1000];
+    int snprintf_status = 0;
+    struct nmea_container nc;
+    struct client_table_entry* candidate = get_client_by_id(client_id);
+    if(candidate != NULL){
+        nc = candidate->nmea;
+        s_write(tsm, PRINT_LOCATION_HEADER, sizeof(PRINT_LOCATION_HEADER));
+        snprintf_status = snprintf( buffer, 1000, "LAT: %f  %f  %f\nLON: %f  %f  %f\nALT: %f  %f  %f\n",
+                                    nc.lat_current, nc.lat_low, nc.lat_high,
+                                    nc.lon_current, nc.lon_low, nc.lon_high,
+                                    nc.alt_current, nc.alt_low, nc.alt_high);
+    s_write(tsm, buffer, snprintf_status);
+    }else{
+        s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+    }    
+}
+
 /*
 * Explanation:
 * ------------
@@ -213,6 +232,14 @@ int parse_input(struct client_table_entry *cte)
         cte->cm.code = CODE_IDENTIFY;
         return 1;
     }
+
+    /* GET_LOCATION */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_GET_LOCATION ) == (cte->transmission.iobuffer)) {
+        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_GET_LOCATION) );
+        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_GET_LOCATION)*(sizeof(char))), length);
+        cte->cm.code = CODE_GET_LOCATION;
+        return 1;
+    } 
 
     /* PRINTCLIENTS */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTCLIENTS ) == (cte->transmission.iobuffer)) {
@@ -340,6 +367,16 @@ static int respond(struct client_table_entry *cte)
             return 0;
         }
 
+        if(cte->cm.code == CODE_GET_LOCATION) {
+            int id = 0;
+
+            if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
+                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
+                return 0;
+            }
+            print_location(&(cte->transmission), id);
+        }
+
         if(cte->client_id == 0) {
             s_write(&(cte->transmission), ERROR_NO_ID, sizeof(ERROR_NO_ID));
             return 0;
@@ -409,14 +446,14 @@ static void init_nmea(struct client_table_entry *cte)
 {
 
     /* Setting low values */
-    cte->nmea.lat_low = 9999.9999;
-    cte->nmea.lon_low = 9999.9999;
-    cte->nmea.alt_low = 9999.9999;
+    cte->nmea.lat_low = 9999.999999;
+    cte->nmea.lon_low = 9999.999999;
+    cte->nmea.alt_low = 9999.999999;
 
     /* Setting the high values */
-    cte->nmea.lat_high = -9999.9999;
-    cte->nmea.lon_high = -9999.9999;
-    cte->nmea.alt_high = -9999.9999;
+    cte->nmea.lat_high = -9999.999999;
+    cte->nmea.lon_high = -9999.999999;
+    cte->nmea.alt_high = -9999.999999;
 
 }
 
