@@ -29,7 +29,7 @@
   				"---------------------------------------------------------------------------\n"\
   				"  PRINTSERVER	NONE	   Prints server state and config\n"\
   				"---------------------------------------------------------------------------\n"\
-  				"  GETTIME	INTEGER	   Prints time solved from CLIENT ID\n"\
+  				"  GETTIME	INTEGER	   Prints time solved from <CLIENT ID>\n"\
   				"---------------------------------------------------------------------------\n"\
 
 

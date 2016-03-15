@@ -185,6 +185,7 @@ int calc_nmea_checksum(char *s) {
 * delim_num_1 -> The number of the first delimiter, ex.3
 * delim_num_2 -> The number of the second delimiter, ex.5
 * delimiter -> The character to be used as a delimiter
+* string -> Input
 * buffer -> To transport the string
 */
 int word_extractor(int delim_num_1, int delim_num_2, char delimiter, char *buffer, int buffsize, char *string, int str_len)

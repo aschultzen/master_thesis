@@ -24,6 +24,7 @@ static void extract_pos(struct client_table_entry *cte)
 {
     int buffsize = 100;
     char buffer[buffsize];
+    memset(&buffer, 0, buffsize);
 
     /* Extracting latitude */
     word_extractor(LATITUDE_START,LATITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
@@ -101,6 +102,22 @@ static void kick_client(struct transmission_s *tsm, int client_id)
                 s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
             sem_post(&(s_synch->ready_mutex));
         sem_post(&(s_synch->client_list_mutex));
+    }else{
+        s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+    }
+}
+
+static void print_client_time(struct transmission_s *tsm, int client_id)
+{
+    int buffsize = 100;
+    char buffer[buffsize];
+    memset(&buffer, 0, buffsize);
+
+    struct client_table_entry* time_cand = get_client_by_id(client_id);
+    if(time_cand != NULL){
+        word_extractor(RMC_TIME_START,RMC_TIME_START + 1,',',buffer, buffsize,time_cand->nmea.raw_rmc, strlen(time_cand->nmea.raw_rmc));
+        s_write(tsm, buffer, 12);
+        s_write(tsm, "\n", 1);
     }else{
         s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
     }
@@ -272,6 +289,12 @@ int parse_input(struct client_table_entry *cte)
     /* ZEROING COMMAND CODE */
     cte->cm.code = 0;
 
+    /* NMEA */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_NMEA ) == (cte->transmission.iobuffer)) {
+        cte->cm.code = CODE_NMEA;
+        return 1;
+    }  
+
     /* IDENTIFY */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_IDENTIFY ) == (cte->transmission.iobuffer)) {
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_IDENTIFY) );
@@ -285,6 +308,14 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINT_LOCATION) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_PRINT_LOCATION)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINT_LOCATION;
+        return 1;
+    } 
+
+    /* PRINTTIME */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTTIME ) == (cte->transmission.iobuffer)) {
+        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINTTIME) );
+        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_PRINTTIME)*(sizeof(char))), length);
+        cte->cm.code = CODE_PRINTTIME;
         return 1;
     } 
 
@@ -313,21 +344,9 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_KICK) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_KICK)*(sizeof(char))), length);
         cte->cm.code = CODE_KICK;
-        t_print("Told to kick %s", cte->cm.parameter);
         return 1;
     }
-
-    /* NMEA */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_NMEA ) == (cte->transmission.iobuffer)) {
-        cte->cm.code = CODE_NMEA;
-        /* Fetch RMC */
-        char *rmc_start = strstr(cte->transmission.iobuffer, RMC);
-        char *gga_start = strstr(cte->transmission.iobuffer, GGA);
-        memcpy(cte->nmea.raw_rmc, rmc_start, gga_start - rmc_start);
-        memcpy(cte->nmea.raw_gga, gga_start, ( strlen(cte->transmission.iobuffer) - (rmc_start - cte->transmission.iobuffer) - (gga_start - rmc_start)));
-        return 1;
-    }    
-
+  
     /* EXIT */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_EXIT ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_DISCONNECT;
@@ -455,6 +474,15 @@ static int respond(struct client_table_entry *cte)
             print_server_data(cte, s_data);
         }
 
+        if(cte->cm.code == CODE_PRINTTIME) {
+            int id = atoi(cte->cm.parameter);
+            if(!id){
+                s_write(&(cte->transmission), ERROR_NO_ID, sizeof(ERROR_NO_ID));
+            }else{
+                print_client_time(&(cte->transmission), id);
+            }    
+        }
+
         if(cte->cm.code == CODE_KICK) {
             int id = atoi(cte->cm.parameter);
             if(!id){
@@ -465,6 +493,13 @@ static int respond(struct client_table_entry *cte)
         }
 
         if(cte->cm.code == CODE_NMEA) {
+            /* Fetching data from buffer */
+            char *rmc_start = strstr(cte->transmission.iobuffer, RMC);
+            char *gga_start = strstr(cte->transmission.iobuffer, GGA);
+            memcpy(cte->nmea.raw_rmc, rmc_start, gga_start - rmc_start);
+            memcpy(cte->nmea.raw_gga, gga_start, ( strlen(cte->transmission.iobuffer) - (rmc_start - cte->transmission.iobuffer) - (gga_start - rmc_start)));
+            
+            /* Checking NMEA checksum */
             int rmc_checksum = calc_nmea_checksum(cte->nmea.raw_rmc);
             int gga_checksum = calc_nmea_checksum(cte->nmea.raw_gga);
             if(rmc_checksum == 0 && gga_checksum == 0) {
