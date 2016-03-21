@@ -28,6 +28,7 @@
 /* GENERAL */
 #define IO_BUFFER_SIZE MAX_PARAMETER_SIZE
 #define ID_MAX 1000	/* Highest ID number allowed */
+#define ID_AS_STRING_MAX 4
 #define MONITOR_MAX 2
 #define CLIENT_TIMEOUT 5
 #define MONITOR_TIMEOUT 100

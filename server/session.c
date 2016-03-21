@@ -248,17 +248,41 @@ static void print_location(struct transmission_s *tsm, int client_id)
 }
 
 /* Restart WARMUP procedure */
-static void warmup(struct transmission_s *tsm, int client_id)
+static void warmup(struct client_table_entry* target, struct transmission_s *tsm)
 {
- struct client_table_entry* candidate = get_client_by_id(client_id);
-    if(candidate != NULL){
-        candidate->warmup = 1;
-        candidate->warmup_started = time(NULL);
-        t_print("Sensor %d warmup restarted!\n", client_id);
-        s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
-    }else{
-        s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-    }    
+    target->warmup = 1;
+    target->warmup_started = time(NULL);
+    t_print("Sensor %d warmup restarted!\n", target->client_id);
+    s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
+}
+
+static void dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char *filename_append)
+{
+    int filename_size = sizeof(DATADUMP_EXTENSION) + DUMPDATA_TIME_SIZE + strlen(filename_append) + ID_AS_STRING_MAX + 2;
+    char filename[filename_size];
+    bzero(filename, filename_size);
+
+    char time_buffer[100];
+    time_t rawtime;
+    struct tm *info;
+    time(&rawtime);
+    info = gmtime(&rawtime);
+    strftime(time_buffer,80,"%d%m%y-%H%M%S", info);
+
+    char id_as_string[ID_AS_STRING_MAX];
+    sprintf(id_as_string, "%d", target->client_id);
+
+    strcat(filename, id_as_string);
+    strcat(filename, "_");
+    strcat(filename, time_buffer);
+    strcat(filename, DATADUMP_EXTENSION);
+
+    t_print("Filename: %s\n", filename);
+
+    FILE *fp;
+    fp=fopen(filename, "wb");
+    fwrite(&target->nmea, sizeof(struct nmea_container), 1, fp);
+    fclose(fp);
 }
 
 /*
@@ -304,10 +328,10 @@ int parse_input(struct client_table_entry *cte)
     }
 
     /* DUMPLOC */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DUMPLOC ) == (cte->transmission.iobuffer)) {
-        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_DUMPLOC) );
-        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_DUMPLOC)*(sizeof(char))), length);
-        cte->cm.code = CODE_DUMPLOC;
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DUMPDATA ) == (cte->transmission.iobuffer)) {
+        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_DUMPDATA) );
+        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_DUMPDATA)*(sizeof(char))), length);
+        cte->cm.code = CODE_DUMPDATA;
         return 1;
     }
 
@@ -380,6 +404,7 @@ int parse_input(struct client_table_entry *cte)
 /* Responds to client action */
 static int respond(struct client_table_entry *cte)
 {
+    bzero(cte->cm.parameter, MAX_PARAMETER_SIZE);
     /* Only print ">" if client is monitor */
     if(cte->client_id < 0){
         s_write(&(cte->transmission), ">", 1);  
@@ -489,6 +514,11 @@ static int respond(struct client_table_entry *cte)
             return 0;
         }
 
+        if(cte->client_id == 0) {
+            s_write(&(cte->transmission), ERROR_NO_ID, sizeof(ERROR_NO_ID));
+            return 0;
+        }
+
         if(cte->cm.code == CODE_PRINT_LOCATION) {
             int id = 0;
 
@@ -501,20 +531,28 @@ static int respond(struct client_table_entry *cte)
         }
 
         if(cte->cm.code == CODE_WARMUP) {
-            int id = 0;
+            int target_id = 0;
 
-            if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
+            if(sscanf(cte->cm.parameter, "%d", &target_id) == -1) {
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
                 return 0;
             }
-            warmup(&(cte->transmission), id);
+
+            if(target_id > 0){
+                struct client_table_entry* candidate = get_client_by_id(target_id);
+                if(candidate != NULL){
+                    warmup(candidate, &(cte->transmission));
+                }
+                else{
+                    s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+                }
+            }
+            else{
+                s_write(&(cte->transmission), ERROR_WARMUP_NOT_SENSOR, sizeof(ERROR_WARMUP_NOT_SENSOR));
+            }
+
             return 0;
         }        
-
-        if(cte->client_id == 0) {
-            s_write(&(cte->transmission), ERROR_NO_ID, sizeof(ERROR_NO_ID));
-            return 0;
-        }
 
         if(cte->cm.code == CODE_PRINTCLIENTS) {
             print_clients(cte);
@@ -529,7 +567,7 @@ static int respond(struct client_table_entry *cte)
         if(cte->cm.code == CODE_PRINTTIME) {
             int id = atoi(cte->cm.parameter);
             if(!id){
-                s_write(&(cte->transmission), ERROR_NO_ID, sizeof(ERROR_NO_ID));
+                s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             }else{
                 print_client_time(&(cte->transmission), id);
             }
@@ -539,11 +577,42 @@ static int respond(struct client_table_entry *cte)
         if(cte->cm.code == CODE_KICK) {
             int id = atoi(cte->cm.parameter);
             if(!id){
-                s_write(&(cte->transmission), "ILLEGAL KICK REQUEST\n", 22);
+                s_write(&(cte->transmission), ERROR_ILLEGAL_KICK, sizeof(ERROR_ILLEGAL_KICK));
             }else{
                 kick_client(&(cte->transmission),id);
             }
             return 0;
+        }
+
+        if(cte->cm.code == CODE_DUMPDATA) {
+            int append_buffer_size = MAX_APPEND_LENGTH;
+            char append_text[append_buffer_size];
+            int target_id;
+            char id_buffer[ID_AS_STRING_MAX];
+            bzero(id_buffer, ID_AS_STRING_MAX);
+            bzero(append_text, append_buffer_size);
+
+            word_extractor(2,3, ' ', append_text, append_buffer_size,cte->cm.parameter, MAX_APPEND_LENGTH);
+
+            if(strlen(append_text) == 0){
+                target_id = atoi(cte->cm.parameter);
+            }
+            else{
+                word_extractor(1,2, ' ', id_buffer, ID_AS_STRING_MAX,cte->cm.parameter, ID_AS_STRING_MAX);
+                target_id = atoi(id_buffer);
+            }
+
+            if(!target_id){
+                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
+            }else{
+                struct client_table_entry* candidate = get_client_by_id(target_id);
+                if(candidate != NULL){
+                    dumpdata(candidate, &(cte->transmission), append_text);
+                }
+                else{
+                    s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+                }
+            }
         }
     }
     return 0;
