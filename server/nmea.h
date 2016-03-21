@@ -39,6 +39,9 @@ struct nmea_container{
 	double alt_high;
 	double alt_current;
 	int alt_disturbed;
+
+	/* CHECKSUM */
+	int checksum_passed;
 };
 
 #endif /* !NMEA_H */

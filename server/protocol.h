@@ -22,6 +22,7 @@
 #define PROTOCOL_PRINT_LOCATION "PRINTLOC"
 #define PROTOCOL_WARMUP "WARMUP"
 #define PROTOCOL_PRINTTIME "PRINTTIME"
+#define PROTOCOL_DUMPLOC "DUMPLOC"
 
 /* RESPONSES */
 #define PROTOCOL_GOODBYE "Goodbye!\n"
@@ -29,18 +30,20 @@
 
 /* COMMAND CODES */
 /* Used by respond() */
-#define CODE_DISCONNECT 1
-#define CODE_GET_TIME 2
-#define CODE_IDENTIFY 3
-#define CODE_STORE 4
-#define CODE_NMEA 5
-#define CODE_PRINTCLIENTS 6
-#define CODE_PRINTSERVER 7
-#define CODE_KICK 8
-#define CODE_HELP 9
+#define CODE_DISCONNECT 	1
+#define CODE_GET_TIME 		2
+#define CODE_IDENTIFY 		3
+#define CODE_STORE 			4
+#define CODE_NMEA 			5
+#define CODE_PRINTCLIENTS 	6
+#define CODE_PRINTSERVER 	7
+#define CODE_KICK 			8
+#define CODE_HELP 			9
 #define CODE_PRINT_LOCATION 10
-#define CODE_WARMUP 11
-#define CODE_PRINTTIME 12
+#define CODE_WARMUP 		11
+#define CODE_PRINTTIME 		12
+#define CODE_DUMPLOC 		13
+#define CODE_MOVED 			14 
 
 /* ERRORS*/
 #define ERROR_ILLEGAL_COMMAND "ILLEGAL COMMAND\n"

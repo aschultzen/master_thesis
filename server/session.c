@@ -303,6 +303,14 @@ int parse_input(struct client_table_entry *cte)
         return 1;
     }
 
+    /* DUMPLOC */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DUMPLOC ) == (cte->transmission.iobuffer)) {
+        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_DUMPLOC) );
+        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_DUMPLOC)*(sizeof(char))), length);
+        cte->cm.code = CODE_DUMPLOC;
+        return 1;
+    }
+
     /* PRINT_LOCATION */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINT_LOCATION ) == (cte->transmission.iobuffer)) {
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINT_LOCATION) );
@@ -398,6 +406,46 @@ static int respond(struct client_table_entry *cte)
                 sizeof(ERROR_ILLEGAL_COMMAND));
     }
     if(parse_status == 1) {
+            if(cte->cm.code == CODE_NMEA) {
+            /* Fetching data from buffer */
+            char *rmc_start = strstr(cte->transmission.iobuffer, RMC);
+            char *gga_start = strstr(cte->transmission.iobuffer, GGA);
+            memcpy(cte->nmea.raw_rmc, rmc_start, gga_start - rmc_start);
+            memcpy(cte->nmea.raw_gga, gga_start, ( strlen(cte->transmission.iobuffer) - (rmc_start - cte->transmission.iobuffer) - (gga_start - rmc_start)));
+            
+            /* Checking NMEA checksum */
+            int rmc_checksum = calc_nmea_checksum(cte->nmea.raw_rmc);
+            int gga_checksum = calc_nmea_checksum(cte->nmea.raw_gga);
+            if(rmc_checksum == 0 && gga_checksum == 0) {
+                cte->timestamp = time(NULL);
+                cte->nmea.checksum_passed = 1;
+                extract_pos(cte);
+                if(cte->warmup){
+                    check_warm_up(cte);
+                    warm_up(cte);
+                }
+            } else {
+                cte->nmea.checksum_passed = 0;
+                t_print("RMC and GGA received, checksum failed!\n");
+            }
+
+            /* If the client is finished with warming up */
+        
+            /* 
+            * NOTE! This means that no data will be analyzed
+            * before all the sensors are ready
+            */
+            if(!cte->warmup){
+                sem_wait(&(s_synch->ready_mutex));
+
+                if(nmea_ready()){
+                    analyze();
+                }else{
+                    t_print("Not ready!\n");
+                }
+                sem_post(&(s_synch->ready_mutex));
+            }
+        }
         if(cte->cm.code == CODE_DISCONNECT) {
             t_print("Client %d requested DISCONNECT.\n", cte->client_id);
             s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
@@ -449,6 +497,7 @@ static int respond(struct client_table_entry *cte)
                 return 0;
             }
             print_location(&(cte->transmission), id);
+            return 0;
         }
 
         if(cte->cm.code == CODE_WARMUP) {
@@ -459,6 +508,7 @@ static int respond(struct client_table_entry *cte)
                 return 0;
             }
             warmup(&(cte->transmission), id);
+            return 0;
         }        
 
         if(cte->client_id == 0) {
@@ -468,10 +518,12 @@ static int respond(struct client_table_entry *cte)
 
         if(cte->cm.code == CODE_PRINTCLIENTS) {
             print_clients(cte);
+            return 0;
         }
 
         if(cte->cm.code == CODE_PRINTSERVER) {
             print_server_data(cte, s_data);
+            return 0;
         }
 
         if(cte->cm.code == CODE_PRINTTIME) {
@@ -480,7 +532,8 @@ static int respond(struct client_table_entry *cte)
                 s_write(&(cte->transmission), ERROR_NO_ID, sizeof(ERROR_NO_ID));
             }else{
                 print_client_time(&(cte->transmission), id);
-            }    
+            }
+            return 0;    
         }
 
         if(cte->cm.code == CODE_KICK) {
@@ -490,47 +543,7 @@ static int respond(struct client_table_entry *cte)
             }else{
                 kick_client(&(cte->transmission),id);
             }
-        }
-
-        if(cte->cm.code == CODE_NMEA) {
-            /* Fetching data from buffer */
-            char *rmc_start = strstr(cte->transmission.iobuffer, RMC);
-            char *gga_start = strstr(cte->transmission.iobuffer, GGA);
-            memcpy(cte->nmea.raw_rmc, rmc_start, gga_start - rmc_start);
-            memcpy(cte->nmea.raw_gga, gga_start, ( strlen(cte->transmission.iobuffer) - (rmc_start - cte->transmission.iobuffer) - (gga_start - rmc_start)));
-            
-            /* Checking NMEA checksum */
-            int rmc_checksum = calc_nmea_checksum(cte->nmea.raw_rmc);
-            int gga_checksum = calc_nmea_checksum(cte->nmea.raw_gga);
-            if(rmc_checksum == 0 && gga_checksum == 0) {
-                cte->timestamp = time(NULL);
-                cte->checksum_passed = 1;
-                extract_pos(cte);
-                if(cte->warmup){
-                    check_warm_up(cte);
-                    warm_up(cte);
-                }
-            } else {
-                cte->checksum_passed = 0;
-                t_print("RMC and GGA received, checksum failed!\n");
-            }
-
-            /* If the client is finished with warming up */
-        
-            /* 
-            * NOTE! This means that no data will be analyzed
-            * before all the sensors are ready
-            */
-            if(!cte->warmup){
-                sem_wait(&(s_synch->ready_mutex));
-
-                if(nmea_ready()){
-                    analyze();
-                }else{
-                    t_print("Not ready!\n");
-                }
-                sem_post(&(s_synch->ready_mutex));
-            }
+            return 0;
         }
     }
     return 0;
@@ -575,6 +588,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->transmission.session_fd = session_fd;
     new_client->moved = 0;
     new_client->marked_for_kick = 0;
+    new_client->dumploc = 0;
 
     /* Marked for warm up */
     new_client->warmup = 1;

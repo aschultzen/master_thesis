@@ -42,10 +42,10 @@ struct client_table_entry{
 	time_t warmup_started;				
 	int client_id;							
 	int client_type;							
-	int checksum_passed;
 	int warmup;
 	int moved;
 	int marked_for_kick;
+	int dumploc;
  	char ip[INET_ADDRSTRLEN];
 } __attribute__ ((packed));
 
