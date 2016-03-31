@@ -3,19 +3,24 @@
 /* 
 * Used by spawned client processes to "mark" that their NMEA
 * data is ready for processing. Works as a barrier in a way.
+* BUG!! IF THE SAME CLIENT CALLS nmea_ready() TWICE IN A SYSTEM WITH TWO CLIENTS, IT WILL READY THE OTHER CLIENTS!!
 */
 static int nmea_ready()
 {
-    s_synch->ready_counter++;
-    if(s_synch->ready_counter == s_data->number_of_sensors)
-    {
-        /* Zeroing out the counter, we are ready */
-        t_print("%d of %d sensors ready!\n", s_synch->ready_counter, s_data->number_of_sensors);
-        s_synch->ready_counter = 0;
+    struct client_table_entry* client_list_iterate;
+    struct client_table_entry* temp;
+    int ready = 0;
+
+    list_for_each_entry_safe(client_list_iterate, temp, &client_list->list, list) {
+        if(client_list_iterate->ready == 1) {
+             ready++;
+             t_print("Ready counter: %d\n", ready);
+        }
+    }
+    if(ready == s_data->number_of_sensors){
         return 1;
     }
-    else 
-    {
+    else{
         return 0;
     }
 }
@@ -253,6 +258,7 @@ static void warmup(struct client_table_entry* target, struct transmission_s *tsm
 {
     target->warmup = 1;
     target->warmup_started = time(NULL);
+    target->ready = 0;
     t_print("Sensor %d warmup restarted!\n", target->client_id);
     s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
 }
@@ -449,29 +455,25 @@ static int respond(struct client_table_entry *cte)
                 if(cte->warmup){
                     check_warm_up(cte);
                     warm_up(cte);
+                }else{
+                    cte->ready = 1;
+                    sem_wait(&(s_synch->ready_mutex));
+                    /* If all is ready, analyze */
+                    if(nmea_ready()){
+                        analyze();
+                    }else{
+                        sem_post(&(s_synch->ready_mutex));
+                        return 0;
+                    }
+                    sem_post(&(s_synch->ready_mutex));
                 }
             } else {
                 cte->nmea.checksum_passed = 0;
                 t_print("RMC and GGA received, checksum failed!\n");
             }
-
-            /* If the client is finished with warming up */
-        
-            /* 
-            * NOTE! This means that no data will be analyzed
-            * before all the sensors are ready
-            */
-            if(!cte->warmup){
-                sem_wait(&(s_synch->ready_mutex));
-
-                if(nmea_ready()){
-                    analyze();
-                }else{
-                    //t_print("Not ready!\n");
-                }
-                sem_post(&(s_synch->ready_mutex));
-            }
+            return 0;
         }
+
         if(cte->cm.code == CODE_DISCONNECT) {
             t_print("Client %d requested DISCONNECT.\n", cte->client_id);
             s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
@@ -660,6 +662,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->was_moved = 0;
     new_client->marked_for_kick = 0;
     new_client->dumploc = 0;
+    new_client->ready = 0;
 
     /* Marked for warm up */
     new_client->warmup = 1;
