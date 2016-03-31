@@ -1,20 +1,19 @@
 #include "analyzer.h"
 
-static void check_result()
+static void check_moved_result()
 {
 	struct client_table_entry* client_list_iterate;
     struct client_table_entry* safe;
-    static int was_moved = 0;
 
 	list_for_each_entry_safe(client_list_iterate, safe,&client_list->list, list) {
 		if(client_list_iterate->client_id > 0){
 			if(client_list_iterate->moved == 1){
-				was_moved = 1;
+				client_list_iterate->was_moved = 1;
 				client_list_iterate->moved = 0;
 				t_print(ALARM_MOVED, client_list_iterate->client_id);
 			}else{
-				if(was_moved){
-					was_moved = 0;
+				if(client_list_iterate->was_moved){
+					client_list_iterate->was_moved = 0;
 					t_print(ALARM_RETURNED, client_list_iterate->client_id);
 				}
 			}
@@ -64,10 +63,11 @@ static void check_moved()
 	    	client_list_iterate->nmea.alt_disturbed = SAFE;
 	    }	
     }
+
+    check_moved_result();
 }
 
 /* Analyzes data from all the clients */
 void analyze(){
 	check_moved();
-	check_result();
 }

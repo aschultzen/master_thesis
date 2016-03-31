@@ -10,6 +10,7 @@ static int nmea_ready()
     if(s_synch->ready_counter == s_data->number_of_sensors)
     {
         /* Zeroing out the counter, we are ready */
+        t_print("%d of %d sensors ready!\n", s_synch->ready_counter, s_data->number_of_sensors);
         s_synch->ready_counter = 0;
         return 1;
     }
@@ -466,7 +467,7 @@ static int respond(struct client_table_entry *cte)
                 if(nmea_ready()){
                     analyze();
                 }else{
-                    t_print("Not ready!\n");
+                    //t_print("Not ready!\n");
                 }
                 sem_post(&(s_synch->ready_mutex));
             }
@@ -520,13 +521,13 @@ static int respond(struct client_table_entry *cte)
         }
 
         if(cte->cm.code == CODE_PRINT_LOCATION) {
-            int id = 0;
+            int target_id = 0;
 
-            if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
+            if(sscanf(cte->cm.parameter, "%d", &target_id) == -1) {
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
                 return 0;
             }
-            print_location(&(cte->transmission), id);
+            print_location(&(cte->transmission), target_id);
             return 0;
         }
 
@@ -565,21 +566,21 @@ static int respond(struct client_table_entry *cte)
         }
 
         if(cte->cm.code == CODE_PRINTTIME) {
-            int id = atoi(cte->cm.parameter);
-            if(!id){
+            int target_id = atoi(cte->cm.parameter);
+            if(!target_id){
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             }else{
-                print_client_time(&(cte->transmission), id);
+                print_client_time(&(cte->transmission), target_id);
             }
             return 0;    
         }
 
         if(cte->cm.code == CODE_KICK) {
-            int id = atoi(cte->cm.parameter);
-            if(!id){
+            int target_id = atoi(cte->cm.parameter);
+            if(!target_id){
                 s_write(&(cte->transmission), ERROR_ILLEGAL_KICK, sizeof(ERROR_ILLEGAL_KICK));
             }else{
-                kick_client(&(cte->transmission),id);
+                kick_client(&(cte->transmission),target_id);
             }
             return 0;
         }
@@ -656,6 +657,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->client_id = 0;
     new_client->transmission.session_fd = session_fd;
     new_client->moved = 0;
+    new_client->was_moved = 0;
     new_client->marked_for_kick = 0;
     new_client->dumploc = 0;
 

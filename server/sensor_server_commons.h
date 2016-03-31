@@ -44,6 +44,7 @@ struct client_table_entry{
 	int client_type;							
 	int warmup;
 	int moved;
+	int was_moved;
 	int marked_for_kick;
 	int dumploc;
  	char ip[INET_ADDRSTRLEN];

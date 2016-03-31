@@ -32,8 +32,10 @@
   				"---------------------------------------------------------------------------\n"\
   				"  PRINTSERVER	NONE	   Prints server state and config\n"\
   				"---------------------------------------------------------------------------\n"\
-  				"  GETTIME	INTEGER	   Prints time solved from <CLIENT ID>\n"\
+  				"  PRINTTIME	INTEGER	   Prints time solved from <CLIENT ID>\n"\
   				"---------------------------------------------------------------------------\n"\
+          "  DUMPDATA    INTEGER    Dumps all location related data to file\n"\
+          "---------------------------------------------------------------------------\n"\
 
 /* SIZES */
 #define DUMPDATA_TIME_SIZE 13
