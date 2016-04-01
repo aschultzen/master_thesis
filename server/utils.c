@@ -136,7 +136,7 @@ int load_config(struct config *cfg, char *path)
     return 0;
 }
 
-int calc_nmea_checksum(char *s) {
+int calculate_nmea_checksum(char *s) {
     char checksum = 0;
     int i;
     int received_checksum = 0;

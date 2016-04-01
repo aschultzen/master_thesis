@@ -9,7 +9,7 @@
 #define CLIENT_TABLE_LABEL "CLIENT TABLE\n"
 #define SERVER_TABLE_LABEL "SERVER DATA\n"
 #define NEW_LINE "\n"
-#define PRINT_LOCATION_HEADER "      CURRENT        MIN          MAX\n"
+#define PRINT_LOCATION_HEADER "      CURRENT        MIN          MAX          AVG\n"
 #define DATADUMP_EXTENSION ".dump"
 
 /* ERRORS */

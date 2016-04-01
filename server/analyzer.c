@@ -70,4 +70,5 @@ static void check_moved()
 /* Analyzes data from all the clients */
 void analyze(){
 	check_moved();
+	//check_telemetry();
 }
