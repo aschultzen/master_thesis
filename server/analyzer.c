@@ -61,7 +61,19 @@ static void check_moved()
 	    }
 	    else{
 	    	client_list_iterate->nmea.alt_disturbed = SAFE;
-	    }	
+	    }
+
+	    if(client_list_iterate->nmea.speed_current > client_list_iterate->nmea.speed_high){
+	        client_list_iterate->moved = 1;
+	        client_list_iterate->nmea.speed_disturbed = HIGH;
+	    }
+	    else if(client_list_iterate->nmea.speed_current < client_list_iterate->nmea.speed_low){
+	        client_list_iterate->moved = 1;
+	        client_list_iterate->nmea.speed_disturbed = LOW;
+	    }
+	    else{
+	    	client_list_iterate->nmea.speed_disturbed = SAFE;
+	    }		
     }
 
     check_moved_result();

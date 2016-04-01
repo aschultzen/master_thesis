@@ -41,6 +41,10 @@ static void extract_nmea_data(struct client_table_entry *cte)
     /* Extracting altitude */
     word_extractor(ALTITUDE_START,ALTITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_gga, strlen(cte->nmea.raw_gga));
     cte->nmea.alt_current = atof(buffer);
+
+    /* Extracting speed */
+    word_extractor(SPEED_START,SPEED_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
+    cte->nmea.speed_current = atof(buffer);
 }
 
 static void calculate_nmea_average(struct client_table_entry *cte)
@@ -52,10 +56,12 @@ static void calculate_nmea_average(struct client_table_entry *cte)
     cte->nmea.lat_total = cte->nmea.lat_total + cte->nmea.lat_current;
     cte->nmea.lon_total = cte->nmea.lon_total + cte->nmea.lon_current;
     cte->nmea.alt_total = cte->nmea.alt_total + cte->nmea.alt_current;
+    cte->nmea.speed_total = cte->nmea.speed_total + cte->nmea.speed_current;
 
     cte->nmea.lat_average = ( cte->nmea.lat_total / cte->nmea.n_samples );
     cte->nmea.lon_average = ( cte->nmea.lon_total / cte->nmea.n_samples );
     cte->nmea.alt_average = ( cte->nmea.alt_total / cte->nmea.n_samples );
+    cte->nmea.speed_average = ( cte->nmea.speed_total / cte->nmea.n_samples );
 }
 
 /* Check if a client is still warming up */
@@ -108,6 +114,15 @@ static void warm_up(struct client_table_entry *cte)
 
     if(cte->nmea.alt_current < cte->nmea.alt_low){
         cte->nmea.alt_low = cte->nmea.alt_current;
+    }
+
+    /* Updating speed */
+    if(cte->nmea.speed_current > cte->nmea.speed_high){
+        cte->nmea.speed_high = cte->nmea.speed_current;
+    }
+
+    if(cte->nmea.speed_current < cte->nmea.speed_low){
+        cte->nmea.speed_low = cte->nmea.speed_current;
     }
 }
 
@@ -219,6 +234,7 @@ static void print_location(struct transmission_s *tsm, int client_id)
     char *lat_modifier;
     char *lon_modifier;
     char *alt_modifier;
+    char *speed_modifier;
 
     char *high_modifier = BOLD_BLK_RED;
     char *low_modifier = BOLD_WHT_CYN;
@@ -256,10 +272,19 @@ static void print_location(struct transmission_s *tsm, int client_id)
             alt_modifier = BOLD_CYN_BLK;
         }
 
-        snprintf_status = snprintf( buffer, 1000, "LAT: %s%f%s  %s%f%s  %s%f%s %f\nLON: %s%f%s  %s%f%s  %s%f%s %f\nALT: %s %f%s  %s %f%s  %s %f%s %f\n",
+         if(!nc.speed_disturbed){
+            speed_modifier = BOLD_GRN_BLK;
+        }else if(nc.speed_disturbed > 0){
+            speed_modifier = BOLD_RED_BLK;
+        }else{
+            speed_modifier = BOLD_CYN_BLK;
+        }
+
+        snprintf_status = snprintf( buffer, 1000, "LAT: %s%f%s  %s%f%s  %s%f%s %f\nLON: %s%f%s  %s%f%s  %s%f%s %f\nALT: %s %f%s  %s %f%s  %s %f%s  %f\nSPD: %s   %f%s  %s   %f%s  %s   %f%s    %f\n",
                                     lat_modifier,nc.lat_current,reset, low_modifier,nc.lat_low,reset, high_modifier,nc.lat_high,reset,nc.lat_average,
                                     lon_modifier, nc.lon_current,reset, low_modifier,nc.lon_low,reset, high_modifier,nc.lon_high,reset,nc.lon_average, 
-                                    alt_modifier, nc.alt_current,reset, low_modifier,nc.alt_low,reset, high_modifier,nc.alt_high,reset,nc.alt_average);
+                                    alt_modifier, nc.alt_current,reset, low_modifier,nc.alt_low,reset, high_modifier,nc.alt_high,reset,nc.alt_average,
+                                    speed_modifier, nc.speed_current,reset, low_modifier,nc.speed_low,reset, high_modifier,nc.speed_high,reset,nc.speed_average);
     s_write(tsm, buffer, snprintf_status);
     }else{
         s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));

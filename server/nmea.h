@@ -12,6 +12,7 @@
 #define LATITUDE_START 3
 #define LONGITUDE_START 5
 #define RMC_TIME_START 1
+#define SPEED_START 7
 
 #define SAFE 0
 #define HIGH 1
