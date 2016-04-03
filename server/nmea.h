@@ -28,6 +28,7 @@ struct nmea_container{
 	double lat_high;
 	double lat_current;
 	double lat_average;
+	double lat_avg_diff;
 	double lat_total;
 	int lat_disturbed;
 
@@ -36,6 +37,7 @@ struct nmea_container{
 	double lon_high;
 	double lon_current;
 	double lon_average;
+	double lon_avg_diff;
 	double lon_total;
 	int lon_disturbed;
 
@@ -44,6 +46,7 @@ struct nmea_container{
 	double alt_high;
 	double alt_current;
 	double alt_average;
+	double alt_avg_diff;
 	double alt_total;
 	int alt_disturbed;
 
@@ -52,6 +55,7 @@ struct nmea_container{
 	double speed_high;
 	double speed_current;
 	double speed_average;
+	double speed_avg_diff;
 	double speed_total;
 	int speed_disturbed;
 

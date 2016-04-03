@@ -47,6 +47,7 @@ static void extract_nmea_data(struct client_table_entry *cte)
     cte->nmea.speed_current = atof(buffer);
 }
 
+/* Calculate the average NMEA values */
 static void calculate_nmea_average(struct client_table_entry *cte)
 {
     /* Updating number of samples */
@@ -62,6 +63,18 @@ static void calculate_nmea_average(struct client_table_entry *cte)
     cte->nmea.lon_average = ( cte->nmea.lon_total / cte->nmea.n_samples );
     cte->nmea.alt_average = ( cte->nmea.alt_total / cte->nmea.n_samples );
     cte->nmea.speed_average = ( cte->nmea.speed_total / cte->nmea.n_samples );
+}
+
+/* 
+* Calculate the diff between current 
+* NMEA values and the average values.
+*/
+static void calculate_nmea_diff(struct client_table_entry *cte)
+{
+    cte->nmea.lat_avg_diff = (cte->nmea.lat_current - cte->nmea.lat_average);
+    cte->nmea.lon_avg_diff = (cte->nmea.lon_current - cte->nmea.lon_average);
+    cte->nmea.alt_avg_diff = (cte->nmea.alt_current - cte->nmea.alt_average);
+    cte->nmea.speed_avg_diff = (cte->nmea.speed_current - cte->nmea.speed_average);
 }
 
 /* Check if a client is still warming up */
@@ -243,8 +256,9 @@ static void print_location(struct transmission_s *tsm, int client_id)
 
     struct nmea_container nc;
     struct client_table_entry* candidate = get_client_by_id(client_id);
-    if(candidate != NULL){
+    if(candidate != NULL && client_id > 0){
         nc = candidate->nmea;
+        s_write(tsm, NEW_LINE, sizeof(NEW_LINE));
         s_write(tsm, PRINT_LOCATION_HEADER, sizeof(PRINT_LOCATION_HEADER));
 
         /*Determining colors*/
@@ -291,13 +305,37 @@ static void print_location(struct transmission_s *tsm, int client_id)
     }    
 }
 
+static void print_avg_diff(struct client_table_entry *cte)
+{
+    char buffer [1000];
+    int snprintf_status = 0;
+    struct nmea_container nc;
+
+    if(s_data->number_of_sensors > 0){
+        s_write(&(cte->transmission), NEW_LINE, sizeof(NEW_LINE));
+        s_write(&(cte->transmission), PRINT_AVG_DIFF_HEADER, sizeof(PRINT_AVG_DIFF_HEADER));
+        struct client_table_entry* client_list_iterate;
+        list_for_each_entry(client_list_iterate,&client_list->list, list) {
+            if(client_list_iterate->client_id > 0){
+                nc = client_list_iterate->nmea;
+                snprintf_status = snprintf( buffer, 1000, "%d   %f  %f  %f  %f\n", 
+                client_list_iterate->client_id, nc.lat_avg_diff, nc.lon_avg_diff, nc.alt_avg_diff, nc.speed_avg_diff);
+                s_write(&(cte->transmission), buffer, snprintf_status);
+            }
+        }
+    }else{
+        s_write(&(cte->transmission), ERROR_NO_SENSORS_CONNECTED, sizeof(ERROR_NO_SENSORS_CONNECTED));
+    }
+}
+
+
 /* Restart WARMUP procedure */
 static void restart_warmup(struct client_table_entry* target, struct transmission_s *tsm)
 {
     target->warmup = 1;
     target->warmup_started = time(NULL);
     target->ready = 0;
-    t_print("Sensor %d warmup restarted!\n", target->client_id);
+    t_print("Sensor %d warmup restarted\n", target->client_id);
     s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
 }
 
@@ -328,6 +366,7 @@ static void dumpdata(struct client_table_entry* target, struct transmission_s *t
     fp=fopen(filename, "wb");
     fwrite(&target->nmea, sizeof(struct nmea_container), 1, fp);
     fclose(fp);
+    s_write(&(target->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
 }
 
 /*
@@ -372,10 +411,26 @@ int parse_input(struct client_table_entry *cte)
         return 1;
     }
 
-    /* DUMPLOC */
+    /* IDENTIFY SHORT */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_IDENTIFY_SHORT ) == (cte->transmission.iobuffer)) {
+        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_IDENTIFY_SHORT) );
+        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_IDENTIFY_SHORT)*(sizeof(char))), length);
+        cte->cm.code = CODE_IDENTIFY;
+        return 1;
+    }
+
+    /* DUMPDATA */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DUMPDATA ) == (cte->transmission.iobuffer)) {
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_DUMPDATA) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_DUMPDATA)*(sizeof(char))), length);
+        cte->cm.code = CODE_DUMPDATA;
+        return 1;
+    }
+
+    /* DUMPDATA_SHORT */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DUMPDATA_SHORT ) == (cte->transmission.iobuffer)) {
+        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_DUMPDATA_SHORT) );
+        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_DUMPDATA_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_DUMPDATA;
         return 1;
     }
@@ -384,6 +439,14 @@ int parse_input(struct client_table_entry *cte)
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINT_LOCATION ) == (cte->transmission.iobuffer)) {
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINT_LOCATION) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_PRINT_LOCATION)*(sizeof(char))), length);
+        cte->cm.code = CODE_PRINT_LOCATION;
+        return 1;
+    } 
+
+    /* PRINT_LOCATION_SHORT */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINT_LOCATION_SHORT ) == (cte->transmission.iobuffer)) {
+        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINT_LOCATION_SHORT) );
+        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_PRINT_LOCATION_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINT_LOCATION;
         return 1;
     } 
@@ -405,13 +468,15 @@ int parse_input(struct client_table_entry *cte)
     } 
 
     /* PRINTCLIENTS */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTCLIENTS ) == (cte->transmission.iobuffer)) {
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTCLIENTS ) == (cte->transmission.iobuffer) || 
+        strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTCLIENTS_SHORT ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_PRINTCLIENTS;
         return 1;
     }
 
     /* PRINTSERVER */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTSERVER ) == (cte->transmission.iobuffer)) {
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTSERVER ) == (cte->transmission.iobuffer) || 
+        strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTSERVER_SHORT ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_PRINTSERVER;
         return 1;
     }
@@ -431,7 +496,8 @@ int parse_input(struct client_table_entry *cte)
     }
 
     /* DISCONNECT */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DISCONNECT ) == (cte->transmission.iobuffer)) {
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DISCONNECT ) == (cte->transmission.iobuffer) || 
+        strstr((char*)cte->transmission.iobuffer, PROTOCOL_DISCONNECT_SHORT ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_DISCONNECT;
         return 1;
     } 
@@ -439,6 +505,13 @@ int parse_input(struct client_table_entry *cte)
     /* HELP */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_HELP ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_HELP;
+        return 1;
+    } 
+
+    /* PRINTAVGDIFF */
+    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTAVGDIFF ) == (cte->transmission.iobuffer) || 
+        strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTAVGDIFF_SHORT ) == (cte->transmission.iobuffer)) {
+        cte->cm.code = CODE_PRINTAVGDIFF;
         return 1;
     } 
 
@@ -541,6 +614,7 @@ static int respond(struct client_table_entry *cte)
                 cte->nmea.checksum_passed = 1;
                 extract_nmea_data(cte);
                 calculate_nmea_average(cte);
+                calculate_nmea_diff(cte);
                 if(cte->warmup){
                     check_warm_up(cte);
                     warm_up(cte);
@@ -657,6 +731,11 @@ static int respond(struct client_table_entry *cte)
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
                 }
             }
+        }
+
+        if(cte->cm.code == CODE_PRINTAVGDIFF) {
+            print_avg_diff(cte);
+            return 0;
         }
     }
     return 0;

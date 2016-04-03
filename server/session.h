@@ -10,12 +10,14 @@
 #define SERVER_TABLE_LABEL "SERVER DATA\n"
 #define NEW_LINE "\n"
 #define PRINT_LOCATION_HEADER "      CURRENT        MIN          MAX          AVG\n"
+#define PRINT_AVG_DIFF_HEADER "ID     LAT        LON       ALT       SPEED\n"
 #define DATADUMP_EXTENSION ".dump"
 
 /* ERRORS */
 #define ERROR_NO_CLIENT "ERROR: NO SUCH CLIENT\n"
 #define ERROR_APPEND_TOO_LONG "ERROR: TEXT TO APPEND TOO LONG\n"
 #define ERROR_ILLEGAL_KICK "ILLEGAL KICK REQUEST\n"
+#define ERROR_NO_SENSORS_CONNECTED "NO SENSORS CONNECTED\n"
 
 /* HELP */
 #define HELP	"\n"\
@@ -35,6 +37,8 @@
   				"  PRINTTIME	INTEGER	   Prints time solved from <CLIENT ID>\n"\
   				"---------------------------------------------------------------------------\n"\
           "  DUMPDATA    INTEGER    Dumps all location related data to file\n"\
+          "---------------------------------------------------------------------------\n"\
+          "  PRINTAVGDIFF  NONE    Prints all average diffs for all clients\n"\
           "---------------------------------------------------------------------------\n"\
 
 /* SIZES */
