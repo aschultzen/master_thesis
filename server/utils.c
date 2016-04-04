@@ -194,11 +194,19 @@ int word_extractor(int delim_num_1, int delim_num_2, char delimiter, char *buffe
     int delim_counter = 0;
     int buffer_index = 0;
 
+    /* 
+    * Some ending i dont understand yet.
+    * Its probably some garbage from the terminal,
+    * when analyzing it as hex it turned out
+    * to end with 1310
+    */
+    int MYSTERY_ENDING = 13;
+
     bzero(buffer, buffsize);
 
     for(i = 0; i < str_len; i++){
         /* Second delim (end) reached, stopping. */
-        if(delim_counter == delim_num_2){
+        if(delim_counter == delim_num_2 || (int)string[i] == MYSTERY_ENDING) {
             return 0;
         }
 

@@ -215,32 +215,38 @@ void restart_warmup(struct client_table_entry* target, struct transmission_s *ts
 }
 
 /* Dumps data location data for client X into a file */
-void dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char *filename_append)
+void dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char *filename)
 {
-    int filename_size = sizeof(DATADUMP_EXTENSION) + DUMPDATA_TIME_SIZE + strlen(filename_append) + ID_AS_STRING_MAX + 2;
-    char filename[filename_size];
-    bzero(filename, filename_size);
+	FILE *fp;
 
-    char time_buffer[100];
-    time_t rawtime;
-    struct tm *info;
-    time(&rawtime);
-    info = gmtime(&rawtime);
-    strftime(time_buffer,80,"%d%m%y-%H%M%S", info);
+	/* No name specified, generates one */
+	if(strlen(filename) == 0){
+		int autoname_size = sizeof(DATADUMP_EXTENSION) + DUMPDATA_TIME_SIZE + ID_AS_STRING_MAX + 2;
+		char autoname[autoname_size];
+	    bzero(autoname, autoname_size);
 
-    char id_as_string[ID_AS_STRING_MAX];
-    sprintf(id_as_string, "%d", target->client_id);
+	    char time_buffer[100];
+	    time_t rawtime;
+	    struct tm *info;
+	    time(&rawtime);
+	    info = gmtime(&rawtime);
+	    strftime(time_buffer,80,"%d%m%y-%H%M%S", info);
 
-    strcat(filename, id_as_string);
-    strcat(filename, "_");
-    strcat(filename, time_buffer);
-    strcat(filename, DATADUMP_EXTENSION);
+	    char id_as_string[ID_AS_STRING_MAX];
+	    sprintf(id_as_string, "%d", target->client_id);
 
-    t_print("Filename: %s\n", filename);
-
-    FILE *fp;
-    fp=fopen(filename, "wb");
+	    strcat(autoname, id_as_string);
+	    strcat(autoname, "_");
+	    strcat(autoname, time_buffer);
+	    strcat(autoname, DATADUMP_EXTENSION);
+		fp=fopen(autoname, "wb");
+	}
+	else{
+		fp=fopen(filename, "wb");
+	}
+    
     fwrite(&target->nmea, sizeof(struct nmea_container), 1, fp);
     fclose(fp);
     s_write(&(target->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
+    t_print("Create data dump filename: %s\n", filename);
 }

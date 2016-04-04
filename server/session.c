@@ -469,16 +469,33 @@ static int respond(struct client_table_entry *cte)
         }
 
         if(cte->cm.code == CODE_DUMPDATA) {
-            int append_buffer_size = MAX_APPEND_LENGTH;
-            char append_text[append_buffer_size];
+            int filename_buffer_size = MAX_FILENAME_SIZE;
+            char filename[filename_buffer_size];
             int target_id;
             char id_buffer[ID_AS_STRING_MAX];
             bzero(id_buffer, ID_AS_STRING_MAX);
-            bzero(append_text, append_buffer_size);
+            bzero(filename, filename_buffer_size);
 
-            word_extractor(2,3, ' ', append_text, append_buffer_size,cte->cm.parameter, MAX_APPEND_LENGTH);
+            word_extractor(2,3, ' ', filename, filename_buffer_size,cte->cm.parameter, MAX_FILENAME_SIZE);
+            t_print("Param buffer: %s\n", cte->cm.parameter);
 
-            if(strlen(append_text) == 0){
+            int limit = strlen(cte->cm.parameter);
+            int i;
+
+            for(i = 0; i < limit; i++){
+                printf("%02x", cte->cm.parameter[i]);
+            }
+
+            printf("\n");
+            
+            for(i = 0; i < limit; i++){
+                printf("%02x", filename[i]);
+            }
+            printf("\n");
+
+            t_print("Filename size: %d\n", strlen(filename));
+
+            if(strlen(filename) == 0){
                 target_id = atoi(cte->cm.parameter);
             }
             else{
@@ -491,7 +508,7 @@ static int respond(struct client_table_entry *cte)
             }else{
                 struct client_table_entry* candidate = get_client_by_id(target_id);
                 if(candidate != NULL){
-                    dumpdata(candidate, &(cte->transmission), append_text);
+                    dumpdata(candidate, &(cte->transmission), filename);
                 }
                 else{
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
@@ -557,8 +574,8 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
 
     init_nmea(new_client);
 
-    memset(&new_client->transmission.iobuffer, 0, IO_BUFFER_SIZE*sizeof(char));
-    memset(&new_client->cm.parameter, 0, MAX_PARAMETER_SIZE*sizeof(char));
+    memset(&new_client->transmission.iobuffer, '0', IO_BUFFER_SIZE*sizeof(char));
+    memset(&new_client->cm.parameter, '0', MAX_PARAMETER_SIZE*sizeof(char));
 
     /* Setting socket timeout to default value */
     /* This doesn't always work for some reason, race condition? :/ */
