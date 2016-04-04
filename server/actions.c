@@ -15,6 +15,7 @@ void kick_client(struct transmission_s *tsm, int client_id)
     }
 }
 
+/* Prints client X's solved time back to monitor */
 void print_client_time(struct transmission_s *tsm, int client_id)
 {
     int buffsize = 100;
@@ -31,7 +32,7 @@ void print_client_time(struct transmission_s *tsm, int client_id)
     }
 }
 
-/* Sends a formatted string containing info about connected clients */
+/* Prints a formatted string containing info about connected clients to monitor */
 void print_clients(struct client_table_entry *cte)
 {
     char buffer [1000];
@@ -69,7 +70,7 @@ void print_clients(struct client_table_entry *cte)
     s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
 }
 
-/* Sends a formatted string containing server info */
+/* Prints a formatted string containing server info to monitor */
 void print_server_data(struct client_table_entry *cte, struct server_data *s_data)
 {
     char buffer [1000];
@@ -94,12 +95,21 @@ void print_server_data(struct client_table_entry *cte, struct server_data *s_dat
     s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
 }
 
+/* 
+* Prints a string containing simple description
+* of the different implemented commands back
+* to the monitor.
+*/
 void print_help(struct transmission_s *tsm)
 {
     s_write(tsm, HELP, sizeof(HELP));
     s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
 }
 
+/* 
+* Prints MAX, MIN, CURRENT and AVERAGE position
+* for client X back to the monitor
+*/
 void print_location(struct transmission_s *tsm, int client_id)
 {
     char buffer [1000];
@@ -166,6 +176,10 @@ void print_location(struct transmission_s *tsm, int client_id)
     }    
 }
 
+/* 
+* Prints the difference between the calculated
+* average values for location and the current value
+*/
 void print_avg_diff(struct client_table_entry *cte)
 {
     char buffer [1000];
@@ -200,6 +214,7 @@ void restart_warmup(struct client_table_entry* target, struct transmission_s *ts
     s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
 }
 
+/* Dumps data location data for client X into a file */
 void dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char *filename_append)
 {
     int filename_size = sizeof(DATADUMP_EXTENSION) + DUMPDATA_TIME_SIZE + strlen(filename_append) + ID_AS_STRING_MAX + 2;

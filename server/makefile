@@ -1,4 +1,4 @@
-SERVER_OBJS = sensor_server.o net.o utils.o serial.o session.o analyzer.o
+SERVER_OBJS = sensor_server.o net.o utils.o serial.o session.o analyzer.o actions.o
 CLIENT_OBJS = sensor_client.o net.o utils.o serial.o
 
 CC = gcc
@@ -40,6 +40,9 @@ session.o : session.h session.c sensor_server.h
 
 analyzer.o : analyzer.h analyzer.c sensor_server.h
 	$(CC) $(CFLAGS) analyzer.c
+
+actions.o : actions.h actions.c sensor_server.h
+	$(CC) $(CFLAGS) actions.c 
 
 clean:
 	\rm *.o

@@ -1,8 +1,7 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
-
 #include "sensor_server.h"
-    
+
 void analyze();
 
 #define ALARM_MOVED "[ ALARM ] Client %d was moved!\n"
