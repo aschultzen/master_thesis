@@ -216,9 +216,13 @@ void restart_warmup(struct client_table_entry* target, struct transmission_s *ts
 }
 
 /* Dumps data location data for client X into a file */
-void dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char *filename)
+int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char *filename)
 {
-	FILE *fp;
+	FILE *dumpfile;
+
+    int full_filename_size = strlen(filename) + strlen(DATADUMP_EXTENSION);
+    char full_filename[full_filename_size];
+    bzero(full_filename, full_filename_size);
 
 	/* No name specified, generates one */
 	if(strlen(filename) == 0){
@@ -240,17 +244,25 @@ void dumpdata(struct client_table_entry* target, struct transmission_s *tsm, cha
 	    strcat(autoname, "_");
 	    strcat(autoname, time_buffer);
 	    strcat(autoname, DATADUMP_EXTENSION);
-		fp=fopen(autoname, "wb");
+        *full_filename = *autoname;
+		dumpfile=fopen(autoname, "wb");
+        if(!dumpfile){
+            t_print("dumpdata(): Failed to open file, aborting.\n");
+            return -1;
+        }
 	}
 	else{
-        char full_filename[strlen(filename) + strlen(DATADUMP_EXTENSION)];
         strcat(full_filename, filename);
         strcat(full_filename, DATADUMP_EXTENSION);
-		fp=fopen(filename, "wb");
+		dumpfile=fopen(filename, "wb");
+        if(!dumpfile){
+            t_print("dumpdata(): Failed to open file, aborting.\n");
+            return -1;
+        }
 	}
     
-    fwrite(&target->nmea, sizeof(struct nmea_container), 1, fp);
-    fclose(fp);
-    s_write(&(target->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
-    t_print("Create data dump filename: %s\n", filename);
+    fwrite(&target->nmea, sizeof(struct nmea_container), 1, dumpfile);
+    fclose(dumpfile);
+    return 0;
 }
+

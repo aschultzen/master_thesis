@@ -166,7 +166,7 @@ int parse_input(struct client_table_entry *cte)
     /* NMEA */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_NMEA ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_NMEA;
-        return 1;
+        return 0;
     }  
 
     /* IDENTIFY */
@@ -174,7 +174,7 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_IDENTIFY) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
         cte->cm.code = CODE_IDENTIFY;
-        return 1;
+        return 0;
     }
 
     /* IDENTIFY SHORT */
@@ -182,7 +182,7 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_IDENTIFY_SHORT) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_IDENTIFY_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_IDENTIFY;
-        return 1;
+        return 0;
     }
 
     /* DUMPDATA */
@@ -190,7 +190,7 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_DUMPDATA) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_DUMPDATA)*(sizeof(char))), length);
         cte->cm.code = CODE_DUMPDATA;
-        return 1;
+        return 0;
     }
 
     /* DUMPDATA_SHORT */
@@ -198,7 +198,7 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_DUMPDATA_SHORT) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_DUMPDATA_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_DUMPDATA;
-        return 1;
+        return 0;
     }
 
     /* PRINT_LOCATION */
@@ -206,7 +206,7 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINT_LOCATION) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_PRINT_LOCATION)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINT_LOCATION;
-        return 1;
+        return 0;
     } 
 
     /* PRINT_LOCATION_SHORT */
@@ -214,7 +214,7 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINT_LOCATION_SHORT) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_PRINT_LOCATION_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINT_LOCATION;
-        return 1;
+        return 0;
     } 
 
     /* PRINTTIME */
@@ -222,7 +222,7 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINTTIME) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_PRINTTIME)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINTTIME;
-        return 1;
+        return 0;
     } 
 
     /* WARMUP */
@@ -230,21 +230,21 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_WARMUP) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_WARMUP)*(sizeof(char))), length);
         cte->cm.code = CODE_WARMUP;
-        return 1;
+        return 0;
     } 
 
     /* PRINTCLIENTS */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTCLIENTS ) == (cte->transmission.iobuffer) || 
         strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTCLIENTS_SHORT ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_PRINTCLIENTS;
-        return 1;
+        return 0;
     }
 
     /* PRINTSERVER */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTSERVER ) == (cte->transmission.iobuffer) || 
         strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTSERVER_SHORT ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_PRINTSERVER;
-        return 1;
+        return 0;
     }
 
     /* KICK */
@@ -252,37 +252,37 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_KICK) );
         memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_KICK)*(sizeof(char))), length);
         cte->cm.code = CODE_KICK;
-        return 1;
+        return 0;
     }
   
     /* EXIT */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_EXIT ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_DISCONNECT;
-        return 1;
+        return 0;
     }
 
     /* DISCONNECT */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DISCONNECT ) == (cte->transmission.iobuffer) || 
         strstr((char*)cte->transmission.iobuffer, PROTOCOL_DISCONNECT_SHORT ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_DISCONNECT;
-        return 1;
+        return 0;
     } 
 
     /* HELP */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_HELP ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_HELP;
-        return 1;
+        return 0;
     } 
 
     /* PRINTAVGDIFF */
     if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTAVGDIFF ) == (cte->transmission.iobuffer) || 
         strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTAVGDIFF_SHORT ) == (cte->transmission.iobuffer)) {
         cte->cm.code = CODE_PRINTAVGDIFF;
-        return 1;
+        return 0;
     } 
 
 
-    return 0;
+    return 1;
 }
 
 /* Responds to client action */
@@ -310,12 +310,12 @@ static int respond(struct client_table_entry *cte)
         s_write(&(cte->transmission), ERROR_ILLEGAL_MESSAGE_SIZE,
                 sizeof(ERROR_ILLEGAL_MESSAGE_SIZE));
     }
-    if(parse_status == 0) {
+    if(parse_status == 1) {
         s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND,
                 sizeof(ERROR_ILLEGAL_COMMAND));
     }
     /* PARSING OK, CONTINUING */
-    if(parse_status == 1) {
+    if(parse_status == 0) {
             
         if(cte->cm.code == CODE_DISCONNECT) {
             t_print("Client %d requested DISCONNECT.\n", cte->client_id);
@@ -491,7 +491,11 @@ static int respond(struct client_table_entry *cte)
             }else{
                 struct client_table_entry* candidate = get_client_by_id(target_id);
                 if(candidate != NULL){
-                    dumpdata(candidate, &(cte->transmission), filename);
+                    if(dumpdata(candidate, &(cte->transmission), filename)){
+                        s_write(&(candidate->transmission), ERROR_FILE_OPEN, sizeof(ERROR_FILE_OPEN));
+                    }else{
+                        s_write(&(candidate->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
+                    }
                 }
                 else{
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));

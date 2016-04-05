@@ -54,6 +54,6 @@ void print_help(struct transmission_s *tsm);
 void print_location(struct transmission_s *tsm, int client_id);
 void print_avg_diff(struct client_table_entry *cte);
 void restart_warmup(struct client_table_entry* target, struct transmission_s *tsm);
-void dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char *filename_append);
+int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char *filename_append);
 
 #endif /* !ACTIONS_H */
