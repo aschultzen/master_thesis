@@ -85,7 +85,7 @@ static void check_warm_up(struct client_table_entry *cte)
         double percent = (elapsed / cfg->warm_up_seconds) * 100;
 
         if((int)percent % 10 == 0){
-            t_print("Client %d Warming up, %d%%\n", cte->client_id, (int)percent);
+            t_print("Client %d Warming up, %d\n", cte->client_id, (int)percent);
         }
 
         if(elapsed >= cfg->warm_up_seconds){
@@ -296,7 +296,7 @@ static int respond(struct client_table_entry *cte)
 
     int read_status = s_read(&(cte->transmission)); /* Blocking */
     if(read_status == -1) {
-        t_print("[ CLIENT % ] Read failed or interrupted!\n", cte->client_id);
+        t_print("[ CLIENT %d ] Read failed or interrupted!\n", cte->client_id);
         return -1;
     }
 
@@ -477,23 +477,6 @@ static int respond(struct client_table_entry *cte)
             bzero(filename, filename_buffer_size);
 
             word_extractor(2,3, ' ', filename, filename_buffer_size,cte->cm.parameter, MAX_FILENAME_SIZE);
-            t_print("Param buffer: %s\n", cte->cm.parameter);
-
-            int limit = strlen(cte->cm.parameter);
-            int i;
-
-            for(i = 0; i < limit; i++){
-                printf("%02x", cte->cm.parameter[i]);
-            }
-
-            printf("\n");
-            
-            for(i = 0; i < limit; i++){
-                printf("%02x", filename[i]);
-            }
-            printf("\n");
-
-            t_print("Filename size: %d\n", strlen(filename));
 
             if(strlen(filename) == 0){
                 target_id = atoi(cte->cm.parameter);

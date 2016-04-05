@@ -57,13 +57,13 @@ void print_clients(struct client_table_entry *cte)
         }else{
             modifier = RESET;
         }
-        snprintf_status = snprintf( buffer, 1000, "%sPID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d\n" RESET,
+        snprintf_status = snprintf( buffer, 1000, "%sPID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d%s\n",
                                     modifier,
                                     client_list_iterate->pid,
                                     client_list_iterate->ip,
                                     (int)difftime(time(NULL),client_list_iterate->timestamp),
                                     c_type,
-                                    client_list_iterate->client_id);
+                                    client_list_iterate->client_id, RESET);
        
         s_write(&(cte->transmission), buffer, snprintf_status);
     }
@@ -93,6 +93,7 @@ void print_server_data(struct client_table_entry *cte, struct server_data *s_dat
 
     s_write(&(cte->transmission), buffer, snprintf_status);
     s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
+    s_write(&(cte->transmission), NEW_LINE, sizeof(NEW_LINE));
 }
 
 /* 
