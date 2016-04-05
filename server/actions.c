@@ -243,6 +243,9 @@ void dumpdata(struct client_table_entry* target, struct transmission_s *tsm, cha
 		fp=fopen(autoname, "wb");
 	}
 	else{
+        char full_filename[strlen(filename) + strlen(DATADUMP_EXTENSION)];
+        strcat(full_filename, filename);
+        strcat(full_filename, DATADUMP_EXTENSION);
 		fp=fopen(filename, "wb");
 	}
     
