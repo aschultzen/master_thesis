@@ -492,7 +492,7 @@ static int respond(struct client_table_entry *cte)
                 struct client_table_entry* candidate = get_client_by_id(target_id);
                 if(candidate != NULL){
                     if(dumpdata(candidate, &(cte->transmission), filename)){
-                        s_write(&(candidate->transmission), ERROR_FILE_OPEN, sizeof(ERROR_FILE_OPEN));
+                        s_write(&(candidate->transmission), ERROR_DUMPDATA_FAILED, sizeof(ERROR_DUMPDATA_FAILED));
                     }else{
                         s_write(&(candidate->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
                     }

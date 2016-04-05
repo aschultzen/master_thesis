@@ -222,13 +222,13 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
 
     int full_filename_size = strlen(filename) + strlen(DATADUMP_EXTENSION);
     char full_filename[full_filename_size];
-    bzero(full_filename, full_filename_size);
+    memset(full_filename,'0',full_filename_size);
 
 	/* No name specified, generates one */
 	if(strlen(filename) == 0){
 		int autoname_size = sizeof(DATADUMP_EXTENSION) + DUMPDATA_TIME_SIZE + ID_AS_STRING_MAX + 2;
 		char autoname[autoname_size];
-	    bzero(autoname, autoname_size);
+	    memset(autoname,'0',autoname_size);
 
 	    char time_buffer[100];
 	    time_t rawtime;
@@ -247,7 +247,7 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
         *full_filename = *autoname;
 		dumpfile=fopen(autoname, "wb");
         if(!dumpfile){
-            t_print("dumpdata(): Failed to open file, aborting.\n");
+            t_print("dumpdata(): Failed to open file.\n");
             return -1;
         }
 	}
@@ -256,13 +256,18 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
         strcat(full_filename, DATADUMP_EXTENSION);
 		dumpfile=fopen(filename, "wb");
         if(!dumpfile){
-            t_print("dumpdata(): Failed to open file, aborting.\n");
+            t_print("dumpdata(): Failed to open file.\n");
             return -1;
         }
 	}
     
-    fwrite(&target->nmea, sizeof(struct nmea_container), 1, dumpfile);
-    fclose(dumpfile);
+    if(!fwrite(&target->nmea, sizeof(struct nmea_container), 1, dumpfile)){
+        t_print("dumpdata(): Failed to write file.\n");
+    }
+
+    if(fclose(dumpfile)){
+        t_print("dumpdata(): Failed to close file.\n");
+    }
     return 0;
 }
 
