@@ -164,6 +164,8 @@ int parse_input(struct client_table_entry *cte)
 
     /* ZEROING COMMAND CODE */
     cte->cm.code = 0;
+    /* ZEROING ID_PARAMETER */
+    cte->cm.id_parameter = 0;
 
     /* NMEA */
     if(strstr((char*)incoming, PROTOCOL_NMEA ) == (incoming)) {
@@ -270,6 +272,10 @@ int parse_input(struct client_table_entry *cte)
     else{
         return 0;
     }
+
+    /* Retrieving potential ID */
+    sscanf(cte->cm.parameter, "%d", &cte->cm.id_parameter);
+
     return 1;
 }
 
@@ -305,7 +311,8 @@ static int respond(struct client_table_entry *cte)
     /* PARSING OK, CONTINUING */
     else{
         s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
-            
+
+        /* Comparing CODES to determine the correct action */    
         if(cte->cm.code == CODE_DISCONNECT) {
             t_print("Client %d requested DISCONNECT.\n", cte->client_id);
             s_write(&(cte->transmission), PROTOCOL_GOODBYE, sizeof(PROTOCOL_GOODBYE));
@@ -317,24 +324,22 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_IDENTIFY) {
-            int id = 0;
-
-            if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
+            if(cte->cm.id_parameter == 0){
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
                 return 0;
             }
 
             struct client_table_entry* client_list_iterate;
             list_for_each_entry(client_list_iterate, &client_list->list, list) {
-                if(client_list_iterate->client_id == id) {
+                if(client_list_iterate->client_id == cte->cm.id_parameter) {
                     cte->client_id = 0;
-                    t_print("[%s] bounced! ID %d already in use.\n", cte->ip,id);
+                    t_print("[%s] bounced! ID %d already in use.\n", cte->ip,cte->cm.id_parameter);
                     s_write(&(cte->transmission), "ID in use!\n", 11);
                     return 0;
                 }
             }
 
-            if(id < 0) {
+            if(cte->cm.id_parameter < 0) {
                 cte->client_type = MONITOR;
             } else {
                 cte->client_type = SENSOR;
@@ -342,11 +347,12 @@ static int respond(struct client_table_entry *cte)
                     s_data->number_of_sensors++;
                 sem_post(&(s_synch->client_list_mutex));
             }
-            cte->client_id = id;
+            cte->client_id = cte->cm.id_parameter;
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
             return 1;
         }
 
+        /* Stop here if client is unidentified */
         else if(cte->client_id == 0) {
             s_write(&(cte->transmission), ERROR_NO_ID, sizeof(ERROR_NO_ID));
         }
@@ -386,13 +392,11 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_PRINT_LOCATION) {
-            int target_id = 0;
-
-            if(sscanf(cte->cm.parameter, "%d", &target_id) == -1) {
+            if(cte->cm.id_parameter == 0){
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
             }
             else{
-                struct client_table_entry* candidate = get_client_by_id(target_id);
+                struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
                 if(candidate == NULL){
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
                 }else{
@@ -402,13 +406,11 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_WARMUP) {
-            int target_id = 0;
-
-            if(sscanf(cte->cm.parameter, "%d", &target_id) == -1) {
+            if(cte->cm.id_parameter == 0){
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
             }else{
-                if(target_id > 0){
-                    struct client_table_entry* candidate = get_client_by_id(target_id);
+                if(cte->cm.id_parameter > 0){
+                    struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
                     if(candidate != NULL){
                         restart_warmup(candidate, &(cte->transmission));
                     }else{
@@ -429,11 +431,10 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_PRINTTIME) {
-            int target_id = atoi(cte->cm.parameter);
-            if(!target_id){
+            if(cte->cm.id_parameter == 0){
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             }else{
-                struct client_table_entry* candidate = get_client_by_id(target_id);
+                struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
                 if(candidate != NULL){
                     print_client_time(&(cte->transmission), candidate);
                 }else{
@@ -443,11 +444,10 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_KICK) {
-            int target_id = atoi(cte->cm.parameter);
-            if(!target_id){
+            if(cte->cm.id_parameter == 0){
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             }else{
-                struct client_table_entry* candidate = get_client_by_id(target_id);
+                struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
                 if(candidate == NULL){
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT)); 
                 }
@@ -482,8 +482,6 @@ static int respond(struct client_table_entry *cte)
                 if(candidate != NULL){
                     if(!dumpdata(candidate, &(cte->transmission), filename)){
                         s_write(&(candidate->transmission), ERROR_DUMPDATA_FAILED, sizeof(ERROR_DUMPDATA_FAILED));
-                    }else{
-                        s_write(&(candidate->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
                     }
                 }
                 else{

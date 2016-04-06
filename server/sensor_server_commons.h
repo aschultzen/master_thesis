@@ -15,6 +15,7 @@
 struct command_code{
 	int code;
 	char parameter[MAX_PARAMETER_SIZE];
+	int id_parameter;
 } __attribute__ ((packed));
 
 /*
