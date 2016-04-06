@@ -497,6 +497,8 @@ static int respond(struct client_table_entry *cte)
                 if(candidate != NULL){
                     if(!dumpdata(candidate, &(cte->transmission), filename)){
                         s_write(&(candidate->transmission), ERROR_DUMPDATA_FAILED, sizeof(ERROR_DUMPDATA_FAILED));
+                    }else{
+                        s_write(&(candidate->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
                     }
                 }
                 else{
