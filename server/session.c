@@ -85,7 +85,7 @@ static void check_warm_up(struct client_table_entry *cte)
         double percent = (elapsed / cfg->warm_up_seconds) * 100;
 
         if((int)percent % 10 == 0){
-            t_print("Client %d Warming up, %d\n", cte->client_id, (int)percent);
+            t_print("Client %d Warming up, %d%%\n", cte->client_id, (int)percent);
         }
 
         if(elapsed >= cfg->warm_up_seconds){
@@ -150,13 +150,15 @@ static void warm_up(struct client_table_entry *cte)
 
 int parse_input(struct client_table_entry *cte)
 {
+    char *incoming = cte->transmission.iobuffer;
+
     /* INPUT TO BIG */
-    if(strlen(cte->transmission.iobuffer) > (MAX_PARAMETER_SIZE + MAX_COMMAND_SIZE) + 2) {
+    if(strlen(incoming) > (MAX_PARAMETER_SIZE + MAX_COMMAND_SIZE) + 2) {
         return -1;
     }
 
     /* INPUT TO SMALL */
-    if(strlen(cte->transmission.iobuffer) < (MIN_PARAMETER_SIZE + MIN_COMMAND_SIZE) + 2) {
+    if(strlen(incoming) < (MIN_PARAMETER_SIZE + MIN_COMMAND_SIZE) + 2) {
         return -1;
     }
 
@@ -164,124 +166,110 @@ int parse_input(struct client_table_entry *cte)
     cte->cm.code = 0;
 
     /* NMEA */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_NMEA ) == (cte->transmission.iobuffer)) {
+    if(strstr((char*)incoming, PROTOCOL_NMEA ) == (incoming)) {
         cte->cm.code = CODE_NMEA;
-        return 0;
     }  
 
     /* IDENTIFY */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_IDENTIFY ) == (cte->transmission.iobuffer)) {
-        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_IDENTIFY) );
-        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
+    else if(strstr((char*)incoming, PROTOCOL_IDENTIFY ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_IDENTIFY) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
         cte->cm.code = CODE_IDENTIFY;
-        return 0;
     }
 
     /* IDENTIFY SHORT */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_IDENTIFY_SHORT ) == (cte->transmission.iobuffer)) {
-        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_IDENTIFY_SHORT) );
-        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_IDENTIFY_SHORT)*(sizeof(char))), length);
+    else if(strstr((char*)incoming, PROTOCOL_IDENTIFY_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_IDENTIFY_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_IDENTIFY_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_IDENTIFY;
-        return 0;
     }
 
     /* DUMPDATA */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DUMPDATA ) == (cte->transmission.iobuffer)) {
-        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_DUMPDATA) );
-        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_DUMPDATA)*(sizeof(char))), length);
+    else if(strstr((char*)incoming, PROTOCOL_DUMPDATA ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_DUMPDATA) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_DUMPDATA)*(sizeof(char))), length);
         cte->cm.code = CODE_DUMPDATA;
-        return 0;
     }
 
     /* DUMPDATA_SHORT */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DUMPDATA_SHORT ) == (cte->transmission.iobuffer)) {
-        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_DUMPDATA_SHORT) );
-        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_DUMPDATA_SHORT)*(sizeof(char))), length);
+    else if(strstr((char*)incoming, PROTOCOL_DUMPDATA_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_DUMPDATA_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_DUMPDATA_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_DUMPDATA;
-        return 0;
     }
 
     /* PRINT_LOCATION */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINT_LOCATION ) == (cte->transmission.iobuffer)) {
-        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINT_LOCATION) );
-        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_PRINT_LOCATION)*(sizeof(char))), length);
+    else if(strstr((char*)incoming, PROTOCOL_PRINT_LOCATION ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_PRINT_LOCATION) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINT_LOCATION)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINT_LOCATION;
-        return 0;
     } 
 
     /* PRINT_LOCATION_SHORT */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINT_LOCATION_SHORT ) == (cte->transmission.iobuffer)) {
-        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINT_LOCATION_SHORT) );
-        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_PRINT_LOCATION_SHORT)*(sizeof(char))), length);
+    else if(strstr((char*)incoming, PROTOCOL_PRINT_LOCATION_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_PRINT_LOCATION_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINT_LOCATION_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINT_LOCATION;
-        return 0;
     } 
 
     /* PRINTTIME */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTTIME ) == (cte->transmission.iobuffer)) {
-        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_PRINTTIME) );
-        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_PRINTTIME)*(sizeof(char))), length);
+    else if(strstr((char*)incoming, PROTOCOL_PRINTTIME ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_PRINTTIME) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINTTIME)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINTTIME;
-        return 0;
     } 
 
     /* WARMUP */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_WARMUP ) == (cte->transmission.iobuffer)) {
-        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_WARMUP) );
-        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_WARMUP)*(sizeof(char))), length);
+    else if(strstr((char*)incoming, PROTOCOL_WARMUP ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_WARMUP) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_WARMUP)*(sizeof(char))), length);
         cte->cm.code = CODE_WARMUP;
-        return 0;
     } 
 
     /* PRINTCLIENTS */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTCLIENTS ) == (cte->transmission.iobuffer) || 
-        strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTCLIENTS_SHORT ) == (cte->transmission.iobuffer)) {
+    else if(strstr((char*)incoming, PROTOCOL_PRINTCLIENTS ) == (incoming) || 
+        strstr((char*)incoming, PROTOCOL_PRINTCLIENTS_SHORT ) == (incoming)) {
         cte->cm.code = CODE_PRINTCLIENTS;
-        return 0;
     }
 
     /* PRINTSERVER */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTSERVER ) == (cte->transmission.iobuffer) || 
-        strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTSERVER_SHORT ) == (cte->transmission.iobuffer)) {
+    else if(strstr((char*)incoming, PROTOCOL_PRINTSERVER ) == (incoming) || 
+        strstr((char*)incoming, PROTOCOL_PRINTSERVER_SHORT ) == (incoming)) {
         cte->cm.code = CODE_PRINTSERVER;
-        return 0;
     }
 
     /* KICK */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_KICK ) == (cte->transmission.iobuffer)) {
-        int length = (strlen(cte->transmission.iobuffer) - strlen(PROTOCOL_KICK) );
-        memcpy(cte->cm.parameter, (cte->transmission.iobuffer)+(strlen(PROTOCOL_KICK)*(sizeof(char))), length);
+    else if(strstr((char*)incoming, PROTOCOL_KICK ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_KICK) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_KICK)*(sizeof(char))), length);
         cte->cm.code = CODE_KICK;
-        return 0;
     }
   
     /* EXIT */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_EXIT ) == (cte->transmission.iobuffer)) {
+    else if(strstr((char*)incoming, PROTOCOL_EXIT ) == (incoming)) {
         cte->cm.code = CODE_DISCONNECT;
-        return 0;
     }
 
     /* DISCONNECT */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_DISCONNECT ) == (cte->transmission.iobuffer) || 
-        strstr((char*)cte->transmission.iobuffer, PROTOCOL_DISCONNECT_SHORT ) == (cte->transmission.iobuffer)) {
+    else if(strstr((char*)incoming, PROTOCOL_DISCONNECT ) == (incoming) || 
+        strstr((char*)incoming, PROTOCOL_DISCONNECT_SHORT ) == (incoming)) {
         cte->cm.code = CODE_DISCONNECT;
-        return 0;
     } 
 
     /* HELP */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_HELP ) == (cte->transmission.iobuffer)) {
+    else if(strstr((char*)incoming, PROTOCOL_HELP ) == (incoming)) {
         cte->cm.code = CODE_HELP;
-        return 0;
     } 
 
     /* PRINTAVGDIFF */
-    if(strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTAVGDIFF ) == (cte->transmission.iobuffer) || 
-        strstr((char*)cte->transmission.iobuffer, PROTOCOL_PRINTAVGDIFF_SHORT ) == (cte->transmission.iobuffer)) {
+    else if(strstr((char*)incoming, PROTOCOL_PRINTAVGDIFF ) == (incoming) || 
+        strstr((char*)incoming, PROTOCOL_PRINTAVGDIFF_SHORT ) == (incoming)) {
         cte->cm.code = CODE_PRINTAVGDIFF;
+    }
+
+    else{
         return 0;
-    } 
-
-
+    }
     return 1;
 }
 
@@ -297,11 +285,11 @@ static int respond(struct client_table_entry *cte)
     int read_status = s_read(&(cte->transmission)); /* Blocking */
     if(read_status == -1) {
         t_print("[ CLIENT %d ] Read failed or interrupted!\n", cte->client_id);
-        return -1;
+        return 0;
     }
 
     if(cte->marked_for_kick){
-        return -1;
+        return 0;
     }
 
     int parse_status = parse_input(cte);
@@ -310,18 +298,18 @@ static int respond(struct client_table_entry *cte)
         s_write(&(cte->transmission), ERROR_ILLEGAL_MESSAGE_SIZE,
                 sizeof(ERROR_ILLEGAL_MESSAGE_SIZE));
     }
-    if(parse_status == 1) {
+    else if(parse_status == 0) {
         s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND,
                 sizeof(ERROR_ILLEGAL_COMMAND));
     }
     /* PARSING OK, CONTINUING */
-    if(parse_status == 0) {
+    else{
+        s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
             
         if(cte->cm.code == CODE_DISCONNECT) {
             t_print("Client %d requested DISCONNECT.\n", cte->client_id);
-            s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
             s_write(&(cte->transmission), PROTOCOL_GOODBYE, sizeof(PROTOCOL_GOODBYE));
-            return -1;
+            return 0;
         }
 
         if(cte->cm.code == CODE_HELP) {
@@ -342,7 +330,7 @@ static int respond(struct client_table_entry *cte)
                     cte->client_id = 0;
                     t_print("[%s] bounced! ID %d already in use.\n", cte->ip,id);
                     s_write(&(cte->transmission), "ID in use!\n", 11);
-                    return -1;
+                    return 0;
                 }
             }
 
@@ -356,13 +344,12 @@ static int respond(struct client_table_entry *cte)
             }
             cte->client_id = id;
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
-            s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
-            return 0;
+            return 1;
         }
 
         if(cte->client_id == 0) {
             s_write(&(cte->transmission), ERROR_NO_ID, sizeof(ERROR_NO_ID));
-            return 0;
+            return 1;
         }
 
         if(cte->cm.code == CODE_NMEA) {
@@ -392,7 +379,7 @@ static int respond(struct client_table_entry *cte)
                         analyze();
                     }else{
                         sem_post(&(s_synch->ready_mutex));
-                        return 0;
+                        return 1;
                     }
                     sem_post(&(s_synch->ready_mutex));
                 }
@@ -400,7 +387,7 @@ static int respond(struct client_table_entry *cte)
                 cte->nmea.checksum_passed = 0;
                 t_print("RMC and GGA received, checksum failed!\n");
             }
-            return 0;
+            return 1;
         }
 
         if(cte->cm.code == CODE_PRINT_LOCATION) {
@@ -408,10 +395,16 @@ static int respond(struct client_table_entry *cte)
 
             if(sscanf(cte->cm.parameter, "%d", &target_id) == -1) {
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
-                return 0;
+                return 1;
             }
-            print_location(&(cte->transmission), target_id);
-            return 0;
+
+            struct client_table_entry* candidate = get_client_by_id(target_id);
+            if(candidate == NULL){
+                s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+            }else{
+                print_location(&(cte->transmission), candidate);   
+            }
+            return 1;
         }
 
         if(cte->cm.code == CODE_WARMUP) {
@@ -419,7 +412,7 @@ static int respond(struct client_table_entry *cte)
 
             if(sscanf(cte->cm.parameter, "%d", &target_id) == -1) {
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
-                return 0;
+                return 1;
             }
 
             if(target_id > 0){
@@ -435,17 +428,17 @@ static int respond(struct client_table_entry *cte)
                 s_write(&(cte->transmission), ERROR_WARMUP_NOT_SENSOR, sizeof(ERROR_WARMUP_NOT_SENSOR));
             }
 
-            return 0;
+            return 1;
         }        
 
         if(cte->cm.code == CODE_PRINTCLIENTS) {
             print_clients(cte);
-            return 0;
+            return 1;
         }
 
         if(cte->cm.code == CODE_PRINTSERVER) {
             print_server_data(cte, s_data);
-            return 0;
+            return 1;
         }
 
         if(cte->cm.code == CODE_PRINTTIME) {
@@ -453,19 +446,30 @@ static int respond(struct client_table_entry *cte)
             if(!target_id){
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             }else{
-                print_client_time(&(cte->transmission), target_id);
+                struct client_table_entry* candidate = get_client_by_id(target_id);
+                if(candidate != NULL){
+                    print_client_time(&(cte->transmission), candidate);
+                 }else{
+                    s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+                 } 
             }
-            return 0;    
+            return 1;    
         }
 
         if(cte->cm.code == CODE_KICK) {
             int target_id = atoi(cte->cm.parameter);
             if(!target_id){
-                s_write(&(cte->transmission), ERROR_ILLEGAL_KICK, sizeof(ERROR_ILLEGAL_KICK));
+                s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             }else{
-                kick_client(&(cte->transmission),target_id);
+                struct client_table_entry* candidate = get_client_by_id(target_id);
+                if(candidate == NULL){
+                    s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT)); 
+                }
+                else{
+                    kick_client(&(cte->transmission),candidate);  
+                }
             }
-            return 0;
+            return 1;
         }
 
         if(cte->cm.code == CODE_DUMPDATA) {
@@ -491,10 +495,8 @@ static int respond(struct client_table_entry *cte)
             }else{
                 struct client_table_entry* candidate = get_client_by_id(target_id);
                 if(candidate != NULL){
-                    if(dumpdata(candidate, &(cte->transmission), filename)){
-                        s_write(&(candidate->transmission), ERROR_FILE_OPEN, sizeof(ERROR_FILE_OPEN));
-                    }else{
-                        s_write(&(candidate->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
+                    if(!dumpdata(candidate, &(cte->transmission), filename)){
+                        s_write(&(candidate->transmission), ERROR_DUMPDATA_FAILED, sizeof(ERROR_DUMPDATA_FAILED));
                     }
                 }
                 else{
@@ -505,10 +507,10 @@ static int respond(struct client_table_entry *cte)
 
         if(cte->cm.code == CODE_PRINTAVGDIFF) {
             print_avg_diff(cte);
-            return 0;
+            return 1;
         }
     }
-    return 0;
+    return 1;
 }
 
 /* 
@@ -578,7 +580,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     * respond < 0
     */
     while(!done) {
-        if(respond(new_client) < 0) {
+        if(!respond(new_client)) {
             break;
         }
     }

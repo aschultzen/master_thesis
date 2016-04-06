@@ -36,7 +36,8 @@
 
 /* RESPONSES */
 #define PROTOCOL_GOODBYE "Goodbye!\n"
-#define PROTOCOL_OK "OK\n"
+#define PROTOCOL_OK "OK!\n\n"
+#define PROTOCOL_WELCOME "Welcome to the Sensor Server!\n"
 
 /* COMMAND CODES */
 /* Used by respond() */
@@ -62,7 +63,7 @@
 #define ERROR_ID_IN_USE "ID IN USE\n"
 #define ERROR_ILLEGAL_MESSAGE_SIZE "ILLEGAL MESSAGE SIZE\n"
 #define ERROR_WARMUP_NOT_SENSOR "WARM-UP ONLY APPLIES TO SENSORS\n"
-#define ERROR_FILE_OPEN "Failed to open file.\n"
+#define ERROR_DUMPDATA_FAILED "Failed to dump data\n"
 
 /* SIZES */
 #define TIME_SIZE 9 /* SIZE OF TIME AS CHARS eg.142546.00, FROM GNRMC */

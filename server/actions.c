@@ -1,35 +1,24 @@
 #include "actions.h"
 
-void kick_client(struct transmission_s *tsm, int client_id)
+void kick_client(struct transmission_s *tsm, struct client_table_entry* candidate)
 {
-    struct client_table_entry* kick_cand = get_client_by_id(client_id);
-    if(kick_cand != NULL){
-        sem_wait(&(s_synch->client_list_mutex));
-            sem_wait(&(s_synch->ready_mutex));
-                kick_cand->marked_for_kick = 1;
-                s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
-            sem_post(&(s_synch->ready_mutex));
-        sem_post(&(s_synch->client_list_mutex));
-    }else{
-        s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-    }
+    sem_wait(&(s_synch->client_list_mutex));
+    sem_wait(&(s_synch->ready_mutex));
+    candidate->marked_for_kick = 1;
+    sem_post(&(s_synch->ready_mutex));
+    sem_post(&(s_synch->client_list_mutex));
 }
 
 /* Prints client X's solved time back to monitor */
-void print_client_time(struct transmission_s *tsm, int client_id)
+void print_client_time(struct transmission_s *tsm, struct client_table_entry* candidate)
 {
     int buffsize = 100;
     char buffer[buffsize];
     memset(&buffer, 0, buffsize);
 
-    struct client_table_entry* time_cand = get_client_by_id(client_id);
-    if(time_cand != NULL){
-        word_extractor(RMC_TIME_START,RMC_TIME_START + 1,',',buffer, buffsize,time_cand->nmea.raw_rmc, strlen(time_cand->nmea.raw_rmc));
-        s_write(tsm, buffer, 12);
-        s_write(tsm, "\n", 1);
-    }else{
-        s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-    }
+    word_extractor(RMC_TIME_START,RMC_TIME_START + 1,',',buffer, buffsize,candidate->nmea.raw_rmc, strlen(candidate->nmea.raw_rmc));
+    s_write(tsm, buffer, 12);
+    s_write(tsm, "\n", 1);
 }
 
 /* Prints a formatted string containing info about connected clients to monitor */
@@ -41,7 +30,6 @@ void print_clients(struct client_table_entry *cte)
     char *modifier = "";
 
     struct client_table_entry* client_list_iterate;
-    s_write(&(cte->transmission), NEW_LINE, sizeof(NEW_LINE));
     s_write(&(cte->transmission), CLIENT_TABLE_LABEL, sizeof(CLIENT_TABLE_LABEL));
     s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
     list_for_each_entry(client_list_iterate,&client_list->list, list) {
@@ -78,7 +66,6 @@ void print_server_data(struct client_table_entry *cte, struct server_data *s_dat
     struct tm *loctime;
     loctime = localtime (&s_data->started);
 
-    s_write(&(cte->transmission), NEW_LINE, sizeof(NEW_LINE));
     s_write(&(cte->transmission), SERVER_TABLE_LABEL, sizeof(SERVER_TABLE_LABEL));
     s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
 
@@ -93,7 +80,6 @@ void print_server_data(struct client_table_entry *cte, struct server_data *s_dat
 
     s_write(&(cte->transmission), buffer, snprintf_status);
     s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
-    s_write(&(cte->transmission), NEW_LINE, sizeof(NEW_LINE));
 }
 
 /* 
@@ -111,7 +97,7 @@ void print_help(struct transmission_s *tsm)
 * Prints MAX, MIN, CURRENT and AVERAGE position
 * for client X back to the monitor
 */
-void print_location(struct transmission_s *tsm, int client_id)
+void print_location(struct transmission_s *tsm, struct client_table_entry* candidate)
 {
     char buffer [1000];
     int snprintf_status = 0;
@@ -127,54 +113,49 @@ void print_location(struct transmission_s *tsm, int client_id)
     char *reset = RESET;
 
     struct nmea_container nc;
-    struct client_table_entry* candidate = get_client_by_id(client_id);
-    if(candidate != NULL && client_id > 0){
-        nc = candidate->nmea;
-        s_write(tsm, NEW_LINE, sizeof(NEW_LINE));
-        s_write(tsm, PRINT_LOCATION_HEADER, sizeof(PRINT_LOCATION_HEADER));
 
-        /*Determining colors*/
-        if(!nc.lat_disturbed){
-            lat_modifier = BOLD_GRN_BLK;
-        }else if(nc.lat_disturbed > 0){
-            lat_modifier = BOLD_RED_BLK;
-        }else{
-            lat_modifier = BOLD_CYN_BLK;
-        }
+    nc = candidate->nmea;
+    s_write(tsm, PRINT_LOCATION_HEADER, sizeof(PRINT_LOCATION_HEADER));
 
-        if(!nc.lon_disturbed){
-            lon_modifier = BOLD_GRN_BLK;
-        }else if(nc.lon_disturbed > 0){
-            lon_modifier = BOLD_RED_BLK;
-        }else{
-            lon_modifier = BOLD_CYN_BLK;
-        }
-
-        if(!nc.alt_disturbed){
-            alt_modifier = BOLD_GRN_BLK;
-        }else if(nc.alt_disturbed > 0){
-            alt_modifier = BOLD_RED_BLK;
-        }else{
-            alt_modifier = BOLD_CYN_BLK;
-        }
-
-         if(!nc.speed_disturbed){
-            speed_modifier = BOLD_GRN_BLK;
-        }else if(nc.speed_disturbed > 0){
-            speed_modifier = BOLD_RED_BLK;
-        }else{
-            speed_modifier = BOLD_CYN_BLK;
-        }
-
-        snprintf_status = snprintf( buffer, 1000, "LAT: %s%f%s  %s%f%s  %s%f%s %f\nLON: %s%f%s  %s%f%s  %s%f%s %f\nALT: %s %f%s  %s %f%s  %s %f%s  %f\nSPD: %s   %f%s  %s   %f%s  %s   %f%s    %f\n",
-                                    lat_modifier,nc.lat_current,reset, low_modifier,nc.lat_low,reset, high_modifier,nc.lat_high,reset,nc.lat_average,
-                                    lon_modifier, nc.lon_current,reset, low_modifier,nc.lon_low,reset, high_modifier,nc.lon_high,reset,nc.lon_average, 
-                                    alt_modifier, nc.alt_current,reset, low_modifier,nc.alt_low,reset, high_modifier,nc.alt_high,reset,nc.alt_average,
-                                    speed_modifier, nc.speed_current,reset, low_modifier,nc.speed_low,reset, high_modifier,nc.speed_high,reset,nc.speed_average);
-    s_write(tsm, buffer, snprintf_status);
+    /*Determining colors*/
+    if(!nc.lat_disturbed){
+        lat_modifier = BOLD_GRN_BLK;
+    }else if(nc.lat_disturbed > 0){
+        lat_modifier = BOLD_RED_BLK;
     }else{
-        s_write(tsm, ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-    }    
+        lat_modifier = BOLD_CYN_BLK;
+    }
+
+    if(!nc.lon_disturbed){
+        lon_modifier = BOLD_GRN_BLK;
+    }else if(nc.lon_disturbed > 0){
+        lon_modifier = BOLD_RED_BLK;
+    }else{
+        lon_modifier = BOLD_CYN_BLK;
+    }
+
+    if(!nc.alt_disturbed){
+        alt_modifier = BOLD_GRN_BLK;
+    }else if(nc.alt_disturbed > 0){
+        alt_modifier = BOLD_RED_BLK;
+    }else{
+        alt_modifier = BOLD_CYN_BLK;
+    }
+
+    if(!nc.speed_disturbed){
+        speed_modifier = BOLD_GRN_BLK;
+    }else if(nc.speed_disturbed > 0){
+        speed_modifier = BOLD_RED_BLK;
+    }else{
+        speed_modifier = BOLD_CYN_BLK;
+    }
+
+    snprintf_status = snprintf( buffer, 1000, "LAT: %s%f%s  %s%f%s  %s%f%s %f\nLON: %s%f%s  %s%f%s  %s%f%s %f\nALT: %s %f%s  %s %f%s  %s %f%s  %f\nSPD: %s   %f%s  %s   %f%s  %s   %f%s    %f\n",
+                                lat_modifier,nc.lat_current,reset, low_modifier,nc.lat_low,reset, high_modifier,nc.lat_high,reset,nc.lat_average,
+                                lon_modifier, nc.lon_current,reset, low_modifier,nc.lon_low,reset, high_modifier,nc.lon_high,reset,nc.lon_average, 
+                                alt_modifier, nc.alt_current,reset, low_modifier,nc.alt_low,reset, high_modifier,nc.alt_high,reset,nc.alt_average,
+                                speed_modifier, nc.speed_current,reset, low_modifier,nc.speed_low,reset, high_modifier,nc.speed_high,reset,nc.speed_average);
+    s_write(tsm, buffer, snprintf_status); 
 }
 
 /* 
@@ -188,7 +169,6 @@ void print_avg_diff(struct client_table_entry *cte)
     struct nmea_container nc;
 
     if(s_data->number_of_sensors > 0){
-        s_write(&(cte->transmission), NEW_LINE, sizeof(NEW_LINE));
         s_write(&(cte->transmission), PRINT_AVG_DIFF_HEADER, sizeof(PRINT_AVG_DIFF_HEADER));
         struct client_table_entry* client_list_iterate;
         list_for_each_entry(client_list_iterate,&client_list->list, list) {
@@ -212,7 +192,6 @@ void restart_warmup(struct client_table_entry* target, struct transmission_s *ts
     target->warmup_started = time(NULL);
     target->ready = 0;
     t_print("Sensor %d warmup restarted\n", target->client_id);
-    s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
 }
 
 /* Dumps data location data for client X into a file */
@@ -222,13 +201,13 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
 
     int full_filename_size = strlen(filename) + strlen(DATADUMP_EXTENSION);
     char full_filename[full_filename_size];
-    bzero(full_filename, full_filename_size);
+    memset(full_filename,'0', full_filename_size);
 
-	/* No name specified, generates one */
+	/* No name specified, generate one instead */
 	if(strlen(filename) == 0){
 		int autoname_size = sizeof(DATADUMP_EXTENSION) + DUMPDATA_TIME_SIZE + ID_AS_STRING_MAX + 2;
 		char autoname[autoname_size];
-	    bzero(autoname, autoname_size);
+	    memset(autoname,'0',autoname_size);
 
 	    char time_buffer[100];
 	    time_t rawtime;
@@ -247,8 +226,8 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
         *full_filename = *autoname;
 		dumpfile=fopen(autoname, "wb");
         if(!dumpfile){
-            t_print("dumpdata(): Failed to open file, aborting.\n");
-            return -1;
+            t_print(ERROR_FOPEN);
+            return 0;
         }
 	}
 	else{
@@ -256,13 +235,20 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
         strcat(full_filename, DATADUMP_EXTENSION);
 		dumpfile=fopen(filename, "wb");
         if(!dumpfile){
-            t_print("dumpdata(): Failed to open file, aborting.\n");
-            return -1;
+            t_print(ERROR_FOPEN);
+            return 0;
         }
 	}
     
-    fwrite(&target->nmea, sizeof(struct nmea_container), 1, dumpfile);
-    fclose(dumpfile);
-    return 0;
+    if(!fwrite(&target->nmea, sizeof(struct nmea_container), 1, dumpfile)){
+        t_print(ERROR_FWRITE);
+        return 0;
+    }
+
+    if(fclose(dumpfile)){
+        t_print(ERROR_FCLOSE);
+    }
+
+    return 1;
 }
 
