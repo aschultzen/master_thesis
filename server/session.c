@@ -312,11 +312,11 @@ static int respond(struct client_table_entry *cte)
             return 0;
         }
 
-        if(cte->cm.code == CODE_HELP) {
+        else if(cte->cm.code == CODE_HELP) {
             print_help(&(cte->transmission));
         }
 
-        if(cte->cm.code == CODE_IDENTIFY) {
+        else if(cte->cm.code == CODE_IDENTIFY) {
             int id = 0;
 
             if(sscanf(cte->cm.parameter, "%d", &id) == -1) {
@@ -347,12 +347,11 @@ static int respond(struct client_table_entry *cte)
             return 1;
         }
 
-        if(cte->client_id == 0) {
+        else if(cte->client_id == 0) {
             s_write(&(cte->transmission), ERROR_NO_ID, sizeof(ERROR_NO_ID));
-            return 1;
         }
 
-        if(cte->cm.code == CODE_NMEA) {
+        else if(cte->cm.code == CODE_NMEA) {
             /* Fetching data from buffer */
             char *rmc_start = strstr(cte->transmission.iobuffer, RMC);
             char *gga_start = strstr(cte->transmission.iobuffer, GGA);
@@ -387,61 +386,52 @@ static int respond(struct client_table_entry *cte)
                 cte->nmea.checksum_passed = 0;
                 t_print("RMC and GGA received, checksum failed!\n");
             }
-            return 1;
         }
 
-        if(cte->cm.code == CODE_PRINT_LOCATION) {
+        else if(cte->cm.code == CODE_PRINT_LOCATION) {
             int target_id = 0;
 
             if(sscanf(cte->cm.parameter, "%d", &target_id) == -1) {
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
-                return 1;
-            }
-
-            struct client_table_entry* candidate = get_client_by_id(target_id);
-            if(candidate == NULL){
-                s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-            }else{
-                print_location(&(cte->transmission), candidate);   
-            }
-            return 1;
-        }
-
-        if(cte->cm.code == CODE_WARMUP) {
-            int target_id = 0;
-
-            if(sscanf(cte->cm.parameter, "%d", &target_id) == -1) {
-                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
-                return 1;
-            }
-
-            if(target_id > 0){
-                struct client_table_entry* candidate = get_client_by_id(target_id);
-                if(candidate != NULL){
-                    restart_warmup(candidate, &(cte->transmission));
-                }
-                else{
-                    s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-                }
             }
             else{
-                s_write(&(cte->transmission), ERROR_WARMUP_NOT_SENSOR, sizeof(ERROR_WARMUP_NOT_SENSOR));
+                struct client_table_entry* candidate = get_client_by_id(target_id);
+                if(candidate == NULL){
+                    s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+                }else{
+                    print_location(&(cte->transmission), candidate);   
+                }    
             }
+        }
 
-            return 1;
+        else if(cte->cm.code == CODE_WARMUP) {
+            int target_id = 0;
+
+            if(sscanf(cte->cm.parameter, "%d", &target_id) == -1) {
+                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
+            }else{
+                if(target_id > 0){
+                    struct client_table_entry* candidate = get_client_by_id(target_id);
+                    if(candidate != NULL){
+                        restart_warmup(candidate, &(cte->transmission));
+                    }else{
+                        s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+                    }
+                }else{
+                    s_write(&(cte->transmission), ERROR_WARMUP_NOT_SENSOR, sizeof(ERROR_WARMUP_NOT_SENSOR));
+                }
+            }
         }        
 
-        if(cte->cm.code == CODE_PRINTCLIENTS) {
+        else if(cte->cm.code == CODE_PRINTCLIENTS) {
             print_clients(cte);
-            return 1;
         }
 
-        if(cte->cm.code == CODE_PRINTSERVER) {
+        else if(cte->cm.code == CODE_PRINTSERVER) {
             print_server_data(cte, s_data);
-            return 1;
         }
 
-        if(cte->cm.code == CODE_PRINTTIME) {
+        else if(cte->cm.code == CODE_PRINTTIME) {
             int target_id = atoi(cte->cm.parameter);
             if(!target_id){
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
@@ -449,14 +439,13 @@ static int respond(struct client_table_entry *cte)
                 struct client_table_entry* candidate = get_client_by_id(target_id);
                 if(candidate != NULL){
                     print_client_time(&(cte->transmission), candidate);
-                 }else{
+                }else{
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-                 } 
-            }
-            return 1;    
+                } 
+            }   
         }
 
-        if(cte->cm.code == CODE_KICK) {
+        else if(cte->cm.code == CODE_KICK) {
             int target_id = atoi(cte->cm.parameter);
             if(!target_id){
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
@@ -469,10 +458,9 @@ static int respond(struct client_table_entry *cte)
                     kick_client(&(cte->transmission),candidate);  
                 }
             }
-            return 1;
         }
 
-        if(cte->cm.code == CODE_DUMPDATA) {
+        else if(cte->cm.code == CODE_DUMPDATA) {
             int filename_buffer_size = MAX_FILENAME_SIZE;
             char filename[filename_buffer_size];
             int target_id;
@@ -507,9 +495,11 @@ static int respond(struct client_table_entry *cte)
             }
         }
 
-        if(cte->cm.code == CODE_PRINTAVGDIFF) {
+        else if(cte->cm.code == CODE_PRINTAVGDIFF) {
             print_avg_diff(cte);
-            return 1;
+        }
+        else{
+            t_print("No action made for this part of the protocol\n");
         }
     }
     return 1;
