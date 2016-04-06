@@ -5,13 +5,6 @@ void kick_client(struct transmission_s *tsm, struct client_table_entry* candidat
     sem_wait(&(s_synch->client_list_mutex));
     sem_wait(&(s_synch->ready_mutex));
     candidate->marked_for_kick = 1;
-    candidate->heartbeat_timeout.tv_sec = 0;
-    candidate->heartbeat_timeout.tv_usec = 1;
-
-    if (setsockopt (candidate->transmission.session_fd, SOL_SOCKET,
-                SO_RCVTIMEO, (char *)&candidate->heartbeat_timeout, sizeof(struct timeval)) < 0) {
-        die(36,"setsockopt failed\n");
-    }
     sem_post(&(s_synch->ready_mutex));
     sem_post(&(s_synch->client_list_mutex));
 }

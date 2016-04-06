@@ -373,12 +373,9 @@ static int respond(struct client_table_entry *cte)
                 }else{
                     cte->ready = 1;
                     sem_wait(&(s_synch->ready_mutex));
-                    /* If all is ready, analyze */
-                    if(nmea_ready()){
+                    int ready = nmea_ready();
+                    if(ready){
                         analyze();
-                    }else{
-                        sem_post(&(s_synch->ready_mutex));
-                        return 1;
                     }
                     sem_post(&(s_synch->ready_mutex));
                 }
