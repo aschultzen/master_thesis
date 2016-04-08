@@ -115,6 +115,17 @@ static void handle_sig(int signum)
     done = 1;
 }
 
+/* Setting up the config structure specific for the server */
+static void initialize_config(struct config_map_entry *conf_map, struct config *cfg, int entries){
+    conf_map[0].entry_name = CONFIG_SERVER_MAX_CONNECTIONS;
+    conf_map[0].modifier = FORMAT_INT;
+    conf_map[0].destination = &cfg->max_clients;
+
+    conf_map[1].entry_name = CONFIG_SERVER_WARM_UP;
+    conf_map[1].modifier = FORMAT_INT;
+    conf_map[1].destination = &cfg->warm_up_seconds;
+}
+
 /*
 * Main loop for the server.
 * Forks everytime a client connects and calls setup_session()
@@ -126,9 +137,12 @@ static void start_server(int port_number)
     struct sockaddr_in serv_addr;
     done = 0;
 
-    /* Loading config */
+    /* Initializing config structure */
     cfg = mmap(NULL, sizeof(struct config), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    int load_config_status = load_config(cfg, CONFIG_FILE_PATH);
+    initialize_config(conf_map, cfg, CONFIG_ENTRIES);
+
+    /* Loading config */
+    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
 
     /* Falling back to default if load_config fails */
     if(load_config_status == 0) {
@@ -138,6 +152,7 @@ static void start_server(int port_number)
         t_print(ERROR_CONFIG_LOAD_FAILED);
         exit(0);
     }
+
     INIT_LIST_HEAD(&client_list->list);
 
     /* Create and initialize shared memory for server data */

@@ -39,6 +39,10 @@
 #define USAGE_PROGRAM_INTRO "Sensor_server: Server part of GPS Jamming/Spoofing system\n\n"
 #define USAGE_USAGE "Usage: %s [ARGS]\n\n"
 
+/* CONFIG MAP */
+#define CONFIG_ENTRIES 2
+struct config_map_entry conf_map[CONFIG_ENTRIES];
+
 /* 
 * Made extern because the sessions should
 * exit if the server is given a SIGINT/TERM

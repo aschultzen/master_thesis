@@ -6,6 +6,15 @@
 #define CONFIG_SERVER_WARM_UP "warm_up:"
 #define CONFIG_FILE_PATH "config.ini"
 
+#define FORMAT_INT "%d"
+#define FORMAT_FLOAT "%f"
+
+struct config_map_entry {
+	char *entry_name;
+	char *modifier;
+	void *destination;
+} __attribute__ ((packed));
+
 /* 
 * CONFIG STRUCT
 * 

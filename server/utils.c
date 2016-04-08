@@ -69,7 +69,7 @@ void t_print(const char* format, ...)
 * Loads config. 
 * Returns: -1 fail | 0 success
 */
-int load_config(struct config *cfg, char *path)
+int load_config(struct config_map_entry *cme, char *path, int entries)
 {
     FILE *config_file;
     long file_size;
@@ -103,26 +103,16 @@ int load_config(struct config *cfg, char *path)
         return -1;
     }   
 
-    /* Retrieving max connections from config */
-    char *ptr = strstr(input_buffer,CONFIG_SERVER_MAX_CONNECTIONS);
-    if(ptr != NULL){
-        int length = strlen(ptr) - strlen(CONFIG_SERVER_MAX_CONNECTIONS);
-        memcpy(temp_buffer, ptr+(strlen(CONFIG_SERVER_MAX_CONNECTIONS)*(sizeof(char))), length);
-        status = sscanf(temp_buffer, "%d", &cfg->max_clients);
-    }
-
-    if(status == EOF || status == 0){
-        fclose(config_file);
-        free(input_buffer);
-        return -1;
-    }
-
-    /* Retrieving warm_up from config */
-    ptr = strstr(input_buffer,CONFIG_SERVER_WARM_UP);
-    if(ptr != NULL){
-        int length = strlen(ptr) - strlen(CONFIG_SERVER_WARM_UP);
-        memcpy(temp_buffer, ptr+(strlen(CONFIG_SERVER_WARM_UP)*(sizeof(char))), length);
-        status = sscanf(temp_buffer, "%d", &cfg->warm_up_seconds);
+    int counter = 0;
+    while(counter < entries){
+        char *ptr = strstr(input_buffer,cme->entry_name);
+        if(ptr != NULL){
+            int length = strlen(ptr) - strlen(cme->entry_name);
+            memcpy(temp_buffer, ptr+(strlen(cme->entry_name)*(sizeof(char))), length);
+            status = sscanf(temp_buffer, cme->modifier, cme->destination);
+        }
+        counter++;
+        cme++;
     }
 
     if(status == EOF || status == 0){
