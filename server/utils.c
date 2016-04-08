@@ -80,7 +80,7 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
     config_file=fopen(path, "r");
     if(!config_file){
         t_print("config_loader(): Failed to load config file, aborting.\n");
-        return -1;
+        return 0;
     }
 
     fseek(config_file , 0L , SEEK_END);
@@ -92,7 +92,7 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
     if(!input_buffer){
       fclose(config_file);
       t_print("config_loader(): Memory allocation failed, aborting.\n");
-      return -1; 
+      return 0; 
     } 
 
     /* Get the file into the buffer */
@@ -100,7 +100,7 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
         fclose(config_file);
         free(input_buffer);
         t_print("config_loader(): Read failed, aborting\n");
-        return -1;
+        return 0;
     }   
 
     int counter = 0;
@@ -123,7 +123,7 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
 
     fclose(config_file);
     free(input_buffer);
-    return 0;
+    return 1;
 }
 
 int calculate_nmea_checksum(char *s) {

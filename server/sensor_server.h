@@ -39,9 +39,23 @@
 #define USAGE_PROGRAM_INTRO "Sensor_server: Server part of GPS Jamming/Spoofing system\n\n"
 #define USAGE_USAGE "Usage: %s [ARGS]\n\n"
 
-/* CONFIG MAP */
+/* CONFIG */
+#define CONFIG_SERVER_MAX_CONNECTIONS "max_clients:"
+#define CONFIG_SERVER_WARM_UP "warm_up:"
+#define CONFIG_FILE_PATH "config.ini"
 #define CONFIG_ENTRIES 2
 struct config_map_entry conf_map[CONFIG_ENTRIES];
+
+/* 
+* CONFIG STRUCT
+* 
+* Used as container for the config_loader function
+* config_server_max_connections: max number of permitted connections
+*/
+struct config {
+	int max_clients;
+	int warm_up_seconds;
+} __attribute__ ((packed));
 
 /* 
 * Made extern because the sessions should

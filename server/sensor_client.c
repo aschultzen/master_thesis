@@ -129,6 +129,17 @@ static int send_nmea(int session_fd, struct nmea_container *nmea_c)
     return 0;
 }
 
+/* Setting up the config structure specific for the server */
+static void initialize_config(struct config_map_entry *conf_map, struct config *cfg, int entries){
+    conf_map[0].entry_name = CONFIG_SERIAL_INTERFACE;
+    conf_map[0].modifier = FORMAT_STRING;
+    conf_map[0].destination = &cfg->serial_interface;
+
+    conf_map[1].entry_name = CONFIG_CLIENT_ID;
+    conf_map[1].modifier = FORMAT_INT;
+    conf_map[1].destination = &cfg->client_id;
+}
+
 static int start_client(int portno, char* ip, int id)
 {
     char buffer[1024];
@@ -145,8 +156,20 @@ static int start_client(int portno, char* ip, int id)
     struct nmea_container nmea_c;
     memset(&nmea_c, 0, sizeof(nmea_c));
 
+    initialize_config(conf_map, &cfg, CONFIG_ENTRIES);
+    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
+    if(!load_config_status){
+        t_print("Failed to load the config, using default values\n");
+        memcpy(DEFAULT_SERIAL_INTERFACE, cfg.serial_interface, strlen(DEFAULT_SERIAL_INTERFACE));
+    }else{
+        if(cfg.client_id == 0 || cfg.client_id > ID_MAX) {
+            t_print("Client ID can not be less than 1 or more than %d!\n", ID_MAX);
+            exit(0);
+        }
+    }
+
     /* Establishing connection to GPS receiver */
-    int gps_serial = open_serial("/dev/ttyACM0", GPS);
+    int gps_serial = open_serial(cfg.serial_interface, GPS);
     if(gps_serial == -1){
         t_print("Connection to GPS receiver failed! Exiting...\n");
         exit(0);
@@ -199,7 +222,7 @@ int main(int argc, char *argv[])
     while (1) {
         char c;
 
-        c = getopt (argc, argv, "s:p:i:");
+        c = getopt (argc, argv, "s:p:");
         if (c == -1) {
             break;
         }
@@ -210,16 +233,9 @@ int main(int argc, char *argv[])
         case 'p':
             port_number = optarg;
             break;
-        case 'i':
-            client_id = atoi(optarg);
-            break;
         default:
             usage(argv);
         }
-    }
-    if(client_id == 0 || client_id > ID_MAX) {
-        printf("Client ID can not be less than 1 or more than %d!\n", ID_MAX);
-        exit(0);
     }
 
     if(ip_address == NULL || port_number == NULL) {
