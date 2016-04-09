@@ -96,7 +96,7 @@ int open_serial(char *portname, serial_device device)
 {
     int fd = open (portname, O_RDWR | O_NOCTTY);
     if (fd < 0) {
-        printf ("error %d opening %s: %s\n", errno, portname, strerror (errno));
+        t_print ("Error %d opening %s: %s\n", errno, portname, strerror (errno));
     }
 
     if(device == GPS){

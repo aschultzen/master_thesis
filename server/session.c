@@ -226,7 +226,21 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(incoming) - strlen(PROTOCOL_WARMUP) );
         memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_WARMUP)*(sizeof(char))), length);
         cte->cm.code = CODE_WARMUP;
+    }
+
+    /* UPDATE WARMUP */
+    else if(strstr((char*)incoming, PROTOCOL_UPDATE_WARMUP ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_UPDATE_WARMUP) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_UPDATE_WARMUP)*(sizeof(char))), length);
+        cte->cm.code = CODE_UPDATE_WARMUP;
     } 
+
+    /* UPDATE WARMUP SHORT */
+    else if(strstr((char*)incoming, PROTOCOL_UPDATE_WARMUP_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_UPDATE_WARMUP_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_UPDATE_WARMUP_SHORT)*(sizeof(char))), length);
+        cte->cm.code = CODE_UPDATE_WARMUP;
+    }  
 
     /* PRINTCLIENTS */
     else if(strstr((char*)incoming, PROTOCOL_PRINTCLIENTS ) == (incoming) || 
@@ -493,6 +507,11 @@ static int respond(struct client_table_entry *cte)
         else if(cte->cm.code == CODE_PRINTAVGDIFF) {
             print_avg_diff(cte);
         }
+
+        else if(cte->cm.code == CODE_UPDATE_WARMUP) {
+            update_warmup(cte, cte->cm.id_parameter);
+        }
+
         else{
             t_print("No action made for this part of the protocol\n");
         }

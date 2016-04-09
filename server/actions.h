@@ -20,6 +20,7 @@
 #define ERROR_FCLOSE "dumpdata(): Failed to close file, out of space?\n"
 #define ERROR_FWRITE "dumpdata(): Failed to write to file, aborting.\n"
 #define ERROR_FOPEN "dumpdata(): Failed to open file, aborting.\n"
+#define ERROR_UPDATE_WARMUP_ILLEGAL "Warm-up time value has to be greater than 0!\n"
 
 /* HELP */
 #define HELP  "\n"\
@@ -57,5 +58,6 @@ void print_location(struct transmission_s *tsm, struct client_table_entry* candi
 void print_avg_diff(struct client_table_entry *cte);
 void restart_warmup(struct client_table_entry* target, struct transmission_s *tsm);
 int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char *filename_append);
+void update_warmup(struct client_table_entry *cte, int value);
 
 #endif /* !ACTIONS_H */

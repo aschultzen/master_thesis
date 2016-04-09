@@ -160,7 +160,7 @@ static int start_client(int portno, char* ip, int id)
     int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
     if(!load_config_status){
         t_print("Failed to load the config, using default values\n");
-        memcpy(DEFAULT_SERIAL_INTERFACE, cfg.serial_interface, strlen(DEFAULT_SERIAL_INTERFACE));
+        memcpy(cfg.serial_interface, DEFAULT_SERIAL_INTERFACE, strlen(DEFAULT_SERIAL_INTERFACE)*sizeof(char));
     }else{
         if(cfg.client_id == 0 || cfg.client_id > ID_MAX) {
             t_print("Client ID can not be less than 1 or more than %d!\n", ID_MAX);
@@ -204,7 +204,7 @@ static int start_client(int portno, char* ip, int id)
 
 static int usage(char *argv[])
 {
-    printf("Usage: %s -s <SERVER IP> -p <SERVER PORT> -i <CLIENT ID>\n", argv[0]);
+    printf("Usage: %s -s <SERVER IP> -p <SERVER PORT>\n", argv[0]);
     return 0;
 }
 

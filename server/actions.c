@@ -1,5 +1,15 @@
 #include "actions.h"
 
+void update_warmup(struct client_table_entry *cte, int new_value)
+{
+    if(new_value > 0){
+        cfg->warm_up_seconds = new_value;
+    }else{
+        s_write(&(cte->transmission), ERROR_UPDATE_WARMUP_ILLEGAL, sizeof(ERROR_UPDATE_WARMUP_ILLEGAL));
+    }
+
+}
+
 void kick_client(struct transmission_s *tsm, struct client_table_entry* candidate)
 {
     sem_wait(&(s_synch->client_list_mutex));
@@ -70,11 +80,12 @@ void print_server_data(struct client_table_entry *cte, struct server_data *s_dat
     s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
 
     snprintf_status = snprintf( buffer, 1000,
-                                "PID: %d\nNumber of clients: %d\nNumber of sensors: %d\nMax clients: %d\nStarted: %sVersion: %s\n",
+                                "PID: %d\nNumber of clients: %d\nNumber of sensors: %d\nMax clients: %d\nSensor Warm-up time: %ds\nStarted: %sVersion: %s\n",
                                 s_data->pid,
                                 s_data->number_of_clients,
                                 s_data->number_of_sensors,
                                 cfg->max_clients,
+                                cfg->warm_up_seconds,
                                 asctime (loctime),
                                 s_data->version);
 

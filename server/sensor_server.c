@@ -145,7 +145,7 @@ static void start_server(int port_number)
     int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
 
     /* Falling back to default if load_config fails */
-    if(load_config_status == 0) {
+    if(load_config_status) {
         t_print(CONFIG_LOADED);
         client_list = mmap(NULL, (cfg->max_clients * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     } else {
