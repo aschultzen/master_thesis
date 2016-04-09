@@ -50,18 +50,23 @@ void print_clients(struct client_table_entry *cte)
             c_type = "SENSOR";
         }
 
+        double elapsed_warmup = difftime(time(NULL), client_list_iterate->warmup_started);
+        int time_left = cfg->warm_up_seconds - elapsed_warmup;
+
         if(cte->client_id == client_list_iterate->client_id){
             modifier = BOLD_GRN_BLK;
         }else{
             modifier = RESET;
         }
-        snprintf_status = snprintf( buffer, 1000, "%sPID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d%s\n",
+        snprintf_status = snprintf( buffer, 1000, "%sPID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d WARMUP LEFT: %d%s\n",
                                     modifier,
                                     client_list_iterate->pid,
                                     client_list_iterate->ip,
                                     (int)difftime(time(NULL),client_list_iterate->timestamp),
                                     c_type,
-                                    client_list_iterate->client_id, RESET);
+                                    client_list_iterate->client_id, 
+                                    time_left,
+                                    RESET);
        
         s_write(&(cte->transmission), buffer, snprintf_status);
     }

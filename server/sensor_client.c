@@ -140,7 +140,7 @@ static void initialize_config(struct config_map_entry *conf_map, struct config *
     conf_map[1].destination = &cfg->client_id;
 }
 
-static int start_client(int portno, char* ip, int id)
+static int start_client(int portno, char* ip)
 {
     char buffer[1024];
     memset(buffer, '0',sizeof (buffer));
@@ -191,7 +191,7 @@ static int start_client(int portno, char* ip, int id)
     }
 
     /* Identifying client for server */
-    if( identify(session_fd, id) == -1 ) {
+    if( identify(session_fd, cfg.client_id) == -1 ) {
         exit(0);
     }
 
@@ -212,7 +212,6 @@ int main(int argc, char *argv[])
 {
     char *ip_address = NULL;
     char *port_number = NULL;
-    int client_id = 0;
 
     if(argc < 5) {
         usage(argv);
@@ -243,6 +242,6 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    start_client(atoi(port_number), ip_address, client_id);
+    start_client(atoi(port_number), ip_address);
     return 0;
 }
