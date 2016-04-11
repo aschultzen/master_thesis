@@ -219,18 +219,19 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
     char full_filename[full_filename_size];
     memset(full_filename,'0', full_filename_size);
 
+    /* Creating timestamp */
+    char time_buffer[100];
+    time_t rawtime;
+    struct tm *info;
+    time(&rawtime);
+    info = gmtime(&rawtime);
+    strftime(time_buffer,80,"%d%m%y-%H%M%S", info);
+
 	/* No name specified, generate one instead */
 	if(strlen(filename) == 0){
 		int autoname_size = sizeof(DATADUMP_EXTENSION) + DUMPDATA_TIME_SIZE + ID_AS_STRING_MAX + 2;
 		char autoname[autoname_size];
 	    memset(autoname,'0',autoname_size);
-
-	    char time_buffer[100];
-	    time_t rawtime;
-	    struct tm *info;
-	    time(&rawtime);
-	    info = gmtime(&rawtime);
-	    strftime(time_buffer,80,"%d%m%y-%H%M%S", info);
 
 	    char id_as_string[ID_AS_STRING_MAX];
 	    sprintf(id_as_string, "%d", target->client_id);
@@ -257,10 +258,13 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
 	}
 
     /* Dumping humanly readable data */
+    fprintf(dumpfile, "Sensor Server dumpfile created %s for client %d\n", time_buffer, target->client_id);
+
     int inner_counter = 0;
     int outer_counter = 0;
-    double *data = &target->nmea.lat_low;
+    double *data = &target->nmea.lat_current;
 
+    fprintf(dumpfile,DUMPDATA_HEADER);
     while(outer_counter < 4){
         while(inner_counter < 7){
             fprintf(dumpfile, "%f  ",*data);

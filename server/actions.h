@@ -10,6 +10,7 @@
 #define SERVER_TABLE_LABEL "SERVER DATA\n"
 #define NEW_LINE "\n"
 #define PRINT_LOCATION_HEADER "      CURRENT        MIN          MAX          AVG\n"
+#define DUMPDATA_HEADER "CURRENT        MIN           MAX      AVERAGE     AVG_DIFF      TOTAL      DISTURBED\n"
 #define PRINT_AVG_DIFF_HEADER "ID     LAT        LON       ALT       SPEED\n"
 #define DATADUMP_EXTENSION ".dump"
 
