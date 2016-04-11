@@ -240,7 +240,7 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
 	    strcat(autoname, time_buffer);
 	    strcat(autoname, DATADUMP_EXTENSION);
         *full_filename = *autoname;
-		dumpfile=fopen(autoname, "wb");
+		dumpfile=fopen(autoname, "w");
         if(!dumpfile){
             t_print(ERROR_FOPEN);
             return 0;
@@ -255,11 +255,24 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
             return 0;
         }
 	}
-    
-    if(!fwrite(&target->nmea, sizeof(struct nmea_container), 1, dumpfile)){
-        t_print(ERROR_FWRITE);
-        return 0;
+
+    /* Dumping humanly readable data */
+    int inner_counter = 0;
+    int outer_counter = 0;
+    double *data = &target->nmea.lat_low;
+
+    while(outer_counter < 4){
+        while(inner_counter < 7){
+            fprintf(dumpfile, "%f  ",*data);
+            data++;
+            inner_counter++;
+        }
+        fprintf(dumpfile, "%s", "\n");
+        inner_counter = 0;
+        outer_counter++;
     }
+
+
 
     if(fclose(dumpfile)){
         t_print(ERROR_FCLOSE);
