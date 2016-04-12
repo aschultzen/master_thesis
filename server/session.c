@@ -139,6 +139,18 @@ static void warm_up(struct client_table_entry *cte)
     }
 }
 
+int set_timeout(struct client_table_entry *target, struct timeval h_timeout)
+{
+    /* setsockopt return -1 on error and 0 on success */
+    target->heartbeat_timeout = h_timeout;
+    if (setsockopt (target->transmission.session_fd, SOL_SOCKET,
+                    SO_RCVTIMEO, (char *)&target->heartbeat_timeout, sizeof(struct timeval)) < 0) {
+        t_print("an error: %s\n", strerror(errno));
+        return 0;
+    }
+    return 1;
+}
+
 /*
 * Parses input from clients. Return value indicates status.
 * Uses the command_code struct to convey parameter and command code. 
@@ -355,6 +367,9 @@ static int respond(struct client_table_entry *cte)
 
             if(cte->cm.id_parameter < 0) {
                 cte->client_type = MONITOR;
+                struct timeval timeout = {MONITOR_TIMEOUT, 0};
+                set_timeout(cte, timeout);
+
             } else {
                 cte->client_type = SENSOR;
                 sem_wait(&(s_synch->client_list_mutex));
@@ -532,8 +547,6 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     strncpy(new_client->ip, ip, INET_ADDRSTRLEN);
 
     /* Initializing structure, zeroing just to be sure */
-    new_client->heartbeat_timeout.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
-    new_client->heartbeat_timeout.tv_usec = 0;
     new_client->client_id = 0;
     new_client->transmission.session_fd = session_fd;
     new_client->moved = 0;
@@ -541,6 +554,12 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->marked_for_kick = 0;
     new_client->dumploc = 0;
     new_client->ready = 0;
+
+    /* Setting timeout */
+    struct timeval timeout = {2, 0};
+    if(!set_timeout(new_client, timeout)){
+        t_print("Failed to set timeout for client\n");
+    }
 
     /* Marked for warm up */
     new_client->warmup = 1;
@@ -558,13 +577,6 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
 
     memset(&new_client->transmission.iobuffer, '0', IO_BUFFER_SIZE*sizeof(char));
     memset(&new_client->cm.parameter, '0', MAX_PARAMETER_SIZE*sizeof(char));
-
-    /* Setting socket timeout to default value */
-    /* This doesn't always work for some reason, race condition? :/ */
-    if (setsockopt (new_client->transmission.session_fd, SOL_SOCKET,
-                    SO_RCVTIMEO, (char *)&new_client->heartbeat_timeout, sizeof(struct timeval)) < 0) {
-        die(36,"setsockopt failed\n");
-    }
 
     /*
     * Entering child process main loop

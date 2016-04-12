@@ -173,7 +173,7 @@ static void start_server(int port_number)
     initialize_config(conf_map, s_conf);
 
     /* Loading config */
-    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
+    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, 2);
 
     /* Falling back to default if load_config fails */
     if(load_config_status) {

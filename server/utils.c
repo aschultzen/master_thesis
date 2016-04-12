@@ -105,20 +105,20 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
 
     int counter = 0;
     while(counter < entries){
-        char *ptr = strstr(input_buffer,cme->entry_name);
-        if(ptr != NULL){
-            int length = strlen(ptr) - strlen(cme->entry_name);
-            memcpy(temp_buffer, ptr+(strlen(cme->entry_name)*(sizeof(char))), length);
+        char *search_ptr = strstr(input_buffer,cme->entry_name);
+        if(search_ptr != NULL){
+            int length = strlen(search_ptr) - strlen(cme->entry_name);
+            memcpy(temp_buffer, search_ptr+(strlen(cme->entry_name)*(sizeof(char))), length);
             status = sscanf(temp_buffer, cme->modifier, cme->destination);
+
+            if(status == EOF || status == 0){
+                fclose(config_file);
+                free(input_buffer);
+                return -1;
+            }
         }
         counter++;
         cme++;
-    }
-
-    if(status == EOF || status == 0){
-        fclose(config_file);
-        free(input_buffer);
-        return -1;
     }
 
     fclose(config_file);
