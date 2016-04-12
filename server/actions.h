@@ -1,7 +1,6 @@
 #ifndef ACTIONS_H
 #define ACTIONS_H
 
-#include "sensor_server_commons.h"
 #include "sensor_server.h"
 
 /* GENERAL */
@@ -50,15 +49,15 @@
 #define MAX_APPEND_LENGTH 20
 #define MAX_FILENAME_SIZE 30
 
-void kick_client(struct transmission_s *tsm, struct client_table_entry* candidate);
-void print_client_time(struct transmission_s *tsm, struct client_table_entry* candidate);
-void print_clients(struct client_table_entry *cte);
-void print_server_data(struct client_table_entry *cte, struct server_data *s_data);
-void print_help(struct transmission_s *tsm);
-void print_location(struct transmission_s *tsm, struct client_table_entry* candidate);
-void print_avg_diff(struct client_table_entry *cte);
-void restart_warmup(struct client_table_entry* target, struct transmission_s *tsm);
-int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char *filename_append);
-void update_warmup(struct client_table_entry *cte, int value);
+void kick_client(struct client_table_entry* client);
+void print_client_time(struct client_table_entry *monitor, struct client_table_entry* client);
+void print_clients(struct client_table_entry *monitor);
+void print_server_data(struct client_table_entry *monitor);
+void print_help(struct client_table_entry *monitor);
+void print_location(struct client_table_entry *monitor, struct client_table_entry* client);
+void print_avg_diff(struct client_table_entry *monitor);
+void restart_warmup(struct client_table_entry* client);
+int dumpdata(struct client_table_entry* client, char *filename);
+void update_warmup(struct client_table_entry *client, int value);
 
 #endif /* !ACTIONS_H */

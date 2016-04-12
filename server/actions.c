@@ -1,38 +1,38 @@
 #include "actions.h"
 
-void update_warmup(struct client_table_entry *cte, int new_value)
+void update_warmup(struct client_table_entry *client, int new_value)
 {
     if(new_value > 0){
-        cfg->warm_up_seconds = new_value;
+        s_conf->warm_up_seconds = new_value;
     }else{
-        s_write(&(cte->transmission), ERROR_UPDATE_WARMUP_ILLEGAL, sizeof(ERROR_UPDATE_WARMUP_ILLEGAL));
+        s_write(&(client->transmission), ERROR_UPDATE_WARMUP_ILLEGAL, sizeof(ERROR_UPDATE_WARMUP_ILLEGAL));
     }
 
 }
 
-void kick_client(struct transmission_s *tsm, struct client_table_entry* candidate)
+void kick_client(struct client_table_entry* client)
 {
     sem_wait(&(s_synch->client_list_mutex));
     sem_wait(&(s_synch->ready_mutex));
-    candidate->marked_for_kick = 1;
+    client->marked_for_kick = 1;
     sem_post(&(s_synch->ready_mutex));
     sem_post(&(s_synch->client_list_mutex));
 }
 
 /* Prints client X's solved time back to monitor */
-void print_client_time(struct transmission_s *tsm, struct client_table_entry* candidate)
+void print_client_time(struct client_table_entry *monitor, struct client_table_entry* client)
 {
     int buffsize = 100;
     char buffer[buffsize];
     memset(&buffer, 0, buffsize);
 
-    word_extractor(RMC_TIME_START,RMC_TIME_START + 1,',',buffer, buffsize,candidate->nmea.raw_rmc, strlen(candidate->nmea.raw_rmc));
-    s_write(tsm, buffer, 12);
-    s_write(tsm, "\n", 1);
+    word_extractor(RMC_TIME_START,RMC_TIME_START + 1,',',buffer, buffsize,client->nmea.raw_rmc, strlen(client->nmea.raw_rmc));
+    s_write(&(monitor->transmission), buffer, 12);
+    s_write(&(monitor->transmission), "\n", 1);
 }
 
 /* Prints a formatted string containing info about connected clients to monitor */
-void print_clients(struct client_table_entry *cte)
+void print_clients(struct client_table_entry *monitor)
 {
     char buffer [1000];
     int snprintf_status = 0;
@@ -40,8 +40,8 @@ void print_clients(struct client_table_entry *cte)
     char *modifier = "";
 
     struct client_table_entry* client_list_iterate;
-    s_write(&(cte->transmission), CLIENT_TABLE_LABEL, sizeof(CLIENT_TABLE_LABEL));
-    s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
+    s_write(&(monitor->transmission), CLIENT_TABLE_LABEL, sizeof(CLIENT_TABLE_LABEL));
+    s_write(&(monitor->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
     list_for_each_entry(client_list_iterate,&client_list->list, list) {
 
         if(client_list_iterate->client_type == MONITOR) {
@@ -51,14 +51,20 @@ void print_clients(struct client_table_entry *cte)
         }
 
         double elapsed_warmup = difftime(time(NULL), client_list_iterate->warmup_started);
-        int time_left = cfg->warm_up_seconds - elapsed_warmup;
+        int time_left = s_conf->warm_up_seconds - elapsed_warmup;
 
-        if(cte->client_id == client_list_iterate->client_id){
+        if(monitor->client_id == client_list_iterate->client_id){
             modifier = BOLD_GRN_BLK;
         }else{
             modifier = RESET;
         }
-        snprintf_status = snprintf( buffer, 1000, "%sPID: %d, IP:%s, TOUCH: %d, TYPE: %s, ID: %d WARMUP LEFT: %d%s\n",
+        snprintf_status = snprintf( buffer, 1000, 
+                                    "%sPID: %d, " \
+                                    "IP:%s, " \
+                                    "TOUCH: %d, " \
+                                    "TYPE: %s, " \
+                                    "ID: %d " \
+                                    "WARMUP LEFT: %d%s\n",
                                     modifier,
                                     client_list_iterate->pid,
                                     client_list_iterate->ip,
@@ -68,34 +74,9 @@ void print_clients(struct client_table_entry *cte)
                                     time_left,
                                     RESET);
        
-        s_write(&(cte->transmission), buffer, snprintf_status);
+        s_write(&(monitor->transmission), buffer, snprintf_status);
     }
-    s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
-}
-
-/* Prints a formatted string containing server info to monitor */
-void print_server_data(struct client_table_entry *cte, struct server_data *s_data)
-{
-    char buffer [1000];
-    int snprintf_status = 0;
-    struct tm *loctime;
-    loctime = localtime (&s_data->started);
-
-    s_write(&(cte->transmission), SERVER_TABLE_LABEL, sizeof(SERVER_TABLE_LABEL));
-    s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
-
-    snprintf_status = snprintf( buffer, 1000,
-                                "PID: %d\nNumber of clients: %d\nNumber of sensors: %d\nMax clients: %d\nSensor Warm-up time: %ds\nStarted: %sVersion: %s\n",
-                                s_data->pid,
-                                s_data->number_of_clients,
-                                s_data->number_of_sensors,
-                                cfg->max_clients,
-                                cfg->warm_up_seconds,
-                                asctime (loctime),
-                                s_data->version);
-
-    s_write(&(cte->transmission), buffer, snprintf_status);
-    s_write(&(cte->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
+    s_write(&(monitor->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
 }
 
 /* 
@@ -103,17 +84,16 @@ void print_server_data(struct client_table_entry *cte, struct server_data *s_dat
 * of the different implemented commands back
 * to the monitor.
 */
-void print_help(struct transmission_s *tsm)
+void print_help(struct client_table_entry *monitor)
 {
-    s_write(tsm, HELP, sizeof(HELP));
-    s_write(tsm, PROTOCOL_OK, sizeof(PROTOCOL_OK));
+    s_write(&(monitor->transmission), HELP, sizeof(HELP));
 }
 
 /* 
 * Prints MAX, MIN, CURRENT and AVERAGE position
 * for client X back to the monitor
 */
-void print_location(struct transmission_s *tsm, struct client_table_entry* candidate)
+void print_location(struct client_table_entry *monitor, struct client_table_entry* client)
 {
     char buffer [1000];
     int snprintf_status = 0;
@@ -130,8 +110,8 @@ void print_location(struct transmission_s *tsm, struct client_table_entry* candi
 
     struct nmea_container nc;
 
-    nc = candidate->nmea;
-    s_write(tsm, PRINT_LOCATION_HEADER, sizeof(PRINT_LOCATION_HEADER));
+    nc = client->nmea;
+    s_write(&(monitor->transmission), PRINT_LOCATION_HEADER, sizeof(PRINT_LOCATION_HEADER));
 
     /*Determining colors*/
     if(!nc.lat_disturbed){
@@ -166,52 +146,56 @@ void print_location(struct transmission_s *tsm, struct client_table_entry* candi
         speed_modifier = BOLD_CYN_BLK;
     }
 
-    snprintf_status = snprintf( buffer, 1000, "LAT: %s%f%s  %s%f%s  %s%f%s %f\nLON: %s%f%s  %s%f%s  %s%f%s %f\nALT: %s %f%s  %s %f%s  %s %f%s  %f\nSPD: %s   %f%s  %s   %f%s  %s   %f%s    %f\n",
+    snprintf_status = snprintf( buffer, 1000, 
+                                "LAT: %s%f%s  %s%f%s  %s%f%s %f\n" \
+                                "LON: %s%f%s  %s%f%s  %s%f%s %f\n" \
+                                "ALT: %s %f%s  %s %f%s  %s %f%s  %f\n" \
+                                "SPD: %s   %f%s  %s   %f%s  %s   %f%s    %f\n",
                                 lat_modifier,nc.lat_current,reset, low_modifier,nc.lat_low,reset, high_modifier,nc.lat_high,reset,nc.lat_average,
                                 lon_modifier, nc.lon_current,reset, low_modifier,nc.lon_low,reset, high_modifier,nc.lon_high,reset,nc.lon_average, 
                                 alt_modifier, nc.alt_current,reset, low_modifier,nc.alt_low,reset, high_modifier,nc.alt_high,reset,nc.alt_average,
                                 speed_modifier, nc.speed_current,reset, low_modifier,nc.speed_low,reset, high_modifier,nc.speed_high,reset,nc.speed_average);
-    s_write(tsm, buffer, snprintf_status); 
+    s_write(&(monitor->transmission), buffer, snprintf_status); 
 }
 
 /* 
 * Prints the difference between the calculated
 * average values for location and the current value
 */
-void print_avg_diff(struct client_table_entry *cte)
+void print_avg_diff(struct client_table_entry *client)
 {
     char buffer [1000];
     int snprintf_status = 0;
     struct nmea_container nc;
 
     if(s_data->number_of_sensors > 0){
-        s_write(&(cte->transmission), PRINT_AVG_DIFF_HEADER, sizeof(PRINT_AVG_DIFF_HEADER));
+        s_write(&(client->transmission), PRINT_AVG_DIFF_HEADER, sizeof(PRINT_AVG_DIFF_HEADER));
         struct client_table_entry* client_list_iterate;
         list_for_each_entry(client_list_iterate,&client_list->list, list) {
             if(client_list_iterate->client_id > 0){
                 nc = client_list_iterate->nmea;
                 snprintf_status = snprintf( buffer, 1000, "%d   %f  %f  %f  %f\n", 
                 client_list_iterate->client_id, nc.lat_avg_diff, nc.lon_avg_diff, nc.alt_avg_diff, nc.speed_avg_diff);
-                s_write(&(cte->transmission), buffer, snprintf_status);
+                s_write(&(client->transmission), buffer, snprintf_status);
             }
         }
     }else{
-        s_write(&(cte->transmission), ERROR_NO_SENSORS_CONNECTED, sizeof(ERROR_NO_SENSORS_CONNECTED));
+        s_write(&(client->transmission), ERROR_NO_SENSORS_CONNECTED, sizeof(ERROR_NO_SENSORS_CONNECTED));
     }
 }
 
 
 /* Restart WARMUP procedure */
-void restart_warmup(struct client_table_entry* target, struct transmission_s *tsm)
+void restart_warmup(struct client_table_entry* client)
 {
-    target->warmup = 1;
-    target->warmup_started = time(NULL);
-    target->ready = 0;
-    t_print("Sensor %d warmup restarted\n", target->client_id);
+    client->warmup = 1;
+    client->warmup_started = time(NULL);
+    client->ready = 0;
+    t_print("Sensor %d warmup restarted\n", client->client_id);
 }
 
 /* Dumps data location data for client X into a file */
-int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char *filename)
+int dumpdata(struct client_table_entry* client, char *filename)
 {
 	FILE *dumpfile;
 
@@ -234,7 +218,7 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
 	    memset(autoname,'0',autoname_size);
 
 	    char id_as_string[ID_AS_STRING_MAX];
-	    sprintf(id_as_string, "%d", target->client_id);
+	    sprintf(id_as_string, "%d", client->client_id);
 
 	    strcat(autoname, id_as_string);
 	    strcat(autoname, "_");
@@ -258,11 +242,11 @@ int dumpdata(struct client_table_entry* target, struct transmission_s *tsm, char
 	}
 
     /* Dumping humanly readable data */
-    fprintf(dumpfile, "Sensor Server dumpfile created %s for client %d\n", time_buffer, target->client_id);
+    fprintf(dumpfile, "Sensor Server dumpfile created %s for client %d\n", time_buffer, client->client_id);
 
     int inner_counter = 0;
     int outer_counter = 0;
-    double *data = &target->nmea.lat_current;
+    double *data = &client->nmea.lat_current;
 
     fprintf(dumpfile,DUMPDATA_HEADER);
     while(outer_counter < 4){

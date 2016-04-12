@@ -78,17 +78,17 @@ static void calculate_nmea_diff(struct client_table_entry *cte)
 }
 
 /* Check if a client is still warming up */
-static void check_warm_up(struct client_table_entry *cte)
+static void verify_warm_up(struct client_table_entry *cte)
 {
     if(cte->warmup_started){
         double elapsed = difftime(time(NULL), cte->warmup_started);
-        double percent = (elapsed / cfg->warm_up_seconds) * 100;
+        double percent = (elapsed / s_conf->warm_up_seconds) * 100;
 
         if((int)percent % 10 == 0){
             t_print("Client %d Warming up, %d%%\n", cte->client_id, (int)percent);
         }
 
-        if(elapsed >= cfg->warm_up_seconds){
+        if(elapsed >= s_conf->warm_up_seconds){
             t_print("Client %d, warm-up finished!\n", cte->client_id);
             cte->warmup = 0;
         }
@@ -334,7 +334,7 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_HELP) {
-            print_help(&(cte->transmission));
+            print_help(cte);
         }
 
         else if(cte->cm.code == CODE_IDENTIFY) {
@@ -388,7 +388,7 @@ static int respond(struct client_table_entry *cte)
                 calculate_nmea_average(cte);
                 calculate_nmea_diff(cte);
                 if(cte->warmup){
-                    check_warm_up(cte);
+                    verify_warm_up(cte);
                     warm_up(cte);
                 }else{
                     cte->ready = 1;
@@ -414,7 +414,7 @@ static int respond(struct client_table_entry *cte)
                 if(candidate == NULL){
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
                 }else{
-                    print_location(&(cte->transmission), candidate);   
+                    print_location(cte, candidate);   
                 }    
             }
         }
@@ -426,7 +426,7 @@ static int respond(struct client_table_entry *cte)
                 if(cte->cm.id_parameter > 0){
                     struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
                     if(candidate != NULL){
-                        restart_warmup(candidate, &(cte->transmission));
+                        restart_warmup(candidate);
                     }else{
                         s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
                     }
@@ -441,7 +441,7 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_PRINTSERVER) {
-            print_server_data(cte, s_data);
+            print_server_data(cte);
         }
 
         else if(cte->cm.code == CODE_PRINTTIME) {
@@ -450,7 +450,7 @@ static int respond(struct client_table_entry *cte)
             }else{
                 struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
                 if(candidate != NULL){
-                    print_client_time(&(cte->transmission), candidate);
+                    print_client_time(cte, candidate);
                 }else{
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
                 } 
@@ -466,7 +466,7 @@ static int respond(struct client_table_entry *cte)
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT)); 
                 }
                 else{
-                    kick_client(&(cte->transmission),candidate);  
+                    kick_client(candidate);  
                 }
             }
         }
@@ -494,8 +494,8 @@ static int respond(struct client_table_entry *cte)
             }else{
                 struct client_table_entry* candidate = get_client_by_id(target_id);
                 if(candidate != NULL){
-                    if(!dumpdata(candidate, &(cte->transmission), filename)){
-                        s_write(&(candidate->transmission), ERROR_DUMPDATA_FAILED, sizeof(ERROR_DUMPDATA_FAILED));
+                    if(!dumpdata(candidate,filename)){
+                        s_write(&(cte->transmission), ERROR_DUMPDATA_FAILED, sizeof(ERROR_DUMPDATA_FAILED));
                     }
                 }
                 else{
@@ -519,26 +519,6 @@ static int respond(struct client_table_entry *cte)
     return 1;
 }
 
-/* 
-* Used to set extremes values to their opposite.
-* This way, the comparison check in warm_up() is "true" 
-* even tough they are checked for the first time 
-*/
-static void init_nmea(struct client_table_entry *cte)
-{
-
-    /* Setting low values */
-    cte->nmea.lat_low = 9999.999999;
-    cte->nmea.lon_low = 9999.999999;
-    cte->nmea.alt_low = 999.999999;
-
-    /* Setting the high values */
-    cte->nmea.lat_high = -9999.999999;
-    cte->nmea.lon_high = -9999.999999;
-    cte->nmea.alt_high = -999.999999;
-
-}
-
 /* Setups the clients structure and initializes data */
 void setup_session(int session_fd, struct client_table_entry *new_client)
 {
@@ -551,7 +531,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->timestamp = time(NULL);
     strncpy(new_client->ip, ip, INET_ADDRSTRLEN);
 
-    /* Initializing structure */
+    /* Initializing structure, zeroing just to be sure */
     new_client->heartbeat_timeout.tv_sec = CLIENT_TIMEOUT + 1000; //remove 1000 when testing is done!
     new_client->heartbeat_timeout.tv_usec = 0;
     new_client->client_id = 0;
@@ -566,8 +546,15 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->warmup = 1;
     new_client->warmup_started = 0;
 
+    /* Setting low values */
+    new_client->nmea.lat_low = 9999.999999;
+    new_client->nmea.lon_low = 9999.999999;
+    new_client->nmea.alt_low = 999.999999;
 
-    init_nmea(new_client);
+    /* Setting the high values */
+    new_client->nmea.lat_high = -9999.999999;
+    new_client->nmea.lon_high = -9999.999999;
+    new_client->nmea.alt_high = -999.999999;
 
     memset(&new_client->transmission.iobuffer, '0', IO_BUFFER_SIZE*sizeof(char));
     memset(&new_client->cm.parameter, '0', MAX_PARAMETER_SIZE*sizeof(char));

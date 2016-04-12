@@ -4,7 +4,7 @@ CLIENT_OBJS = sensor_client.o net.o utils.o serial.o
 CC = gcc
 DEBUG = -g
 
-CFLAGS = -Wall -c $(DEBUG) -std=gnu99 -pedantic -O3
+CFLAGS = -Wall -Wextra -c $(DEBUG) -std=gnu99 -pedantic -O3
 
 cpu := $(shell uname -m)
 

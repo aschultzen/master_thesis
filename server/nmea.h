@@ -62,7 +62,7 @@ struct nmea_container{
 	/* CHECKSUM */
 	int checksum_passed;
 
-	/* COUNTER */
+	/* COUNTER FOR AVERAGE */
 	int n_samples;
 };
 

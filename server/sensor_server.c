@@ -13,7 +13,38 @@ volatile sig_atomic_t done;
 struct client_table_entry *client_list;
 
 /* Pointer to shared memory containing config */
-struct config *cfg;
+struct server_config *s_conf;
+
+/* Prints a formatted string containing server info to monitor */
+void print_server_data(struct client_table_entry *monitor)
+{
+    char buffer [1000];
+    int snprintf_status = 0;
+    struct tm *loctime_started;
+    loctime_started = localtime (&s_data->started);
+
+    s_write(&(monitor->transmission), SERVER_TABLE_LABEL, sizeof(SERVER_TABLE_LABEL));
+    s_write(&(monitor->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
+
+    snprintf_status = snprintf( buffer, 1000,
+                                "PID: %d\n" \
+                                "Number of clients: %d\n" \
+                                "Number of sensors: %d\n" \
+                                "Max clients: %d\n" \
+                                "Sensor Warm-up time: %ds\n" \
+                                "Started: %s" \
+                                "Version: %s\n",
+                                s_data->pid,
+                                s_data->number_of_clients,
+                                s_data->number_of_sensors,
+                                s_conf->max_clients,
+                                s_conf->warm_up_seconds,
+                                asctime (loctime_started),
+                                s_data->version);
+
+    s_write(&(monitor->transmission), buffer, snprintf_status);
+    s_write(&(monitor->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
+}
 
 struct client_table_entry* get_client_by_id(int id)
 {
@@ -116,14 +147,14 @@ static void handle_sig(int signum)
 }
 
 /* Setting up the config structure specific for the server */
-static void initialize_config(struct config_map_entry *conf_map, struct config *cfg, int entries){
+static void initialize_config(struct config_map_entry *conf_map, struct server_config *s_conf){
     conf_map[0].entry_name = CONFIG_SERVER_MAX_CONNECTIONS;
     conf_map[0].modifier = FORMAT_INT;
-    conf_map[0].destination = &cfg->max_clients;
+    conf_map[0].destination = &s_conf->max_clients;
 
     conf_map[1].entry_name = CONFIG_SERVER_WARM_UP;
     conf_map[1].modifier = FORMAT_INT;
-    conf_map[1].destination = &cfg->warm_up_seconds;
+    conf_map[1].destination = &s_conf->warm_up_seconds;
 }
 
 /*
@@ -135,11 +166,11 @@ static void start_server(int port_number)
     /* Initializing variables */
     int server_sockfd;
     struct sockaddr_in serv_addr;
-    done = 0;
+    struct config_map_entry conf_map[CONFIG_ENTRIES];
 
     /* Initializing config structure */
-    cfg = mmap(NULL, sizeof(struct config), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    initialize_config(conf_map, cfg, CONFIG_ENTRIES);
+    s_conf = mmap(NULL, sizeof(struct server_config), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    initialize_config(conf_map, s_conf);
 
     /* Loading config */
     int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
@@ -147,7 +178,7 @@ static void start_server(int port_number)
     /* Falling back to default if load_config fails */
     if(load_config_status) {
         t_print(CONFIG_LOADED);
-        client_list = mmap(NULL, (cfg->max_clients * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        client_list = mmap(NULL, (s_conf->max_clients * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     } else {
         t_print(ERROR_CONFIG_LOAD_FAILED);
         exit(0);
@@ -234,7 +265,7 @@ static void start_server(int port_number)
             if (errno==EINTR) continue;
                 t_print(ERROR_CONNECTION_ACCEPT,errno);
         }
-        if(s_data->number_of_clients == cfg->max_clients) {
+        if(s_data->number_of_clients == s_conf->max_clients) {
             write(session_fd, ERROR_MAX_CLIENTS_REACHED, sizeof(ERROR_MAX_CLIENTS_REACHED));
             close(session_fd);
         } else {

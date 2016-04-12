@@ -130,7 +130,7 @@ static int send_nmea(int session_fd, struct nmea_container *nmea_c)
 }
 
 /* Setting up the config structure specific for the server */
-static void initialize_config(struct config_map_entry *conf_map, struct config *cfg, int entries){
+static void initialize_config(struct config_map_entry *conf_map, struct config *cfg){
     conf_map[0].entry_name = CONFIG_SERIAL_INTERFACE;
     conf_map[0].modifier = FORMAT_STRING;
     conf_map[0].destination = &cfg->serial_interface;
@@ -156,7 +156,7 @@ static int start_client(int portno, char* ip)
     struct nmea_container nmea_c;
     memset(&nmea_c, 0, sizeof(nmea_c));
 
-    initialize_config(conf_map, &cfg, CONFIG_ENTRIES);
+    initialize_config(conf_map, &cfg);
     int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
     if(!load_config_status){
         t_print("Failed to load the config, using default values\n");
