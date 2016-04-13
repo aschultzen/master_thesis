@@ -184,6 +184,11 @@ int substring_extractor(int start, int end, char delimiter, char *buffer, int bu
     int delim_counter = 0;
     int buffer_index = 0;
 
+    /* 
+    * The MYSTERY_ENDING is used to detect the end of input.
+    * It probably originates from some dodgy null-terminating
+    * or bad input parsing.
+    */
     const int MYSTERY_ENDING = 13;
 
     bzero(buffer, buffsize);
@@ -205,6 +210,6 @@ int substring_extractor(int start, int end, char delimiter, char *buffer, int bu
             }  
         }
     }
-    /* Reached end of string without encountering end */
+    /* Reached end of string without encountering end delimit */
     return 0;
 }

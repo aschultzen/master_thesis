@@ -1,63 +1,116 @@
+/**
+ * @file actions.h
+ * @brief File containing function prototypes and includes for actions.c
+ *
+ * Function prototypes for functions that implements different
+ * actions that a MONITOR or the system can use to manipulate the
+ * state of the SENSORS or print stats or similar.
+ *
+ * Be advised that any reference to MONITOR in this file means
+ * a client connected to the server who's role is that of a
+ * monitor of the system and not a monitor like a peripheral
+ * connected to a computer. The names of these roles are under
+ * discussion and will probably be changed to avoid misunderstanding.
+ *
+ * @author Aril Schultzen
+ * @date 9.11.2015
+ */
+
 #ifndef ACTIONS_H
 #define ACTIONS_H
 
 #include "sensor_server.h"
 
-/* GENERAL */
-#define HORIZONTAL_BAR "=============================================================\n"
-#define CLIENT_TABLE_LABEL "CLIENT TABLE\n"
-#define SERVER_TABLE_LABEL "SERVER DATA\n"
-#define NEW_LINE "\n"
-#define PRINT_LOCATION_HEADER "      CURRENT        MIN          MAX          AVG\n"
-#define DUMPDATA_HEADER "CURRENT        MIN           MAX      AVERAGE     AVG_DIFF      TOTAL      DISTURBED\n"
-#define PRINT_AVG_DIFF_HEADER "ID     LAT        LON       ALT       SPEED\n"
-#define DATADUMP_EXTENSION ".dump"
-
-/* ERRORS */
-#define ERROR_NO_CLIENT "ERROR: NO SUCH CLIENT\n"
-#define ERROR_APPEND_TOO_LONG "ERROR: TEXT TO APPEND TOO LONG\n"
-#define ERROR_NO_SENSORS_CONNECTED "NO SENSORS CONNECTED\n"
-#define ERROR_FCLOSE "dumpdata(): Failed to close file, out of space?\n"
-#define ERROR_FWRITE "dumpdata(): Failed to write to file, aborting.\n"
-#define ERROR_FOPEN "dumpdata(): Failed to open file, aborting.\n"
-#define ERROR_UPDATE_WARMUP_ILLEGAL "Warm-up time value has to be greater than 0!\n"
-
-/* HELP */
-#define HELP  "\n"\
-          "   COMMAND     PARAMETER                      DESCRIPTION\n"\
-          "------------ ------------ -------------------------------------------------\n"\
-          "  IDENTIFY INTEGER    PARAM is set as the connected clients ID (you)\n"\
-          "        ID > 0 is treated as sensor, ID < 0 as monitor\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  EXIT   NONE     Disconnects\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  DISCONNECT   NONE     See EXIT\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  PRINTCLIENTS NONE     Prints an overview of connected clients\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  PRINTSERVER  NONE     Prints server state and config\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  PRINTTIME  INTEGER    Prints time solved from <CLIENT ID>\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  DUMPDATA    INTEGER    Dumps all location related data to file\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  PRINTAVGDIFF  NONE    Prints all average diffs for all clients\n"\
-          "---------------------------------------------------------------------------\n"\
-
-/* SIZES */
-#define DUMPDATA_TIME_SIZE 13
-#define MAX_APPEND_LENGTH 20
-#define MAX_FILENAME_SIZE 30
-
+/** @brief Kicks a client (both MONITOR or SENSOR)
+ *
+ * Marks the client so respond() in session.c can
+ * disconnect it the next time that client transmits 
+ * data. The kick is in other words not instant, this
+ * is however an easy way to gracefully disconnect a 
+ * client. 
+ *
+ * @param client Pointer to the client_table_entry for the candidate to be kicked.
+ * @return Void
+ */
 void kick_client(struct client_table_entry* client);
+
+/** @brief Prints clients solved time to MONITOR
+ *
+ * Extracts the time solved by the GPS receiver, transmitted
+ * via NMEA and stored in the client_table_struct at the server,
+ * and transmits it to the MONITOR that requested it.
+ *
+ * @param monitor Pointer to MONITOR who made the request.
+ * @param client Pointer to SENSOR whose time was requested.
+ * @return Void
+ */
 void print_client_time(struct client_table_entry *monitor, struct client_table_entry* client);
+
+/** @brief Prints a table of clients to the MONITOR
+ *
+ * Transmits a table of the connected clients to the MONITOR.
+ *
+ * @param monitor Pointer to MONITOR who made the request.
+ * @return Void
+ */
 void print_clients(struct client_table_entry *monitor);
-void print_server_data(struct client_table_entry *monitor);
+
+/** @brief Prints table of available commands to requesting MONITOR.
+ *
+ * @param monitor Pointer to MONITOR who made the request.
+ * @return Void
+ */
 void print_help(struct client_table_entry *monitor);
+
+/** @brief Prints location of SENSOR to requesting MONITOR.
+ *
+ * Prints a overview of current as well as MIN, MAX and AVERAGE
+ * values of LAT, LON, ALT and SPEED recovered from NMEA.
+ *
+ * @param monitor Pointer to MONITOR who made the request.
+ * @param client Pointer to SENSOR whose location is requested.
+ * @return Void
+ */
 void print_location(struct client_table_entry *monitor, struct client_table_entry* client);
+
+/** @brief Prints difference between current position and average.
+ *
+ * Prints the difference between the current position values
+ * recorded from NMEA, and the calculated averages. 
+ * Two sensors in close proximity (100m >) should be
+ * subjected to the same noise. If the difference between 
+ * sensor A (current-avg) and sensor B (current-avg) changes,
+ * this could mean that one of them is being spoofed.
+ *
+ * @param monitor Pointer to MONITOR who made the request.
+ * @return Void
+ */
 void print_avg_diff(struct client_table_entry *monitor);
+
+/** @brief Restarts the warm-up procedure for the given SENSOR 
+ *
+ * Sets the SENSORs warmup_started to NOW, warmup to 1 and ready to 0.
+ * This "triggers" a restart of the warm-up procedure. 
+ *
+ * @param client Pointer to client whose warm-up procedure to restart.
+ * @return Void
+ */
 void restart_warmup(struct client_table_entry* client);
+
+/** @brief Dumps NMEA data to file for given client
+ *
+ * @param client Pointer to client whose data should be dumped.
+ * @param filename Pointer to filename.
+ * @return Void
+ */
 int dumpdata(struct client_table_entry* client, char *filename);
-void update_warmup(struct client_table_entry *client, int value);
+
+/** @brief Sets a new warm-up time for a given SENSOR.
+ *
+ * @param client Pointer to client whose warm-up time to be given new value.
+ * @param value New warm-up time in seconds.
+ * @return Void
+ */
+void set_warmup(struct client_table_entry *client, int value);
 
 #endif /* !ACTIONS_H */

@@ -18,8 +18,8 @@
 #include "list.h"
 #include "config.h"
 
-/** @brief	Terminates program and prints the line
- *			number where die was called from.
+/** @brief Terminates program and prints the line
+ *		   number where die was called from.
  *
  *  @param line_number Line number where die() was written
  *  @param format String with error description.

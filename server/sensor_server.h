@@ -32,6 +32,17 @@ extern struct server_config *s_conf;
 
 void remove_client_by_id(int id);
 struct client_table_entry* get_client_by_id(int id);
+
+/** @brief Prints information about the server.
+ *
+ * Transmits info about the server:
+ * Time when started, PID, number of clients, 
+ * number of sensors, max number of clients, 
+ * sensor warm-up time and version. 
+ * 
+ * @param client MONITOR who made the request.
+ * @return Void
+ */
 void print_server_data(struct client_table_entry *monitor);
 
 #endif /* !SENSOR_SERVER_H */

@@ -1,5 +1,10 @@
 #include "session.h"
 
+#define ID_MAX 1000
+#define CLIENT_TIMEOUT 5
+#define MONITOR_TIMEOUT 1000
+#define UNIDENTIFIED_TIMEOUT 100
+
 /* 
 * Used by spawned client processes to "mark" that their NMEA
 * data is ready for processing. Works as a barrier in a way.
@@ -241,17 +246,17 @@ int parse_input(struct client_table_entry *cte)
     }
 
     /* UPDATE WARMUP */
-    else if(strstr((char*)incoming, PROTOCOL_UPDATE_WARMUP ) == (incoming)) {
-        int length = (strlen(incoming) - strlen(PROTOCOL_UPDATE_WARMUP) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_UPDATE_WARMUP)*(sizeof(char))), length);
-        cte->cm.code = CODE_UPDATE_WARMUP;
+    else if(strstr((char*)incoming, PROTOCOL_SET_WARMUP ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_SET_WARMUP) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_SET_WARMUP)*(sizeof(char))), length);
+        cte->cm.code = CODE_SET_WARMUP;
     } 
 
     /* UPDATE WARMUP SHORT */
-    else if(strstr((char*)incoming, PROTOCOL_UPDATE_WARMUP_SHORT ) == (incoming)) {
-        int length = (strlen(incoming) - strlen(PROTOCOL_UPDATE_WARMUP_SHORT) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_UPDATE_WARMUP_SHORT)*(sizeof(char))), length);
-        cte->cm.code = CODE_UPDATE_WARMUP;
+    else if(strstr((char*)incoming, PROTOCOL_SET_WARMUP_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_SET_WARMUP_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_SET_WARMUP_SHORT)*(sizeof(char))), length);
+        cte->cm.code = CODE_SET_WARMUP;
     }  
 
     /* PRINTCLIENTS */
@@ -523,8 +528,8 @@ static int respond(struct client_table_entry *cte)
             print_avg_diff(cte);
         }
 
-        else if(cte->cm.code == CODE_UPDATE_WARMUP) {
-            update_warmup(cte, cte->cm.id_parameter);
+        else if(cte->cm.code == CODE_SET_WARMUP) {
+            set_warmup(cte, cte->cm.id_parameter);
         }
 
         else{
@@ -556,7 +561,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->ready = 0;
 
     /* Setting timeout */
-    struct timeval timeout = {2, 0};
+    struct timeval timeout = {UNIDENTIFIED_TIMEOUT, 0};
     if(!set_timeout(new_client, timeout)){
         t_print("Failed to set timeout for client\n");
     }

@@ -5,7 +5,11 @@
 #include <semaphore.h>
 #include "colors.h"
 
-/* STRUCTS */
+#define SERVER_TABLE_LABEL "SERVER DATA\n"
+#define HORIZONTAL_BAR "==================================================================================\n"
+#define ERROR_NO_CLIENT "ERROR: NO SUCH CLIENT\n"
+#define MAX_FILENAME_SIZE 30
+#define ID_AS_STRING_MAX 4
 
 /*
 * command_code struct is used by the parser
