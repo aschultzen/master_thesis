@@ -1,7 +1,7 @@
 /**
  * @file sensor_server.h
  * @author Aril Schultzen
- * @date 9.10.2015
+ * @date 13.04.2016
  * @brief File containing function prototypes, structs and includes for sensor_server.c
  */
 

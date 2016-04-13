@@ -27,7 +27,6 @@
 
 /* GENERAL */
 #define IO_BUFFER_SIZE MAX_PARAMETER_SIZE
-#define CONNECTION_ATTEMPTS_MAX 10
 
 struct transmission_s{
 	int session_fd;

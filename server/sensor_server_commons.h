@@ -1,3 +1,10 @@
+/**
+ * @file sensor_server_commons.h
+ * @author Aril Schultzen
+ * @date 13.04.2016
+ * @brief File containing structs and defines used by session.c, analyzer.c, sensors_server.c and actions.c
+ */
+
 #ifndef SENSOR_SERVER_COMMONS_H
 #define SENSOR_SERVER_COMMONS_H
 
@@ -36,24 +43,26 @@ struct command_code{
 * are parsed by command parser.
 */
 
+/*!@struct*/
+/*!@brief Contain information about every client that is connected. 
+*/
 struct client_table_entry{ 
-	struct list_head list;
+	struct list_head list; /** The head in the list of clients */
 	struct transmission_s transmission;
 	struct timeval heartbeat_timeout;
 	struct command_code cm;
 	struct nmea_container nmea;
-	pid_t pid;
-	time_t timestamp;
-	time_t warmup_started;				
-	int client_id;							
-	int client_type;							
-	int warmup;
-	int moved;
-	int ready;
-	int was_moved;
-	int marked_for_kick;
-	int dumploc;
- 	char ip[INET_ADDRSTRLEN];
+	pid_t pid; /** The process ID */
+	time_t timestamp; /** When last analyzed */
+	time_t warmup_started; /** When warm-up of SENSOR started */			
+	int client_id; /** Clients ID */					
+	int client_type; /** Client type, SENSOR or MONITOR */							
+	int warmup; /** Currently warming up status */
+	int moved; /** Moved status */
+	int ready;	/** Ready status */
+	int was_moved;	/** Moved when last checked. Used to check if returned */
+	int marked_for_kick; /** Marked for kicked at next opportunity */ 
+ 	char ip[INET_ADDRSTRLEN]; /** Clients IP address */
 };
 
 /* Server info shared with processes */

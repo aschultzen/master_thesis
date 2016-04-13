@@ -556,7 +556,6 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->moved = 0;
     new_client->was_moved = 0;
     new_client->marked_for_kick = 0;
-    new_client->dumploc = 0;
     new_client->ready = 0;
 
     /* Setting timeout */
