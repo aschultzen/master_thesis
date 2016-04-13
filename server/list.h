@@ -1,5 +1,14 @@
 /**
- * 
+ * @author kazutomo@mcs.anl.gov
+ * @file list.h
+ * @brief Linked list implementation from linux kernel source code. 
+ *
+ * This code was lifted from http://www.mcs.anl.gov/~kazutomo/list/.
+ * I stumbled upon when writing when writing a Linux clone autumn 15',
+ * and tested it in this project. It is planned to be replaced by something
+ * smaller. 
+ * Kazutomo's description:
+ *
  * I grub it from linux kernel source code and fix it for user space
  * program. Of course, this is a GPL licensed header file.
  *
@@ -14,6 +23,7 @@
  *
  * - kazutomo@mcs.anl.gov
  */
+
 #ifndef _LINUX_LIST_H
 #define _LINUX_LIST_H
 
