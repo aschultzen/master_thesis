@@ -11,7 +11,7 @@ void die (int line_number, const char * format, ...)
 }
 
 /* 
-* Extracts IP adress from sockaddr struct.
+* Extracts IP address from sockaddr struct.
 * Supports both IPV4 and IPV6
 */
 void extract_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
@@ -126,7 +126,7 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
     return 1;
 }
 
-int calculate_nmea_checksum(char *s) {
+int calculate_nmea_checksum(char *nmea) {
     char checksum = 0;
     int i;
     int received_checksum = 0;
@@ -137,11 +137,11 @@ int calculate_nmea_checksum(char *s) {
     char substring[100] = {0};
 
     /* Finding end (*) and calculate length */
-    char *substring_end = strstr(s, "*");
-    int length = substring_end - (s+1);
+    char *substring_end = strstr(nmea, "*");
+    int length = substring_end - (nmea+1);
 
     /* Copying the substring */
-    memcpy(substring, s+1, length);
+    memcpy(substring, nmea+1, length);
 
     /* Calculating checksum */
     for(i = 0; i < length; i++){
@@ -155,17 +155,17 @@ int calculate_nmea_checksum(char *s) {
     sscanf(substring, "%d", &calculated_checksum);
 
     /* Fetching received checksum */
-    memcpy(substring, substring_end+1, strlen(s));
+    memcpy(substring, substring_end+1, strlen(nmea));
 
     /* Converting received checksum to int*/
     sscanf(substring, "%d", &received_checksum);
 
     /* Comparing checksum */
     if(received_checksum == calculated_checksum){
-        return 0;    
+        return 1;    
     }
     else{
-        return -1;
+        return 0;
     }
     
 }
@@ -178,26 +178,20 @@ int calculate_nmea_checksum(char *s) {
 * string -> Input
 * buffer -> To transport the string
 */
-int word_extractor(int delim_num_1, int delim_num_2, char delimiter, char *buffer, int buffsize, char *string, int str_len)
+int substring_extractor(int start, int end, char delimiter, char *buffer, int buffsize, char *string, int str_len)
 {
     int i;
     int delim_counter = 0;
     int buffer_index = 0;
 
-    /* 
-    * Some ending i dont understand yet.
-    * Its probably some garbage from the terminal,
-    * when analyzing it as hex it turned out
-    * to end with 1310
-    */
-    int MYSTERY_ENDING = 13;
+    const int MYSTERY_ENDING = 13;
 
     bzero(buffer, buffsize);
 
     for(i = 0; i < str_len; i++){
         /* Second delim (end) reached, stopping. */
-        if(delim_counter == delim_num_2 || (int)string[i] == MYSTERY_ENDING) {
-            return 0;
+        if(delim_counter == end || (int)string[i] == MYSTERY_ENDING) {
+            return 1;
         }
 
         if(string[i] == delimiter){
@@ -205,12 +199,12 @@ int word_extractor(int delim_num_1, int delim_num_2, char delimiter, char *buffe
         }
         else{
             /* The first delim is reached */
-            if(delim_counter >= delim_num_1){
+            if(delim_counter >= start){
                 buffer[buffer_index] = string[i];
                 buffer_index++;
             }  
         }
     }
-    /* Reached end of string without encountering delim_num_2 */
-    return -1;
+    /* Reached end of string without encountering end */
+    return 0;
 }

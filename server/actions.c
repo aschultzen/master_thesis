@@ -26,7 +26,7 @@ void print_client_time(struct client_table_entry *monitor, struct client_table_e
     char buffer[buffsize];
     memset(&buffer, 0, buffsize);
 
-    word_extractor(RMC_TIME_START,RMC_TIME_START + 1,',',buffer, buffsize,client->nmea.raw_rmc, strlen(client->nmea.raw_rmc));
+    substring_extractor(RMC_TIME_START,RMC_TIME_START + 1,',',buffer, buffsize,client->nmea.raw_rmc, strlen(client->nmea.raw_rmc));
     s_write(&(monitor->transmission), buffer, 12);
     s_write(&(monitor->transmission), "\n", 1);
 }

@@ -31,19 +31,19 @@ static void extract_nmea_data(struct client_table_entry *cte)
     memset(&buffer, 0, buffsize);
 
     /* Extracting latitude */
-    word_extractor(LATITUDE_START,LATITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
+    substring_extractor(LATITUDE_START,LATITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
     cte->nmea.lat_current = atof(buffer);
 
     /* Extracting longitude */
-    word_extractor(LONGITUDE_START,LONGITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
+    substring_extractor(LONGITUDE_START,LONGITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
     cte->nmea.lon_current = atof(buffer);
 
     /* Extracting altitude */
-    word_extractor(ALTITUDE_START,ALTITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_gga, strlen(cte->nmea.raw_gga));
+    substring_extractor(ALTITUDE_START,ALTITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_gga, strlen(cte->nmea.raw_gga));
     cte->nmea.alt_current = atof(buffer);
 
     /* Extracting speed */
-    word_extractor(SPEED_START,SPEED_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
+    substring_extractor(SPEED_START,SPEED_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
     cte->nmea.speed_current = atof(buffer);
 }
 
@@ -396,7 +396,7 @@ static int respond(struct client_table_entry *cte)
             /* Checking NMEA checksum */
             int rmc_checksum = calculate_nmea_checksum(cte->nmea.raw_rmc);
             int gga_checksum = calculate_nmea_checksum(cte->nmea.raw_gga);
-            if(rmc_checksum == 0 && gga_checksum == 0) {
+            if(rmc_checksum && gga_checksum) {
                 cte->timestamp = time(NULL);
                 cte->nmea.checksum_passed = 1;
                 extract_nmea_data(cte);
@@ -494,13 +494,13 @@ static int respond(struct client_table_entry *cte)
             bzero(id_buffer, ID_AS_STRING_MAX);
             bzero(filename, filename_buffer_size);
 
-            word_extractor(2,3, ' ', filename, filename_buffer_size,cte->cm.parameter, MAX_FILENAME_SIZE);
+            substring_extractor(2,3, ' ', filename, filename_buffer_size,cte->cm.parameter, MAX_FILENAME_SIZE);
 
             if(strlen(filename) == 0){
                 target_id = atoi(cte->cm.parameter);
             }
             else{
-                word_extractor(1,2, ' ', id_buffer, ID_AS_STRING_MAX,cte->cm.parameter, ID_AS_STRING_MAX);
+                substring_extractor(1,2, ' ', id_buffer, ID_AS_STRING_MAX,cte->cm.parameter, ID_AS_STRING_MAX);
                 target_id = atoi(id_buffer);
             }
 
