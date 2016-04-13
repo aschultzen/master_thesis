@@ -1,6 +1,5 @@
 #include "session.h"
 
-#define ID_MAX 1000
 #define CLIENT_TIMEOUT 5
 #define MONITOR_TIMEOUT 1000
 #define UNIDENTIFIED_TIMEOUT 100

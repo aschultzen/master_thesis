@@ -20,9 +20,6 @@ struct config_map_entry conf_map[1];
 struct config {
 	char serial_interface[100];
 	int client_id;
-} __attribute__ ((packed));
-
-struct config cfg;
-
+};
 
 #endif /* !SENSOR_CLIENT_H */

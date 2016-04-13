@@ -9,6 +9,6 @@ struct config_map_entry {
 	char *entry_name;
 	char *modifier;
 	void *destination;
-} __attribute__ ((packed));
+};
 
 #endif /* !CONFIG_H */

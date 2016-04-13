@@ -1,3 +1,10 @@
+/**
+ * @file sensor_server.h
+ * @author Aril Schultzen
+ * @date 9.10.2015
+ * @brief File containing function prototypes, structs and includes for sensor_server.c
+ */
+
 #ifndef SENSOR_SERVER_H
 #define SENSOR_SERVER_H
 
@@ -7,16 +14,13 @@
 #include "serial.h"
 #include "sensor_server_commons.h"
 
-/* 
-* CONFIG STRUCT
-* 
-* Used as container for the config_loader function
-* config_server_max_connections: max number of permitted connections
+/*!@struct*/
+/*!@brief Contains configuration values for the server
 */
 struct server_config {
 	int max_clients;
-	int warm_up_seconds;
-} __attribute__ ((packed));
+	int warm_up_seconds; 
+};
 
 /* 
 * Made extern because the sessions should
@@ -31,6 +35,15 @@ extern struct server_synchro *s_synch;
 extern struct server_config *s_conf;
 
 void remove_client_by_id(int id);
+
+/** @brief Returns a client whose ID matches parameter
+ * 
+ * Iterates through the linked list and returns
+ * a pointer to the client_table_entry struct in the 
+ * list that corresponds with the parameter.
+ * @param id ID for the client
+ * @return client_table_entry *
+ */
 struct client_table_entry* get_client_by_id(int id);
 
 /** @brief Prints information about the server.

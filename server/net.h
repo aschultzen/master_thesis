@@ -32,7 +32,7 @@
 struct transmission_s{
 	int session_fd;
 	char iobuffer[IO_BUFFER_SIZE]; 
-} __attribute__ ((packed));
+};
 
 int s_read(struct transmission_s *tsm);
 int s_write(struct transmission_s *tsm, char *message, int length);

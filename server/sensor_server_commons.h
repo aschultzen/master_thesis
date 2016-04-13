@@ -20,7 +20,7 @@ struct command_code{
 	int code;
 	char parameter[MAX_PARAMETER_SIZE];
 	int id_parameter;
-} __attribute__ ((packed));
+};
 
 /*
 * CLIENT TABLE STRUCT 
@@ -54,7 +54,7 @@ struct client_table_entry{
 	int marked_for_kick;
 	int dumploc;
  	char ip[INET_ADDRSTRLEN];
-} __attribute__ ((packed));
+};
 
 /* Server info shared with processes */
 struct server_data{
@@ -63,14 +63,14 @@ struct server_data{
 	time_t started;			/* When the server was started */
 	pid_t pid;
 	char version[4];
-} __attribute__ ((packed));
+};
 
 /* Synchronization elements shared with processes */
 struct server_synchro{
 	sem_t ready_mutex;
 	sem_t client_list_mutex;
 	volatile int ready_counter;
-} __attribute__ ((packed));
+};
 
 /* 
 * Roles of client, either SENSOR or MONITOR. 

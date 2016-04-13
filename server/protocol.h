@@ -4,7 +4,7 @@
 /* CONSTRAINS */
 #define MAX_COMMAND_SIZE 20
 #define MAX_PARAMETER_SIZE 2048 //2 KiB for good measure 	
-
+#define ID_MAX 1000
 #define MIN_COMMAND_SIZE 2
 #define MIN_PARAMETER_SIZE 0
 

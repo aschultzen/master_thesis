@@ -156,6 +156,8 @@ static int start_client(int portno, char* ip)
     struct nmea_container nmea_c;
     memset(&nmea_c, 0, sizeof(nmea_c));
 
+    struct config cfg;
+
     initialize_config(conf_map, &cfg);
     int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
     if(!load_config_status){
