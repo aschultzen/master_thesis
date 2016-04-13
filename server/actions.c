@@ -81,6 +81,7 @@ void print_clients(struct client_table_entry *monitor)
     int snprintf_status = 0;
     char *c_type = "SENSOR";
     char *modifier = "";
+    int time_left = 0;
 
     struct client_table_entry* client_list_iterate;
     s_write(&(monitor->transmission), CLIENT_TABLE_LABEL, sizeof(CLIENT_TABLE_LABEL));
@@ -93,8 +94,12 @@ void print_clients(struct client_table_entry *monitor)
             c_type = "SENSOR";
         }
 
-        double elapsed_warmup = difftime(time(NULL), client_list_iterate->warmup_started);
-        int time_left = s_conf->warm_up_seconds - elapsed_warmup;
+        if(client_list_iterate->client_type == SENSOR){
+            double elapsed_warmup = difftime(time(NULL), client_list_iterate->warmup_started);
+            time_left = s_conf->warm_up_seconds - elapsed_warmup;
+        }else{
+            time_left = 0;
+        }
 
         if(monitor->client_id == client_list_iterate->client_id){
             modifier = BOLD_GRN_BLK;

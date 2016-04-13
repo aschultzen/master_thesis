@@ -1,7 +1,7 @@
 /**
  * @file utils.h
  * @author Aril Schultzen
- * @date 10.11.2015
+ * @date 13.04.2016
  * @brief File containing function prototypes and includes for utils.c
  */
 

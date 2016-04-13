@@ -34,6 +34,13 @@ extern struct server_data *s_data;
 extern struct server_synchro *s_synch;
 extern struct server_config *s_conf;
 
+/** @brief Removes a client whose ID matches parameter
+ * 
+ * Iterates through the linked list and removes the 
+ * node containing the client whose ID matches the parameter.
+ * @param id ID for the client
+ * @return Void
+ */
 void remove_client_by_id(int id);
 
 /** @brief Returns a client whose ID matches parameter
