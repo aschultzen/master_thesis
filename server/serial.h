@@ -16,9 +16,9 @@
 #include "protocol.h"
 
 typedef enum e_serial_device {
-	GPS,
-	CSAC
-}serial_device;
+    GPS,
+    CSAC
+} serial_device;
 
 int open_serial(char *portname, serial_device device);
 

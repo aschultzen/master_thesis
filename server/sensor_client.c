@@ -1,5 +1,22 @@
 #include "sensor_client.h"
 
+/* CONFIG */
+#define CONFIG_SERIAL_INTERFACE "serial_interface:"
+#define CONFIG_CLIENT_ID "client_id:"
+#define CONFIG_ENTRIES 2
+#define CONFIG_FILE_PATH "client_config.ini"
+#define DEFAULT_SERIAL_INTERFACE "/dev/ttyACM0"
+struct config_map_entry conf_map[1];
+
+static int identify(int session_fd, int id);
+static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno);
+static void receive_nmea(int gps_serial, struct nmea_container *nmea_c);
+static int send_nmea(int session_fd, struct nmea_container *nmea_c);
+static void initialize_config(struct config_map_entry *conf_map, struct config *cfg);
+static int start_client(int portno, char* ip);
+static int usage(char *argv[]);
+
+
 /* Identify the client for the server */
 static int identify(int session_fd, int id)
 {
@@ -38,7 +55,7 @@ static int identify(int session_fd, int id)
 static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno)
 {
     if((*session_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("Could not create socket\n");
+        t_print("Could not create socket\n");
         return -1;
     }
 
@@ -48,7 +65,7 @@ static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, cha
     serv_addr->sin_port = htons(portno);
 
     if(inet_pton(AF_INET, ip, &(serv_addr->sin_addr))<=0) {
-        printf("inet_pton error occured!\n");
+        t_print("inet_pton error occured!\n");
         return 1;
     }
 
@@ -70,26 +87,26 @@ static void receive_nmea(int gps_serial, struct nmea_container *nmea_c)
     bool gga = false;
 
     /* Get a load of THIS timebomb!! */
-    while(1){
+    while(1) {
         while(position < 100) {
             read(gps_serial, buffer+position, 1);
             if( buffer[position] == '\n' ) break;
             position++;
-        }    
+        }
 
-        if(strstr(buffer, RMC ) != NULL){
+        if(strstr(buffer, RMC ) != NULL) {
             memcpy(nmea_c->raw_rmc, buffer, position+1);
             nmea_c->raw_rmc[position + 2] = '\0';
             rmc = true;
         }
 
-        if(strstr(buffer, GGA ) != NULL){
+        if(strstr(buffer, GGA ) != NULL) {
             memcpy(nmea_c->raw_gga, buffer, position+1);
             nmea_c->raw_rmc[position + 2] = '\0';
             gga = true;
         }
 
-        if(rmc && gga){
+        if(rmc && gga) {
             break;
         }
         position = 0;
@@ -130,7 +147,8 @@ static int send_nmea(int session_fd, struct nmea_container *nmea_c)
 }
 
 /* Setting up the config structure specific for the server */
-static void initialize_config(struct config_map_entry *conf_map, struct config *cfg){
+static void initialize_config(struct config_map_entry *conf_map, struct config *cfg)
+{
     conf_map[0].entry_name = CONFIG_SERIAL_INTERFACE;
     conf_map[0].modifier = FORMAT_STRING;
     conf_map[0].destination = &cfg->serial_interface;
@@ -160,10 +178,10 @@ static int start_client(int portno, char* ip)
 
     initialize_config(conf_map, &cfg);
     int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
-    if(!load_config_status){
+    if(!load_config_status) {
         t_print("Failed to load the config, using default values\n");
         memcpy(cfg.serial_interface, DEFAULT_SERIAL_INTERFACE, strlen(DEFAULT_SERIAL_INTERFACE)*sizeof(char));
-    }else{
+    } else {
         if(cfg.client_id == 0 || cfg.client_id > ID_MAX) {
             t_print("Client ID can not be less than 1 or more than %d!\n", ID_MAX);
             exit(0);
@@ -172,11 +190,10 @@ static int start_client(int portno, char* ip)
 
     /* Establishing connection to GPS receiver */
     int gps_serial = open_serial(cfg.serial_interface, GPS);
-    if(gps_serial == -1){
+    if(gps_serial == -1) {
         t_print("Connection to GPS receiver failed! Exiting...\n");
         exit(0);
-    }
-    else{
+    } else {
         t_print("Connection to GPS receiver established!\n");
     }
 
@@ -206,7 +223,7 @@ static int start_client(int portno, char* ip)
 
 static int usage(char *argv[])
 {
-    printf("Usage: %s -s <SERVER IP> -p <SERVER PORT>\n", argv[0]);
+    t_print("Usage: %s -s <SERVER IP> -p <SERVER PORT>\n", argv[0]);
     return 0;
 }
 
@@ -240,7 +257,7 @@ int main(int argc, char *argv[])
     }
 
     if(ip_address == NULL || port_number == NULL) {
-        printf("Missing parameters!\n");
+        t_print("Missing parameters!\n");
         exit(0);
     }
 

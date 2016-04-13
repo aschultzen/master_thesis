@@ -18,52 +18,52 @@
 #define HIGH 1
 #define LOW -1
 
-struct nmea_container{
-	/* Raw data */
-	char raw_gga[SENTENCE_LENGTH];
-	char raw_rmc[SENTENCE_LENGTH];
+struct nmea_container {
+    /* Raw data */
+    char raw_gga[SENTENCE_LENGTH];
+    char raw_rmc[SENTENCE_LENGTH];
 
-	/* Latitude */
-	double lat_current;
-	double lat_low;
-	double lat_high;
-	double lat_average;
-	double lat_avg_diff;
-	double lat_total;
-	int lat_disturbed;
+    /* Latitude */
+    double lat_current;
+    double lat_low;
+    double lat_high;
+    double lat_average;
+    double lat_avg_diff;
+    double lat_total;
+    int lat_disturbed;
 
-	/* Longitude */
-	double lon_current;
-	double lon_low;
-	double lon_high;
-	double lon_average;
-	double lon_avg_diff;
-	double lon_total;
-	int lon_disturbed;
+    /* Longitude */
+    double lon_current;
+    double lon_low;
+    double lon_high;
+    double lon_average;
+    double lon_avg_diff;
+    double lon_total;
+    int lon_disturbed;
 
-	/* Altitude */
-	double alt_current;
-	double alt_low;
-	double alt_high;
-	double alt_average;
-	double alt_avg_diff;
-	double alt_total;
-	int alt_disturbed;
+    /* Altitude */
+    double alt_current;
+    double alt_low;
+    double alt_high;
+    double alt_average;
+    double alt_avg_diff;
+    double alt_total;
+    int alt_disturbed;
 
-	/* Speed */
-	double speed_current;
-	double speed_low;
-	double speed_high;
-	double speed_average;
-	double speed_avg_diff;
-	double speed_total;
-	int speed_disturbed;
+    /* Speed */
+    double speed_current;
+    double speed_low;
+    double speed_high;
+    double speed_average;
+    double speed_avg_diff;
+    double speed_total;
+    int speed_disturbed;
 
-	/* CHECKSUM */
-	int checksum_passed;
+    /* CHECKSUM */
+    int checksum_passed;
 
-	/* COUNTER FOR AVERAGE */
-	int n_samples;
+    /* COUNTER FOR AVERAGE */
+    int n_samples;
 };
 
 #endif /* !NMEA_H */

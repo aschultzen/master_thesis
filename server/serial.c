@@ -52,12 +52,12 @@ void set_blocking (int fd, int should_block, struct termios *tty)
         printf ("error %d setting term attributes", errno);
 }
 
-/* 
+/*
 * As of 7.1.16 this is broken since both
 * static char *serial_display_connections;
 * static char *serial_display_message;
 * where both removed. There is however, a new structure
-* that should be usable. 
+* that should be usable.
 */
 
 int configure_gps_serial(int fd)
@@ -85,7 +85,7 @@ int configure_gps_serial(int fd)
     tty.c_cc[VMIN] = 0;
     tty.c_cc[VTIME] = 0;
 
-    if (tcsetattr (fd, TCSANOW, &tty) != 0){
+    if (tcsetattr (fd, TCSANOW, &tty) != 0) {
         printf ("error %d setting term attributes", errno);
         return -1;
     }
@@ -99,13 +99,13 @@ int open_serial(char *portname, serial_device device)
         t_print ("Error %d opening %s: %s\n", errno, portname, strerror (errno));
     }
 
-    if(device == GPS){
-        if(configure_gps_serial(fd) < 0){
+    if(device == GPS) {
+        if(configure_gps_serial(fd) < 0) {
             exit(0);
-        } 
+        }
     }
 
     return fd;
 }
-    
+
 

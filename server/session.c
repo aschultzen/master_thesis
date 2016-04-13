@@ -4,7 +4,19 @@
 #define MONITOR_TIMEOUT 1000
 #define UNIDENTIFIED_TIMEOUT 100
 
-/* 
+static int nmea_ready();
+static void extract_nmea_data(struct client_table_entry *cte);
+static void calculate_nmea_average(struct client_table_entry *cte);
+static void calculate_nmea_diff(struct client_table_entry *cte);
+static void verify_warm_up(struct client_table_entry *cte);
+static void verify_warm_up(struct client_table_entry *cte);
+static void warm_up(struct client_table_entry *cte);
+static int set_timeout(struct client_table_entry *target, struct timeval h_timeout);
+static int parse_input(struct client_table_entry *cte);
+static int respond(struct client_table_entry *cte);
+
+
+/*
 * Used by spawned client processes to "mark" that their NMEA
 * data is ready for processing. Works as a barrier in a way.
 */
@@ -16,13 +28,13 @@ static int nmea_ready()
 
     list_for_each_entry_safe(client_list_iterate, temp, &client_list->list, list) {
         if(client_list_iterate->ready == 1) {
-             ready++;
+            ready++;
         }
     }
-    if(ready == s_data->number_of_sensors){
+    if(ready == s_data->number_of_sensors) {
         return 1;
     }
-    else{
+    else {
         return 0;
     }
 }
@@ -69,8 +81,8 @@ static void calculate_nmea_average(struct client_table_entry *cte)
     cte->nmea.speed_average = ( cte->nmea.speed_total / cte->nmea.n_samples );
 }
 
-/* 
-* Calculate the diff between current 
+/*
+* Calculate the diff between current
 * NMEA values and the average values.
 */
 static void calculate_nmea_diff(struct client_table_entry *cte)
@@ -84,15 +96,15 @@ static void calculate_nmea_diff(struct client_table_entry *cte)
 /* Check if a client is still warming up */
 static void verify_warm_up(struct client_table_entry *cte)
 {
-    if(cte->warmup_started){
+    if(cte->warmup_started) {
         double elapsed = difftime(time(NULL), cte->warmup_started);
         double percent = (elapsed / s_conf->warm_up_seconds) * 100;
 
-        if((int)percent % 10 == 0){
+        if((int)percent % 10 == 0) {
             t_print("Client %d Warming up, %d%%\n", cte->client_id, (int)percent);
         }
 
-        if(elapsed >= s_conf->warm_up_seconds){
+        if(elapsed >= s_conf->warm_up_seconds) {
             t_print("Client %d, warm-up finished!\n", cte->client_id);
             cte->warmup = 0;
         }
@@ -107,43 +119,43 @@ static void verify_warm_up(struct client_table_entry *cte)
 static void warm_up(struct client_table_entry *cte)
 {
     /* Updating latitude */
-    if(cte->nmea.lat_current > cte->nmea.lat_high){
+    if(cte->nmea.lat_current > cte->nmea.lat_high) {
         cte->nmea.lat_high = cte->nmea.lat_current;
     }
 
-    if(cte->nmea.lat_current < cte->nmea.lat_low){
+    if(cte->nmea.lat_current < cte->nmea.lat_low) {
         cte->nmea.lat_low = cte->nmea.lat_current;
     }
 
     /* Updating longitude */
-    if(cte->nmea.lon_current > cte->nmea.lon_high){
+    if(cte->nmea.lon_current > cte->nmea.lon_high) {
         cte->nmea.lon_high = cte->nmea.lon_current;
     }
 
-    if(cte->nmea.lon_current < cte->nmea.lon_low){
+    if(cte->nmea.lon_current < cte->nmea.lon_low) {
         cte->nmea.lon_low = cte->nmea.lon_current;
     }
 
     /* Updating altitude */
-    if(cte->nmea.alt_current > cte->nmea.alt_high){
+    if(cte->nmea.alt_current > cte->nmea.alt_high) {
         cte->nmea.alt_high = cte->nmea.alt_current;
     }
 
-    if(cte->nmea.alt_current < cte->nmea.alt_low){
+    if(cte->nmea.alt_current < cte->nmea.alt_low) {
         cte->nmea.alt_low = cte->nmea.alt_current;
     }
 
     /* Updating speed */
-    if(cte->nmea.speed_current > cte->nmea.speed_high){
+    if(cte->nmea.speed_current > cte->nmea.speed_high) {
         cte->nmea.speed_high = cte->nmea.speed_current;
     }
 
-    if(cte->nmea.speed_current < cte->nmea.speed_low){
+    if(cte->nmea.speed_current < cte->nmea.speed_low) {
         cte->nmea.speed_low = cte->nmea.speed_current;
     }
 }
 
-int set_timeout(struct client_table_entry *target, struct timeval h_timeout)
+static int set_timeout(struct client_table_entry *target, struct timeval h_timeout)
 {
     /* setsockopt return -1 on error and 0 on success */
     target->heartbeat_timeout = h_timeout;
@@ -157,14 +169,14 @@ int set_timeout(struct client_table_entry *target, struct timeval h_timeout)
 
 /*
 * Parses input from clients. Return value indicates status.
-* Uses the command_code struct to convey parameter and command code. 
+* Uses the command_code struct to convey parameter and command code.
 *
 * Returns -1 if size is wrong
 * Returns 0 if protocol is not followed
 * Returns 1 if all is ok
 */
 
-int parse_input(struct client_table_entry *cte)
+static int parse_input(struct client_table_entry *cte)
 {
     char *incoming = cte->transmission.iobuffer;
 
@@ -186,7 +198,7 @@ int parse_input(struct client_table_entry *cte)
     /* NMEA */
     if(strstr((char*)incoming, PROTOCOL_NMEA ) == (incoming)) {
         cte->cm.code = CODE_NMEA;
-    }  
+    }
 
     /* IDENTIFY */
     else if(strstr((char*)incoming, PROTOCOL_IDENTIFY ) == (incoming)) {
@@ -221,21 +233,21 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(incoming) - strlen(PROTOCOL_PRINT_LOCATION) );
         memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINT_LOCATION)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINT_LOCATION;
-    } 
+    }
 
     /* PRINT_LOCATION_SHORT */
     else if(strstr((char*)incoming, PROTOCOL_PRINT_LOCATION_SHORT ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_PRINT_LOCATION_SHORT) );
         memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINT_LOCATION_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINT_LOCATION;
-    } 
+    }
 
     /* PRINTTIME */
     else if(strstr((char*)incoming, PROTOCOL_PRINTTIME ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_PRINTTIME) );
         memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINTTIME)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINTTIME;
-    } 
+    }
 
     /* WARMUP */
     else if(strstr((char*)incoming, PROTOCOL_WARMUP ) == (incoming)) {
@@ -249,24 +261,24 @@ int parse_input(struct client_table_entry *cte)
         int length = (strlen(incoming) - strlen(PROTOCOL_SET_WARMUP) );
         memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_SET_WARMUP)*(sizeof(char))), length);
         cte->cm.code = CODE_SET_WARMUP;
-    } 
+    }
 
     /* UPDATE WARMUP SHORT */
     else if(strstr((char*)incoming, PROTOCOL_SET_WARMUP_SHORT ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_SET_WARMUP_SHORT) );
         memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_SET_WARMUP_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_SET_WARMUP;
-    }  
+    }
 
     /* PRINTCLIENTS */
-    else if(strstr((char*)incoming, PROTOCOL_PRINTCLIENTS ) == (incoming) || 
-        strstr((char*)incoming, PROTOCOL_PRINTCLIENTS_SHORT ) == (incoming)) {
+    else if(strstr((char*)incoming, PROTOCOL_PRINTCLIENTS ) == (incoming) ||
+            strstr((char*)incoming, PROTOCOL_PRINTCLIENTS_SHORT ) == (incoming)) {
         cte->cm.code = CODE_PRINTCLIENTS;
     }
 
     /* PRINTSERVER */
-    else if(strstr((char*)incoming, PROTOCOL_PRINTSERVER ) == (incoming) || 
-        strstr((char*)incoming, PROTOCOL_PRINTSERVER_SHORT ) == (incoming)) {
+    else if(strstr((char*)incoming, PROTOCOL_PRINTSERVER ) == (incoming) ||
+            strstr((char*)incoming, PROTOCOL_PRINTSERVER_SHORT ) == (incoming)) {
         cte->cm.code = CODE_PRINTSERVER;
     }
 
@@ -276,30 +288,30 @@ int parse_input(struct client_table_entry *cte)
         memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_KICK)*(sizeof(char))), length);
         cte->cm.code = CODE_KICK;
     }
-  
+
     /* EXIT */
     else if(strstr((char*)incoming, PROTOCOL_EXIT ) == (incoming)) {
         cte->cm.code = CODE_DISCONNECT;
     }
 
     /* DISCONNECT */
-    else if(strstr((char*)incoming, PROTOCOL_DISCONNECT ) == (incoming) || 
-        strstr((char*)incoming, PROTOCOL_DISCONNECT_SHORT ) == (incoming)) {
+    else if(strstr((char*)incoming, PROTOCOL_DISCONNECT ) == (incoming) ||
+            strstr((char*)incoming, PROTOCOL_DISCONNECT_SHORT ) == (incoming)) {
         cte->cm.code = CODE_DISCONNECT;
-    } 
+    }
 
     /* HELP */
     else if(strstr((char*)incoming, PROTOCOL_HELP ) == (incoming)) {
         cte->cm.code = CODE_HELP;
-    } 
+    }
 
     /* PRINTAVGDIFF */
-    else if(strstr((char*)incoming, PROTOCOL_PRINTAVGDIFF ) == (incoming) || 
-        strstr((char*)incoming, PROTOCOL_PRINTAVGDIFF_SHORT ) == (incoming)) {
+    else if(strstr((char*)incoming, PROTOCOL_PRINTAVGDIFF ) == (incoming) ||
+            strstr((char*)incoming, PROTOCOL_PRINTAVGDIFF_SHORT ) == (incoming)) {
         cte->cm.code = CODE_PRINTAVGDIFF;
     }
 
-    else{
+    else {
         return 0;
     }
 
@@ -314,8 +326,8 @@ static int respond(struct client_table_entry *cte)
 {
     bzero(cte->cm.parameter, MAX_PARAMETER_SIZE);
     /* Only print ">" if client is monitor */
-    if(cte->client_id < 0){
-        s_write(&(cte->transmission), ">", 1);  
+    if(cte->client_id < 0) {
+        s_write(&(cte->transmission), ">", 1);
     }
 
     int read_status = s_read(&(cte->transmission)); /* Blocking */
@@ -324,7 +336,7 @@ static int respond(struct client_table_entry *cte)
         return 0;
     }
 
-    if(cte->marked_for_kick){
+    if(cte->marked_for_kick) {
         return 0;
     }
 
@@ -339,10 +351,10 @@ static int respond(struct client_table_entry *cte)
                 sizeof(ERROR_ILLEGAL_COMMAND));
     }
     /* PARSING OK, CONTINUING */
-    else{
+    else {
         s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
 
-        /* Comparing CODES to determine the correct action */    
+        /* Comparing CODES to determine the correct action */
         if(cte->cm.code == CODE_DISCONNECT) {
             t_print("Client %d requested DISCONNECT.\n", cte->client_id);
             s_write(&(cte->transmission), PROTOCOL_GOODBYE, sizeof(PROTOCOL_GOODBYE));
@@ -354,7 +366,7 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_IDENTIFY) {
-            if(cte->cm.id_parameter == 0){
+            if(cte->cm.id_parameter == 0) {
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
                 return 0;
             }
@@ -377,7 +389,7 @@ static int respond(struct client_table_entry *cte)
             } else {
                 cte->client_type = SENSOR;
                 sem_wait(&(s_synch->client_list_mutex));
-                    s_data->number_of_sensors++;
+                s_data->number_of_sensors++;
                 sem_post(&(s_synch->client_list_mutex));
             }
             cte->client_id = cte->cm.id_parameter;
@@ -396,7 +408,7 @@ static int respond(struct client_table_entry *cte)
             char *gga_start = strstr(cte->transmission.iobuffer, GGA);
             memcpy(cte->nmea.raw_rmc, rmc_start, gga_start - rmc_start);
             memcpy(cte->nmea.raw_gga, gga_start, ( strlen(cte->transmission.iobuffer) - (rmc_start - cte->transmission.iobuffer) - (gga_start - rmc_start)));
-            
+
             /* Checking NMEA checksum */
             int rmc_checksum = calculate_nmea_checksum(cte->nmea.raw_rmc);
             int gga_checksum = calculate_nmea_checksum(cte->nmea.raw_gga);
@@ -406,14 +418,14 @@ static int respond(struct client_table_entry *cte)
                 extract_nmea_data(cte);
                 calculate_nmea_average(cte);
                 calculate_nmea_diff(cte);
-                if(cte->warmup){
+                if(cte->warmup) {
                     verify_warm_up(cte);
                     warm_up(cte);
-                }else{
+                } else {
                     cte->ready = 1;
                     sem_wait(&(s_synch->ready_mutex));
                     int ready = nmea_ready();
-                    if(ready){
+                    if(ready) {
                         analyze();
                     }
                     sem_post(&(s_synch->ready_mutex));
@@ -425,35 +437,35 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_PRINT_LOCATION) {
-            if(cte->cm.id_parameter == 0){
+            if(cte->cm.id_parameter == 0) {
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
             }
-            else{
+            else {
                 struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
-                if(candidate == NULL){
+                if(candidate == NULL) {
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-                }else{
-                    print_location(cte, candidate);   
-                }    
+                } else {
+                    print_location(cte, candidate);
+                }
             }
         }
 
         else if(cte->cm.code == CODE_WARMUP) {
-            if(cte->cm.id_parameter == 0){
+            if(cte->cm.id_parameter == 0) {
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
-            }else{
-                if(cte->cm.id_parameter > 0){
+            } else {
+                if(cte->cm.id_parameter > 0) {
                     struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
-                    if(candidate != NULL){
+                    if(candidate != NULL) {
                         restart_warmup(candidate);
-                    }else{
+                    } else {
                         s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
                     }
-                }else{
+                } else {
                     s_write(&(cte->transmission), ERROR_WARMUP_NOT_SENSOR, sizeof(ERROR_WARMUP_NOT_SENSOR));
                 }
             }
-        }        
+        }
 
         else if(cte->cm.code == CODE_PRINTCLIENTS) {
             print_clients(cte);
@@ -464,28 +476,28 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_PRINTTIME) {
-            if(cte->cm.id_parameter == 0){
+            if(cte->cm.id_parameter == 0) {
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-            }else{
+            } else {
                 struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
-                if(candidate != NULL){
+                if(candidate != NULL) {
                     print_client_time(cte, candidate);
-                }else{
+                } else {
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-                } 
-            }   
+                }
+            }
         }
 
         else if(cte->cm.code == CODE_KICK) {
-            if(cte->cm.id_parameter == 0){
+            if(cte->cm.id_parameter == 0) {
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-            }else{
+            } else {
                 struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
-                if(candidate == NULL){
-                    s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT)); 
+                if(candidate == NULL) {
+                    s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
                 }
-                else{
-                    kick_client(candidate);  
+                else {
+                    kick_client(candidate);
                 }
             }
         }
@@ -500,24 +512,24 @@ static int respond(struct client_table_entry *cte)
 
             substring_extractor(2,3, ' ', filename, filename_buffer_size,cte->cm.parameter, MAX_FILENAME_SIZE);
 
-            if(strlen(filename) == 0){
+            if(strlen(filename) == 0) {
                 target_id = atoi(cte->cm.parameter);
             }
-            else{
+            else {
                 substring_extractor(1,2, ' ', id_buffer, ID_AS_STRING_MAX,cte->cm.parameter, ID_AS_STRING_MAX);
                 target_id = atoi(id_buffer);
             }
 
-            if(!target_id){
+            if(!target_id) {
                 s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
-            }else{
+            } else {
                 struct client_table_entry* candidate = get_client_by_id(target_id);
-                if(candidate != NULL){
-                    if(!dumpdata(candidate,filename)){
+                if(candidate != NULL) {
+                    if(!dumpdata(candidate,filename)) {
                         s_write(&(cte->transmission), ERROR_DUMPDATA_FAILED, sizeof(ERROR_DUMPDATA_FAILED));
                     }
                 }
-                else{
+                else {
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
                 }
             }
@@ -531,7 +543,7 @@ static int respond(struct client_table_entry *cte)
             set_warmup(cte, cte->cm.id_parameter);
         }
 
-        else{
+        else {
             t_print("No action made for this part of the protocol\n");
         }
     }
@@ -560,7 +572,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
 
     /* Setting timeout */
     struct timeval timeout = {UNIDENTIFIED_TIMEOUT, 0};
-    if(!set_timeout(new_client, timeout)){
+    if(!set_timeout(new_client, timeout)) {
         t_print("Failed to set timeout for client\n");
     }
 

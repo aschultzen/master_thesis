@@ -9,7 +9,7 @@
 #define SENSOR_SERVER_H
 
 #include <fcntl.h>
-#include <sys/stat.h> 
+#include <sys/stat.h>
 #include "session.h"
 #include "serial.h"
 #include "sensor_server_commons.h"
@@ -18,11 +18,11 @@
 /*!@brief Contains configuration values for the server
 */
 struct server_config {
-	int max_clients;
-	int warm_up_seconds; 
+    int max_clients;
+    int warm_up_seconds;
 };
 
-/* 
+/*
 * Made extern because the sessions should
 * exit if the server is given a SIGINT/TERM
 */
@@ -35,8 +35,8 @@ extern struct server_synchro *s_synch;
 extern struct server_config *s_conf;
 
 /** @brief Removes a client whose ID matches parameter
- * 
- * Iterates through the linked list and removes the 
+ *
+ * Iterates through the linked list and removes the
  * node containing the client whose ID matches the parameter.
  * @param id ID for the client
  * @return Void
@@ -44,9 +44,9 @@ extern struct server_config *s_conf;
 void remove_client_by_id(int id);
 
 /** @brief Returns a client whose ID matches parameter
- * 
+ *
  * Iterates through the linked list and returns
- * a pointer to the client_table_entry struct in the 
+ * a pointer to the client_table_entry struct in the
  * list that corresponds with the parameter.
  * @param id ID for the client
  * @return client_table_entry *
@@ -56,10 +56,10 @@ struct client_table_entry* get_client_by_id(int id);
 /** @brief Prints information about the server.
  *
  * Transmits info about the server:
- * Time when started, PID, number of clients, 
- * number of sensors, max number of clients, 
- * sensor warm-up time and version. 
- * 
+ * Time when started, PID, number of clients,
+ * number of sensors, max number of clients,
+ * sensor warm-up time and version.
+ *
  * @param client MONITOR who made the request.
  * @return Void
  */

@@ -6,9 +6,9 @@
 #define FORMAT_STRING "%s"
 
 struct config_map_entry {
-	char *entry_name;
-	char *modifier;
-	void *destination;
+    char *entry_name;
+    char *modifier;
+    void *destination;
 };
 
 #endif /* !CONFIG_H */

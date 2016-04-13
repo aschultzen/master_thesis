@@ -24,10 +24,10 @@
 /** @brief Kicks a client (both MONITOR or SENSOR)
  *
  * Marks the client so respond() in session.c can
- * disconnect it the next time that client transmits 
+ * disconnect it the next time that client transmits
  * data. The kick is in other words not instant, this
- * is however an easy way to gracefully disconnect a 
- * client. 
+ * is however an easy way to gracefully disconnect a
+ * client.
  *
  * @param client Pointer to the client_table_entry for the candidate to be kicked.
  * @return Void
@@ -76,9 +76,9 @@ void print_location(struct client_table_entry *monitor, struct client_table_entr
 /** @brief Prints difference between current position and average.
  *
  * Prints the difference between the current position values
- * recorded from NMEA, and the calculated averages. 
+ * recorded from NMEA, and the calculated averages.
  * Two sensors in close proximity (100m >) should be
- * subjected to the same noise. If the difference between 
+ * subjected to the same noise. If the difference between
  * sensor A (current-avg) and sensor B (current-avg) changes,
  * this could mean that one of them is being spoofed.
  *
@@ -87,10 +87,10 @@ void print_location(struct client_table_entry *monitor, struct client_table_entr
  */
 void print_avg_diff(struct client_table_entry *monitor);
 
-/** @brief Restarts the warm-up procedure for the given SENSOR 
+/** @brief Restarts the warm-up procedure for the given SENSOR
  *
  * Sets the SENSORs warmup_started to NOW, warmup to 1 and ready to 0.
- * This "triggers" a restart of the warm-up procedure. 
+ * This "triggers" a restart of the warm-up procedure.
  *
  * @param client Pointer to client whose warm-up procedure to restart.
  * @return Void

@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -20,7 +20,7 @@
 #include <arpa/inet.h>
 #include <stdbool.h>
 
-/* My own header files */ 
+/* My own header files */
 #include "utils.h"
 #include "protocol.h"
 #include "nmea.h"
@@ -28,9 +28,9 @@
 /* GENERAL */
 #define IO_BUFFER_SIZE MAX_PARAMETER_SIZE
 
-struct transmission_s{
-	int session_fd;
-	char iobuffer[IO_BUFFER_SIZE]; 
+struct transmission_s {
+    int session_fd;
+    char iobuffer[IO_BUFFER_SIZE];
 };
 
 int s_read(struct transmission_s *tsm);

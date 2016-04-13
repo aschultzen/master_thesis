@@ -45,9 +45,9 @@
 
 void set_warmup(struct client_table_entry *client, int new_value)
 {
-    if(new_value > 0){
+    if(new_value > 0) {
         s_conf->warm_up_seconds = new_value;
-    }else{
+    } else {
         s_write(&(client->transmission), ERROR_UPDATE_WARMUP_ILLEGAL, sizeof(ERROR_UPDATE_WARMUP_ILLEGAL));
     }
 
@@ -94,19 +94,19 @@ void print_clients(struct client_table_entry *monitor)
             c_type = "SENSOR";
         }
 
-        if(client_list_iterate->client_type == SENSOR){
+        if(client_list_iterate->client_type == SENSOR) {
             double elapsed_warmup = difftime(time(NULL), client_list_iterate->warmup_started);
             time_left = s_conf->warm_up_seconds - elapsed_warmup;
-        }else{
+        } else {
             time_left = 0;
         }
 
-        if(monitor->client_id == client_list_iterate->client_id){
+        if(monitor->client_id == client_list_iterate->client_id) {
             modifier = BOLD_GRN_BLK;
-        }else{
+        } else {
             modifier = RESET;
         }
-        snprintf_status = snprintf( buffer, 1000, 
+        snprintf_status = snprintf( buffer, 1000,
                                     "%sPID: %d, " \
                                     "IP:%s, " \
                                     "TOUCH: %d, " \
@@ -118,16 +118,16 @@ void print_clients(struct client_table_entry *monitor)
                                     client_list_iterate->ip,
                                     (int)difftime(time(NULL),client_list_iterate->timestamp),
                                     c_type,
-                                    client_list_iterate->client_id, 
+                                    client_list_iterate->client_id,
                                     time_left,
                                     RESET);
-       
+
         s_write(&(monitor->transmission), buffer, snprintf_status);
     }
     s_write(&(monitor->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
 }
 
-/* 
+/*
 * Prints a string containing simple description
 * of the different implemented commands back
 * to the monitor.
@@ -137,7 +137,7 @@ void print_help(struct client_table_entry *monitor)
     s_write(&(monitor->transmission), HELP, sizeof(HELP));
 }
 
-/* 
+/*
 * Prints MAX, MIN, CURRENT and AVERAGE position
 * for client X back to the monitor
 */
@@ -162,51 +162,51 @@ void print_location(struct client_table_entry *monitor, struct client_table_entr
     s_write(&(monitor->transmission), PRINT_LOCATION_HEADER, sizeof(PRINT_LOCATION_HEADER));
 
     /*Determining colors*/
-    if(!nc.lat_disturbed){
+    if(!nc.lat_disturbed) {
         lat_modifier = BOLD_GRN_BLK;
-    }else if(nc.lat_disturbed > 0){
+    } else if(nc.lat_disturbed > 0) {
         lat_modifier = BOLD_RED_BLK;
-    }else{
+    } else {
         lat_modifier = BOLD_CYN_BLK;
     }
 
-    if(!nc.lon_disturbed){
+    if(!nc.lon_disturbed) {
         lon_modifier = BOLD_GRN_BLK;
-    }else if(nc.lon_disturbed > 0){
+    } else if(nc.lon_disturbed > 0) {
         lon_modifier = BOLD_RED_BLK;
-    }else{
+    } else {
         lon_modifier = BOLD_CYN_BLK;
     }
 
-    if(!nc.alt_disturbed){
+    if(!nc.alt_disturbed) {
         alt_modifier = BOLD_GRN_BLK;
-    }else if(nc.alt_disturbed > 0){
+    } else if(nc.alt_disturbed > 0) {
         alt_modifier = BOLD_RED_BLK;
-    }else{
+    } else {
         alt_modifier = BOLD_CYN_BLK;
     }
 
-    if(!nc.speed_disturbed){
+    if(!nc.speed_disturbed) {
         speed_modifier = BOLD_GRN_BLK;
-    }else if(nc.speed_disturbed > 0){
+    } else if(nc.speed_disturbed > 0) {
         speed_modifier = BOLD_RED_BLK;
-    }else{
+    } else {
         speed_modifier = BOLD_CYN_BLK;
     }
 
-    snprintf_status = snprintf( buffer, 1000, 
+    snprintf_status = snprintf( buffer, 1000,
                                 "LAT: %s%f%s  %s%f%s  %s%f%s %f\n" \
                                 "LON: %s%f%s  %s%f%s  %s%f%s %f\n" \
                                 "ALT: %s %f%s  %s %f%s  %s %f%s  %f\n" \
                                 "SPD: %s   %f%s  %s   %f%s  %s   %f%s    %f\n",
                                 lat_modifier,nc.lat_current,reset, low_modifier,nc.lat_low,reset, high_modifier,nc.lat_high,reset,nc.lat_average,
-                                lon_modifier, nc.lon_current,reset, low_modifier,nc.lon_low,reset, high_modifier,nc.lon_high,reset,nc.lon_average, 
+                                lon_modifier, nc.lon_current,reset, low_modifier,nc.lon_low,reset, high_modifier,nc.lon_high,reset,nc.lon_average,
                                 alt_modifier, nc.alt_current,reset, low_modifier,nc.alt_low,reset, high_modifier,nc.alt_high,reset,nc.alt_average,
                                 speed_modifier, nc.speed_current,reset, low_modifier,nc.speed_low,reset, high_modifier,nc.speed_high,reset,nc.speed_average);
-    s_write(&(monitor->transmission), buffer, snprintf_status); 
+    s_write(&(monitor->transmission), buffer, snprintf_status);
 }
 
-/* 
+/*
 * Prints the difference between the calculated
 * average values for location and the current value
 */
@@ -216,18 +216,18 @@ void print_avg_diff(struct client_table_entry *client)
     int snprintf_status = 0;
     struct nmea_container nc;
 
-    if(s_data->number_of_sensors > 0){
+    if(s_data->number_of_sensors > 0) {
         s_write(&(client->transmission), PRINT_AVG_DIFF_HEADER, sizeof(PRINT_AVG_DIFF_HEADER));
         struct client_table_entry* client_list_iterate;
         list_for_each_entry(client_list_iterate,&client_list->list, list) {
-            if(client_list_iterate->client_id > 0){
+            if(client_list_iterate->client_id > 0) {
                 nc = client_list_iterate->nmea;
-                snprintf_status = snprintf( buffer, 1000, "%d   %f  %f  %f  %f\n", 
-                client_list_iterate->client_id, nc.lat_avg_diff, nc.lon_avg_diff, nc.alt_avg_diff, nc.speed_avg_diff);
+                snprintf_status = snprintf( buffer, 1000, "%d   %f  %f  %f  %f\n",
+                                            client_list_iterate->client_id, nc.lat_avg_diff, nc.lon_avg_diff, nc.alt_avg_diff, nc.speed_avg_diff);
                 s_write(&(client->transmission), buffer, snprintf_status);
             }
         }
-    }else{
+    } else {
         s_write(&(client->transmission), ERROR_NO_SENSORS_CONNECTED, sizeof(ERROR_NO_SENSORS_CONNECTED));
     }
 }
@@ -245,7 +245,7 @@ void restart_warmup(struct client_table_entry* client)
 /* Dumps data location data for client X into a file */
 int dumpdata(struct client_table_entry* client, char *filename)
 {
-	FILE *dumpfile;
+    FILE *dumpfile;
 
     int full_filename_size = strlen(filename) + strlen(DATADUMP_EXTENSION);
     char full_filename[full_filename_size];
@@ -259,35 +259,35 @@ int dumpdata(struct client_table_entry* client, char *filename)
     info = gmtime(&rawtime);
     strftime(time_buffer,80,"%d%m%y-%H%M%S", info);
 
-	/* No name specified, generate one instead */
-	if(strlen(filename) == 0){
-		int autoname_size = sizeof(DATADUMP_EXTENSION) + DUMPDATA_TIME_SIZE + ID_AS_STRING_MAX + 2;
-		char autoname[autoname_size];
-	    memset(autoname,'0',autoname_size);
+    /* No name specified, generate one instead */
+    if(strlen(filename) == 0) {
+        int autoname_size = sizeof(DATADUMP_EXTENSION) + DUMPDATA_TIME_SIZE + ID_AS_STRING_MAX + 2;
+        char autoname[autoname_size];
+        memset(autoname,'0',autoname_size);
 
-	    char id_as_string[ID_AS_STRING_MAX];
-	    sprintf(id_as_string, "%d", client->client_id);
+        char id_as_string[ID_AS_STRING_MAX];
+        sprintf(id_as_string, "%d", client->client_id);
 
-	    strcat(autoname, id_as_string);
-	    strcat(autoname, "_");
-	    strcat(autoname, time_buffer);
-	    strcat(autoname, DATADUMP_EXTENSION);
+        strcat(autoname, id_as_string);
+        strcat(autoname, "_");
+        strcat(autoname, time_buffer);
+        strcat(autoname, DATADUMP_EXTENSION);
         *full_filename = *autoname;
-		dumpfile=fopen(autoname, "w");
-        if(!dumpfile){
+        dumpfile=fopen(autoname, "w");
+        if(!dumpfile) {
             t_print(ERROR_FOPEN);
             return 0;
         }
-	}
-	else{
+    }
+    else {
         strcat(full_filename, filename);
         strcat(full_filename, DATADUMP_EXTENSION);
-		dumpfile=fopen(filename, "wb");
-        if(!dumpfile){
+        dumpfile=fopen(filename, "wb");
+        if(!dumpfile) {
             t_print(ERROR_FOPEN);
             return 0;
         }
-	}
+    }
 
     /* Dumping humanly readable data */
     fprintf(dumpfile, "Sensor Server dumpfile created %s for client %d\n", time_buffer, client->client_id);
@@ -297,8 +297,8 @@ int dumpdata(struct client_table_entry* client, char *filename)
     double *data = &client->nmea.lat_current;
 
     fprintf(dumpfile,DUMPDATA_HEADER);
-    while(outer_counter < 4){
-        while(inner_counter < 7){
+    while(outer_counter < 4) {
+        while(inner_counter < 7) {
             fprintf(dumpfile, "%f  ",*data);
             data++;
             inner_counter++;
@@ -310,7 +310,7 @@ int dumpdata(struct client_table_entry* client, char *filename)
 
 
 
-    if(fclose(dumpfile)){
+    if(fclose(dumpfile)) {
         t_print(ERROR_FCLOSE);
     }
 

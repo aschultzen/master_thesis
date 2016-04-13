@@ -22,19 +22,19 @@
 * command_code struct is used by the parser
 * to convey an easy to compare command code, as well
 * as any parameter belonging to that command
-*/ 
-struct command_code{
-	int code;
-	char parameter[MAX_PARAMETER_SIZE];
-	int id_parameter;
+*/
+struct command_code {
+    int code;
+    char parameter[MAX_PARAMETER_SIZE];
+    int id_parameter;
 };
 
 /*
-* CLIENT TABLE STRUCT 
+* CLIENT TABLE STRUCT
 *
 * list_head list: The head in the list of clients
 * pid: Process ID for the client connection (See "fork")
-* session_fd: The file descriptor for the session. 
+* session_fd: The file descriptor for the session.
 * client_id: The connected clients ID
 * iobuffer: A general purpose buffer for in and output
 * heartbeat_timeout: Number of seconds of inactivity before disconnect
@@ -44,48 +44,48 @@ struct command_code{
 */
 
 /*!@struct*/
-/*!@brief Contain information about every client that is connected. 
+/*!@brief Contain information about every client that is connected.
 */
-struct client_table_entry{ 
-	struct list_head list; /** The head in the list of clients */
-	struct transmission_s transmission;
-	struct timeval heartbeat_timeout;
-	struct command_code cm;
-	struct nmea_container nmea;
-	pid_t pid; /** The process ID */
-	time_t timestamp; /** When last analyzed */
-	time_t warmup_started; /** When warm-up of SENSOR started */			
-	int client_id; /** Clients ID */					
-	int client_type; /** Client type, SENSOR or MONITOR */							
-	int warmup; /** Currently warming up status */
-	int moved; /** Moved status */
-	int ready;	/** Ready status */
-	int was_moved;	/** Moved when last checked. Used to check if returned */
-	int marked_for_kick; /** Marked for kicked at next opportunity */ 
- 	char ip[INET_ADDRSTRLEN]; /** Clients IP address */
+struct client_table_entry {
+    struct list_head list; /** The head in the list of clients */
+    struct transmission_s transmission;
+    struct timeval heartbeat_timeout;
+    struct command_code cm;
+    struct nmea_container nmea;
+    pid_t pid; /** The process ID */
+    time_t timestamp; /** When last analyzed */
+    time_t warmup_started; /** When warm-up of SENSOR started */
+    int client_id; /** Clients ID */
+    int client_type; /** Client type, SENSOR or MONITOR */
+    int warmup; /** Currently warming up status */
+    int moved; /** Moved status */
+    int ready;	/** Ready status */
+    int was_moved;	/** Moved when last checked. Used to check if returned */
+    int marked_for_kick; /** Marked for kicked at next opportunity */
+    char ip[INET_ADDRSTRLEN]; /** Clients IP address */
 };
 
 /* Server info shared with processes */
-struct server_data{
-	int number_of_clients;	/* Number of clients currently connected */
-	int number_of_sensors;	/* Number of sensors, subset of clients */
-	time_t started;			/* When the server was started */
-	pid_t pid;
-	char version[4];
+struct server_data {
+    int number_of_clients;	/* Number of clients currently connected */
+    int number_of_sensors;	/* Number of sensors, subset of clients */
+    time_t started;			/* When the server was started */
+    pid_t pid;
+    char version[4];
 };
 
 /* Synchronization elements shared with processes */
-struct server_synchro{
-	sem_t ready_mutex;
-	sem_t client_list_mutex;
-	volatile int ready_counter;
+struct server_synchro {
+    sem_t ready_mutex;
+    sem_t client_list_mutex;
+    volatile int ready_counter;
 };
 
-/* 
-* Roles of client, either SENSOR or MONITOR. 
+/*
+* Roles of client, either SENSOR or MONITOR.
 * A monitor is only used to monitor the programs state.
 */
-enum client_type{
+enum client_type {
     SENSOR,
     MONITOR
 };

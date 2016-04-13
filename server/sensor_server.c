@@ -14,7 +14,7 @@
 #define ERROR_MISSING_PARAMS "MISSING PARAMETERS!\n"
 
 /* GENERAL STRINGS */
-#define PROCESS_REAPED "Process %d reaped. Status: %d\n"
+#define PROCESS_REAPED "Process %d reaped. Status: %d Signum: %d\n"
 #define SIGTERM_RECEIVED "[%d] SIGTERM received!\n"
 #define SIGINT_RECEIVED "[%d] SIGINT received!\n"
 #define STOPPING_SERVER "Stopping server...\n"
@@ -52,6 +52,15 @@ struct client_table_entry *client_list;
 
 /* Pointer to shared memory containing config */
 struct server_config *s_conf;
+
+static void remove_client_by_pid(pid_t pid);
+void remove_client_by_id(int id);
+static struct client_table_entry* create_client(struct client_table_entry* ptr);
+static void handle_sigchld(int signum);
+static void handle_sig(int signum);
+static void initialize_config(struct config_map_entry *conf_map, struct server_config *s_conf);
+static void start_server(int port_number);
+static int usage(char *argv[]);
 
 /* Prints a formatted string containing server info to monitor */
 void print_server_data(struct client_table_entry *monitor)
@@ -98,10 +107,9 @@ struct client_table_entry* get_client_by_id(int id)
         }
     }
     sem_post(&(s_synch->client_list_mutex));
-    if(found){
+    if(found) {
         return client_list_iterate;
-    }
-    else{
+    } else {
         return NULL;
     }
 }
@@ -115,7 +123,7 @@ static void remove_client_by_pid(pid_t pid)
     sem_wait(&(s_synch->client_list_mutex));
     list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
         if(client_list_iterate->pid == pid) {
-            if(client_list_iterate->client_id > 0){
+            if(client_list_iterate->client_id > 0) {
                 s_data->number_of_sensors--;
             }
             list_del(&client_list_iterate->list);
@@ -166,7 +174,7 @@ static void handle_sigchld(int signum)
 
         if(pid > 0) {
             remove_client_by_pid(pid);
-            t_print(PROCESS_REAPED, pid, status);
+            t_print(PROCESS_REAPED, pid, status, signum);
         }
     }
 }
@@ -185,7 +193,8 @@ static void handle_sig(int signum)
 }
 
 /* Setting up the config structure specific for the server */
-static void initialize_config(struct config_map_entry *conf_map, struct server_config *s_conf){
+static void initialize_config(struct config_map_entry *conf_map, struct server_config *s_conf)
+{
     conf_map[0].entry_name = CONFIG_SERVER_MAX_CONNECTIONS;
     conf_map[0].modifier = FORMAT_INT;
     conf_map[0].destination = &s_conf->max_clients;
@@ -301,7 +310,7 @@ static void start_server(int port_number)
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
             if (errno==EINTR) continue;
-                t_print(ERROR_CONNECTION_ACCEPT,errno);
+            t_print(ERROR_CONNECTION_ACCEPT,errno);
         }
         if(s_data->number_of_clients == s_conf->max_clients) {
             write(session_fd, ERROR_MAX_CLIENTS_REACHED, sizeof(ERROR_MAX_CLIENTS_REACHED));
@@ -316,7 +325,7 @@ static void start_server(int port_number)
                 close(server_sockfd);
                 setup_session(session_fd, new_client);
                 close(session_fd);
-                if(new_client->marked_for_kick){
+                if(new_client->marked_for_kick) {
                     t_print(CLIENT_KICKED, getpid());
                 }
                 t_print(CLIENT_DISCONNECTED, getpid());

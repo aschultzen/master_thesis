@@ -14,9 +14,9 @@
 #include "sensor_server.h"
 
 /** @brief Sets up and starts the session with the client
- * 
+ *
  * Initializes and prepares the session and calls respond().
- * 
+ *
  * @return Void
  */
 void setup_session(int session_fd, struct client_table_entry *new_client);
