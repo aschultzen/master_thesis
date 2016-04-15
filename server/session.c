@@ -311,6 +311,12 @@ static int parse_input(struct client_table_entry *cte)
         cte->cm.code = CODE_PRINTAVGDIFF;
     }
 
+    /* LISTDUMPS */
+    else if(strstr((char*)incoming, PROTOCOL_LISTDUMPS ) == (incoming) ||
+            strstr((char*)incoming, PROTOCOL_LISTDUMPS_SHORT ) == (incoming)) {
+        cte->cm.code = CODE_LISTDUMPS;
+    }
+
     else {
         return 0;
     }
@@ -525,7 +531,7 @@ static int respond(struct client_table_entry *cte)
             } else {
                 struct client_table_entry* candidate = get_client_by_id(target_id);
                 if(candidate != NULL) {
-                    if(!dumpdata(candidate,filename)) {
+                    if(!datadump(candidate,filename, s_conf->human_readable_dumpdata)) {
                         s_write(&(cte->transmission), ERROR_DUMPDATA_FAILED, sizeof(ERROR_DUMPDATA_FAILED));
                     }
                 }
@@ -541,6 +547,10 @@ static int respond(struct client_table_entry *cte)
 
         else if(cte->cm.code == CODE_SET_WARMUP) {
             set_warmup(cte, cte->cm.id_parameter);
+        }
+
+        else if(cte->cm.code == CODE_LISTDUMPS) {
+            listdumps(cte);
         }
 
         else {

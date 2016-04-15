@@ -35,8 +35,9 @@
 /* CONFIG */
 #define CONFIG_SERVER_MAX_CONNECTIONS "max_clients:"
 #define CONFIG_SERVER_WARM_UP "warm_up:"
+#define CONFIG_SERVER_HUMANLY_READABLE "humanly_readable_dumpdata:"
 #define CONFIG_FILE_PATH "config.ini"
-#define CONFIG_ENTRIES 2
+#define CONFIG_ENTRIES 3
 
 /* Server data and stats */
 struct server_data *s_data;
@@ -79,6 +80,7 @@ void print_server_data(struct client_table_entry *monitor)
                                 "Number of sensors: %d\n" \
                                 "Max clients: %d\n" \
                                 "Sensor Warm-up time: %ds\n" \
+                                "Dump humanly readable data: %d\n" \
                                 "Started: %s" \
                                 "Version: %s\n",
                                 s_data->pid,
@@ -86,6 +88,7 @@ void print_server_data(struct client_table_entry *monitor)
                                 s_data->number_of_sensors,
                                 s_conf->max_clients,
                                 s_conf->warm_up_seconds,
+                                s_conf->human_readable_dumpdata,
                                 asctime (loctime_started),
                                 s_data->version);
 
@@ -202,6 +205,10 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
     conf_map[1].entry_name = CONFIG_SERVER_WARM_UP;
     conf_map[1].modifier = FORMAT_INT;
     conf_map[1].destination = &s_conf->warm_up_seconds;
+
+    conf_map[2].entry_name = CONFIG_SERVER_HUMANLY_READABLE;
+    conf_map[2].modifier = FORMAT_INT;
+    conf_map[2].destination = &s_conf->human_readable_dumpdata;
 }
 
 /*
@@ -220,7 +227,7 @@ static void start_server(int port_number)
     initialize_config(conf_map, s_conf);
 
     /* Loading config */
-    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, 2);
+    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
 
     /* Falling back to default if load_config fails */
     if(load_config_status) {

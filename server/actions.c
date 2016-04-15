@@ -6,7 +6,8 @@
 #define PRINT_LOCATION_HEADER "      CURRENT        MIN          MAX          AVG\n"
 #define DUMPDATA_HEADER "CURRENT        MIN           MAX      AVERAGE     AVG_DIFF      TOTAL      DISTURBED\n"
 #define PRINT_AVG_DIFF_HEADER "ID     LAT        LON       ALT       SPEED\n"
-#define DATADUMP_EXTENSION ".dump"
+#define DATADUMP_EXTENSION ".bin"
+#define DATADUMP_HUMAN_EXTENSION ".txt"
 
 /* ERRORS */
 
@@ -20,9 +21,8 @@
 /* HELP */
 #define HELP  "\n"\
           "   COMMAND     PARAMETER                      DESCRIPTION\n"\
-          "------------ ------------ -------------------------------------------------\n"\
-          "  IDENTIFY INTEGER    PARAM is set as the connected clients ID (you)\n"\
-          "        ID > 0 is treated as sensor, ID < 0 as monitor\n"\
+          "---------------------------------------------------------------------------\n"\
+          "  IDENTIFY   ID    ID is set as the connected clients ID (you)\n" \
           "---------------------------------------------------------------------------\n"\
           "  EXIT   NONE     Disconnects\n"\
           "---------------------------------------------------------------------------\n"\
@@ -32,12 +32,15 @@
           "---------------------------------------------------------------------------\n"\
           "  PRINTSERVER  NONE     Prints server state and config\n"\
           "---------------------------------------------------------------------------\n"\
-          "  PRINTTIME  INTEGER    Prints time solved from <CLIENT ID>\n"\
+          "  PRINTTIME  ID    Prints time solved from <CLIENT ID>\n"\
           "---------------------------------------------------------------------------\n"\
-          "  DUMPDATA    INTEGER    Dumps all location related data to file\n"\
+          "  DUMPDATA    ID    Dumps all location related data to file\n"\
           "---------------------------------------------------------------------------\n"\
           "  PRINTAVGDIFF  NONE    Prints all average diffs for all clients\n"\
           "---------------------------------------------------------------------------\n"\
+          "  PRINTLOC  ID    Prints all average diffs for all clients\n"\
+          "---------------------------------------------------------------------------\n"\
+
 
 /* SIZES */
 #define DUMPDATA_TIME_SIZE 13
@@ -243,77 +246,77 @@ void restart_warmup(struct client_table_entry* client)
 }
 
 /* Dumps data location data for client X into a file */
-int dumpdata(struct client_table_entry* client, char *filename)
+int datadump(struct client_table_entry* client, char *filename, int dump_human_read)
 {
-    FILE *dumpfile;
+    FILE *bin_file;
+    char bin_name[strlen(filename) + strlen(DATADUMP_EXTENSION)];
+    strcpy(bin_name, filename);
+    strcat(bin_name, DATADUMP_EXTENSION);
 
-    int full_filename_size = strlen(filename) + strlen(DATADUMP_EXTENSION);
-    char full_filename[full_filename_size];
-    memset(full_filename,'0', full_filename_size);
+    bin_file=fopen(bin_name, "wb");
 
-    /* Creating timestamp */
-    char time_buffer[100];
-    time_t rawtime;
-    struct tm *info;
-    time(&rawtime);
-    info = gmtime(&rawtime);
-    strftime(time_buffer,80,"%d%m%y-%H%M%S", info);
+    if(!bin_file) {
+        t_print(ERROR_FOPEN);
+        return 0;
+    }
 
-    /* No name specified, generate one instead */
-    if(strlen(filename) == 0) {
-        int autoname_size = sizeof(DATADUMP_EXTENSION) + DUMPDATA_TIME_SIZE + ID_AS_STRING_MAX + 2;
-        char autoname[autoname_size];
-        memset(autoname,'0',autoname_size);
+    if(!fwrite(&client->nmea, sizeof(struct nmea_container), 1, bin_file)){
+        t_print(ERROR_FWRITE);
+        return 0;
+    }
 
-        char id_as_string[ID_AS_STRING_MAX];
-        sprintf(id_as_string, "%d", client->client_id);
+    if(dump_human_read){
+        /* Dumping humanly readable data */
+        FILE *h_dump;
+        char h_name[strlen(filename) + strlen(DATADUMP_HUMAN_EXTENSION)];
+        strcpy(h_name, filename);
+        strcat(h_name, DATADUMP_HUMAN_EXTENSION);
 
-        strcat(autoname, id_as_string);
-        strcat(autoname, "_");
-        strcat(autoname, time_buffer);
-        strcat(autoname, DATADUMP_EXTENSION);
-        *full_filename = *autoname;
-        dumpfile=fopen(autoname, "w");
-        if(!dumpfile) {
-            t_print(ERROR_FOPEN);
-            return 0;
+        h_dump = fopen(h_name, "wb");
+
+        fprintf(h_dump, "Sensor Server dumpfile created for client %d\n", client->client_id);
+
+        int inner_counter = 0;
+        int outer_counter = 0;
+        double *data = &client->nmea.lat_current;
+ 
+        fprintf(h_dump,DUMPDATA_HEADER);
+        while(outer_counter < 4) {
+            while(inner_counter < 7) {
+                fprintf(h_dump, "%f  ",*data);
+                data++;
+                inner_counter++;
+            }
+            fprintf(h_dump, "%s", "\n");
+            inner_counter = 0;
+            outer_counter++;
+        }
+
+        if(fclose(h_dump)) {
+            t_print(ERROR_FCLOSE);
         }
     }
-    else {
-        strcat(full_filename, filename);
-        strcat(full_filename, DATADUMP_EXTENSION);
-        dumpfile=fopen(filename, "wb");
-        if(!dumpfile) {
-            t_print(ERROR_FOPEN);
-            return 0;
-        }
-    }
-
-    /* Dumping humanly readable data */
-    fprintf(dumpfile, "Sensor Server dumpfile created %s for client %d\n", time_buffer, client->client_id);
-
-    int inner_counter = 0;
-    int outer_counter = 0;
-    double *data = &client->nmea.lat_current;
-
-    fprintf(dumpfile,DUMPDATA_HEADER);
-    while(outer_counter < 4) {
-        while(inner_counter < 7) {
-            fprintf(dumpfile, "%f  ",*data);
-            data++;
-            inner_counter++;
-        }
-        fprintf(dumpfile, "%s", "\n");
-        inner_counter = 0;
-        outer_counter++;
-    }
-
-
-
-    if(fclose(dumpfile)) {
-        t_print(ERROR_FCLOSE);
-    }
-
     return 1;
+}
+
+int listdumps(struct client_table_entry* monitor)
+{
+  DIR *dp;
+  struct dirent *ep;
+
+  dp = opendir ("./");
+  if(dp != NULL){
+      while ( (ep = readdir(dp)) ){
+        if(strstr(ep->d_name,DATADUMP_EXTENSION) != NULL){
+            s_write(&(monitor->transmission),ep->d_name, strlen(ep->d_name));
+            s_write(&(monitor->transmission),NEW_LINE, sizeof(NEW_LINE));
+        }
+      }
+      closedir (dp);
+    }else{
+    return 0;
+  }
+
+  return 1;
 }
 

@@ -20,6 +20,7 @@
 #define ACTIONS_H
 
 #include "sensor_server.h"
+#include <dirent.h>
 
 /** @brief Kicks a client (both MONITOR or SENSOR)
  *
@@ -101,9 +102,25 @@ void restart_warmup(struct client_table_entry* client);
  *
  * @param client Pointer to client whose data should be dumped.
  * @param filename Pointer to filename.
- * @return Void
+ * @param human_readable Switch to determine if humanly readable data should be made as well.
+ * @return 1 if success, 0 if fail.
  */
-int dumpdata(struct client_table_entry* client, char *filename);
+int datadump(struct client_table_entry* client, char *filename, int human_readable);
+
+/** @brief Restore NMEA data from file
+ *
+ * @param client Pointer to client whose data should be restored from file
+ * @param filename Pointer to filename.
+ * @return 1 if success, 0 if fail.
+ */
+int datarestore(struct client_table_entry* client, char *filename);
+
+/** @brief List files in folder
+ *
+ * @param monitor Pointer to requesting monitor
+ * @return 1 if success, 0 if fail.
+ */
+int listdumps(struct client_table_entry* monitor);
 
 /** @brief Sets a new warm-up time for a given SENSOR.
  *
@@ -112,5 +129,7 @@ int dumpdata(struct client_table_entry* client, char *filename);
  * @return Void
  */
 void set_warmup(struct client_table_entry *client, int value);
+
+
 
 #endif /* !ACTIONS_H */
