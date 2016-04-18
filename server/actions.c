@@ -13,9 +13,10 @@
 
 #define ERROR_APPEND_TOO_LONG "ERROR: TEXT TO APPEND TOO LONG\n"
 #define ERROR_NO_SENSORS_CONNECTED "NO SENSORS CONNECTED\n"
-#define ERROR_FCLOSE "dumpdata(): Failed to close file, out of space?\n"
-#define ERROR_FWRITE "dumpdata(): Failed to write to file, aborting.\n"
-#define ERROR_FOPEN "dumpdata(): Failed to open file, aborting.\n"
+#define ERROR_FCLOSE "Failed to close file, out of space?\n"
+#define ERROR_FWRITE "Failed to write to file, aborting.\n"
+#define ERROR_FREAD "Failed to read file, aborting.\n"
+#define ERROR_FOPEN "Failed to open file, aborting.\n"
 #define ERROR_UPDATE_WARMUP_ILLEGAL "Warm-up time value has to be greater than 0!\n"
 
 /* HELP */
@@ -265,6 +266,10 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
         return 0;
     }
 
+    if(fclose(bin_file)) {
+        t_print(ERROR_FCLOSE);
+    }
+
     if(dump_human_read){
         /* Dumping humanly readable data */
         FILE *h_dump;
@@ -320,3 +325,36 @@ int listdumps(struct client_table_entry* monitor)
   return 1;
 }
 
+int loaddata(struct client_table_entry* target, char *filename)
+{
+    FILE *dump_file;
+    int file_len = 0;
+
+
+    dump_file=fopen(filename, "rb");
+
+    if(!dump_file) {
+        t_print(ERROR_FOPEN);
+        return ERROR_CODE_NO_FILE;
+    }
+
+    /* Checking file length */
+    fseek(dump_file, 0, SEEK_END);
+    file_len=ftell(dump_file);
+    fseek(dump_file, 0, SEEK_SET);
+
+    int f_s = fread( &target->nmea,1,sizeof(struct nmea_container), dump_file);
+
+    t_print("Read %d bytes of %d successfully from %s\n", f_s, file_len,filename);
+
+    if(f_s == 0){
+        t_print(ERROR_FREAD);
+        return ERROR_CODE_READ_FAILED;
+    }
+
+    if(fclose(dump_file)) {
+        t_print(ERROR_FCLOSE);
+    }
+
+    return 1;
+}

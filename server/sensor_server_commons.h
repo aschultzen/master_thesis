@@ -8,15 +8,23 @@
 #ifndef SENSOR_SERVER_COMMONS_H
 #define SENSOR_SERVER_COMMONS_H
 
-#include "net.h"
 #include <semaphore.h>
+#include "net.h"
 #include "colors.h"
 
+/* General */
 #define SERVER_TABLE_LABEL "SERVER DATA\n"
 #define HORIZONTAL_BAR "==================================================================================\n"
-#define ERROR_NO_CLIENT "ERROR: NO SUCH CLIENT\n"
+#define ERROR_NO_CLIENT "ERROR: No such client\n"
+#define ERROR_NO_FILENAME "ERROR: No FILENAME specified\n"
 #define MAX_FILENAME_SIZE 30
 #define ID_AS_STRING_MAX 4
+
+ /* Errors */
+#define ERROR_CODE_NO_FILE -1
+#define ERROR_CODE_READ_FAILED -2
+#define ERROR_NO_FILE "ERROR:No such file\n"
+#define ERROR_READ_FAILED "ERROR:Failed to read file\n"
 
 /*
 * command_code struct is used by the parser

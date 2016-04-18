@@ -130,6 +130,13 @@ int listdumps(struct client_table_entry* monitor);
  */
 void set_warmup(struct client_table_entry *client, int value);
 
+/** @brief Loads NMEA data into the NMEA struct of a given client (target).
+*
+* @param target Pointer to the client whose NMEA data should be loaded 
+* from file.
+* @param filename Pointer to the filename of the data file.
+*/ 
+int loaddata(struct client_table_entry* target,  char *filename);
 
 
 #endif /* !ACTIONS_H */

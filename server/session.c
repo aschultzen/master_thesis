@@ -4,6 +4,15 @@
 #define MONITOR_TIMEOUT 1000
 #define UNIDENTIFIED_TIMEOUT 100
 
+/* ERRORS*/
+#define ERROR_ILLEGAL_COMMAND "ERROR:Illegal command\n"
+#define ERROR_NO_ID "ERROR:Client not identified\n"
+#define ERROR_ID_IN_USE "ERROR:ID in use\n"
+#define ERROR_ILLEGAL_MESSAGE_SIZE "ERROR:Illegal message size\n"
+#define ERROR_WARMUP_NOT_SENSOR "ERROR:Warm-up only applies to sensors\n"
+#define ERROR_DUMPDATA_FAILED "ERROR:Failed to dump data\n"
+#define ERROR_LOADDATA_FAILED "ERROR:Failed to load data\n"
+
 static int nmea_ready();
 static void extract_nmea_data(struct client_table_entry *cte);
 static void calculate_nmea_average(struct client_table_entry *cte);
@@ -317,11 +326,25 @@ static int parse_input(struct client_table_entry *cte)
         cte->cm.code = CODE_LISTDUMPS;
     }
 
+    /* LOADDATA */
+    else if(strstr((char*)incoming, PROTOCOL_LOADDATA ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_LOADDATA) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADDATA)*(sizeof(char))), length);
+        cte->cm.code = CODE_LOADDATA;
+    }
+
+    /* LOADDATA_SHORT */
+    else if(strstr((char*)incoming, PROTOCOL_LOADDATA_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_LOADDATA_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADDATA_SHORT)*(sizeof(char))), length);
+        cte->cm.code = CODE_LOADDATA;
+    }
+
     else {
         return 0;
     }
 
-    /* Retrieving potential ID */
+    /* Attempting to retrie ID */
     sscanf(cte->cm.parameter, "%d", &cte->cm.id_parameter);
 
     return 1;
@@ -516,11 +539,15 @@ static int respond(struct client_table_entry *cte)
             bzero(id_buffer, ID_AS_STRING_MAX);
             bzero(filename, filename_buffer_size);
 
+            /* Attempting to extract filename */
             substring_extractor(2,3, ' ', filename, filename_buffer_size,cte->cm.parameter, MAX_FILENAME_SIZE);
 
+            /* If length of filename = 0 (no filename specified).. */
             if(strlen(filename) == 0) {
+                /* ...Cast to int without a care */
                 target_id = atoi(cte->cm.parameter);
             }
+            /* Else, extract ID */
             else {
                 substring_extractor(1,2, ' ', id_buffer, ID_AS_STRING_MAX,cte->cm.parameter, ID_AS_STRING_MAX);
                 target_id = atoi(id_buffer);
@@ -533,6 +560,46 @@ static int respond(struct client_table_entry *cte)
                 if(candidate != NULL) {
                     if(!datadump(candidate,filename, s_conf->human_readable_dumpdata)) {
                         s_write(&(cte->transmission), ERROR_DUMPDATA_FAILED, sizeof(ERROR_DUMPDATA_FAILED));
+                    }
+                }
+                else {
+                    s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+                }
+            }
+        }
+
+        else if(cte->cm.code == CODE_LOADDATA) {
+            int filename_buffer_size = MAX_FILENAME_SIZE;
+            char filename[filename_buffer_size];
+            int target_id;
+            char id_buffer[ID_AS_STRING_MAX];
+            bzero(id_buffer, ID_AS_STRING_MAX);
+            bzero(filename, filename_buffer_size);
+
+            substring_extractor(2,3, ' ', filename, filename_buffer_size,cte->cm.parameter, MAX_FILENAME_SIZE);
+
+            /* No filename specified, abort */
+            if(strlen(filename) == 0) {
+                s_write(&(cte->transmission), ERROR_NO_FILENAME, sizeof(ERROR_NO_FILENAME));
+                return 1;
+            }
+            /* Extract target id and move on */
+            else {
+                substring_extractor(1,2, ' ', id_buffer, ID_AS_STRING_MAX,cte->cm.parameter, ID_AS_STRING_MAX);
+                target_id = atoi(id_buffer);
+            }
+
+            if(!target_id) {
+                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
+            } else {
+                struct client_table_entry* candidate = get_client_by_id(target_id);
+                if(candidate != NULL) {
+                    int load_status = loaddata(candidate,filename);
+                    if(load_status == ERROR_CODE_NO_FILE) {
+                        s_write(&(cte->transmission), ERROR_NO_FILE, sizeof(ERROR_NO_FILE));
+                    }
+                    else if(load_status == ERROR_CODE_READ_FAILED){
+                        s_write(&(cte->transmission), ERROR_READ_FAILED, sizeof(ERROR_READ_FAILED));
                     }
                 }
                 else {
