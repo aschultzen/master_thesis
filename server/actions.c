@@ -20,27 +20,31 @@
 #define ERROR_UPDATE_WARMUP_ILLEGAL "Warm-up time value has to be greater than 0!\n"
 
 /* HELP */
-#define HELP  "\n"\
-          "   COMMAND     PARAMETER                      DESCRIPTION\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  IDENTIFY   ID    ID is set as the connected clients ID (you)\n" \
-          "---------------------------------------------------------------------------\n"\
-          "  EXIT   NONE     Disconnects\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  DISCONNECT   NONE     See EXIT\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  PRINTCLIENTS NONE     Prints an overview of connected clients\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  PRINTSERVER  NONE     Prints server state and config\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  PRINTTIME  ID    Prints time solved from <CLIENT ID>\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  DUMPDATA    ID    Dumps all location related data to file\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  PRINTAVGDIFF  NONE    Prints all average diffs for all clients\n"\
-          "---------------------------------------------------------------------------\n"\
-          "  PRINTLOC  ID    Prints all average diffs for all clients\n"\
-          "---------------------------------------------------------------------------\n"\
+#define HELP "\n"\
+" COMMAND      | SHORT | PARAM     | DESCRIPTION\n"\
+"----------------------------------------------------------------------------------\n"\
+" HELP         | ?     | NONE      | Prints this table\n"\
+"----------------------------------------------------------------------------------\n"\
+" IDENTIFY     | ID    | ID        | ID is set as the connected clients ID (you)\n"\
+"----------------------------------------------------------------------------------\n"\
+" DISCONNECT   | EXIT  | NONE      | Disconnects\n"\
+"----------------------------------------------------------------------------------\n"\
+" PRINTCLIENTS | PC    | NONE      | Prints an overview of connected clients\n"\
+"----------------------------------------------------------------------------------\n"\
+" PRINTSERVER  | PS    | NONE      | Prints server state and config\n"\
+"----------------------------------------------------------------------------------\n"\
+" PRINTTIME    |       | ID        | Prints time solved from <CLIENT ID>\n"\
+"----------------------------------------------------------------------------------\n"\
+" PRINTAVGDIFF | PAD   | NONE      | Prints all average diffs for all clients\n"\
+"----------------------------------------------------------------------------------\n"\
+" PRINTLOC     | PL    | ID        | Prints all average diffs for all clients\n"\
+"----------------------------------------------------------------------------------\n"\
+" LISTDATA     | LSD   | NONE      | Lists all dump files in server directory\n"\
+"----------------------------------------------------------------------------------\n"\
+" DUMPDATA     | DD    | ID & FILE | Dumps NMEA data of ID into FILE\n"\
+"----------------------------------------------------------------------------------\n"\
+" LOADDATA     | LD    | ID & FILE | Loads NMEA of FILE into sensor ID\n"\
+"----------------------------------------------------------------------------------\n"\
 
 
 /* SIZES */
@@ -345,7 +349,7 @@ int loaddata(struct client_table_entry* target, char *filename)
 
     int f_s = fread( &target->nmea,1,sizeof(struct nmea_container), dump_file);
 
-    t_print("Read %d bytes of %d successfully from %s\n", f_s, file_len,filename);
+    t_print("Read %d/%d bytes successfully from %s\n", f_s, file_len,filename);
 
     if(f_s == 0){
         t_print(ERROR_FREAD);
