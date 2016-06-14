@@ -113,7 +113,6 @@ def dbInsert(data):
 def initConfig():
     configFile = "config.ini"
     config.read(configFile)
-    #t_print("Config file " + configFile + " : loaded.")
 
 def t_print(message):
     current_time = datetime.datetime.now().time()
@@ -137,17 +136,16 @@ def get_today_mjd():
     today = datetime.datetime.utcnow()
     return jdutil.jd_to_mjd(jdutil.datetime_to_jd(today)) 
 
-def calculate_file_name():
-    start_mjd = get_start_mjd()
-    stop_mjd = start_mjd + 59;
+def calculate_file_name(current_era):
+    stop_mjd = current_era + 59;
     filename = config['files']['file_prefix'] + " " + str(start_mjd) + " - " + str(stop_mjd) + ".dat"
     return filename
 
     ## Returns a formatted string with the correct filename for the
     ## current time period (mjd)
-def get_full_path():
-    calculate_file_name()
-    return str(config['files']['folder'] + calculate_file_name())
+def get_full_path(current_era):
+    calculate_file_name(current_era)
+    return str(config['files']['folder'] + calculate_file_name(current_era))
 
     ## Get the mjd value for the last line in the DB.
     ## If no mjd is found, the function returns -1 
@@ -165,8 +163,8 @@ def get_last_db_line_mjd():
     
     ## Find new lines in the text file that has not
     ## yet been uploaded to the base
-def find_new_lines(db_last_mjd):
-    file_full_path = get_full_path()
+def find_new_lines(db_last_mjd, current_era):
+    file_full_path = get_full_path(current_era)
     last_db_mjd = str(db_last_mjd)
 
     line_found_switch = False;
@@ -183,22 +181,45 @@ def find_new_lines(db_last_mjd):
     t_print("Found " + str(len(new_lines)) + " new line(s)")            
     return new_lines
 
+# Sets the value of file_insert: to no in config file.
+# This is a hack and currently necessary because the config file
+# is re-read at every iteration (after every sleep).
 def disable_file_insert():
     for line in fileinput.input(["config.ini"], inplace=True):
         line = line.replace("file_insert: yes", "file_insert: no")
         sys.stdout.write(line)
 
 def main_routine():
+    # Initializes mjd era variable
+    current_era = get_start_mjd();
+    era_changed = False
+
     while(True):
-        print("\n")
+
+        # Initializes every time in case the config has been modified 
         initConfig()
+
+        print("\n")
         t_print("Starting up...")
+        
+        # Initializes timer variable
         time_start = time.time()
 
-        # Check if file insert mode is enabled. 
+        # If file insert mode is enabled. 
         if(config['modes']['file_insert'] == "yes"):
+                # Insert file as specified in config
                 insert_file(config['files']['insert_mode_path'])
+                # Disable file insert
                 disable_file_insert()
+
+        # Check if era has changed since wake-up
+        if(current_era != get_start_mjd):
+            # Sleep for X seconds as configured in config file
+            # The purpose of this sleep is to make sure that the
+            # measurement system is finished with the measurement file
+            # for the previous era and that it has made the measurement 
+            # file for the next. The default sleep value is 3 hours.
+            time.sleep(float(config['general']['era_changed_sleep']))
 
         # If not, continue as always.
         else:
@@ -207,7 +228,7 @@ def main_routine():
 
             # If the DB is not empty
             if(last_mjd != -1):
-                new_lines = find_new_lines(last_mjd)
+                new_lines = find_new_lines(last_mjd, current_era)
                 if(len(new_lines) > 0):
                     dbInsert(new_lines)
 
@@ -216,8 +237,16 @@ def main_routine():
                 t_print("This file is not yet inserted to DB. Inserting the whole file")
                 insert_file(get_full_path())
 
+        # Calculating and printing elapsed time
         seconds = "{0:.2f}".format(float(time.time() - time_start))
         t_print("Elapsed time: " + str(seconds) + "s")
+
+        # Updates current_era if era has changed. It is now safe.
+        if(era_changed == True):
+            current_era = get_start_mjd()
+            era_changed = False
+
+        # Sleeps X seconds as configured in config file.
         time.sleep(float(config['general']['interval']))
             
 if __name__ == '__main__':
