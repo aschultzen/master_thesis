@@ -1,3 +1,20 @@
+## CSAC Config ##################
+#
+# 57600			
+# 8 bit			
+# No parity		
+# 
+# While CSAC is off:
+#
+# sudo stty -F /dev/ttyS0 57600
+# cat /dev/ttyS0 
+#
+# Turn the CSAC ON
+# 
+# Symmetricom CSAC <- Output
+#
+#################################
+
 #ifndef SERIAL_H
 #define SERIAL_H
 
