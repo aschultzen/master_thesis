@@ -73,16 +73,16 @@ def get_handle(name):
 		return (device, q_result)
 
 if __name__ == '__main__':
-	t_print("Starting up...")
+	t_print("gpib2db started!")
 	
 	config_parser = SafeConfigParser()
 	conf_status = config_parser.read(CONFIG_PATH)
 
 	if(len(conf_status) == 0):
-		t_print("Failed to load " + CONFIG_PATH + ". Aborting.")
+		t_print("Failed to load " + CONFIG_PATH + ". Aborting")
 		sys.exit()
 	else:
-		t_print("Config loaded from " + CONFIG_PATH + ".")
+		t_print("Config loaded from " + CONFIG_PATH)
 
 	connection_attempts = 1
 	connection_attempts_max = int(config_parser.get('db','connection_attempts_max'))
@@ -93,14 +93,14 @@ if __name__ == '__main__':
 		db_con = dbConnect(config_parser)
 		connection_attempts = connection_attempts + 1
 		if(connection_attempts_max > 1 and connection_attempts > connection_attempts_max):
-			t_print("Reached maximum attempts at connecting to DB. Aborting.")
+			t_print("Reached maximum attempts at connecting to DB. Aborting")
 			sys.exit()
 
 	t_print("Connection to database established after "
-			+ str(connection_attempts) + " attempt(s).")
+			+ str(connection_attempts) + " attempt(s)")
 
 	close_status = dbClose(db_con)
 	if(close_status == 1):
-		t_print("Connection to database closed.")
+		t_print("Connection to database closed")
 	else:
-		t_print("Failed to close connection to database. Aborting anyway.")
+		t_print("Failed to close connection to database. Aborting anyway")
