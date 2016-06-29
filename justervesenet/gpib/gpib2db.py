@@ -11,11 +11,13 @@ import os
 import sys
 import ctypes
 import mysql.connector
+import hashlib
 
 GPIB_IDENTIFY = "*IDN?"
 GPIB_RESET = "*RST"
 LOG_LEVEL = 0
 CONFIG_PATH = "config.ini"
+GPIB_CONFIG_FILE = "/etc/gpib.conf"
 
 def dbConnect(c_parser):
     try:    
@@ -51,13 +53,13 @@ def t_print(message):
         with open(config['logs']['log_path'], "a+") as log:
             log.write(complete_message + "\n")
 
-def query(handle, command, numbytes = 100):
+def gpib_query(handle, command, numbytes = 1000):
 	gpib.write(handle, command)
 	time.sleep(0.1)
 	response = gpib.read(handle, numbytes)
 	return response
 
-def reset(handle, sleep):
+def gpib_reset(handle, sleep):
 	gpib.write(handle, GPIB_RESET)
 	time.sleep(sleep)	
 
@@ -75,7 +77,7 @@ def get_handle(name):
 			device = gpib.dev(0,name)
 		else:
 			return 0
-		q_result = query(device, GPIB_IDENTIFY)
+		q_result = gpib_query(device, GPIB_IDENTIFY)
 		return (device, q_result)
 
 if __name__ == '__main__':
@@ -109,11 +111,18 @@ if __name__ == '__main__':
 
 	# Connecting to counter/analyzer
 	device_name_config = config_parser.get('counter','name')
-	file = open("/etc/gpib.conf", "r")
-	file_content = file.read()
 	device_name = device_name_config
+	name_found_in_config = -1
 
-	if( file_content.find(device_name_config) < 0 ):
+	try:
+		gpib_conf_file = open(GPIB_CONFIG_FILE, "r")
+		file_content = gpib_conf_file.read()
+		gpib_conf_file.close()
+		name_found_in_config = file_content.find(device_name_config)
+	except IOError:
+		t_print("Could not load " + GPIB_CONFIG_FILE + ", trying anyway...")
+
+	if( name_found_in_config < 0 ):
 		t_print("Did not find " + device_name_config + " in /etc/gpib.conf, falling back to config.ini")
 		device_name = int(config_parser.get('counter','channel'))
 
@@ -122,8 +131,37 @@ if __name__ == '__main__':
 	device_id = handle_tuple[1]
 	device_id = device_id.rstrip("\r\n")
 	t_print("Connection to GPIB device established!")
-	reset(device_handle, 1)
+	gpib_reset(device_handle, 1)
 	t_print("Device ID: " + device_id)
+
+	# Uploading GPIB configuration
+	try:
+		device_gpib_conf_path = config_parser.get('counter','device_gpib_conf')
+		device_gpib_conf_file = open(device_gpib_conf_path,'r')
+		file_content = device_gpib_conf_file.read()
+		hasher = hashlib.sha1	()
+		hasher.update(file_content)
+		if(hasher.hexdigest() == config_parser.get('counter','device_gpib_conf_checksum').rstrip()):
+			t_print("Checksum check PASSED for: " + device_gpib_conf_path)
+		else:
+			t_print("Checksum check FAILED for: " + device_gpib_conf_path)
+			if(config_parser.get('counter','quit_on_failed_checksum') == "yes"):
+				t_print("Aborting because of failed checksum. See config.ini")
+				sys.exit()	
+	except IOError:
+		t_print("Could not load device config file: " + config_parser.get('counter','device_gpib_conf') + ". Aborting...")
+		sys.exit()	
+
+	file_content = file_content.split("\n")
+
+	for x in range(1, len(file_content) -1):
+		print(file_content[x])
+		gpib.write(device_handle, file_content[x])
+		time.sleep(2)
+
+	#result = gpib_query(device_handle, file_content[len(file_content) -1])
+	#print result
+
 
 	# Closing connection to database
 	close_status = dbClose(db_con)
@@ -131,5 +169,3 @@ if __name__ == '__main__':
 		t_print("Connection to database closed")
 	else:
 		t_print("Failed to close connection to database. Aborting anyway")
-
-
