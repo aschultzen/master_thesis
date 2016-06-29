@@ -8,6 +8,7 @@ from ConfigParser import SafeConfigParser
 import fileinput, sys
 import datetime
 import os
+import sys
 import ctypes
 import mysql.connector
 
@@ -27,13 +28,20 @@ def dbConnect(c_parser):
             )
         
         if dbConnection.is_connected():
-            t_print("Connection to database (" + dbConnection.server_host +":" 
-                + str(dbConnection.server_port) + ") established")
+            return dbConnection
+        else:
+        	return 0
 
-    except RuntimeError as e:
-            t_print(e)
+    except mysql.connector.errors.InterfaceError as e:
+            return 0
 
-    return dbConnection    
+def dbClose(dbConnection):
+    dbConnection.close()
+
+    if dbConnection.is_connected():
+    	return 0
+    else:
+    	return 1 
 
 def t_print(message):
     current_time = datetime.datetime.now().time()
@@ -66,9 +74,33 @@ def get_handle(name):
 
 if __name__ == '__main__':
 	t_print("Starting up...")
-	t_print("Loading config...")
+	
 	config_parser = SafeConfigParser()
-	config_parser.read(CONFIG_PATH)
-	t_print("Config loaded from " + CONFIG_PATH + ".")
-	t_print("Connecting to database...")
-	dbConnect(config_parser)
+	conf_status = config_parser.read(CONFIG_PATH)
+
+	if(len(conf_status) == 0):
+		t_print("Failed to load " + CONFIG_PATH + ". Aborting.")
+		sys.exit()
+	else:
+		t_print("Config loaded from " + CONFIG_PATH + ".")
+
+	connection_attempts = 1
+	connection_attempts_max = int(config_parser.get('db','connection_attempts_max'))
+	db_con = dbConnect(config_parser)
+	while( db_con == 0 ):
+		time.sleep(1)
+		t_print("DB connection attempt " + str(connection_attempts) + " failed.")
+		db_con = dbConnect(config_parser)
+		connection_attempts = connection_attempts + 1
+		if(connection_attempts_max > 1 and connection_attempts > connection_attempts_max):
+			t_print("Reached maximum attempts at connecting to DB. Aborting.")
+			sys.exit()
+
+	t_print("Connection to database established after "
+			+ str(connection_attempts) + " attempt(s).")
+
+	close_status = dbClose(db_con)
+	if(close_status == 1):
+		t_print("Connection to database closed.")
+	else:
+		t_print("Failed to close connection to database. Aborting anyway.")
