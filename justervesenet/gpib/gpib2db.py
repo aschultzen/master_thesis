@@ -67,14 +67,21 @@ def set_display(handle, value):
 	else:
 		gpib.write(handle, "DISP:ENAB ON") 
 
+# Returns handle to GPIB device by either name or channel
 def get_handle(name):
-		device = gpib.find(name)
+		if( isinstance(name, basestring) ):
+			device = gpib.find(name)
+		elif( isinstance(name, int)):
+			device = gpib.dev(0,name)
+		else:
+			return 0
 		q_result = query(device, GPIB_IDENTIFY)
 		return (device, q_result)
 
 if __name__ == '__main__':
 	t_print("gpib2db started!")
 	
+	# Init config
 	config_parser = SafeConfigParser()
 	conf_status = config_parser.read(CONFIG_PATH)
 
@@ -84,6 +91,7 @@ if __name__ == '__main__':
 	else:
 		t_print("Config loaded from " + CONFIG_PATH)
 
+	# Connects to database
 	connection_attempts = 1
 	connection_attempts_max = int(config_parser.get('db','connection_attempts_max'))
 	db_con = dbConnect(config_parser)
@@ -99,8 +107,29 @@ if __name__ == '__main__':
 	t_print("Connection to database established after "
 			+ str(connection_attempts) + " attempt(s)")
 
+	# Connecting to counter/analyzer
+	device_name_config = config_parser.get('counter','name')
+	file = open("/etc/gpib.conf", "r")
+	file_content = file.read()
+	device_name = device_name_config
+
+	if( file_content.find(device_name_config) < 0 ):
+		t_print("Did not find " + device_name_config + " in /etc/gpib.conf, falling back to config.ini")
+		device_name = int(config_parser.get('counter','channel'))
+
+	handle_tuple = get_handle(device_name)
+	device_handle = handle_tuple[0]
+	device_id = handle_tuple[1]
+	device_id = device_id.rstrip("\r\n")
+	t_print("Connection to GPIB device established!")
+	reset(device_handle, 1)
+	t_print("Device ID: " + device_id)
+
+	# Closing connection to database
 	close_status = dbClose(db_con)
 	if(close_status == 1):
 		t_print("Connection to database closed")
 	else:
 		t_print("Failed to close connection to database. Aborting anyway")
+
+
