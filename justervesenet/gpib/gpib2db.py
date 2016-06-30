@@ -2,6 +2,11 @@
 # Initialize config and return config object, pass this on.
 # Verify config name. If no name exists like param name, ask for GPIB channel instead.
 
+# 213 Init ignored
+# 108 param not allowed
+# 109 missing param
+# 1160 measurement broken off
+
 import gpib
 import time
 from ConfigParser import SafeConfigParser
@@ -15,6 +20,10 @@ import hashlib
 
 GPIB_IDENTIFY = "*IDN?"
 GPIB_RESET = "*RST"
+GPIB_CLEAR = "*CLS"
+GPIB_READ = ":READ?"
+GPIB_MEASURE = GPIB_READ
+GPIB_ERROR = ":SYSTem:ERRor?"
 LOG_LEVEL = 0
 CONFIG_PATH = "config.ini"
 GPIB_CONFIG_FILE = "/etc/gpib.conf"
@@ -53,15 +62,29 @@ def t_print(message):
         with open(config['logs']['log_path'], "a+") as log:
             log.write(complete_message + "\n")
 
-def gpib_query(handle, command, numbytes = 1000):
+def gpib_query(handle, command, numbytes = 100):
 	gpib.write(handle, command)
 	time.sleep(0.1)
-	response = gpib.read(handle, numbytes)
+	response = "NULL"
+	try:
+		response = gpib.read(handle, numbytes)
+	except gpib.GpibError:
+		t_print("Read error, returning NULL")
 	return response
 
 def gpib_reset(handle, sleep):
 	gpib.write(handle, GPIB_RESET)
-	time.sleep(sleep)	
+	time.sleep(sleep)
+
+def gpib_clear(handle, sleep):
+	gpib.write(handle, GPIB_CLEAR)
+	time.sleep(sleep)
+
+# Loop untill all errors are retrieved
+def gpib_get_errors(handle):
+	gpib.write(handle, GPIB_ERROR)
+	response = gpib.read(handle, 100)
+	return response
 
 def set_display(handle, value):
 	if(value < 1):
@@ -77,8 +100,7 @@ def get_handle(name):
 			device = gpib.dev(0,name)
 		else:
 			return 0
-		q_result = gpib_query(device, GPIB_IDENTIFY)
-		return (device, q_result)
+		return (device)
 
 if __name__ == '__main__':
 	t_print("gpib2db started!")
@@ -126,12 +148,17 @@ if __name__ == '__main__':
 		t_print("Did not find " + device_name_config + " in /etc/gpib.conf, falling back to config.ini")
 		device_name = int(config_parser.get('counter','channel'))
 
-	handle_tuple = get_handle(device_name)
-	device_handle = handle_tuple[0]
-	device_id = handle_tuple[1]
+	## Retrieving handle
+	device_handle = get_handle(device_name)
+	
+	## Clearing device (RST, CLS)
+	gpib_clear(device_handle, 0.1)
+	gpib_reset(device_handle, 0.1)
+	
+	## Querying for ID
+	device_id = gpib_query(device_handle, GPIB_IDENTIFY)
 	device_id = device_id.rstrip("\r\n")
 	t_print("Connection to GPIB device established!")
-	gpib_reset(device_handle, 1)
 	t_print("Device ID: " + device_id)
 
 	# Uploading GPIB configuration
@@ -154,14 +181,16 @@ if __name__ == '__main__':
 
 	file_content = file_content.split("\n")
 
-	for x in range(1, len(file_content) -1):
-		print(file_content[x])
-		gpib.write(device_handle, file_content[x])
-		time.sleep(2)
+	for x in range(0, len(file_content)):
+		if( file_content[x][0] != "#" ):
+			time.sleep(0.1)
+			gpib.write(device_handle, file_content[x])
 
-	#result = gpib_query(device_handle, file_content[len(file_content) -1])
-	#print result
-
+	## Checking for errors
+	error_text = gpib_get_errors(device_handle).rstrip("\r\n")
+	error_status = error_text.find("No error")
+	if(error_status != 0):
+		t_print("Error detected: " + error_text)
 
 	# Closing connection to database
 	close_status = dbClose(db_con)
