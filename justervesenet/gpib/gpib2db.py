@@ -110,6 +110,13 @@ def get_handle(name):
 			return 0
 		return (device)
 
+def measure(config_parser, counter_handle, db_con):
+	1+1
+	# Measure
+	# Store measurement in DB
+	# Change source
+	# Repeat
+
 if __name__ == '__main__':
 	t_print("gpib2db started!")
 	
@@ -157,14 +164,14 @@ if __name__ == '__main__':
 		device_name = int(config_parser.get('counter','channel'))
 
 	## Retrieving handle
-	device_handle = get_handle(device_name)
+	counter_handle = get_handle(device_name)
 	
 	## Clearing device (RST, CLS)
-	gpib_clear(device_handle, 0.1)
-	gpib_reset(device_handle, 0.1)
+	gpib_clear(counter_handle, 0.1)
+	gpib_reset(counter_handle, 0.1)
 	
 	## Querying for ID
-	device_id = gpib_query(device_handle, GPIB_IDENTIFY)
+	device_id = gpib_query(counter_handle, GPIB_IDENTIFY)
 	device_id = device_id.rstrip("\r\n")
 	t_print("Connection to GPIB device established!")
 	t_print("Device ID: " + device_id)
@@ -192,15 +199,53 @@ if __name__ == '__main__':
 	for x in range(0, len(file_content)):
 		if( file_content[x][0] != "#" and file_content[x][0] != "\n"):
 			time.sleep(0.2)
-			gpib.write(device_handle, file_content[x])
+			gpib.write(counter_handle, file_content[x])
 
-	error_list = gpib_get_errors(device_handle)
+	error_list = gpib_get_errors(counter_handle)
 	if(len(error_list) != 0):
 		t_print("Following errors where reported by the counter:")
 		for x in range(0, len(error_list)):
 			t_print("Error[" + str(x + 1) + "] " + error_list[x])
 
-	print gpib_query(device_handle, GPIB_READ)
+	# Connecting to the Matrix switch
+	matrix_name_config = config_parser.get('matrix','name')
+	matrix_name = matrix_name_config
+	name_found_in_config = -1
+
+	try:
+		gpib_conf_file = open(GPIB_CONFIG_FILE, "r")
+		file_content = gpib_conf_file.read()
+		gpib_conf_file.close()
+		name_found_in_config = file_content.find(matrix_name_config)
+	except IOError:
+		t_print("Could not load " + GPIB_CONFIG_FILE + ", trying anyway...")
+
+	if( name_found_in_config < 0 ):
+		t_print("Did not find " + matrix_name_config + " in /etc/gpib.conf, falling back to config.ini")
+		matrix_name = int(config_parser.get('counter','channel'))
+
+	## Retrieving handle
+	matrix_handle = get_handle(matrix_name)
+
+	## Testing connection
+
+	# NOTE! The CE 1017 Matrix switch that 
+	# this code was written for, does not  
+	# respond to the "*IDN?" command.
+	# However, an "gpib.GpibError: write() failed:"
+	# error will be raised if there is no device 
+	# connected to the channel "used" by the handler.
+	# The message could in other words just be garbage.
+	# This will however work as advertized on a switch
+	# that has the "*IDN?" command implemented
+	try:
+		gpib.write(matrix_handle, "*IDN?")
+	except gpib.GpibError:
+			t_print("The switch is not responding. It might not be configured properly")
+			t_print("Aborting")
+			sys.exit()
+	# Begin measurements
+	measure(config_parser, counter_handle, db_con)
 
 	# Closing connection to database
 	close_status = dbClose(db_con)
