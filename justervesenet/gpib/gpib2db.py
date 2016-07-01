@@ -182,15 +182,19 @@ if __name__ == '__main__':
 	file_content = file_content.split("\n")
 
 	for x in range(0, len(file_content)):
-		if( file_content[x][0] != "#" ):
-			time.sleep(0.1)
+		if( file_content[x][0] != "#" and file_content[x][0] != "\n"):
+			time.sleep(0.2)
 			gpib.write(device_handle, file_content[x])
+			print(file_content[x])
+			print(gpib_get_errors(device_handle))
 
 	## Checking for errors
 	error_text = gpib_get_errors(device_handle).rstrip("\r\n")
 	error_status = error_text.find("No error")
 	if(error_status != 0):
 		t_print("Error detected: " + error_text)
+
+	print gpib_query(device_handle, GPIB_READ)
 
 	# Closing connection to database
 	close_status = dbClose(db_con)
