@@ -56,7 +56,7 @@ def dbClose(dbConnection):
 
 def t_print(message):
     current_time = datetime.datetime.now().time()
-    complete_message = "[" + current_time.isoformat() + "] " +"[" + message + "]"
+    complete_message = "[" + current_time.isoformat() + "] " + message
     print(complete_message)
     if(LOG_LEVEL > 0):
         with open(config['logs']['log_path'], "a+") as log:
@@ -80,11 +80,19 @@ def gpib_clear(handle, sleep):
 	gpib.write(handle, GPIB_CLEAR)
 	time.sleep(sleep)
 
-# Loop untill all errors are retrieved
+# Reads all the errors from the counter into a list.
+# If the returned list len = 0, no errors where returned.
 def gpib_get_errors(handle):
-	gpib.write(handle, GPIB_ERROR)
-	response = gpib.read(handle, 100)
-	return response
+	error_list = []
+	while(True):
+		gpib.write(handle, GPIB_ERROR)
+		response = gpib.read(handle, 100)
+		if(response.find("No error") == -1):
+			response = response.rstrip("\r\n")
+			error_list.append(response)
+		else:
+			break
+	return error_list
 
 def set_display(handle, value):
 	if(value < 1):
@@ -185,14 +193,12 @@ if __name__ == '__main__':
 		if( file_content[x][0] != "#" and file_content[x][0] != "\n"):
 			time.sleep(0.2)
 			gpib.write(device_handle, file_content[x])
-			print(file_content[x])
-			print(gpib_get_errors(device_handle))
 
-	## Checking for errors
-	error_text = gpib_get_errors(device_handle).rstrip("\r\n")
-	error_status = error_text.find("No error")
-	if(error_status != 0):
-		t_print("Error detected: " + error_text)
+	error_list = gpib_get_errors(device_handle)
+	if(len(error_list) != 0):
+		t_print("Following errors where reported by the counter:")
+		for x in range(0, len(error_list)):
+			t_print("Error[" + str(x + 1) + "] " + error_list[x])
 
 	print gpib_query(device_handle, GPIB_READ)
 
