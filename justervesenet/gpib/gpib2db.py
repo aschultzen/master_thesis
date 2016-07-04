@@ -1,11 +1,13 @@
-# TODO:
-# Initialize config and return config object, pass this on.
-# Verify config name. If no name exists like param name, ask for GPIB channel instead.
-
 # 213 Init ignored
 # 108 param not allowed
 # 109 missing param
 # 1160 measurement broken off
+
+# Mental notes:
+# We need a table containing name of source (CS1, CS2) and what ports they
+# are connected to at the switch (1,2,3)
+# Make a simple function in matrix_switch to convert the integers to the 
+# correct hexa codes that are used by the switch.
 
 import gpib
 import time
@@ -17,6 +19,7 @@ import sys
 import ctypes
 import mysql.connector
 import hashlib
+import jdutil
 
 GPIB_IDENTIFY = "*IDN?"
 GPIB_RESET = "*RST"
@@ -27,6 +30,52 @@ GPIB_ERROR = ":SYSTem:ERRor?"
 LOG_LEVEL = 0
 CONFIG_PATH = "config.ini"
 GPIB_CONFIG_FILE = "/etc/gpib.conf"
+
+class matrix_switch(object):
+	''' A class for the matrix switch. It mostly contains state '''
+	def __init__(self, handle):
+		self.handle = handle
+		self.source_index = 0
+		config_parser = SafeConfigParser()
+		config_parser.read(CONFIG_PATH)
+		self.number_of_ports = int(config_parser.get('matrix','num_of_ports'))
+		self.load_config()
+
+	def load_config(self):
+		config_parser.read(CONFIG_PATH)
+		self.source_list = config_parser.get('sources','list')
+		self.source_list = self.source_list.rstrip(" ")
+		self.source_list = self.source_list.split("\n")
+
+	def iterate_port(self):
+		self.source_index += 1
+		if(self.source_index > self.number_of_ports):
+			self.source_index = 1
+		return self.source_index
+
+	def get_next_source(self):
+		# Check if port is supposed to be switched to:
+		empty_list_retry_time = int(config_parser.get('sources','empty_list_retry')) 
+		line = "NULL"
+		counter = 0
+		while(True):
+			port = self.iterate_port()
+			for x in range(0, len(self.source_list)):
+				line = self.source_list[x].split(",")
+				if(line[1] == str(port) and line[0][0] != "#"):
+					return line
+			counter += 1
+			if(counter > self.number_of_ports):
+				t_print("No sources configured. Trying again in: " + str(empty_list_retry_time) + " seconds")
+				time.sleep(empty_list_retry_time)
+				self.load_config()
+				counter = 0
+
+	def switch(self):
+		self.load_config()
+		switch_touple = self.get_next_source()
+		print(switch_touple)
+		# SEND COMMAND TO SWITCHER
 
 def dbConnect(c_parser):
     try:    
@@ -72,13 +121,20 @@ def gpib_query(handle, command, numbytes = 100):
 		t_print("Read error, returning NULL")
 	return response
 
-def gpib_reset(handle, sleep):
-	gpib.write(handle, GPIB_RESET)
-	time.sleep(sleep)
+def gpib_reset(handle):
+	try:
+		gpib.write(handle, GPIB_RESET)
+	except gpib.GpibError:
+		return 0
+	return 1
 
-def gpib_clear(handle, sleep):
-	gpib.write(handle, GPIB_CLEAR)
-	time.sleep(sleep)
+
+def gpib_clear(handle):
+	try:
+		gpib.write(handle, GPIB_CLEAR)
+	except gpib.GpibError:
+		return 0
+	return 1
 
 # Reads all the errors from the counter into a list.
 # If the returned list len = 0, no errors where returned.
@@ -110,8 +166,9 @@ def get_handle(name):
 			return 0
 		return (device)
 
-def measure(config_parser, counter_handle, db_con):
-	1+1
+
+def measure(config_parser, counter_handle, matrix_switch, db_con):	
+	matrix_switch.switch()
 	# Measure
 	# Store measurement in DB
 	# Change source
@@ -167,14 +224,36 @@ if __name__ == '__main__':
 	counter_handle = get_handle(device_name)
 	
 	## Clearing device (RST, CLS)
-	gpib_clear(counter_handle, 0.1)
-	gpib_reset(counter_handle, 0.1)
+	if(gpib_clear(counter_handle) == 0):
+		counter = 1
+		give_up = int(config_parser.get('counter','cls_rst_retry_count'))
+		
+		while(counter < give_up):
+			t_print("Attempt " +  str(counter) + " to CLEAR counter failed, retrying...")
+			if(gpib_clear(counter_handle) == 1):
+				break;
+			counter += 1
+	else:
+		t_print("Counter CLEARED")
+
+	if(gpib_reset(counter_handle) == 0):
+		counter = 1
+		give_up = int(config_parser.get('counter','cls_rst_retry_count'))
+		
+		while(counter < give_up):
+			t_print("Attempt " +  str(counter) + " to RESET counter failed, retrying...")
+			if(gpib_reset(counter_handle) == 1):
+				break;
+			counter += 1
+	else:
+		t_print("Counter RESET")
+
+	gpib_reset(counter_handle)
 	
 	## Querying for ID
 	device_id = gpib_query(counter_handle, GPIB_IDENTIFY)
 	device_id = device_id.rstrip("\r\n")
-	t_print("Connection to GPIB device established!")
-	t_print("Device ID: " + device_id)
+	t_print("Counter ID: " + device_id)
 
 	# Uploading GPIB configuration
 	try:
@@ -208,6 +287,7 @@ if __name__ == '__main__':
 			t_print("Error[" + str(x + 1) + "] " + error_list[x])
 
 	# Connecting to the Matrix switch
+	'''
 	matrix_name_config = config_parser.get('matrix','name')
 	matrix_name = matrix_name_config
 	name_found_in_config = -1
@@ -234,18 +314,22 @@ if __name__ == '__main__':
 	# respond to the "*IDN?" command.
 	# However, an "gpib.GpibError: write() failed:"
 	# error will be raised if there is no device 
-	# connected to the channel "used" by the handler.
+	# connected to the channel used by the handler.
 	# The message could in other words just be garbage.
 	# This will however work as advertized on a switch
 	# that has the "*IDN?" command implemented
 	try:
 		gpib.write(matrix_handle, "*IDN?")
 	except gpib.GpibError:
-			t_print("The switch is not responding. It might not be configured properly")
+			t_print("Error when writing to the switches channel, check configuration and try again.")
 			t_print("Aborting")
 			sys.exit()
+	'''		
+	ms = matrix_switch(11)
+
 	# Begin measurements
-	measure(config_parser, counter_handle, db_con)
+	while(True):
+		measure(config_parser, counter_handle, ms, db_con)
 
 	# Closing connection to database
 	close_status = dbClose(db_con)
