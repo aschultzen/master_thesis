@@ -3,12 +3,6 @@
 # 109 missing param
 # 1160 measurement broken off
 
-# Mental notes:
-# We need a table containing name of source (CS1, CS2) and what ports they
-# are connected to at the switch (1,2,3)
-# Make a simple function in matrix_switch to convert the integers to the 
-# correct hexa codes that are used by the switch.
-
 import gpib
 import time
 from ConfigParser import SafeConfigParser
@@ -31,15 +25,36 @@ LOG_LEVEL = 0
 CONFIG_PATH = "config.ini"
 GPIB_CONFIG_FILE = "/etc/gpib.conf"
 
+
 class matrix_switch(object):
 	''' A class for the matrix switch. It mostly contains state '''
 	def __init__(self, handle):
-		self.handle = handle
+		self.switch_handle = handle
 		self.source_index = 0
 		config_parser = SafeConfigParser()
 		config_parser.read(CONFIG_PATH)
 		self.number_of_ports = int(config_parser.get('matrix','num_of_ports'))
 		self.load_config()
+
+		self.switch_codes = [
+		"ZEROINDX",
+		"01010100",
+		"01010200",
+		"01010400",
+		"01010800",
+		"01011000",
+		"01012000",
+		"01014000",
+		"01018000",
+		"01010001",
+		"01010002",
+		"01010004",
+		"01010008",
+		"01010010",
+		"01010020",
+		"01010040",
+		"01010080",
+		]
 
 	def load_config(self):
 		config_parser.read(CONFIG_PATH)
@@ -74,8 +89,10 @@ class matrix_switch(object):
 	def switch(self):
 		self.load_config()
 		switch_touple = self.get_next_source()
-		print(switch_touple)
-		# SEND COMMAND TO SWITCHER
+		source_name = switch_touple[0]
+		port_to_switch = int(switch_touple[1])
+		t_print("Switching: " + self.switch_codes[port_to_switch] + ", source: " + source_name)
+		#gpib.write(switch_handle, self.switch_codes[port_to_switch])
 
 def dbConnect(c_parser):
     try:    
@@ -169,6 +186,7 @@ def get_handle(name):
 
 def measure(config_parser, counter_handle, matrix_switch, db_con):	
 	matrix_switch.switch()
+	time.sleep(2)
 	# Measure
 	# Store measurement in DB
 	# Change source
@@ -228,11 +246,14 @@ if __name__ == '__main__':
 		counter = 1
 		give_up = int(config_parser.get('counter','cls_rst_retry_count'))
 		
-		while(counter < give_up):
+		while(counter <= give_up):
 			t_print("Attempt " +  str(counter) + " to CLEAR counter failed, retrying...")
+			time.sleep(2)
 			if(gpib_clear(counter_handle) == 1):
 				break;
 			counter += 1
+		t_print("FAILED to clear to counter, confirm that the counter is powered on. Aborting.")
+		sys.exit()
 	else:
 		t_print("Counter CLEARED")
 
@@ -240,11 +261,14 @@ if __name__ == '__main__':
 		counter = 1
 		give_up = int(config_parser.get('counter','cls_rst_retry_count'))
 		
-		while(counter < give_up):
+		while(counter <= give_up):
 			t_print("Attempt " +  str(counter) + " to RESET counter failed, retrying...")
+			time.sleep(2)
 			if(gpib_reset(counter_handle) == 1):
 				break;
 			counter += 1
+		t_print("FAILED to reset to counter, confirm that the counter is powered on. Aborting.")
+		sys.exit()
 	else:
 		t_print("Counter RESET")
 
@@ -310,7 +334,7 @@ if __name__ == '__main__':
 	## Testing connection
 
 	# NOTE! The CE 1017 Matrix switch that 
-	# this code was written for, does not  
+	# this code was written for, does not  l
 	# respond to the "*IDN?" command.
 	# However, an "gpib.GpibError: write() failed:"
 	# error will be raised if there is no device 
