@@ -15,6 +15,7 @@ import mysql.connector
 import hashlib
 import jdutil
 from datetime import date,timedelta
+import cPickle as pickle
 
 GPIB_IDENTIFY = "*IDN?"
 GPIB_RESET = "*RST"
@@ -228,14 +229,26 @@ def upload(db_con, data_measurement):
 	db_con.commit()
 	cursor.close()
 
+def dump(dm, dump_name):
+	today = time.strftime("%Y_%m_%d")
+	dump_file = open(dump_name+today, "a+")
+	output = (	dm['date'] + " " + dm['time'] + " " + 
+				str(dm['mjd']) + " " + dm['source'] + " " + 
+				dm['value'] + " " + 
+				dm['ref_clock'] + " " + dm['measurerID'] + "\n")
+	dump_file.write(output)
+	dump_file.close()
+
 def measure(config_parser, counter_handle, matrix_switch, db_con):	
 	switch_info = matrix_switch.switch()
 	measurement = gpib_query(counter_handle, GPIB_MEASURE)
 	data_measurement = create_query(config_parser, switch_info, measurement)
-	upload(db_con, data_measurement)
+	#upload(db_con, data_measurement)
+	if(config_parser.get('general','dump_to_file') == "yes"):
+		dump(data_measurement, config_parser.get('general','dump_file_name'))
 
 if __name__ == '__main__':
-	t_print("gpib2db started!")
+	t_print("Lean Mean Measuring Machine (LMMM) started!")
 	
 	# Init config
 	config_parser = SafeConfigParser()
