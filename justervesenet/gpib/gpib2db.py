@@ -14,6 +14,7 @@ import ctypes
 import mysql.connector
 import hashlib
 import jdutil
+from datetime import date,timedelta
 
 GPIB_IDENTIFY = "*IDN?"
 GPIB_RESET = "*RST"
@@ -91,8 +92,17 @@ class matrix_switch(object):
 		switch_touple = self.get_next_source()
 		source_name = switch_touple[0]
 		port_to_switch = int(switch_touple[1])
-		t_print("Switching: " + self.switch_codes[port_to_switch] + ", source: " + source_name)
+		#t_print("Switching: " + self.switch_codes[port_to_switch] + ", source: " + source_name)
 		#gpib.write(switch_handle, self.switch_codes[port_to_switch])
+		return (source_name, port_to_switch)
+
+
+def get_today_mjd():
+    today = datetime.datetime.utcnow()
+    return jdutil.jd_to_mjd(jdutil.datetime_to_jd(today)) 
+
+def get_date():
+	return datetime.datetime.utcnow()
 
 def dbConnect(c_parser):
     try:    
@@ -183,14 +193,46 @@ def get_handle(name):
 			return 0
 		return (device)
 
+def format_date_string(date_s):
+    split = date_s.split(".")
+    split = split[::-1]
+    split = ''.join(split)
+    return split
+
+def create_query(config_parser, switch_info, measurement):
+	today = time.strftime("%Y/%m/%d")
+	now = time.strftime("%H:%M:%S")
+	measurement = measurement.rstrip("\r\n")
+
+	data_measurement = {
+		'date': today,
+		'time': now,
+		'mjd' : get_today_mjd(),
+		'source': switch_info[0],
+		'value' : measurement,
+		'ref_clock': config_parser.get('general','ref_clock'),
+		'measurerID': config_parser.get('general','measurerID'),
+	}
+	return data_measurement
+
+def upload(db_con, data_measurement):
+	cursor = db_con.cursor();
+
+	add_measurement = ("INSERT INTO clock_measurements"
+              "(date, time, mjd, source, value, ref_clock, measurerID) "
+              "VALUES (%(date)s, %(time)s, %(mjd)s, %(source)s, %(value)s, %(ref_clock)s, %(measurerID)s)")
+
+	cursor.execute(add_measurement, data_measurement)
+
+	# Make sure data is committed to the database
+	db_con.commit()
+	cursor.close()
 
 def measure(config_parser, counter_handle, matrix_switch, db_con):	
-	matrix_switch.switch()
-	time.sleep(2)
-	# Measure
-	# Store measurement in DB
-	# Change source
-	# Repeat
+	switch_info = matrix_switch.switch()
+	measurement = gpib_query(counter_handle, GPIB_MEASURE)
+	data_measurement = create_query(config_parser, switch_info, measurement)
+	upload(db_con, data_measurement)
 
 if __name__ == '__main__':
 	t_print("gpib2db started!")
@@ -242,13 +284,14 @@ if __name__ == '__main__':
 	counter_handle = get_handle(device_name)
 	
 	## Clearing device (RST, CLS)
+	time.sleep(1)
 	if(gpib_clear(counter_handle) == 0):
 		counter = 1
 		give_up = int(config_parser.get('counter','cls_rst_retry_count'))
 		
 		while(counter <= give_up):
 			t_print("Attempt " +  str(counter) + " to CLEAR counter failed, retrying...")
-			time.sleep(2)
+			time.sleep(1)
 			if(gpib_clear(counter_handle) == 1):
 				break;
 			counter += 1
@@ -257,13 +300,14 @@ if __name__ == '__main__':
 	else:
 		t_print("Counter CLEARED")
 
+	time.sleep(1)
 	if(gpib_reset(counter_handle) == 0):
 		counter = 1
 		give_up = int(config_parser.get('counter','cls_rst_retry_count'))
 		
 		while(counter <= give_up):
 			t_print("Attempt " +  str(counter) + " to RESET counter failed, retrying...")
-			time.sleep(2)
+			time.sleep(1)
 			if(gpib_reset(counter_handle) == 1):
 				break;
 			counter += 1
@@ -301,7 +345,7 @@ if __name__ == '__main__':
 
 	for x in range(0, len(file_content)):
 		if( file_content[x][0] != "#" and file_content[x][0] != "\n"):
-			time.sleep(0.2)
+			time.sleep(1)
 			gpib.write(counter_handle, file_content[x])
 
 	error_list = gpib_get_errors(counter_handle)
@@ -309,6 +353,8 @@ if __name__ == '__main__':
 		t_print("Following errors where reported by the counter:")
 		for x in range(0, len(error_list)):
 			t_print("Error[" + str(x + 1) + "] " + error_list[x])
+	else:
+		t_print("No errors collected from counter.")
 
 	# Connecting to the Matrix switch
 	'''
@@ -354,6 +400,7 @@ if __name__ == '__main__':
 	# Begin measurements
 	while(True):
 		measure(config_parser, counter_handle, ms, db_con)
+		time.sleep(1)
 
 	# Closing connection to database
 	close_status = dbClose(db_con)
