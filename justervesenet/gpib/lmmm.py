@@ -1,21 +1,16 @@
-# 213 Init ignored
-# 108 param not allowed
-# 109 missing param
-# 1160 measurement broken off
-
 import gpib
 import time
-from ConfigParser import SafeConfigParser
 import fileinput, sys
-import datetime
 import os
 import sys
 import ctypes
-import mysql.connector
 import hashlib
-import jdutil
-from datetime import date,timedelta
-import cPickle as pickle
+from ConfigParser import SafeConfigParser
+
+# LMMM Modules
+from matrix_switch import matrix_switch
+from lmmm_common import t_print
+from lmmm_db import (dbConnect, dbClose, create_query, upload)
 
 GPIB_IDENTIFY = "*IDN?"
 GPIB_RESET = "*RST"
@@ -26,118 +21,6 @@ GPIB_ERROR = ":SYSTem:ERRor?"
 LOG_LEVEL = 0
 CONFIG_PATH = "config.ini"
 GPIB_CONFIG_FILE = "/etc/gpib.conf"
-
-
-class matrix_switch(object):
-	''' A class for the matrix switch. It mostly contains state '''
-	def __init__(self, handle):
-		self.switch_handle = handle
-		self.source_index = 0
-		config_parser = SafeConfigParser()
-		config_parser.read(CONFIG_PATH)
-		self.number_of_ports = int(config_parser.get('matrix','num_of_ports'))
-		self.load_config()
-
-		self.switch_codes = [
-		"ZEROINDX",
-		"01010100",
-		"01010200",
-		"01010400",
-		"01010800",
-		"01011000",
-		"01012000",
-		"01014000",
-		"01018000",
-		"01010001",
-		"01010002",
-		"01010004",
-		"01010008",
-		"01010010",
-		"01010020",
-		"01010040",
-		"01010080",
-		]
-
-	def load_config(self):
-		config_parser.read(CONFIG_PATH)
-		self.source_list = config_parser.get('sources','list')
-		self.source_list = self.source_list.rstrip(" ")
-		self.source_list = self.source_list.split("\n")
-
-	def iterate_port(self):
-		self.source_index += 1
-		if(self.source_index > self.number_of_ports):
-			self.source_index = 1
-		return self.source_index
-
-	def get_next_source(self):
-		# Check if port is supposed to be switched to:
-		empty_list_retry_time = int(config_parser.get('sources','empty_list_retry')) 
-		line = "NULL"
-		counter = 0
-		while(True):
-			port = self.iterate_port()
-			for x in range(0, len(self.source_list)):
-				line = self.source_list[x].split(",")
-				if(line[1] == str(port) and line[0][0] != "#"):
-					return line
-			counter += 1
-			if(counter > self.number_of_ports):
-				t_print("No sources configured. Trying again in: " + str(empty_list_retry_time) + " seconds")
-				time.sleep(empty_list_retry_time)
-				self.load_config()
-				counter = 0
-
-	def switch(self):
-		self.load_config()
-		switch_touple = self.get_next_source()
-		source_name = switch_touple[0]
-		port_to_switch = int(switch_touple[1])
-		#t_print("Switching: " + self.switch_codes[port_to_switch] + ", source: " + source_name)
-		#gpib.write(switch_handle, self.switch_codes[port_to_switch])
-		return (source_name, port_to_switch)
-
-
-def get_today_mjd():
-    today = datetime.datetime.utcnow()
-    return jdutil.jd_to_mjd(jdutil.datetime_to_jd(today)) 
-
-def get_date():
-	return datetime.datetime.utcnow()
-
-def dbConnect(c_parser):
-    try:    
-        dbConnection = mysql.connector.connect(
-            host= c_parser.get('db','ip'),
-            database= c_parser.get('db','database'),
-            user= c_parser.get('db','user'),
-            password= c_parser.get('db','password'),
-            autocommit=True
-            )
-        
-        if dbConnection.is_connected():
-            return dbConnection
-        else:
-        	return 0
-
-    except mysql.connector.errors.InterfaceError as e:
-            return 0
-
-def dbClose(dbConnection):
-    dbConnection.close()
-
-    if dbConnection.is_connected():
-    	return 0
-    else:
-    	return 1 
-
-def t_print(message):
-    current_time = datetime.datetime.now().time()
-    complete_message = "[" + current_time.isoformat() + "] " + message
-    print(complete_message)
-    if(LOG_LEVEL > 0):
-        with open(config['logs']['log_path'], "a+") as log:
-            log.write(complete_message + "\n")
 
 def gpib_query(handle, command, numbytes = 100):
 	gpib.write(handle, command)
@@ -155,7 +38,6 @@ def gpib_reset(handle):
 	except gpib.GpibError:
 		return 0
 	return 1
-
 
 def gpib_clear(handle):
 	try:
@@ -193,41 +75,6 @@ def get_handle(name):
 		else:
 			return 0
 		return (device)
-
-def format_date_string(date_s):
-    split = date_s.split(".")
-    split = split[::-1]
-    split = ''.join(split)
-    return split
-
-def create_query(config_parser, switch_info, measurement):
-	today = time.strftime("%Y/%m/%d")
-	now = time.strftime("%H:%M:%S")
-	measurement = measurement.rstrip("\r\n")
-
-	data_measurement = {
-		'date': today,
-		'time': now,
-		'mjd' : get_today_mjd(),
-		'source': switch_info[0],
-		'value' : measurement,
-		'ref_clock': config_parser.get('general','ref_clock'),
-		'measurerID': config_parser.get('general','measurerID'),
-	}
-	return data_measurement
-
-def upload(db_con, data_measurement):
-	cursor = db_con.cursor();
-
-	add_measurement = ("INSERT INTO clock_measurements"
-              "(date, time, mjd, source, value, ref_clock, measurerID) "
-              "VALUES (%(date)s, %(time)s, %(mjd)s, %(source)s, %(value)s, %(ref_clock)s, %(measurerID)s)")
-
-	cursor.execute(add_measurement, data_measurement)
-
-	# Make sure data is committed to the database
-	db_con.commit()
-	cursor.close()
 
 def dump(dm, dump_name):
 	today = time.strftime("%Y_%m_%d")
@@ -390,10 +237,10 @@ if __name__ == '__main__':
 	## Retrieving handle
 	matrix_handle = get_handle(matrix_name)
 
-	## Testing connection
+	## Testing connection 
 
 	# NOTE! The CE 1017 Matrix switch that 
-	# this code was written for, does not  l
+	# this code was written for, does not
 	# respond to the "*IDN?" command.
 	# However, an "gpib.GpibError: write() failed:"
 	# error will be raised if there is no device 
@@ -408,8 +255,9 @@ if __name__ == '__main__':
 			t_print("Aborting")
 			sys.exit()
 	'''		
-	ms = matrix_switch(11)
+	ms = matrix_switch(11, CONFIG_PATH)
 
+	t_print("Commencing measurements...")
 	# Begin measurements
 	while(True):
 		measure(config_parser, counter_handle, ms, db_con)
