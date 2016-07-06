@@ -1,3 +1,5 @@
+# Make sure that the program continues normal execution even if the link goes down
+
 import gpib
 import time
 import fileinput, sys
@@ -5,12 +7,11 @@ import os
 import sys
 import ctypes
 import hashlib
-from ConfigParser import SafeConfigParser
 
 # LMMM Modules
 from matrix_switch import matrix_switch
-from lmmm_common import t_print
-from lmmm_db import (dbConnect, dbClose, create_query, upload)
+from lmmm_common import (t_print, init_config)
+from lmmm_db import (db_connector, dbClose, create_query, upload)
 
 GPIB_IDENTIFY = "*IDN?"
 GPIB_RESET = "*RST"
@@ -19,7 +20,7 @@ GPIB_READ = ":READ?"
 GPIB_MEASURE = GPIB_READ
 GPIB_ERROR = ":SYSTem:ERRor?"
 LOG_LEVEL = 0
-CONFIG_PATH = "config.ini"
+CONFIG_PATH = "lmmm_config.ini"
 GPIB_CONFIG_FILE = "/etc/gpib.conf"
 
 def gpib_query(handle, command, numbytes = 100):
@@ -76,13 +77,20 @@ def get_handle(name):
 			return 0
 		return (device)
 
-def dump(dm, dump_name):
+# Dump query (dm) to file
+def dump(dm, dump_name, upload_status):
 	today = time.strftime("%Y_%m_%d")
 	dump_file = open(dump_name+today, "a+")
 	output = (	dm['date'] + " " + dm['time'] + " " + 
 				str(dm['mjd']) + " " + dm['source'] + " " + 
 				dm['value'] + " " + 
-				dm['ref_clock'] + " " + dm['measurerID'] + "\n")
+				dm['ref_clock'] + " " + dm['measurerID'])
+	# If upload to db failed, the query is marked
+	if(upload_status == 0):
+		output += " *\n"
+	else:
+		output += "\n"
+
 	dump_file.write(output)
 	dump_file.close()
 
@@ -90,40 +98,26 @@ def measure(config_parser, counter_handle, matrix_switch, db_con):
 	switch_info = matrix_switch.switch()
 	measurement = gpib_query(counter_handle, GPIB_MEASURE)
 	data_measurement = create_query(config_parser, switch_info, measurement)
-	#upload(db_con, data_measurement)
+	upload_status = upload(db_con, data_measurement)
 	if(config_parser.get('general','dump_to_file') == "yes"):
-		dump(data_measurement, config_parser.get('general','dump_file_name'))
+		dump(data_measurement, config_parser.get('general','dump_file_name'), upload_status)
 
 if __name__ == '__main__':
 	t_print("Lean Mean Measuring Machine (LMMM) started!")
 	
-	# Init config
-	config_parser = SafeConfigParser()
-	conf_status = config_parser.read(CONFIG_PATH)
-
-	if(len(conf_status) == 0):
-		t_print("Failed to load " + CONFIG_PATH + ". Aborting")
+	# Initializes config
+	config_parser = init_config(CONFIG_PATH)
+	if(config_parser == 0):
 		sys.exit()
-	else:
-		t_print("Config loaded from " + CONFIG_PATH)
 
-	# Connects to database
-	connection_attempts = 1
-	connection_attempts_max = int(config_parser.get('db','connection_attempts_max'))
-	db_con = dbConnect(config_parser)
-	while( db_con == 0 ):
-		time.sleep(1)
-		t_print("DB connection attempt " + str(connection_attempts) + " failed.")
-		db_con = dbConnect(config_parser)
-		connection_attempts = connection_attempts + 1
-		if(connection_attempts_max > 1 and connection_attempts > connection_attempts_max):
-			t_print("Reached maximum attempts at connecting to DB. Aborting")
-			sys.exit()
-
-	t_print("Connection to database established after "
-			+ str(connection_attempts) + " attempt(s)")
+	# Connecting to the database
+	db_con = db_connector(config_parser)
+	if(db_con == 0):
+		sys.exit()
 
 	# Connecting to counter/analyzer
+	# This could be put in a function, but it is only 
+	# called once throughout the program
 	device_name_config = config_parser.get('counter','name')
 	device_name = device_name_config
 	name_found_in_config = -1
@@ -261,7 +255,7 @@ if __name__ == '__main__':
 	# Begin measurements
 	while(True):
 		measure(config_parser, counter_handle, ms, db_con)
-		time.sleep(1)
+		#time.sleep(1)
 
 	# Closing connection to database
 	close_status = dbClose(db_con)
