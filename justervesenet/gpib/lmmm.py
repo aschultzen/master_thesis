@@ -78,9 +78,8 @@ def get_handle(name):
 		return (device)
 
 # Dump query (dm) to file
-def dump(dm, dump_name, upload_status):
-	today = time.strftime("%Y_%m_%d")
-	dump_file = open(dump_name+today, "a+")
+def dump(dm, path, upload_status):
+	dump_file = open(path, "a+")
 	output = (	dm['date'] + " " + dm['time'] + " " + 
 				str(dm['mjd']) + " " + dm['source'] + " " + 
 				dm['value'] + " " + 
@@ -98,8 +97,12 @@ def measure(config_parser, counter_handle, matrix_switch, db_con):
 	switch_info = matrix_switch.switch()
 	measurement = gpib_query(counter_handle, GPIB_MEASURE)
 	data_measurement = create_query(config_parser, switch_info, measurement)
-	upload_status = upload(db_con, data_measurement)
+	#upload_status = upload(db_con, data_measurement)
+	upload_status = 1
 	if(config_parser.get('general','dump_to_file') == "yes"):
+		path = config_parser.get('general','dump_dir')
+		path += config_parser.get('general','dump_file_name')
+		path += time.strftime("%Y_%m_%d")
 		dump(data_measurement, config_parser.get('general','dump_file_name'), upload_status)
 
 if __name__ == '__main__':
@@ -109,6 +112,13 @@ if __name__ == '__main__':
 	config_parser = init_config(CONFIG_PATH)
 	if(config_parser == 0):
 		sys.exit()
+
+	# Creating dump directory
+	dump_dir = config_parser.get('general','dump_dir')
+	if not os.path.isdir(dump_dir):
+		os.makedirs(dump_dir)
+		t_print("Created dump directory: " + dump_dir)
+
 
 	# Connecting to the database
 	db_con = db_connector(config_parser)
