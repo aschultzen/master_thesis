@@ -64,10 +64,11 @@ def create_query(config_parser, switch_info, measurement):
 	return data_measurement
 
 def upload(db_con, data_measurement):
+	error_string = "Connection to DB was down!"
 	try:
 		cursor = db_con.cursor();
 	except mysql.connector.errors.OperationalError:
-		t_print("Connection to DB is down!")
+		t_print(error_string)
 		return 0
 	
 	add_measurement = ("INSERT INTO clock_measurements"
@@ -77,11 +78,16 @@ def upload(db_con, data_measurement):
 	try:
 		cursor.execute(add_measurement, data_measurement)
 	except mysql.connector.errors.OperationalError:
-		t_print("Connection to DB is down!")
+		t_print(error_string)
 		cursor.close()
 		return 0
 
 	# Make sure data is committed to the database
-	db_con.commit()
+	try:
+		db_con.commit()
+	except mysql.connector.errors.OperationalError:
+		t_print(error_string)
+		return 0
+
 	cursor.close()
 	return 1

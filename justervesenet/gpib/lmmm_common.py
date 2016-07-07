@@ -4,6 +4,7 @@ import jdutil
 import time
 import os
 from ConfigParser import SafeConfigParser
+import sys
 
 def get_today_mjd():
     today = datetime.datetime.utcnow()

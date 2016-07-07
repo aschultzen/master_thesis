@@ -97,13 +97,12 @@ def measure(config_parser, counter_handle, matrix_switch, db_con):
 	switch_info = matrix_switch.switch()
 	measurement = gpib_query(counter_handle, GPIB_MEASURE)
 	data_measurement = create_query(config_parser, switch_info, measurement)
-	#upload_status = upload(db_con, data_measurement)
-	upload_status = 1
+	upload_status = upload(db_con, data_measurement)
 	if(config_parser.get('general','dump_to_file') == "yes"):
 		path = config_parser.get('general','dump_dir')
 		path += config_parser.get('general','dump_file_name')
 		path += time.strftime("%Y_%m_%d")
-		dump(data_measurement, config_parser.get('general','dump_file_name'), upload_status)
+		dump(data_measurement, path, upload_status)
 
 if __name__ == '__main__':
 	t_print("Lean Mean Measuring Machine (LMMM) started!")
