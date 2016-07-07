@@ -113,13 +113,6 @@ if __name__ == '__main__':
 	if(config_parser == 0):
 		sys.exit()
 
-	# Creating dump directory
-	dump_dir = config_parser.get('general','dump_dir')
-	if not os.path.isdir(dump_dir):
-		os.makedirs(dump_dir)
-		t_print("Created dump directory: " + dump_dir)
-
-
 	# Connecting to the database
 	db_con = db_connector(config_parser)
 	if(db_con == 0):
