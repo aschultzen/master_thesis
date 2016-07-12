@@ -80,6 +80,7 @@ struct server_data {
     time_t started;			/* When the server was started */
     pid_t pid;
     char version[4];
+    int csac_fd;
 };
 
 /* Synchronization elements shared with processes */

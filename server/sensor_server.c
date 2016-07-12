@@ -243,13 +243,6 @@ static void start_server(int port_number)
         exit(0);
     }
 
-    /* Connect to CSAC */
-    int csac_handle = open_serial(s_conf->csac_path, CSAC);
-    if(csac_handle == -1){ 
-        t_print("Failed to connect to CSAC\n");
-        exit(0);
-    }
-
     INIT_LIST_HEAD(&client_list->list);
 
     /* Create and initialize shared memory for server data */
@@ -268,6 +261,13 @@ static void start_server(int port_number)
         sem_close(&(s_synch->ready_mutex));
         sem_close(&(s_synch->client_list_mutex));
         exit(1);
+    }
+
+    /* Connect to CSAC */
+    s_data->csac_fd = open_serial(s_conf->csac_path, CSAC);
+    if(s_data->csac_fd == -1){ 
+        t_print("Failed to connect to CSAC\n");
+        exit(0);
     }
 
     /* Initialize socket */

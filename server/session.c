@@ -12,6 +12,7 @@
 #define ERROR_WARMUP_NOT_SENSOR "ERROR:Warm-up only applies to sensors\n"
 #define ERROR_DUMPDATA_FAILED "ERROR:Failed to dump data\n"
 #define ERROR_LOADDATA_FAILED "ERROR:Failed to load data\n"
+#define ERROR_NO_COMMAND  "ERROR:No command specified"
 
 static int nmea_ready();
 static void extract_nmea_data(struct client_table_entry *cte);
@@ -338,11 +339,25 @@ static int parse_input(struct client_table_entry *cte)
         cte->cm.code = CODE_LOADDATA;
     }
 
+    /* QUERYCSAC */
+    else if(strstr((char*)incoming, PROTOCOL_QUERYCSAC ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_QUERYCSAC) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_QUERYCSAC)*(sizeof(char))), length);
+        cte->cm.code = CODE_QUERYCSAC;
+    }
+
+    /* QUERYCSAC_SHORT */
+    else if(strstr((char*)incoming, PROTOCOL_QUERYCSAC_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_QUERYCSAC_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_QUERYCSAC_SHORT)*(sizeof(char))), length);
+        cte->cm.code = CODE_QUERYCSAC;
+    }
+
     else {
         return 0;
     }
 
-    /* Attempting to retrie ID */
+    /* Attempting to retrive ID */
     sscanf(cte->cm.parameter, "%d", &cte->cm.id_parameter);
 
     return 1;
@@ -593,6 +608,14 @@ static int respond(struct client_table_entry *cte)
 
         else if(cte->cm.code == CODE_LISTDUMPS) {
             listdumps(cte);
+        }
+
+        else if(cte->cm.code == CODE_QUERYCSAC) {
+            if(strlen(cte->cm.parameter) == 0){
+                s_write(&(cte->transmission), ERROR_NO_COMMAND, sizeof(ERROR_NO_COMMAND));
+                return 1;
+            } 
+            query_csac(cte, cte->cm.parameter, s_data->csac_fd);
         }
 
         else {

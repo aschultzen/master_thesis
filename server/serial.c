@@ -132,5 +132,5 @@ int serial_query(int file_descriptor, char *query, char *buffer, int buf_len)
         return -1;
     }
 
-    return 0;
+    return 1;
 }

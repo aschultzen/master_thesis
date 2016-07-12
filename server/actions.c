@@ -10,7 +10,6 @@
 #define DATADUMP_HUMAN_EXTENSION ".txt"
 
 /* ERRORS */
-
 #define ERROR_APPEND_TOO_LONG "ERROR: TEXT TO APPEND TOO LONG\n"
 #define ERROR_NO_SENSORS_CONNECTED "NO SENSORS CONNECTED\n"
 #define ERROR_FCLOSE "Failed to close file, out of space?\n"
@@ -18,6 +17,7 @@
 #define ERROR_FREAD "Failed to read file, aborting.\n"
 #define ERROR_FOPEN "Failed to open file, aborting.\n"
 #define ERROR_UPDATE_WARMUP_ILLEGAL "Warm-up time value has to be greater than 0!\n"
+#define ERROR_CSAC_FAILED "Communication with CSAC failed!\n"
 
 /* HELP */
 #define HELP "\n"\
@@ -45,6 +45,9 @@
 "----------------------------------------------------------------------------------\n"\
 " LOADDATA     | LD    | ID & FILE | Loads NMEA of FILE into sensor ID\n"\
 "----------------------------------------------------------------------------------\n"\
+" QUERYCSAC    | QS    | COMMAND   | Queries the CSAC with parameter COMMAND\n"\
+"----------------------------------------------------------------------------------\n"\
+
 
 
 /* SIZES */
@@ -361,4 +364,15 @@ int loaddata(struct client_table_entry* target, char *filename)
     }
 
     return 1;
+}
+
+int query_csac(struct client_table_entry *monitor, char *query, int csac_fd)
+{
+    char *buffer = calloc(300, sizeof(char));
+
+    if(!serial_query(csac_fd, query,buffer, 300)){
+        s_write(&(monitor->transmission), ERROR_CSAC_FAILED, sizeof(ERROR_CSAC_FAILED));
+    }
+    s_write(&(monitor->transmission), buffer, 300);
+    return 0;
 }
