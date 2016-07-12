@@ -21,6 +21,7 @@ struct server_config {
     int max_clients;
     int warm_up_seconds;
     int human_readable_dumpdata;
+    char csac_path[100];
 };
 
 /*

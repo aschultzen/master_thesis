@@ -37,7 +37,8 @@
 #define CONFIG_SERVER_WARM_UP "warm_up:"
 #define CONFIG_SERVER_HUMANLY_READABLE "humanly_readable_dumpdata:"
 #define CONFIG_FILE_PATH "config.ini"
-#define CONFIG_ENTRIES 3
+#define CONFIG_CSAC_PATH "csac_serial_interface:"
+#define CONFIG_ENTRIES 4
 
 /* Server data and stats */
 struct server_data *s_data;
@@ -209,6 +210,10 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
     conf_map[2].entry_name = CONFIG_SERVER_HUMANLY_READABLE;
     conf_map[2].modifier = FORMAT_INT;
     conf_map[2].destination = &s_conf->human_readable_dumpdata;
+
+    conf_map[3].entry_name = CONFIG_CSAC_PATH;
+    conf_map[3].modifier = FORMAT_STRING;
+    conf_map[3].destination = &s_conf->csac_path;
 }
 
 /*
@@ -235,6 +240,13 @@ static void start_server(int port_number)
         client_list = mmap(NULL, (s_conf->max_clients * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     } else {
         t_print(ERROR_CONFIG_LOAD_FAILED);
+        exit(0);
+    }
+
+    /* Connect to CSAC */
+    int csac_handle = open_serial(s_conf->csac_path, CSAC);
+    if(csac_handle == -1){ 
+        t_print("Failed to connect to CSAC\n");
         exit(0);
     }
 
