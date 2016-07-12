@@ -1,3 +1,4 @@
+/*
 ## CSAC Config ##################
 #
 # 57600			
@@ -14,6 +15,7 @@
 # Symmetricom CSAC <- Output
 #
 #################################
+*/
 
 #ifndef SERIAL_H
 #define SERIAL_H
@@ -38,5 +40,6 @@ typedef enum e_serial_device {
 } serial_device;
 
 int open_serial(char *portname, serial_device device);
+int serial_query(int file_descriptor, char *query, char *buffer, int buf_len);
 
 #endif /* !SERIAL_H */
