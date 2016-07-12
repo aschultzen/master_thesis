@@ -1,3 +1,13 @@
+'''
+Utility for uploading dump files made by LMMM
+to a database. The program loops over the files 
+specified as parameter and inserts the lines
+ending with a "*" character
+
+:Author: Aril Schultzen
+:Email: aschultzen@gmail.com 
+'''
+
 import sys
 import time
 
@@ -69,7 +79,7 @@ if __name__ == '__main__':
 	# as they were passed as parameters
 
 	t_print("Inserting...")
-	
+
 	counter = 0
 	while(counter < len(file_list)):
 		num_lines = upload_dump(file_list[counter], db_con, config_parser)

@@ -1,4 +1,7 @@
-# Make sure that the program continues normal execution even if the link goes down
+'''
+:Author: Aril Schultzen
+:Email: aschultzen@gmail.com 
+'''
 
 import gpib
 import time
