@@ -12,7 +12,7 @@
 #define ERROR_WARMUP_NOT_SENSOR "ERROR:Warm-up only applies to sensors\n"
 #define ERROR_DUMPDATA_FAILED "ERROR:Failed to dump data\n"
 #define ERROR_LOADDATA_FAILED "ERROR:Failed to load data\n"
-#define ERROR_NO_COMMAND  "ERROR:No command specified"
+#define ERROR_NO_COMMAND  "ERROR:No command specified\n"
 
 static int nmea_ready();
 static void extract_nmea_data(struct client_table_entry *cte);
@@ -611,10 +611,10 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_QUERYCSAC) {
-            if(strlen(cte->cm.parameter) == 0){
+            if(strlen(cte->cm.parameter) < 3){
                 s_write(&(cte->transmission), ERROR_NO_COMMAND, sizeof(ERROR_NO_COMMAND));
                 return 1;
-            } 
+            }
             query_csac(cte, cte->cm.parameter, s_data->csac_fd);
         }
 
@@ -661,6 +661,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->nmea.alt_low = 999.999999;
 
     /* Setting the high values */
+
     new_client->nmea.lat_high = -9999.999999;
     new_client->nmea.lon_high = -9999.999999;
     new_client->nmea.alt_high = -999.999999;

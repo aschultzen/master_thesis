@@ -48,8 +48,6 @@
 " QUERYCSAC    | QC    | COMMAND   | Queries the CSAC with parameter COMMAND\n"\
 "--------------------------------------------------------------------------------\n"\
 
-
-
 /* SIZES */
 #define DUMPDATA_TIME_SIZE 13
 #define MAX_APPEND_LENGTH 20
@@ -373,6 +371,7 @@ int query_csac(struct client_table_entry *monitor, char *query, int csac_fd)
     if(!serial_query(csac_fd, query,buffer, 300)){
         s_write(&(monitor->transmission), ERROR_CSAC_FAILED, sizeof(ERROR_CSAC_FAILED));
     }
+    
     s_write(&(monitor->transmission), buffer, 300);
     return 0;
 }

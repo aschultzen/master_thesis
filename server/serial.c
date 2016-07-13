@@ -96,7 +96,7 @@ int configure_csac_serial(int fd)
 
 int open_serial(char *portname, serial_device device)
 {
-    int fd = open (portname, O_RDWR | O_NOCTTY);
+    int fd = open (portname, O_RDWR | O_NOCTTY ); //O_SYNC
     if (fd < 0) {
         t_print ("Error %d opening %s: %s\n", errno, portname, strerror (errno));
     }
@@ -120,17 +120,34 @@ int open_serial(char *portname, serial_device device)
 
 int serial_query(int file_descriptor, char *query, char *buffer, int buf_len)
 {
+    /* NOTE FOR LATER BUG HUNT!
+    * The query is always followed by the newline. 
+    * It is also preceded by one if there is a space between the 
+    * command and parameter e.g(QC ^).
+    */
+
     if( write(file_descriptor, query, strlen(query)) < 0){
         t_print("Serial write failed\n");
         return -1;
     }
 
-    usleep(100000);
+    usleep(10000);
 
-    if( read(file_descriptor, buffer, buf_len) < 0){
+    /*if( read(file_descriptor, buffer, buf_len) < 0){
         t_print("Serial read failed\n");
         return -1;
+    }*/
+
+    while(1)
+    {
+        char buffer[100];
+        bzero(buffer, 100);
+        read(file_descriptor, buffer, 100);
+        printf("%s\n", buffer);
+
     }
+
+    printf("Buffer: %s\n", buffer);
 
     return 1;
 }
