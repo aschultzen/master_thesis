@@ -263,13 +263,6 @@ static void start_server(int port_number)
         exit(1);
     }
 
-    /* Connect to CSAC */
-    s_data->csac_fd = open_serial(s_conf->csac_path, CSAC);
-    if(s_data->csac_fd == -1){ 
-        t_print("Failed to connect to CSAC\n");
-        exit(0);
-    }
-
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sockfd < 0) {

@@ -143,7 +143,6 @@ int loaddata(struct client_table_entry* target,  char *filename);
 *
 * @param monitor Monitor who made the request
 * @param query Command (query) to send to the CSAC.
-* @param csac_fd File descriptor for the serial connection to the CSAC
 */ 
-int query_csac(struct client_table_entry *monitor, char *query, int csac_fd);
+int query_csac(struct client_table_entry *monitor, char *query);
 #endif /* !ACTIONS_H */

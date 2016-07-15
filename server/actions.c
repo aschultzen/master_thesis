@@ -364,14 +364,25 @@ int loaddata(struct client_table_entry* target, char *filename)
     return 1;
 }
 
-int query_csac(struct client_table_entry *monitor, char *query, int csac_fd)
+int query_csac(struct client_table_entry *monitor, char *query)
 {
-    char *buffer = calloc(300, sizeof(char));
+    /* Connect to CSAC */
+    s_data->csac_fd = open_serial(s_conf->csac_path, CSAC);
+    if(s_data->csac_fd == -1){ 
+        t_print("Failed to connect to CSAC\n");
+        exit(0);
+    }
 
-    if(!serial_query(csac_fd, query,buffer, 300)){
+    char *buffer = calloc(220, sizeof(char));
+    bzero(buffer, 220);
+
+    if(!serial_query(s_data->csac_fd, query,buffer, 220)){
         s_write(&(monitor->transmission), ERROR_CSAC_FAILED, sizeof(ERROR_CSAC_FAILED));
     }
-    
-    s_write(&(monitor->transmission), buffer, 300);
+
+    close(s_data->csac_fd);
+    s_write(&(monitor->transmission), buffer, 220);
+    s_write(&(monitor->transmission), "\n>",2);
+    free(buffer);
     return 0;
 }

@@ -615,7 +615,7 @@ static int respond(struct client_table_entry *cte)
                 s_write(&(cte->transmission), ERROR_NO_COMMAND, sizeof(ERROR_NO_COMMAND));
                 return 1;
             }
-            query_csac(cte, cte->cm.parameter, s_data->csac_fd);
+            query_csac(cte, cte->cm.parameter);
         }
 
         else {

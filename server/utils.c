@@ -188,6 +188,8 @@ int substring_extractor(int start, int end, char delimiter, char *buffer, int bu
     * The MYSTERY_ENDING is used to detect the end of input.
     * It probably originates from some dodgy null-terminating
     * or bad input parsing.
+    *
+    * 
     */
     const int MYSTERY_ENDING = 13;
 
