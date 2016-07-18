@@ -74,21 +74,24 @@ int configure_csac_serial(int fd)
     cfsetospeed (&tty, B57600);
     cfsetispeed (&tty, B57600);
 
+    /* Setting No parity (8N1) */
     tty.c_cflag &= ~PARENB;     // No Parity
     tty.c_cflag &= ~CSTOPB;     // 1 stop bit
     tty.c_cflag &= ~CSIZE;      // See under...
     tty.c_cflag |= CS8;         // 8 bits
 
-    tty.c_cflag &= ~CRTSCTS;    // Disable HW flow control
-                                // The csac does not use flow
-                                // control
-                                
-    tty.c_cflag |= CREAD | CLOCAL;  // Enable receiver
-                                    // Local line, don't change port owner
+    /* Disable HW flow control */
+    tty.c_cflag &= ~CRTSCTS;
+                            
+    /* Enable the receiver and set local mode */
+    tty.c_cflag |= CREAD | CLOCAL;
     
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Software flow control
-    tty.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG); // Enable canonical input
-                                    //
+    /* Disable SW flow control */
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+
+    /* Disable canonical input */
+    tty.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
+
     tty.c_oflag &= ~OPOST;
     tty.c_cc[VMIN] = 0;
     tty.c_cc[VTIME] = 0;
@@ -126,15 +129,14 @@ int open_serial(char *portname, serial_device device)
 
 int serial_query(int file_descriptor, char *query, char *buffer, int buf_len)
 {
-    /* NOTE FOR LATER BUG HUNT!
-    * The query is always followed by the newline. 
-    * It is also preceded by one if there is a space between the 
-    * command and parameter e.g(QC ^).
-    * You also need some sort of tiemout function.
-    */
-
     int write_status = write(file_descriptor, query, strlen(query));
     if( write_status < 0){
+        t_print("Serial write failed\n");
+        return -1;
+    }
+
+    int write_status2 = write(file_descriptor, "\n\r", 2);
+    if( write_status2 < 0){
         t_print("Serial write failed\n");
         return -1;
     }
@@ -149,11 +151,6 @@ int serial_query(int file_descriptor, char *query, char *buffer, int buf_len)
         buffer[counter] = temp[0];
         counter++;
     }
-    /*int read_status = read(file_descriptor, buffer, buf_len);
-    if( read_status < 0){
-        t_print("Serial read failed\n");
-        return -1;
-    }*/
 
     return 1;
 }

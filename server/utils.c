@@ -215,3 +215,16 @@ int substring_extractor(int start, int end, char delimiter, char *buffer, int bu
     /* Reached end of string without encountering end delimit */
     return 0;
 }
+
+int str_len_u(char *buffer, int buf_len)
+{
+    int i;
+    char prev = 'X';
+    for(i = 0; i < buf_len; i++){
+        if(buffer[i] == 0x0a && prev == 0x0a){
+            return i;
+        }
+        prev = buffer[i];
+    }
+    return -1;
+}

@@ -97,4 +97,10 @@ int calculate_nmea_checksum(char *s);
  */
 int substring_extractor(int start, int end, char delimiter, char *buffer, int buffsize, char *string, int str_len);
 
+/** @brief Counts bytes from start to first occurence of null character
+ *
+ *	@param buffer Buffer to search through
+ *	@param buf_len Length of the buffer in bytes
+ */
+int str_len_u(char *buffer, int buf_len);
 #endif /* !UTILS_H */
