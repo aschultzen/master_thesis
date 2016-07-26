@@ -148,9 +148,10 @@ int serial_query(int file_descriptor, char *query, char *buffer, int buf_len)
     while(counter <= buf_len){
         char temp[1];
         int read_status = read(file_descriptor, temp, 1);
-        buffer[counter] = temp[0];
-        counter++;
+           if(temp[0] != 0x58 && temp[0] != 0x38){
+                buffer[counter] = temp[0];
+                counter++;
+            }
     }
-
-    return 1;
+    return counter;
 }

@@ -373,20 +373,27 @@ int query_csac(struct client_table_entry *monitor, char *query)
         exit(0);
     }
 
+    /* Initializing buffer for CSAC query */
     int buf_size = 220;
-    char *buffer = calloc(buf_size, sizeof(char));
+    char buffer[buf_size];
     memset(buffer,'\0' ,buf_size);
 
-    if(!serial_query(s_data->csac_fd, query,buffer, buf_size)){
+    /* Quering CSAC */
+    int serial_query_r = serial_query(s_data->csac_fd, query,buffer, buf_size);
+
+    /* Checking return value */
+    if(!serial_query_r){
         s_write(&(monitor->transmission), ERROR_CSAC_FAILED, sizeof(ERROR_CSAC_FAILED));
     }
 
+    /* Closing file descriptior */
     close(s_data->csac_fd);
-    /* 
-    * The data returned from serial query is not formatted, hence the 
-    * buffer+2 to avoid printing uncesseray CSAC specific output 
+
+    /*
+    * The data returned from serial query is not formatted, hence the
+    * buffer+2 to avoid printing uncesseray CSAC specific output
     */
+
     s_write(&(monitor->transmission), buffer+2, str_len_u(buffer, buf_size));
-    free(buffer);
     return 0;
 }
