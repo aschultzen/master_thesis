@@ -431,6 +431,8 @@ static int respond(struct client_table_entry *cte)
                 s_data->number_of_sensors++;
                 sem_post(&(s_synch->client_list_mutex));
             }
+	    /* Everything is good, setting id and responding*/
+    	    s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
             cte->client_id = cte->cm.id_parameter;
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
             return 1;
