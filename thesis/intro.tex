@@ -1,7 +1,7 @@
 \documentclass[../main.tex]{subfiles}
 
-\section{Introduction}
-\subsection{Global Positioning System: A short introduction}
+\chapter{Introduction}
+\section{Global Positioning System: A short introduction}
 The Global Positioning System (GPS) is a utility owned by the United States that provides its user with positioning, navigation and timing services. At the end of 60's, the U.S Navy was developing the Polaris missile, a missile capable of being launched from a submarine. One of the requirements for launching the Polaris missile was exact knowledge of the submarines position. The problem led the Navy and The Applied Physics Laboratory at Hopkins to develop the Transit system, the earliest predecessor to the GPS system \cite{SteJ}.
 
 Today, roughly 40 years later we are surrounded by GPS technology.
@@ -17,48 +17,48 @@ Trilateration is used in geometry as a process of determining the location (abso
 \begin{equation} Distance = Rate \times Time \end{equation} 
 The equation is simple to solve, first we need the rate. In this context, the \textit{rate} is how fast the signals travel. This is equal to the speed of light (299,792,458 m/s). The time the signal has used traveling from the satellite to earth can be obtained by analyzing the signal itself. A simple and slightly inaccurate description is the signal contains a "time stamp" of when the signal was sent. By comparing this time stamp with the current time, one can calculate the age of the signal and therefore how long it has spent traveling. This is explained in greater detail under (\ref{GST}) \cite{GPSGOVTE}.  
 
-\subsection{Clocks}
+\section{Clocks}
 What does a \$10 wristwatch and a \$100 000 atomic clock have in common? They don't stay accurate forever. This phenomena known as \textit{frequency drift}, is when a clock no longer runs at the exact same speed as a reference clock and they drift apart.
 \begin{wrapfigure}{c}{0.45\textwidth}
   \centering
   \includegraphics[width=0.40\textwidth]{cscrystals.jpg}
-  \caption[Caesium campule]
+  \caption[Caesium ampule]
    {High pure Caesium crystals in ampule under argon. Source: \cite{DENCES}}
 \end{wrapfigure} 
 This property is a result of how they track time. In essence, all clocks work in the same way. They have a part that oscillates, a way to count the number of oscillations and a way to show the count. If we transfer this analogy to the typical "grandfather clock", the pendulum would be the oscillator, the counting mechanism the clockwork and the clock face and dials would be the display. In a typical wristwatch, the oscillator is a quartz crystal powered by a battery. The frequency of which the crystal oscillates is then divided down to a single Hertz by simple electronics. The purity of the crystal is among the decisive factors determining the accuracy of the clock. \cite{CSMG}. 
 Although a completely different beast, the same principles apply to the atomic clock which uses the microwave radiation that electrons in atoms emit when they change energy levels. One of the most commonly used elements in atomic clocks, is \textit{caesium-133}, an isotope of caesium.\footnote{1 second equals 9,192, 631,770 cycles of the Cs-133 transition} \cite{HP}. Bear in mind that this is of course an extremely limited explanation.
 
-\subsection{GPS signals and Time}\label{GST}
+\section{GPS signals and Time}\label{GST}
 During the introduction of this essay the properties of GPS as a tool for navigation was made apparent. This is however not the only use of GPS, it is also used for timing. The GPS satellites transmits a \textit{Coarse/Acquisition (C/A)} code and a restricted \textit{Precision (P)} code. The C/A code is freely open for everyone and is transmitted at the L1 carrier frequency (1575.42 MHz) and the P code is transmitted at both L1 and L2 (1227.60 MHz) and is reserved for the military. The C/A code is a 1023 bit pseudo random code that is transmitted at 1.023 Mbit/s, which means it repeats itself every millisecond. Each satellite transmits a different pseudo random code, codes that does not correlate well with each other. This is important because it makes it possible to separate the satellites from each other. The way the receiver calculates its position was briefly mentioned during the introduction and is better explained here. The receiver calculates the distance from itself to the satellites by comparing the pseudo random code received from the satellite with an identical one it generates itself. The receiver "slides" these codes over each other further and further until they match up. The signals travel time is determined by how far the codes had to be slided before the matched. This is what is called \textit{Code-phase GPS} and it has got some problems. Since the codes have a wide cycle width, almost a microsecond, there is a lot of slop and at the speed of light, a microsecond wrong is roughly 300 meters wrong. What many receivers do is that they start with the code-phase and moves on to using measurements based on the carrier frequency. Since the frequency is much higher, the slop decreases and the accuracy increases dramatically. This is whats known as \textit{Carrier-phase GPS}. 
 
 Alright, but what about time? We have already established that the key to GPS is measuring the travel time of a radio signal, but considering the consequences of a couple of microseconds of slack when dealing with light-speed, it is really putting some pressure on the GPS receivers internal clocks. As previously mentioned, all your receiver needs to do to find its position in a three dimensional space, is three GPS satellites. If the GPS receivers internal clocks where perfect, the three satellite ranges would intersect at a single point, your position. But in the real world our clocks is everything but perfect. One could use atomic clocks  in the receivers but that would make the receivers too expensive (even though chip scale atomic clocks (CSAC) are becoming increasingly affordable \ref{op}) for anyone to buy. The solution is to make a fourth measurement from a fourth satellite. This measurement will not intersect with the first three when using an imperfect clock. The receiver can then try to find a correction factor it can subtract from its timing measurement in order to make the measurements intersect. By doing this, it also brings the receivers clock back to sync with universal time. With the correct time, it can also make correct and precise positioning. \cite{TRIMBLETIME}
 
-\subsection{Phasor Measurement Units}
+\section{Phasor Measurement Units}
 An example of an application relying on GPS derived time is a PMU (phasor measurement unit).A PMU analyzes the waves on the electrical grid and uses a common time source for synchronization. This synchronization allows for real-time measurements between multiple points in the grid by multiple PMU's. The common time source (and why PMU's are relevant) is often obtained by using GPS. \cite{ylyl} The value of such a device is understood clearer by recognizing that the power grid is a complex, interconnected, interdependent network. In other words, errors and abnormalities in one part of the grid will have an effect on operation elsewhere and in some cases lead to whole spread blackouts \cite{EVPMUGA}.
 
-\subsection{Threat Models and countermeasures}
+\section{Threat Models and countermeasures}
 The thread models and countermeasures presented in this paper are based on the article \textit{Reliable GPS-Based Timing for Power Systems: A Multi-Layered, Multi Receiver} by L. Heng, D. Chou and G. Xingxin Gao (2012). The only exception is our proposed countermeasure under \ref{op}.
-\subsubsection{Threats}
-\paragraph{Jamming}\label{jam}
+\subsection{Threats}
+\subsubsection{Jamming}\label{jam}
 By emitting a high-power signal at the frequencies used by GPS satellites, one can interfere with the signals received by the GPS receiver, effectively denying GPS receivers use of these signals. These signals are already weak considering their travel from space. Such an "attack", although effective, is pretty naive and easily recognized by the jammed party. If your equipment is operational and you don't have a signal, you are probably being jammed.
 
-\paragraph{Signal-level Spoofing}\label{sls}
+\subsubsection{Signal-level Spoofing}\label{sls}
 Signal-level spoofing is when an attacker causes a receiver to loose lock on an authentic GPS signal by overpowering it with a false signal. This can be achieved by using a GPS simulator that matches the authentic signals phase, code delay and encoded data \cite{SGRCOOPMU}. Knowing the signal that the victim is receiving is important in order to successfully spoof it. To anyone with access to the military-grade GPS signals, this is less of an issue since their signals are encrypted and harder to spoof, the civilian frequencies on the other hand are publicly known and readily predictable. Shepard, Humphreys and Fansler (2012)\cite{EVPMUGA} describes in their paper \textit{Evaluation of the Vulnerability of Phasor Measurement Units to GPS Spoofing Attacks}, a way to successfully spoof a GPS signal used by a PMU. They describe how they "introduce" the counterfeit signal to the victim by adjusting the power of the signal below the victim receivers noise floor and then gradually raises it until it surpasses the authentic signals strength. Once the victims receiver locks on, the attacker has gained full control.
 
-\paragraph{Data-level Spoofing}\label{dls}
+\subsubsection{Data-level Spoofing}\label{dls}
 In data-level spoofing, the contents (data) of the GPS signal are manipulated. GPS signals includes ephemeris data used to solve the positions of each satellite in orbit and also the time and status of the satellite constellation. By altering this data, the receiver solves incorrect velocity, location and most important in this context, clock offset.\cite{SGRCOOPMU}
 
-\paragraph{Replay spoofing}\label{rs}
+\subsubsection{Replay spoofing}\label{rs}
 Replay spoofing (or \textit{meaconing}\footnote{\textit{Meacon} is portmanteau of \textit{Masking Beacon}}) is a technique where GPS signals are intercepted and rebroadcasted. The rebroadcast can be delayed and used to confuse navigation or to cause delay in applications relying on GPS signals for time.
 
-\paragraph{Malfunctions}\label{mf}
+\subsubsection{Malfunctions}\label{mf}
 Just like any tool or device, a GPS receiver is prone to failure. This threat may not be posed by an external party, but is still a threat to normal operation. The ability to differentiate between an attack and a malfunction is important when deciding how to respond to such an event.
 
-\subsubsection{Countermeasures}
-\paragraph{Monitoring Signal Power}\label{msp} %[C1]
+\subsection{Countermeasures}
+\subsubsection{Monitoring Signal Power}\label{msp} %[C1]
 In any kind of attack, jamming or spoofing, a counterfeit signal must overpower the authentic signal in order for the receiver to lock onto it or in the case with jamming, denying access to the authentic signal. By monitoring the strength of the signal and detecting a spike or rise in signal power, a possible attack can be identified. This is a low-cost, low-complexity and independent (in contrast to for example using other receivers as a reference) countermeasure. It is however because of the unpredictable nature of signals, not considered to be a detection confident countermeasure and should therefore only be used along side other countermeasures.\cite{HengChouGao14}
 
-\paragraph{Checking solved position against known position}\label{cspakp} %[C7]
+\subsubsection{Checking solved position against known position}\label{cspakp} %[C7]
 By checking the position solution against the known position of the receiver, both receiver errors (\ref{mf}) and a replay spoofing (\ref{dls}) attack can be detected. It does however fall short when more sophisticated techniques like Data and Signal-level spoofing (\ref{dls},\ref{sls}) are used. These kind of attacks when done properly (unless it's done with intention), will not alter the solved position. It is important to note that this only relevant when only using \textit{one} receiver. If the position solution from multiple receivers deployed in the same area are cross-checked, this countermeasure can still be considered effective. Consider the following scenarios when using 3 receivers:
 \begin{itemize}
   \item \textbf{None of the receivers are spoofed:} Each receivers solved position matches their respective known position. They all solve the same time. 
@@ -67,26 +67,26 @@ By checking the position solution against the known position of the receiver, bo
 \end{itemize}
 A possible way to for a attacker to avoid detection would be to use one spoofer per receiver. These spoofers would need to be synchronized and their signal power fine tuned to make sure that they only spoof their respective receiver. It is believed that such an attack would be too complex and costly to be considered practical. \cite{HengChouGao14}
 
-\paragraph{Checking time solutions against receiver clock statistics}\label{ctsarcs} %[C8]
+\subsubsection{Checking time solutions against receiver clock statistics}\label{ctsarcs} %[C8]
 By comparing statistics created by monitoring the receivers clock with the time solution, one can detect spoofing (\ref{sls},\ref{dls}) as well as malfunctions (\ref{mf}). This is because the time solution is unlikely to be consistent with the statistics in event of an attack. Since this countermeasure relies on the receivers clock which can be described as both unpredictable and stochastic, it should only be used along side other countermeasures.\cite{HengChouGao14}    
 
 
-\paragraph{Cross-checking navigation data among receivers}\label{ccndar} %[C5]
+\subsubsection{Cross-checking navigation data among receivers}\label{ccndar} %[C5]
 When under a data-level spoofing attack (\ref{dls}), the navigation data is modified. By comparing one GPS receivers navigation data with another, both data-level spoofing and malfunctions (\ref{mf}) can be detected. This countermeasure can also prove useful during jamming attacks (\ref{jam}) because a jammed receiver could use the data from other receivers in the event that is unable to correctly decode navigation, but still able to track satellites. This may enable the receiver to continue operation during an attack. \cite{HengChouGao14}  
 
-\paragraph{Comparing navigation data and reverse-calculated satellite positions}\label{cndrcsp} %[C6]
+\subsubsection{Comparing navigation data and reverse-calculated satellite positions}\label{cndrcsp} %[C6]
 The PMU GPS receivers are never moved and their position is known. By using their pseudorange measurements, the satellites positions can be reverse calculated by using trilateration. Since the reverse-calculated positions only match the positions calculated from the navigation data when both pseudorange and navigation data is correct, one can effectively detect replay spoofing (\ref{rs}) and malfunctions (\ref{mf}). Its also worth noting that this countermeasure increases the difficulty of both signal and data-level spoofing (\ref{dls},\ref{sls}) because it narrows down the possible valid (seemingly) spoofing signals. \cite{HengChouGao14} 
 
-\paragraph{Cross-correlating P(Y) code}\label{ccpc} %[C2]
+\subsubsection{Cross-correlating P(Y) code}\label{ccpc} %[C2]
 This countermeasure assumes two receivers with at least 1 km distance from each other that tracks a signal from a satellite visible to them both. It is also based on the assumption that the encrypted military P(Y) code cannot be forged by a spoofer. The receivers use the C/A code phase and timing relationship to the P(Y) code to obtain two samples from the same time frame of the received P(Y) code and then correlate the two samples. Even though the samples will be encrypted, noisy and perhaps distorted by narrow-band RF front-ends, a high correlation peak should be created when a cross-correlation is conducted as long as the receivers are not spoofed. A key conclusion of the research made by L. Heng (2013) as referenced by L. Heng \textit{et alia} (2014) was that the probability of detection errors using this method decreased exponentially with the length of the samples made from the P(Y) code and the number of receivers used as reference. This method has therefore proved itself effective against spoofing attacks (\ref{dls},\ref{sls}), but ineffective against replay spoofing because the rebroadcast uses authentic GPS signals with correct P(Y) code. It is important to note that the implementation of this countermeasure relies on the GPS receivers ability to output baseband samples and these samples ability to be transfered over a data network. Because the sampling rate of the samples are fairly high, it is recommended that the spoofing detection is done periodically instead of continuously. \cite{HengChouGao14}  
 
-\paragraph{Position Aided (PIA) Tracking loops}\label{ptl} %[C3]
+\subsubsection{Position Aided (PIA) Tracking loops}\label{ptl} %[C3]
 \textit{Vector tracking} is a receiver architecture that combine the tasks of signal tracking and position/velocity estimation into one algorithm. This is a contrast to the traditional way where the tracking methods track satellites independently as well as the position/velocity solution independently. Even though this requires more computing power, it increases immunity to interference and jamming. The vector tracking is aided by the fact the we know the PMU GPS receivers true location. The tracking robustness can be further improved by using a Kalman filter. Since a PMU and its GPS receiver remain stationary, the parameters of the tracking loops can be chosen to narrow the loop filter bandwidth which reduces noise and the effective radius of a potential jamming attack (\ref{jam}). Replay spoofing attacks will also fail since the PIA vector tracking depends on the knowledge of the GPS receivers true position. In the event of such an attack, the result would be that the vector tracking will fail to function. \cite{HengChouGao14}  
 
-\paragraph{Multi-receiver tracking loops}\label{mrtl}
+\subsubsection{Multi-receiver tracking loops}\label{mrtl}
 Building on the idea from \textit{PIA Tracking loops}(\ref{ptl}) one can benefit from the networked nature of the GPS-timed PMU. In a multi-receiver vector tracking loop, many receivers process information in collaboration. A key conclusion of the research made by A. Soloviev \textit{et alia} as referenced by L. Heng \textit{et alia} (2014) showed that acquisition and tracking performance under low signal-to-noise ratio conditions was improved under multi-receiver signal accumulation. Multi-receiver phased arrays also improved the robustness against both jamming (\ref{jam}) and spoofing attacks (\ref{sls},\ref{dls}) by \textit{"Forming beams to satellites and steering nulls in the direction of attacking transmitters"} (L. Heng \textit{et alia} (2014), p.41). In addition to the increase robustness, it increases the ability to detect malfunction (\ref{mf}). A faulty receiver will usually not be consistent with other correctly functioning receivers. As with the countermeasure based on cross-correlating P(Y) code (\ref{ccpc}), this implementation also requires that the GPS receivers are able to output baseband samples. In this implementation, the samples need to be transmitted continuously among the receivers which requires a capable data network such as a typical LAN. \cite{HengChouGao14}  
 
-\paragraph{Spoof proof CSAC SMACC}\label{op}
+\subsubsection{Spoof proof CSAC SMACC}\label{op}
 \begin{wrapfigure}{c}{0.45\textwidth}
   \centering
   \includegraphics[width=0.40\textwidth]{csac.jpg}
@@ -116,7 +116,7 @@ In theory, any atomic clock would suffice for our application. This would howeve
 It is also important to note that this approach doesn't really do anything with the fact that you are being attacked, it is simply an attempt at eliminating the effects of it. In a scenario where you are under attack weeks at a time, you will have to address the issue that you are under attack at some point. It is also important to notes that this countermeasure mostly apply to applications using GPS as a source of time. Having a stable clock during a jamming attack will not help you determine your position once you move (given that you are fully jammed).
 
 \newpage
-\subsubsection{Summary}
+\subsection{Summary}
 The table (\ref{tab:threatcounttable}) shows the different threat models and the effect of the countermeasures covered in this essay. Our proposed countermeasure is not yet tested, but is still included in the table reflecting the effect we believe it might have.  
 
 \begin{savenotes}

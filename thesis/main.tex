@@ -1,4 +1,4 @@
-\documentclass[12pt,english,a4paper]{article}
+\documentclass[12pt,english,a4paper]{report}
 
 \usepackage[utf8]{inputenc}          % Allows UTF-8 encoded characters in the .tex-file.
 \usepackage{babel,csquotes,textcomp,duomasterforside} % Set LaTeX to structure the content following international academic standards.
@@ -20,12 +20,12 @@
 \usepackage{subfiles}
 
 % Making the whole paragraph biz possible
-\usepackage{titlesec}
-\setcounter{secnumdepth}{4}
-\titleformat{\paragraph}
-{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
-\titlespacing*{\paragraph}
-{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+%\usepackage{titlesec}
+%\setcounter{secnumdepth}{4}
+%\titleformat{\paragraph}
+%{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+%\titlespacing*{\paragraph}
+%{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
 
 % Adding the bib
 \usepackage[
@@ -45,7 +45,7 @@
 
 % Setting tty font?
 \lstset{ %
-  basicstyle=\ttfamily\small,     
+  basicstyle=\ttfamily\tiny,     
   backgroundcolor=\color{white},   % choose the background color
   breaklines=true,                 % automatic line breaking only at whitespace
   captionpos=b,                    % sets the caption-position to bottom
@@ -53,6 +53,8 @@
   escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
   keywordstyle=\color{blue},       % keyword style
   stringstyle=\color{mymauve},     % string literal style
+  showspaces=false,
+  showstringspaces=false,
 }
 
 \title{GPS Spoofing}
@@ -62,6 +64,13 @@
 \duoforside[dept={Institutt for informatikk},
 program={Informatikk: programmering og nettverk},
 long]
+
+\begin{abstract}
+Abstract goes here.
+\end{abstract}
+
+\chapter*{Foreword}
+Here goes foreword
 
 % Hackish code to keep counters and white pages at bay
 \thispagestyle{empty}
@@ -79,24 +88,28 @@ long]
 
 % Here goes all the chapters
 % ==================================================
+
 \subfile{intro}
 
 % Chapter about the csac and it's connectivity?
 
 \newpage
+\chapter{Method}
 \section{Data acquisition}
-\subsection{CSAC data}
-In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined state. The Ublox-M8T GPS receiver was specifically designed for timing purposes and was used in this instance to provide the 1 PPS signal for disciplining purposes. Figure \ref{CLS} shows a schematic of the setup used. 
-A simple script running on the PC took care of the data capture (see \ref{CL}). 
+In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined state. The Ublox-M8T GPS receiver was specifically designed for timing purposes and was used in this instance to provide the 1 PPS signal for disciplining purposes. A similar approach was used in order to collect GPS data. This was important in order to establish a baseline for noise in order to tune the CSACC SMACC. Figure \ref{CLS} shows a schematic of the setup used. A couple of simple Python script running on the PC took care of the data capture (see \ref{CL} and \ref{GL}). 
 
 \newpage
-\section{CSACC SMACC Programming}
+\section{Programming}
 
 \newpage
-\section{Testing}
+\chapter{Testing}
 
 \newpage
-\section{Conclusion}
+\chapter{Results and discussion}
+\section{Different approaches}
+
+\newpage
+\chapter{Conclusion}
 
 \newpage
 \subfile{appendix}
