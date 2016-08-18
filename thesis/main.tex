@@ -99,14 +99,36 @@ Here goes foreword
 In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the CSAC will correct it's frequency based on either a 1 PPS (Pulse per second) signal or 10 MHz signal. The Ublox-M8T GPS receiver was specifically designed for timing purposes and was used in this instance to provide the 1 PPS signal for disciplining purposes. A similar approach was used in order to collect GPS data. Data from two Ublox-M8T was gathered over the same time period as the data gathered from the CSAC. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the CSAC. It also provided valuable data that could be used to tune the spoofing detection algorithms in the CSAC SMACC. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the receivers and the CSAC (\ref{CLS})
 
 \newpage
-\section{Programming}
+\section{Programming of SMACC software}
+
+\subsection{Intro}
+The software that makes the SMACC smart, consists of multiple modules. There is a server that manages connection and acts as an interface to the system as a whole. There is a client that connects to the server and relays relevant GPS data and finally, the software running on the micro-controller embedded in the CSAC. The latter is of course not made by us, but paramount in order for our proposal to work. In this chapter, these different parts or modules will be explained.
+
+\subsection{Choice of language}
+The SMACC software was written in C99. This might seem like a strange choice when given alternatives like C++, Java or Python, but C99 offered the following for me:
+\begin{itemize}
+  \item Better portability than C11
+  \item More modern than C89
+  \item Efficient and fast
+  \item Exciting
+  \item I have limited experience with it
+\end{itemize}
+The three first points probably makes perfect sense, but to me it was just as important that i learned a new and exciting language. 
+
+\subsubsection{The client software}
+The client software takes the servers IP and port as parameter. It then reads the path to the connected to GPS receiver to fetch GPS data and an ID number to use to identify itself for the server. It parses the NMEA data it receives from the GPS receiver and relays it to the server. 
+
+\subsubsection{The server}
+
+
+\subsection{Different approaches}
 
 \newpage
 \chapter{Testing}
 
 \newpage
 \chapter{Results and discussion}
-\section{Different approaches}
+
 
 \newpage
 \chapter{Conclusion}
