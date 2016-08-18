@@ -96,7 +96,7 @@ Here goes foreword
 \newpage
 \chapter{Method}
 \section{Data acquisition}
-In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined state. The Ublox-M8T GPS receiver was specifically designed for timing purposes and was used in this instance to provide the 1 PPS signal for disciplining purposes. A similar approach was used in order to collect GPS data. This was important in order to establish a baseline for noise in order to tune the CSACC SMACC. Figure \ref{CLS} shows a schematic of the setup used. A couple of simple Python script running on the PC took care of the data capture (see \ref{CL} and \ref{GL}). 
+In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the CSAC will correct it's frequency based on either a 1 PPS (Pulse per second) signal or 10 MHz signal. The Ublox-M8T GPS receiver was specifically designed for timing purposes and was used in this instance to provide the 1 PPS signal for disciplining purposes. A similar approach was used in order to collect GPS data. Data from two Ublox-M8T was gathered over the same time period as the data gathered from the CSAC. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the CSAC. It also provided valuable data that could be used to tune the spoofing detection algorithms in the CSAC SMACC. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the receivers and the CSAC (\ref{CLS})
 
 \newpage
 \section{Programming}
