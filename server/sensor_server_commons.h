@@ -14,7 +14,7 @@
 
 /* General */
 #define SERVER_TABLE_LABEL "SERVER DATA\n"
-#define HORIZONTAL_BAR "==================================================================================\n"
+#define HORIZONTAL_BAR "================================================================================\n"
 #define ERROR_NO_CLIENT "ERROR: No such client\n"
 #define ERROR_NO_FILENAME "ERROR: No FILENAME specified\n"
 #define MAX_FILENAME_SIZE 30
