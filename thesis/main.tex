@@ -99,6 +99,7 @@ Here goes foreword
 In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the CSAC will correct it's frequency based on either a 1 PPS (Pulse per second) signal or 10 MHz signal. The Ublox-M8T GPS receiver was specifically designed for timing purposes and was used in this instance to provide the 1 PPS signal for disciplining purposes. A similar approach was used in order to collect GPS data. Data from two Ublox-M8T was gathered over the same time period as the data gathered from the CSAC. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the CSAC. It also provided valuable data that could be used to tune the spoofing detection algorithms in the CSAC SMACC. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the receivers and the CSAC (\ref{CLS})
 
 \newpage
+
 \section{Programming of SMACC software}
 
 \subsection{Intro}
@@ -116,12 +117,38 @@ The SMACC software was written in C99. This might seem like a strange choice whe
 The three first points probably makes perfect sense, but to me it was just as important that i learned a new and exciting language. 
 
 \subsubsection{The client software}
-The client software takes the servers IP and port as parameter. It then reads the path to the connected to GPS receiver to fetch GPS data and an ID number to use to identify itself for the server. It parses the NMEA data it receives from the GPS receiver and relays it to the server. 
+The client software takes the servers IP and port as parameter. It then loads its configuration file and reads the path to the connected GPS receiver and an ID number. The GPS receiver is used to fetch GPS data and the ID number is used to identify itself for the server. It then parses the NMEA data it receives and relays the relevant data to the server. 
 
 \subsubsection{The server}
+The server follows a standard web server-like pattern:
+\begin{itemize}
+  \item Wait for connections
+  \item Fork out a new process for the new connection
+  \item Repeat
+\end{itemize}
+However, the similarities end there. The servers job can be divided into three parts:
+\begin{itemize}
+  \item Manage connections
+  \item Handle information received from clients (state)
+  \item Process information received from clients
+\end{itemize}
+\subsubsection{Data structures and shared memory}
+Since the server needs to have access to all the data the clients transmit, it uses a shared memory model. Every process that forks out from the server is given access to this memory area. Even the processes themselves have access to each others memory. One might make the point that this voids the idea of processes, and one might be correct. The shared memory is created using MMAP.
+\begin{lstlisting}
+client_list = mmap(NULL, 
+                  (s_conf->max_clients * sizeof(struct client_table_entry)), 
+                  PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+\end{lstlisting}
+The example over shows how shared memory is allocated. The observant reader will notice that there is allocated memory for a finite number of clients. This is unfortunate but necessary and not really much a problem. The reason however, is that a process as a child inherits all the variables and state from it's parent. This also means that the shared memory has to have the same layout throughout the programs execution for all the processes to have the same "version" of the shared memory. As long as a process only uses the shared memory allocated for itself, it is not a problem, but once it attempts to access the memory of a younger sibling process, it cannot access that area and the process will crash. In this application however, we always know how many clients are going to connect. Even when in doubt, the maximum number of clients can be grossly overestimated and configured in order to make sure that there is room.
 
+\subsubsection{Managing connections}
+
+\subsubsection{The CSAC}
 
 \subsection{Different approaches}
+What is the point of using processes when they aren't even separated? All the bad with none of the good one might argue. 
+
+Why even do this in C? Would be faster to do it in Python and rather just have all the Raspberry's store their data in a database and analyze it regularly. 
 
 \newpage
 \chapter{Testing}
