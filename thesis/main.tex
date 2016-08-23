@@ -128,10 +128,8 @@ However, the similarities end there. The servers job can be divided into three p
   \item Manage connections
   \item Handle information received from clients (state)
   \item Process information received from clients
+  \item Raise alarm, trigger event etc.
 \end{itemize}
-
-\subsection{Detection algorithms}
-Write about our filters.
 
 \subsection{Data structures and shared memory}
 Since the server needs to have access to all the data the clients transmit, it uses a shared memory model. Every process that forks out from the server is given access to this memory area. Even the processes themselves have access to each others memory. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which are not connected to file but rather for sharing data between tasks without using files.
@@ -150,6 +148,18 @@ The example over shows how shared memory is allocated. The observant reader will
 
 \subsection{The CSAC}
 Write about the CSAC and the serial communication. Perhaps mention the how the communication between the server and the CSAC works?
+
+\subsection{Detection algorithms: Filters}
+Write about our filters.
+
+\subsubsection{Clock Model}
+Write about Harald's clock model
+
+\subsubsection{Naive MIN-MAX filter}
+The MIN-MAX filter is one of the least sophisticated filters implemented. Data is gathered over a pre-determined "warm-up" period and the server compares the lowest and highest values of this data with current data. If the values are either higher or lower than the collected data, the data is considered abnormal. 
+
+\subsubsection{Probability filter}
+The "probability filter" is implemented by using collected data to create a model of expected data. The current data is then compared in order to evaluate whether or not it is abnormal. 
 
 \chapter{Testing}
 
