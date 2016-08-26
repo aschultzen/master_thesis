@@ -8,7 +8,7 @@ We wanted to know what kind of data we would collect if the GPS receivers where 
 ## Times recorded
 It proved to be challenging to time-stamp data within the second. The start of each test was usually pretty accurate, but the end was not.
 
-		ACTIVITY			START 		END 	MJD_START			MJD_END
+		ACTIVITY			START 		END 	  MJD_START		  MJD_END
 	==========================================================================
 	EXPERIMENT START	= 11:00:01				57626.4583449	
 	GPSNORTH WAVED		= 11:02:40 - 11:03:27	57626.4601852	57626.4607292
