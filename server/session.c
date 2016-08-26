@@ -8,7 +8,7 @@
 #define ERROR_ILLEGAL_COMMAND "ERROR:Illegal command\n"
 #define ERROR_NO_ID "ERROR:Client not identified\n"
 #define ERROR_ID_IN_USE "ERROR:ID in use\n"
-#define ERROR_ILLEGAL_MESSAGE_SIZE "ERROR:Illegal message size\n"
+#define ERROR_ILLEGAL_MESSAGE_SIZE "\rERROR:Illegal message size\n"
 #define ERROR_WARMUP_NOT_SENSOR "ERROR:Warm-up only applies to sensors\n"
 #define ERROR_DUMPDATA_FAILED "ERROR:Failed to dump data\n"
 #define ERROR_LOADDATA_FAILED "ERROR:Failed to load data\n"

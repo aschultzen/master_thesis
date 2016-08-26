@@ -6,18 +6,18 @@ We wanted to know what kind of data we would collect if the GPS receivers where 
 - Wrote down the actions performed and when.
 
 ## Times recorded
-It proved to be challenging to time-stamp data within the second. The start of each test was usually pretty accurate, but the end was not.
+It proved to be challenging to time-stamp data within the second. The start of each test was usually pretty accurate, but the end was not. Timezone was UTC.
 
-		ACTIVITY			START 		END 	  MJD_START		  MJD_END
+		ACTIVITY		   START 		END 	  MJD_START		  MJD_END
 	==========================================================================
-	EXPERIMENT START	= 11:00:01				57626.4583449	
-	GPSNORTH WAVED		= 11:02:40 - 11:03:27	57626.4601852	57626.4607292
-	GPSSOUTH WAVED		= 11:06:00 - 11:07:00	57626.4625		57626.4631944
+	EXPERIMENT START	= 09:00:01				57626.3750116	
+	GPSNORTH WAVED		= 09:02:40 - 09:03:27	57626.3768519	57626.3773958
+	GPSSOUTH WAVED		= 09:06:00 - 09:07:00	57626.3791667	57626.3798611
 
-	GPSNORTH_TINFOIL	= 11:08:59 - 11:09:59	57626.4645718	57626.4652662
-	GPSSOUTH_TINFOIL	= 11:13:00 - 11:17:30   57626.4673611	57626.4704861
+	GPSNORTH_TINFOIL	= 09:08:59 - 09:09:59	57626.3798611	57626.3819329
+	GPSSOUTH_TINFOIL	= 09:13:00 - 09:17:30   57626.3840278	57626.3871528
 
-	GPSSOUTHONGPSNORTH	= 11:24:05 - 11:27:00	57626.4750579	57626.4770833
+	GPSSOUTHONGPSNORTH	= 09:24:05 - 09:27:00	57626.3917245	57626.39375
 
 The MJD values where calculated using the following script:
 
