@@ -1,8 +1,7 @@
-#include "analyzer.h"
+#include "filters.h"
 
 #define ALARM_MOVED "[ ALARM ] Client %d was moved!\n"
 #define ALARM_RETURNED "[ ALARM ] Client %d has returned!\n"
-
 
 
 /** @brief Checks if a sensor has been marked as moved
@@ -12,24 +11,9 @@
  *
  * @return Void
  */
-static void check_moved_result(void);
+static void min_max_result(void);
 
-/** @brief Checks for any "moving" SENSORS
- *
- * Iterates through client_list
- * and checks if anyone's current position (LAT, LON, ALT, SPEED)
- * is within the ranges recorded during warm-up. If it is, the
- * dimension's disturbed value is set to SAFE (no change),
- * LOW (lower then the lowest recorded) or HIGH (higher than recorded).
- * Unless SAFE, moved is set to 1. The moved variable is used by
- * check_moved_result() to raise an alarm.
- *
- * @return Void
- */
-static void check_moved(void);
-
-
-static void check_moved_result(void)
+static void min_max_result(void)
 {
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* safe;
@@ -50,19 +34,7 @@ static void check_moved_result(void)
     }
 }
 
-/** @brief Checks for any "moving" SENSORS
- *
- * Iterates through client_list
- * and checks if anyone's current position (LAT, LON, ALT, SPEED)
- * is within the ranges recorded during warm-up. If it is, the
- * dimension's disturbed value is set to SAFE (no change),
- * LOW (lower then the lowest recorded) or HIGH (higher than recorded).
- * Unless SAFE, moved is set to 1. The moved variable is used by
- * check_moved_result() to raise an alarm.
- *
- * @return Void
- */
-static void check_moved(void)
+void min_max(void)
 {
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* safe;
@@ -117,10 +89,5 @@ static void check_moved(void)
         }
     }
 
-    check_moved_result();
-}
-
-/* Analyzes data from all the clients */
-void analyze(void) {
-    check_moved();
+    min_max_result();
 }

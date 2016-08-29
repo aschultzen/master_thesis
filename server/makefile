@@ -1,4 +1,4 @@
-SERVER_OBJS = sensor_server.o net.o utils.o serial.o session.o analyzer.o actions.o
+SERVER_OBJS = sensor_server.o net.o utils.o serial.o session.o filters.o actions.o
 CLIENT_OBJS = sensor_client.o net.o utils.o serial.o
 
 CC = gcc
@@ -38,8 +38,8 @@ serial.o : serial.h serial.c
 session.o : session.h session.c sensor_server.h
 	$(CC) $(CFLAGS) session.c 
 
-analyzer.o : analyzer.h analyzer.c sensor_server.h
-	$(CC) $(CFLAGS) analyzer.c
+filters.o : filters.h filters.c sensor_server.h
+	$(CC) $(CFLAGS) filters.c
 
 actions.o : actions.h actions.c sensor_server.h
 	$(CC) $(CFLAGS) actions.c 

@@ -454,24 +454,42 @@ static int respond(struct client_table_entry *cte)
             /* Checking NMEA checksum */
             int rmc_checksum = calculate_nmea_checksum(cte->nmea.raw_rmc);
             int gga_checksum = calculate_nmea_checksum(cte->nmea.raw_gga);
+
+            /* Continue to filters if ok */
             if(rmc_checksum && gga_checksum) {
                 cte->timestamp = time(NULL);
                 cte->nmea.checksum_passed = 1;
                 extract_nmea_data(cte);
                 calculate_nmea_average(cte);
                 calculate_nmea_diff(cte);
+
+                /* Checksums where OK, client marked ready */
+                cte->ready = 1; 
+
+                /* Check if clients are in warm-up period */
                 if(cte->warmup) {
                     verify_warm_up(cte);
                     warm_up(cte);
-                } else {
-                    cte->ready = 1;
-                    sem_wait(&(s_synch->ready_mutex));
-                    int ready = nmea_ready();
-                    if(ready) {
-                        analyze();
-                    }
-                    sem_post(&(s_synch->ready_mutex));
                 }
+
+                /* Acquiring ready-lock */
+                sem_wait(&(s_synch->ready_mutex));
+
+                /* Checking if the other clients are ready as well*/
+                int ready = nmea_ready();
+
+                /* If everyone is ready, process data */
+                if(ready) {
+                    /* Last process ready gets the job of analyzing the data */
+                    t_print("Ready to rock & roll!\n");
+                    
+                    if(!cte->warmup){
+                    /* Perform min_max filter check */
+                    min_max();
+                    }
+                }
+                /* Releasing ready-lock */
+                sem_post(&(s_synch->ready_mutex));
             } else {
                 cte->nmea.checksum_passed = 0;
                 t_print("RMC and GGA received, checksum failed!\n");

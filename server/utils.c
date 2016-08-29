@@ -74,7 +74,7 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
     FILE *config_file;
     long file_size;
     char *input_buffer;
-    char temp_buffer[100];
+
     int status = 0;
 
     config_file=fopen(path, "r");
@@ -86,6 +86,8 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
     fseek(config_file , 0L , SEEK_END);
     file_size = ftell(config_file);
     rewind(config_file);
+
+    char temp_buffer[file_size];
 
     /* Alocating memory for the file buffer */
     input_buffer = calloc( 1, file_size+1 );
@@ -184,20 +186,13 @@ int substring_extractor(int start, int end, char delimiter, char *buffer, int bu
     int delim_counter = 0;
     int buffer_index = 0;
 
-    /*
-    * The MYSTERY_ENDING is used to detect the end of input.
-    * It probably originates from some dodgy null-terminating
-    * or bad input parsing.
-    *
-    * 
-    */
-    const int MYSTERY_ENDING = 13;
+    const int carriage_return = 13;
 
     bzero(buffer, buffsize);
 
     for(i = 0; i < str_len; i++) {
         /* Second delim (end) reached, stopping. */
-        if(delim_counter == end || (int)string[i] == MYSTERY_ENDING) {
+        if(delim_counter == end || (int)string[i] == carriage_return) {
             return 1;
         }
 

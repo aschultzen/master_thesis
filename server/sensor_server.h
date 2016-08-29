@@ -22,6 +22,14 @@ struct server_config {
     int warm_up_seconds;
     int human_readable_dumpdata;
     char csac_path[100];
+    double alt_ref;
+ 	double lon_ref;
+	double lat_ref;
+	double speed_ref;
+	double alt_dev;
+	double lon_dev;
+	double lat_dev;
+	double speed_dev;
 };
 
 /*
