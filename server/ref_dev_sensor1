@@ -1,0 +1,8 @@
+alt_ref: 1.0
+lon_ref: 2.0
+lat_ref: 3.0
+speed_ref: 4.0
+alt_dev: 5.0
+lon_dev: 6.0
+lat_dev: 7.0
+speed_dev: 8.0
