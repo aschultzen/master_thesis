@@ -145,4 +145,10 @@ int loaddata(struct client_table_entry* target,  char *filename);
 * @param query Command (query) to send to the CSAC.
 */ 
 int query_csac(struct client_table_entry *monitor, char *query);
+
+/** @brief Loads data for the REF_DEV_FILTER into the client.
+*
+* @param target Client to load the data into
+*/ 
+int load_ref_def_data(struct client_table_entry* target);
 #endif /* !ACTIONS_H */

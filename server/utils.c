@@ -67,7 +67,7 @@ void t_print(const char* format, ...)
 
 /*
 * Loads config.
-* Returns: -1 fail | 0 success
+* Returns: 0 fail | 1 success
 */
 int load_config(struct config_map_entry *cme, char *path, int entries)
 {
@@ -112,7 +112,6 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
             int length = strlen(search_ptr) - strlen(cme->entry_name);
             memcpy(temp_buffer, search_ptr+(strlen(cme->entry_name)*(sizeof(char))), length);
             status = sscanf(temp_buffer, cme->modifier, cme->destination);
-
             if(status == EOF || status == 0) {
                 fclose(config_file);
                 free(input_buffer);

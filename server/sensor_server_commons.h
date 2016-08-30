@@ -37,6 +37,21 @@ struct command_code {
     int id_parameter;
 };
 
+/*!@struct*/
+/*!@brief Data used by the red_dev_filter.
+* Read from file.
+*/
+struct ref_dev_data {
+    double alt_ref;
+    double lon_ref;
+    double lat_ref;
+    double speed_ref;
+    double alt_dev;
+    double lon_dev;
+    double lat_dev;
+    double speed_dev;
+};
+
 /*
 * CLIENT TABLE STRUCT
 *
@@ -71,6 +86,7 @@ struct client_table_entry {
     int was_moved;	/** Moved when last checked. Used to check if returned */
     int marked_for_kick; /** Marked for kicked at next opportunity */
     char ip[INET_ADDRSTRLEN]; /** Clients IP address */
+    struct ref_dev_data rdd;
 };
 
 /* Server info shared with processes */

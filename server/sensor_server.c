@@ -38,15 +38,7 @@
 #define CONFIG_SERVER_HUMANLY_READABLE "humanly_readable_dumpdata:"
 #define CONFIG_FILE_PATH "config.ini"
 #define CONFIG_CSAC_PATH "csac_serial_interface:"
-#define CONFIG_ALT_REF "alt_ref"
-#define CONFIG_LON_REF "lon_ref"
-#define CONFIG_LAT_REF "lat_ref"
-#define CONFIG_SPEED_REF "speed_ref"
-#define CONFIG_ALT_DEV "alt_dev"
-#define CONFIG_LON_DEV "lon_dev"
-#define CONFIG_LAT_DEV "lat_dev"
-#define CONFIG_SPEED_DEV "speed_dev"
-#define CONFIG_ENTRIES 12
+#define CONFIG_ENTRIES 4
 
 /* Server data and stats */
 struct server_data *s_data;
@@ -222,38 +214,6 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
     conf_map[3].entry_name = CONFIG_CSAC_PATH;
     conf_map[3].modifier = FORMAT_STRING;
     conf_map[3].destination = &s_conf->csac_path;
-
-    conf_map[4].entry_name = CONFIG_ALT_REF;
-    conf_map[4].modifier = FORMAT_DOUBLE;
-    conf_map[4].destination = &s_conf->rdd.alt_ref;
-
-    conf_map[5].entry_name = CONFIG_LON_REF;
-    conf_map[5].modifier = FORMAT_DOUBLE;
-    conf_map[5].destination = &s_conf->rdd.lon_ref;
-
-    conf_map[6].entry_name = CONFIG_LAT_REF;
-    conf_map[6].modifier = FORMAT_DOUBLE;
-    conf_map[6].destination = &s_conf->rdd.lat_ref;
-
-    conf_map[7].entry_name = CONFIG_SPEED_REF;
-    conf_map[7].modifier = FORMAT_DOUBLE;
-    conf_map[7].destination = &s_conf->rdd.speed_ref;
-
-    conf_map[8].entry_name = CONFIG_ALT_DEV;
-    conf_map[8].modifier = FORMAT_DOUBLE;
-    conf_map[8].destination = &s_conf->rdd.alt_dev;
-
-    conf_map[9].entry_name = CONFIG_LON_DEV;
-    conf_map[9].modifier = FORMAT_DOUBLE;
-    conf_map[9].destination = &s_conf->rdd.lon_dev;
-
-    conf_map[10].entry_name = CONFIG_LAT_DEV;
-    conf_map[10].modifier = FORMAT_DOUBLE;
-    conf_map[10].destination = &s_conf->rdd.lat_dev;
-    
-    conf_map[11].entry_name = CONFIG_SPEED_DEV;
-    conf_map[11].modifier = FORMAT_DOUBLE;
-    conf_map[11].destination = &s_conf->rdd.speed_dev;
 }
 
 /*

@@ -8,6 +8,7 @@
 #define PRINT_AVG_DIFF_HEADER "ID     LAT        LON       ALT       SPEED\n"
 #define DATADUMP_EXTENSION ".bin"
 #define DATADUMP_HUMAN_EXTENSION ".txt"
+#define RDF_HEADER "\nREF_DEV_FILTER DATA\n"
 
 /* ERRORS */
 #define ERROR_APPEND_TOO_LONG "ERROR: TEXT TO APPEND TOO LONG\n"
@@ -18,6 +19,18 @@
 #define ERROR_FOPEN "Failed to open file, aborting.\n"
 #define ERROR_UPDATE_WARMUP_ILLEGAL "Warm-up time value has to be greater than 0!\n"
 #define ERROR_CSAC_FAILED "Communication with CSAC failed!\n"
+
+/* LOAD_REF_DEV_DATA */
+#define REF_DEV_FILENAME "ref_dev_sensor"
+#define ALT_REF "alt_ref:"
+#define LON_REF "lon_ref:"
+#define LAT_REF "lat_ref:"
+#define SPEED_REF "speed_ref:"
+#define ALT_DEV "alt_dev:"
+#define LON_DEV "lon_dev:"
+#define LAT_DEV "lat_dev:"
+#define SPEED_DEV "speed_dev:"
+#define LOAD_REF_DEV_DATA_ENTRIES 8
 
 /* HELP */
 #define HELP "\n"\
@@ -46,6 +59,8 @@
 " LOADDATA     | LD    | ID & FILE | Loads NMEA of FILE into sensor ID\n"\
 "--------------------------------------------------------------------------------\n"\
 " QUERYCSAC    | QC    | COMMAND   | Queries the CSAC with parameter COMMAND\n"\
+"--------------------------------------------------------------------------------\n"\
+" LOADRFDATA   | LRFD  | ID        | Loads REF_DEV_FILTER data into clint<ID>\n"\
 "--------------------------------------------------------------------------------\n"\
 
 /* SIZES */
@@ -286,6 +301,10 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
 
         fprintf(h_dump, "Sensor Server dumpfile created for client %d\n", client->client_id);
 
+        /*
+        * Dumping all from NMEA container
+        * after raw_rmc and including speed_disturbed
+        */
         int inner_counter = 0;
         int outer_counter = 0;
         double *data = &client->nmea.lat_current;
@@ -297,9 +316,21 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
                 data++;
                 inner_counter++;
             }
-            fprintf(h_dump, "%s", "\n");
+            fprintf(h_dump, "%f", *data);
             inner_counter = 0;
             outer_counter++;
+        }
+
+        /*
+        * Dumping ref_dev_data 
+        */
+        fprintf(h_dump,DUMPDATA_HEADER);
+        inner_counter = 0;
+        double *rdf = &client->rdd.alt_ref;
+        while(inner_counter < 8) {
+            fprintf(h_dump, "%lf \n",*rdf);
+            rdf++;
+            inner_counter++;
         }
 
         if(fclose(h_dump)) {
@@ -309,6 +340,7 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
     return 1;
 }
 
+/* Print list of dumped data */
 int listdumps(struct client_table_entry* monitor)
 {
   DIR *dp;
@@ -330,6 +362,7 @@ int listdumps(struct client_table_entry* monitor)
   return 1;
 }
 
+/* Load dumped data into the client */
 int loaddata(struct client_table_entry* target, char *filename)
 {
     FILE *dump_file;
@@ -396,4 +429,60 @@ int query_csac(struct client_table_entry *monitor, char *query)
 
     s_write(&(monitor->transmission), buffer+2, str_len_u(buffer, buf_size));
     return 0;
+}
+
+/* 
+* Load ref_dev data into the client struct.
+* Re-using the config loader.
+* This whole function needs some work! Magic numbers beware.
+*/
+int load_ref_def_data(struct client_table_entry* target)
+{
+    struct config_map_entry conf_map[LOAD_REF_DEV_DATA_ENTRIES];
+
+    int filename_length = strlen(REF_DEV_FILENAME) + 100;
+    char filename[filename_length];
+    memset(filename,'\0' ,filename_length);
+    strcpy(filename, REF_DEV_FILENAME);
+ 
+    /* Way overkill for itn to string, but still. */
+    char id[100];
+    memset(id,'\0' ,100);
+    sprintf(id, "%d", target->client_id);
+    strcat(filename, id);
+
+    conf_map[0].entry_name = ALT_REF;
+    conf_map[0].modifier = FORMAT_DOUBLE;
+    conf_map[0].destination = &target->rdd.alt_ref;
+
+    conf_map[1].entry_name = LON_REF;
+    conf_map[1].modifier = FORMAT_DOUBLE;
+    conf_map[1].destination = &target->rdd.lon_ref;
+
+    conf_map[2].entry_name = LAT_REF;
+    conf_map[2].modifier = FORMAT_DOUBLE;
+    conf_map[2].destination = &target->rdd.lat_ref;
+
+    conf_map[3].entry_name = SPEED_REF;
+    conf_map[3].modifier = FORMAT_DOUBLE;
+    conf_map[3].destination = &target->rdd.speed_ref;
+
+    conf_map[4].entry_name = ALT_DEV;
+    conf_map[4].modifier = FORMAT_DOUBLE;
+    conf_map[4].destination = &target->rdd.alt_dev;
+
+    conf_map[5].entry_name = LON_DEV;
+    conf_map[5].modifier = FORMAT_DOUBLE;
+    conf_map[5].destination = &target->rdd.lon_dev;
+
+    conf_map[6].entry_name = LAT_DEV;
+    conf_map[6].modifier = FORMAT_DOUBLE;
+    conf_map[6].destination = &target->rdd.lat_dev;
+    
+    conf_map[7].entry_name = SPEED_DEV;
+    conf_map[7].modifier = FORMAT_DOUBLE;
+    conf_map[7].destination = &target->rdd.speed_dev;
+
+    int load_config_status = load_config(conf_map, filename, LOAD_REF_DEV_DATA_ENTRIES);
+    return load_config_status;
 }

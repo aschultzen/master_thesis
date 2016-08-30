@@ -353,6 +353,20 @@ static int parse_input(struct client_table_entry *cte)
         cte->cm.code = CODE_QUERYCSAC;
     }
 
+    /* PRINT_LOCATION */
+    else if(strstr((char*)incoming, PROTOCOL_LOADRFDATA_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_LOADRFDATA_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADRFDATA_SHORT)*(sizeof(char))), length);
+        cte->cm.code = CODE_LOADRFDATA;
+    }
+
+    /* PRINT_LOCATION_SHORT */
+    else if(strstr((char*)incoming, PROTOCOL_LOADRFDATA_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_LOADRFDATA_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADRFDATA_SHORT)*(sizeof(char))), length);
+        cte->cm.code = CODE_LOADRFDATA;
+    }
+
     else {
         return 0;
     }
@@ -503,6 +517,20 @@ static int respond(struct client_table_entry *cte)
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             } else {
                 print_location(cte, candidate);
+            }
+        }
+
+        else if(cte->cm.code == CODE_LOADRFDATA) {
+            struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
+            if(candidate == NULL) {
+                s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+            } else {
+                if(load_ref_def_data(candidate)){
+                    s_write(&(cte->transmission), "LOADED!\n", 8);
+                }
+                else{
+                    s_write(&(cte->transmission), "FAILED TO LOAD!\n", 16);
+                }
             }
         }
 
