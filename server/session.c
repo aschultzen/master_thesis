@@ -481,11 +481,12 @@ static int respond(struct client_table_entry *cte)
                 /* If everyone is ready, process data */
                 if(ready) {
                     /* Last process ready gets the job of analyzing the data */
-                    t_print("Ready to rock & roll!\n");
+                    ref_dev_filter();
+                    raise_alarm();
                     
                     if(!cte->warmup){
-                    /* Perform min_max filter check */
-                    min_max();
+                        /* Perform min_max filter check */
+                        min_max_filter();
                     }
                 }
                 /* Releasing ready-lock */

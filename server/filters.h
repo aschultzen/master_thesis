@@ -22,6 +22,23 @@
  *
  * @return Void
  */
-void min_max(void);
+void min_max_filter(void);
+
+ /** @brief Checks for any "moving" SENSORS
+ *
+ * Similar to min_max_filter(), but uses values from
+ * the config file.
+ * @return Void
+ */
+void ref_dev_filter(void);
+
+/** @brief Checks if a sensor has been marked as moved
+ *
+ * Iterates through client_list and checks for clients marked
+ * as moved. Raises alarm.
+ *
+ * @return Void
+ */
+void raise_alarm(void);
 
 #endif /* !ANALYZER_H */

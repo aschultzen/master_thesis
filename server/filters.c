@@ -3,91 +3,135 @@
 #define ALARM_MOVED "[ ALARM ] Client %d was moved!\n"
 #define ALARM_RETURNED "[ ALARM ] Client %d has returned!\n"
 
-
-/** @brief Checks if a sensor has been marked as moved
- *
- * Iterates through client_list and checks for clients marked
- * as moved. Raises alarm.
- *
- * @return Void
- */
-static void min_max_result(void);
-
-static void min_max_result(void)
+void raise_alarm(void)
 {
-    struct client_table_entry* client_list_iterate;
+    struct client_table_entry* iterator;
     struct client_table_entry* safe;
 
-    list_for_each_entry_safe(client_list_iterate, safe,&client_list->list, list) {
-        if(client_list_iterate->client_id > 0) {
-            if(client_list_iterate->moved == 1) {
-                client_list_iterate->was_moved = 1;
-                client_list_iterate->moved = 0;
-                t_print(ALARM_MOVED, client_list_iterate->client_id);
+    list_for_each_entry_safe(iterator, safe,&client_list->list, list) {
+        if(iterator->client_id > 0) {
+            if(iterator->moved == 1) {
+                iterator->was_moved = 1;
+                iterator->moved = 0;
+                t_print(ALARM_MOVED, iterator->client_id);
             } else {
-                if(client_list_iterate->was_moved) {
-                    client_list_iterate->was_moved = 0;
-                    t_print(ALARM_RETURNED, client_list_iterate->client_id);
+                if(iterator->was_moved) {
+                    iterator->was_moved = 0;
+                    t_print(ALARM_RETURNED, iterator->client_id);
                 }
             }
         }
     }
 }
 
-void min_max(void)
+void ref_dev_filter(void)
 {
-    struct client_table_entry* client_list_iterate;
+    struct client_table_entry* iterator;
     struct client_table_entry* safe;
 
-    list_for_each_entry_safe(client_list_iterate, safe,&client_list->list, list) {
-        if(client_list_iterate->nmea.lat_current > client_list_iterate->nmea.lat_high) {
-            client_list_iterate->moved = 1;
-            client_list_iterate->nmea.lat_disturbed = HIGH;
+    list_for_each_entry_safe(iterator, safe,&client_list->list, list) {
+        if(iterator->nmea.lat_current > s_conf->rdd.lat_ref + s_conf->rdd.lat_dev) {
+            iterator->moved = 1;
+            iterator->nmea.lat_disturbed = HIGH;
         }
-        else if(client_list_iterate->nmea.lat_current < client_list_iterate->nmea.lat_low) {
-            client_list_iterate->moved = 1;
-            client_list_iterate->nmea.lat_disturbed = LOW;
+        else if(iterator->nmea.lat_current < s_conf->rdd.lat_ref - s_conf->rdd.lat_dev) {
+            iterator->moved = 1;
+            iterator->nmea.lat_disturbed = LOW;
         }
         else {
-            client_list_iterate->nmea.lat_disturbed = SAFE;
+            iterator->nmea.lat_disturbed = SAFE;
         }
 
-        if(client_list_iterate->nmea.lon_current > client_list_iterate->nmea.lon_high) {
-            client_list_iterate->moved = 1;
-            client_list_iterate->nmea.lon_disturbed = HIGH;
+        if(iterator->nmea.alt_current > s_conf->rdd.alt_ref + s_conf->rdd.alt_dev) {
+            iterator->moved = 1;
+            iterator->nmea.alt_disturbed = HIGH;
         }
-        else if(client_list_iterate->nmea.lon_current < client_list_iterate->nmea.lon_low) {
-            client_list_iterate->moved = 1;
-            client_list_iterate->nmea.lon_disturbed = LOW;
+        else if(iterator->nmea.alt_current < s_conf->rdd.alt_ref - s_conf->rdd.alt_dev) {
+            iterator->moved = 1;
+            iterator->nmea.alt_disturbed = LOW;
         }
         else {
-            client_list_iterate->nmea.lon_disturbed = SAFE;
+            iterator->nmea.alt_disturbed = SAFE;
         }
 
-        if(client_list_iterate->nmea.alt_current > client_list_iterate->nmea.alt_high) {
-            client_list_iterate->moved = 1;
-            client_list_iterate->nmea.alt_disturbed = HIGH;
+        if(iterator->nmea.lon_current > s_conf->rdd.lon_ref + s_conf->rdd.lon_dev) {
+            iterator->moved = 1;
+            iterator->nmea.lon_disturbed = HIGH;
         }
-        else if(client_list_iterate->nmea.alt_current < client_list_iterate->nmea.alt_low) {
-            client_list_iterate->moved = 1;
-            client_list_iterate->nmea.alt_disturbed = LOW;
+        else if(iterator->nmea.lon_current < s_conf->rdd.lon_ref - s_conf->rdd.lon_dev) {
+            iterator->moved = 1;
+            iterator->nmea.lon_disturbed = LOW;
         }
         else {
-            client_list_iterate->nmea.alt_disturbed = SAFE;
+            iterator->nmea.lon_disturbed = SAFE;
         }
 
-        if(client_list_iterate->nmea.speed_current > client_list_iterate->nmea.speed_high) {
-            client_list_iterate->moved = 1;
-            client_list_iterate->nmea.speed_disturbed = HIGH;
+        if(iterator->nmea.speed_current > s_conf->rdd.speed_ref + s_conf->rdd.speed_dev) {
+            iterator->moved = 1;
+            iterator->nmea.speed_disturbed = HIGH;
         }
-        else if(client_list_iterate->nmea.speed_current < client_list_iterate->nmea.speed_low) {
-            client_list_iterate->moved = 1;
-            client_list_iterate->nmea.speed_disturbed = LOW;
+        else if(iterator->nmea.speed_current < s_conf->rdd.speed_ref - s_conf->rdd.speed_dev) {
+            iterator->moved = 1;
+            iterator->nmea.speed_disturbed = LOW;
         }
         else {
-            client_list_iterate->nmea.speed_disturbed = SAFE;
+            iterator->nmea.speed_disturbed = SAFE;
         }
     }
+}
 
-    min_max_result();
+void min_max_filter(void)
+{
+    struct client_table_entry* iterator;
+    struct client_table_entry* safe;
+
+    list_for_each_entry_safe(iterator, safe,&client_list->list, list) {
+        if(iterator->nmea.lat_current > iterator->nmea.lat_high) {
+            iterator->moved = 1;
+            iterator->nmea.lat_disturbed = HIGH;
+        }
+        else if(iterator->nmea.lat_current < iterator->nmea.lat_low) {
+            iterator->moved = 1;
+            iterator->nmea.lat_disturbed = LOW;
+        }
+        else {
+            iterator->nmea.lat_disturbed = SAFE;
+        }
+
+        if(iterator->nmea.lon_current > iterator->nmea.lon_high) {
+            iterator->moved = 1;
+            iterator->nmea.lon_disturbed = HIGH;
+        }
+        else if(iterator->nmea.lon_current < iterator->nmea.lon_low) {
+            iterator->moved = 1;
+            iterator->nmea.lon_disturbed = LOW;
+        }
+        else {
+            iterator->nmea.lon_disturbed = SAFE;
+        }
+
+        if(iterator->nmea.alt_current > iterator->nmea.alt_high) {
+            iterator->moved = 1;
+            iterator->nmea.alt_disturbed = HIGH;
+        }
+        else if(iterator->nmea.alt_current < iterator->nmea.alt_low) {
+            iterator->moved = 1;
+            iterator->nmea.alt_disturbed = LOW;
+        }
+        else {
+            iterator->nmea.alt_disturbed = SAFE;
+        }
+
+        if(iterator->nmea.speed_current > iterator->nmea.speed_high) {
+            iterator->moved = 1;
+            iterator->nmea.speed_disturbed = HIGH;
+        }
+        else if(iterator->nmea.speed_current < iterator->nmea.speed_low) {
+            iterator->moved = 1;
+            iterator->nmea.speed_disturbed = LOW;
+        }
+        else {
+            iterator->nmea.speed_disturbed = SAFE;
+        }
+    }
 }

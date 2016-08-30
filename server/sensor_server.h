@@ -14,14 +14,7 @@
 #include "serial.h"
 #include "sensor_server_commons.h"
 
-/*!@struct*/
-/*!@brief Contains configuration values for the server
-*/
-struct server_config {
-    int max_clients;
-    int warm_up_seconds;
-    int human_readable_dumpdata;
-    char csac_path[100];
+struct ref_dev_data {
     double alt_ref;
  	double lon_ref;
 	double lat_ref;
@@ -30,6 +23,17 @@ struct server_config {
 	double lon_dev;
 	double lat_dev;
 	double speed_dev;
+};
+
+/*!@struct*/
+/*!@brief Contains configuration values for the server
+*/
+struct server_config {
+    int max_clients;
+    int warm_up_seconds;
+    int human_readable_dumpdata;
+    char csac_path[100];
+    struct ref_dev_data rdd;
 };
 
 /*

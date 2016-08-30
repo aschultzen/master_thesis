@@ -225,35 +225,35 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
 
     conf_map[4].entry_name = CONFIG_ALT_REF;
     conf_map[4].modifier = FORMAT_DOUBLE;
-    conf_map[4].destination = &s_conf->alt_ref;
+    conf_map[4].destination = &s_conf->rdd.alt_ref;
 
     conf_map[5].entry_name = CONFIG_LON_REF;
     conf_map[5].modifier = FORMAT_DOUBLE;
-    conf_map[5].destination = &s_conf->lon_ref;
+    conf_map[5].destination = &s_conf->rdd.lon_ref;
 
     conf_map[6].entry_name = CONFIG_LAT_REF;
     conf_map[6].modifier = FORMAT_DOUBLE;
-    conf_map[6].destination = &s_conf->lat_ref;
+    conf_map[6].destination = &s_conf->rdd.lat_ref;
 
     conf_map[7].entry_name = CONFIG_SPEED_REF;
     conf_map[7].modifier = FORMAT_DOUBLE;
-    conf_map[7].destination = &s_conf->speed_ref;
+    conf_map[7].destination = &s_conf->rdd.speed_ref;
 
     conf_map[8].entry_name = CONFIG_ALT_DEV;
     conf_map[8].modifier = FORMAT_DOUBLE;
-    conf_map[8].destination = &s_conf->alt_dev;
+    conf_map[8].destination = &s_conf->rdd.alt_dev;
 
     conf_map[9].entry_name = CONFIG_LON_DEV;
     conf_map[9].modifier = FORMAT_DOUBLE;
-    conf_map[9].destination = &s_conf->lon_dev;
+    conf_map[9].destination = &s_conf->rdd.lon_dev;
 
     conf_map[10].entry_name = CONFIG_LAT_DEV;
     conf_map[10].modifier = FORMAT_DOUBLE;
-    conf_map[10].destination = &s_conf->lat_dev;
+    conf_map[10].destination = &s_conf->rdd.lat_dev;
     
     conf_map[11].entry_name = CONFIG_SPEED_DEV;
     conf_map[11].modifier = FORMAT_DOUBLE;
-    conf_map[11].destination = &s_conf->speed_dev;
+    conf_map[11].destination = &s_conf->rdd.speed_dev;
 }
 
 /*
