@@ -3,15 +3,17 @@
 /* CONFIG */
 #define CONFIG_SERIAL_INTERFACE "serial_interface:"
 #define CONFIG_CLIENT_ID "client_id:"
-#define CONFIG_ENTRIES 2
+#define CONFIG_LOG_NAME "log_file_name:"
+#define CONFIG_ENTRIES 3
 #define CONFIG_FILE_PATH "client_config.ini"
 #define DEFAULT_SERIAL_INTERFACE "/dev/ttyACM0"
+
 struct config_map_entry conf_map[1];
 
 static int identify(int session_fd, int id);
 static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno);
 static void receive_nmea(int gps_serial, struct nmea_container *nmea_c);
-static int send_nmea(int session_fd, struct nmea_container *nmea_c);
+static int format_nmea(struct nmea_container *nmea_c);
 static void initialize_config(struct config_map_entry *conf_map, struct config *cfg);
 static int start_client(int portno, char* ip);
 static int usage(char *argv[]);
@@ -114,7 +116,7 @@ static void receive_nmea(int gps_serial, struct nmea_container *nmea_c)
 }
 
 /* Send received NMEA data to server */
-static int send_nmea(int session_fd, struct nmea_container *nmea_c)
+static int format_nmea(struct nmea_container *nmea_c)
 {
     /* The buffer size is dimensioned thinking that one sentence = 100B */
     char buffer[200];
@@ -140,10 +142,29 @@ static int send_nmea(int session_fd, struct nmea_container *nmea_c)
     /* Updating total length */
     total_length += gga_length + newline_length;
 
-    /* Writing to socket (server) */
-    write(session_fd, buffer, total_length);
+    return total_length;
+}
 
-    return 0;
+static int make_log(char *content, int id, char* log_name){
+    /* Allocating memory for filename buffer */
+    int filename_length = strlen(log_name) + 100;
+    char filename[filename_length];
+
+    /* Clearing buffer */
+    memset(filename,'\0' ,filename_length);
+
+    /* Copying name from loaded config */
+    strcpy(filename, log_name);
+
+    /* Casting int to string */
+    char id_string[10];
+    memset(id_string,'\0', 10);
+    sprintf(id_string, "%d", id);
+
+    /* Concating filename and ID */
+    strcat(filename, id_string);
+
+    return log_to_file(filename, content, 1);
 }
 
 /* Setting up the config structure specific for the server */
@@ -156,6 +177,10 @@ static void initialize_config(struct config_map_entry *conf_map, struct config *
     conf_map[1].entry_name = CONFIG_CLIENT_ID;
     conf_map[1].modifier = FORMAT_INT;
     conf_map[1].destination = &cfg->client_id;
+
+    conf_map[2].entry_name = CONFIG_LOG_NAME;
+    conf_map[2].modifier = FORMAT_STRING;
+    conf_map[2].destination = &cfg->log_name;
 }
 
 static int start_client(int portno, char* ip)
@@ -216,7 +241,10 @@ static int start_client(int portno, char* ip)
 
     while (1) {
         receive_nmea(gps_serial, &nmea_c);
-        send_nmea(session_fd, &nmea_c);
+        int trans_length = format_nmea(&nmea_c);
+         /* Writing to socket (server) */
+        write(session_fd, buffer, trans_length);
+        make_log(buffer, cfg.client_id, cfg.log_name);
     }
     return 0;
 }

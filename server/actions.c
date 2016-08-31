@@ -440,14 +440,14 @@ int load_ref_def_data(struct client_table_entry* target)
 {
     struct config_map_entry conf_map[LOAD_REF_DEV_DATA_ENTRIES];
 
-    int filename_length = strlen(REF_DEV_FILENAME) + 100;
+    int filename_length = strlen(REF_DEV_FILENAME) + 10;
     char filename[filename_length];
     memset(filename,'\0' ,filename_length);
     strcpy(filename, REF_DEV_FILENAME);
 
     /* Way overkill for itn to string, but still. */
-    char id[100];
-    memset(id,'\0' ,100);
+    char id[10];
+    memset(id,'\0' ,10);
     sprintf(id, "%d", target->client_id);
     strcat(filename, id);
 
