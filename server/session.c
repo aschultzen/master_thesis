@@ -13,6 +13,7 @@
 #define ERROR_DUMPDATA_FAILED "ERROR:Failed to dump data\n"
 #define ERROR_LOADDATA_FAILED "ERROR:Failed to load data\n"
 #define ERROR_NO_COMMAND  "ERROR:No command specified\n"
+#define ERROR_LRFD_LOAD_FAILED "ERROR:Failed to laod REF_DEV_FILTER data from file\n"
 
 static int nmea_ready();
 static void extract_nmea_data(struct client_table_entry *cte);
@@ -424,6 +425,7 @@ static int respond(struct client_table_entry *cte)
                 return 0;
             }
 
+            /* Checking to see if the ID is in use */
             struct client_table_entry* client_list_iterate;
             list_for_each_entry(client_list_iterate, &client_list->list, list) {
                 if(client_list_iterate->client_id == cte->cm.id_parameter) {
@@ -434,6 +436,7 @@ static int respond(struct client_table_entry *cte)
                 }
             }
 
+            /* Determining role */
             if(cte->cm.id_parameter < 0) {
                 cte->client_type = MONITOR;
                 struct timeval timeout = {MONITOR_TIMEOUT, 0};
@@ -449,6 +452,11 @@ static int respond(struct client_table_entry *cte)
     	    s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
             cte->client_id = cte->cm.id_parameter;
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
+            if(load_ref_def_data(cte)){
+                s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
+            } else {
+                s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED, sizeof(ERROR_LRFD_LOAD_FAILED));
+            }
             return 1;
         }
 
@@ -496,12 +504,13 @@ static int respond(struct client_table_entry *cte)
                 if(ready) {
                     /* Last process ready gets the job of analyzing the data */
                     ref_dev_filter();
-                    raise_alarm();
                     
                     if(!cte->warmup){
                         /* Perform min_max filter check */
                         min_max_filter();
                     }
+                    /* Check the results of the filters */
+                    raise_alarm();
                 }
                 /* Releasing ready-lock */
                 sem_post(&(s_synch->ready_mutex));
@@ -526,10 +535,10 @@ static int respond(struct client_table_entry *cte)
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             } else {
                 if(load_ref_def_data(candidate)){
-                    s_write(&(cte->transmission), "LOADED!\n", 8);
+                    s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
                 }
                 else{
-                    s_write(&(cte->transmission), "FAILED TO LOAD!\n", 16);
+                    s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED, sizeof(ERROR_LRFD_LOAD_FAILED));
                 }
             }
         }

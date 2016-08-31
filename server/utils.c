@@ -1,5 +1,7 @@
 #include "utils.h"
 
+#define MJD_SCRIPT_PATH "./get_mjd.py"
+
 void die (int line_number, const char * format, ...)
 {
     va_list vargs;
@@ -221,4 +223,33 @@ int str_len_u(char *buffer, int buf_len)
         prev = buffer[i];
     }
     return -1;
+}
+
+/* Mega hackish code for getting MJD */
+int get_today_mjd(char *buffer)
+{
+    int status = shell_invoke(MJD_SCRIPT_PATH, buffer);
+    return status;
+}
+
+int shell_invoke(char *path, char *output)
+{
+    FILE *fp;
+
+    /* Open the command for reading. */
+    fp = popen(path, "r");
+    if (fp == NULL) {
+        printf("Failed to run command\n");
+        return 0;
+    }
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(output, sizeof(output)-1, fp) != NULL) {
+        printf("%s", output);
+    }
+
+    /* close */
+    pclose(fp);
+
+    return 1;
 }

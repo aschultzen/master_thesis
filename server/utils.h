@@ -103,4 +103,17 @@ int substring_extractor(int start, int end, char delimiter, char *buffer, int bu
  *	@param buf_len Length of the buffer in bytes
  */
 int str_len_u(char *buffer, int buf_len);
+
+/** @brief Calls a script using shell_invoke to get mjd(now).
+ *
+ *	@param buffer Buffer to store response
+ */
+int get_today_mjd(char *buffer);
+
+/** @brief Run a script or a program through the shell
+ *
+ *	@param path Path to program
+ *	@param output Buffer to store response
+ */
+int shell_invoke(char *path, char *output);
 #endif /* !UTILS_H */
