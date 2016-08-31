@@ -1,17 +1,17 @@
 /*
 ## CSAC Config ##################
 #
-# 57600			
-# 8 bit			
-# No parity		
-# 
+# 57600
+# 8 bit
+# No parity
+#
 # While CSAC is off:
 #
 # sudo stty -F /dev/ttyS0 57600
-# cat /dev/ttyS0 
+# cat /dev/ttyS0
 #
 # Turn the CSAC ON
-# 
+#
 # Symmetricom CSAC <- Output
 #
 #################################
@@ -50,7 +50,7 @@ int open_serial(char *portname, serial_device device);
 * @param query Command (query) to send to the CSAC.
 * @param buffer Buffer to store the response
 * @buf_len buf_len Length of buffer
-*/ 
+*/
 int serial_query(int file_descriptor, char *query, char *buffer, int buf_len);
 
 #endif /* !SERIAL_H */

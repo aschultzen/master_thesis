@@ -20,7 +20,7 @@
 #define MAX_FILENAME_SIZE 30
 #define ID_AS_STRING_MAX 4
 
- /* Errors */
+/* Errors */
 #define ERROR_CODE_NO_FILE -1
 #define ERROR_CODE_READ_FAILED -2
 #define ERROR_NO_FILE "ERROR:No such file\n"

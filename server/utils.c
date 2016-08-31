@@ -135,7 +135,8 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
     return 1;
 }
 
-int calculate_nmea_checksum(char *nmea) {
+int calculate_nmea_checksum(char *nmea)
+{
     char checksum = 0;
     int i;
     int received_checksum = 0;
@@ -172,8 +173,7 @@ int calculate_nmea_checksum(char *nmea) {
     /* Comparing checksum */
     if(received_checksum == calculated_checksum) {
         return 1;
-    }
-    else {
+    } else {
         return 0;
     }
 
@@ -205,8 +205,7 @@ int substring_extractor(int start, int end, char delimiter, char *buffer, int bu
 
         if(string[i] == delimiter) {
             delim_counter++;
-        }
-        else {
+        } else {
             /* The first delim is reached */
             if(delim_counter >= start) {
                 buffer[buffer_index] = string[i];
@@ -222,8 +221,8 @@ int str_len_u(char *buffer, int buf_len)
 {
     int i;
     char prev = 'X';
-    for(i = 0; i < buf_len; i++){
-        if(buffer[i] == 0x0a && prev == 0x0a){
+    for(i = 0; i < buf_len; i++) {
+        if(buffer[i] == 0x0a && prev == 0x0a) {
             return i;
         }
         prev = buffer[i];
@@ -276,24 +275,23 @@ int log_to_file(char *path, char *content, int stamp_switch)
     }
 
     /* Add timestamp */
-    if(stamp_switch){
+    if(stamp_switch) {
         int timestamp_size = 50;
         char timestamp[timestamp_size];
         memset(timestamp,'\0', timestamp_size);
 
         get_today_mjd(timestamp);
-        if(!fprintf(log_file,"%s,",timestamp)){
+        if(!fprintf(log_file,"%s,",timestamp)) {
             t_print(ERROR_FWRITE);
             return 0;
-        } 
+        }
     }
 
     /* Write content to file */
-    if(!(fprintf(log_file,"%s",content)))
-    {
+    if(!(fprintf(log_file,"%s",content))) {
         t_print(ERROR_FWRITE);
         return 0;
-    } 
+    }
 
     /* Close file */
     if(fclose(log_file)) {

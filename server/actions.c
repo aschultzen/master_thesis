@@ -281,7 +281,7 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
         return 0;
     }
 
-    if(!fwrite(&client->nmea, sizeof(struct nmea_container), 1, bin_file)){
+    if(!fwrite(&client->nmea, sizeof(struct nmea_container), 1, bin_file)) {
         t_print(ERROR_FWRITE);
         return 0;
     }
@@ -290,7 +290,7 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
         t_print(ERROR_FCLOSE);
     }
 
-    if(dump_human_read){
+    if(dump_human_read) {
         /* Dumping humanly readable data */
         FILE *h_dump;
         char h_name[strlen(filename) + strlen(DATADUMP_HUMAN_EXTENSION)];
@@ -308,7 +308,7 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
         int inner_counter = 0;
         int outer_counter = 0;
         double *data = &client->nmea.lat_current;
- 
+
         fprintf(h_dump,DUMPDATA_HEADER);
         while(outer_counter < 4) {
             while(inner_counter < 7) {
@@ -322,7 +322,7 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
         }
 
         /*
-        * Dumping ref_dev_data 
+        * Dumping ref_dev_data
         */
         fprintf(h_dump,DUMPDATA_HEADER);
         inner_counter = 0;
@@ -343,23 +343,23 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
 /* Print list of dumped data */
 int listdumps(struct client_table_entry* monitor)
 {
-  DIR *dp;
-  struct dirent *ep;
+    DIR *dp;
+    struct dirent *ep;
 
-  dp = opendir ("./");
-  if(dp != NULL){
-      while ( (ep = readdir(dp)) ){
-        if(strstr(ep->d_name,DATADUMP_EXTENSION) != NULL){
-            s_write(&(monitor->transmission),ep->d_name, strlen(ep->d_name));
-            s_write(&(monitor->transmission),NEW_LINE, sizeof(NEW_LINE));
+    dp = opendir ("./");
+    if(dp != NULL) {
+        while ( (ep = readdir(dp)) ) {
+            if(strstr(ep->d_name,DATADUMP_EXTENSION) != NULL) {
+                s_write(&(monitor->transmission),ep->d_name, strlen(ep->d_name));
+                s_write(&(monitor->transmission),NEW_LINE, sizeof(NEW_LINE));
+            }
         }
-      }
-      closedir (dp);
-    }else{
-    return 0;
-  }
+        closedir (dp);
+    } else {
+        return 0;
+    }
 
-  return 1;
+    return 1;
 }
 
 /* Load dumped data into the client */
@@ -385,7 +385,7 @@ int loaddata(struct client_table_entry* target, char *filename)
 
     t_print("Read %d/%d bytes successfully from %s\n", f_s, file_len,filename);
 
-    if(f_s == 0){
+    if(f_s == 0) {
         t_print(ERROR_FREAD);
         return ERROR_CODE_READ_FAILED;
     }
@@ -401,7 +401,7 @@ int query_csac(struct client_table_entry *monitor, char *query)
 {
     /* Connect to CSAC */
     s_data->csac_fd = open_serial(s_conf->csac_path, CSAC);
-    if(s_data->csac_fd == -1){ 
+    if(s_data->csac_fd == -1) {
         t_print("Failed to connect to CSAC\n");
         exit(0);
     }
@@ -415,7 +415,7 @@ int query_csac(struct client_table_entry *monitor, char *query)
     int serial_query_r = serial_query(s_data->csac_fd, query,buffer, buf_size);
 
     /* Checking return value */
-    if(!serial_query_r){
+    if(!serial_query_r) {
         s_write(&(monitor->transmission), ERROR_CSAC_FAILED, sizeof(ERROR_CSAC_FAILED));
     }
 
@@ -431,7 +431,7 @@ int query_csac(struct client_table_entry *monitor, char *query)
     return 0;
 }
 
-/* 
+/*
 * Load ref_dev data into the client struct.
 * Re-using the config loader.
 * This whole function needs some work! Magic numbers beware.
@@ -444,7 +444,7 @@ int load_ref_def_data(struct client_table_entry* target)
     char filename[filename_length];
     memset(filename,'\0' ,filename_length);
     strcpy(filename, REF_DEV_FILENAME);
- 
+
     /* Way overkill for itn to string, but still. */
     char id[100];
     memset(id,'\0' ,100);
@@ -478,7 +478,7 @@ int load_ref_def_data(struct client_table_entry* target)
     conf_map[6].entry_name = LAT_DEV;
     conf_map[6].modifier = FORMAT_DOUBLE;
     conf_map[6].destination = &target->rdd.lat_dev;
-    
+
     conf_map[7].entry_name = SPEED_DEV;
     conf_map[7].modifier = FORMAT_DOUBLE;
     conf_map[7].destination = &target->rdd.speed_dev;

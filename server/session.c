@@ -448,11 +448,11 @@ static int respond(struct client_table_entry *cte)
                 s_data->number_of_sensors++;
                 sem_post(&(s_synch->client_list_mutex));
             }
-	    /* Everything is good, setting id and responding*/
-    	    s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
+            /* Everything is good, setting id and responding*/
+            s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
             cte->client_id = cte->cm.id_parameter;
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
-            if(load_ref_def_data(cte)){
+            if(load_ref_def_data(cte)) {
                 s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
             } else {
                 s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED, sizeof(ERROR_LRFD_LOAD_FAILED));
@@ -486,7 +486,7 @@ static int respond(struct client_table_entry *cte)
                 calculate_nmea_diff(cte);
 
                 /* Checksums where OK, client marked ready */
-                cte->ready = 1; 
+                cte->ready = 1;
 
                 /* Check if clients are in warm-up period */
                 if(cte->warmup) {
@@ -504,8 +504,8 @@ static int respond(struct client_table_entry *cte)
                 if(ready) {
                     /* Last process ready gets the job of analyzing the data */
                     ref_dev_filter();
-                    
-                    if(!cte->warmup){
+
+                    if(!cte->warmup) {
                         /* Perform min_max filter check */
                         min_max_filter();
                     }
@@ -534,10 +534,9 @@ static int respond(struct client_table_entry *cte)
             if(candidate == NULL) {
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             } else {
-                if(load_ref_def_data(candidate)){
+                if(load_ref_def_data(candidate)) {
                     s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
-                }
-                else{
+                } else {
                     s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED, sizeof(ERROR_LRFD_LOAD_FAILED));
                 }
             }
@@ -669,7 +668,7 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_QUERYCSAC) {
-            if(strlen(cte->cm.parameter) < 3){
+            if(strlen(cte->cm.parameter) < 3) {
                 s_write(&(cte->transmission), ERROR_NO_COMMAND, sizeof(ERROR_NO_COMMAND));
                 return 1;
             }
