@@ -104,7 +104,7 @@ int substring_extractor(int start, int end, char delimiter, char *buffer, int bu
  */
 int str_len_u(char *buffer, int buf_len);
 
-/** @brief Calls a script using shell_invoke to get mjd(now).
+/** @brief Calls a script using run_command to get mjd(now).
  *
  *	@param buffer Buffer to store response
  */
@@ -115,5 +115,13 @@ int get_today_mjd(char *buffer);
  *	@param path Path to program
  *	@param output Buffer to store response
  */
-int shell_invoke(char *path, char *output);
+int run_command(char *path, char *output);
+
+/** @brief Log to file
+ *
+ *	@param content Data to log
+ *	@param path Path to the log file to log to
+ *	@param stamp_switch 0 if no timestamp, 1 if MJD.
+ */
+int log_to_file(char *path, char *content, int stamp_switch);
 #endif /* !UTILS_H */

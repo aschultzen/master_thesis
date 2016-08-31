@@ -1,5 +1,11 @@
 #include "utils.h"
 
+/* These are also in action.c, duplicates are no solution */
+#define ERROR_FCLOSE "Failed to close file, out of space?\n"
+#define ERROR_FWRITE "Failed to write to file, aborting.\n"
+#define ERROR_FREAD "Failed to read file, aborting.\n"
+#define ERROR_FOPEN "Failed to open file, aborting.\n"
+
 #define MJD_SCRIPT_PATH "./get_mjd.py"
 
 void die (int line_number, const char * format, ...)
@@ -228,28 +234,70 @@ int str_len_u(char *buffer, int buf_len)
 /* Mega hackish code for getting MJD */
 int get_today_mjd(char *buffer)
 {
-    int status = shell_invoke(MJD_SCRIPT_PATH, buffer);
+    int status = run_command(MJD_SCRIPT_PATH, buffer);
+    /* Removing newline */
+    buffer[strcspn(buffer, "\n")] = 0;
     return status;
 }
 
-int shell_invoke(char *path, char *output)
+int run_command(char *path, char *output)
 {
     FILE *fp;
+    int buffer_size = 1000;
+    char buffer[buffer_size];
+    memset(buffer, '\0', buffer_size);
 
     /* Open the command for reading. */
     fp = popen(path, "r");
     if (fp == NULL) {
-        printf("Failed to run command\n");
+        t_print("Failed to run command\n");
         return 0;
     }
 
     /* Read the output a line at a time - output it. */
-    while (fgets(output, sizeof(output)-1, fp) != NULL) {
-        printf("%s", output);
+    while (fgets(buffer, sizeof(buffer)-1, fp) != NULL) {
+        strcat(output,buffer);
     }
 
     /* close */
     pclose(fp);
+    return 1;
+}
 
+int log_to_file(char *path, char *content, int stamp_switch)
+{
+    FILE *log_file;
+    log_file = fopen(path, "wb");
+
+    /* Open file */
+    if(!log_file) {
+        t_print(ERROR_FOPEN);
+        return 0;
+    }
+
+    /* Add timestamp */
+    if(stamp_switch){
+        int timestamp_size = 50;
+        char timestamp[timestamp_size];
+        memset(timestamp,'\0', timestamp_size);
+
+        get_today_mjd(timestamp);
+        if(!fprintf(log_file,"%s,",timestamp)){
+            t_print(ERROR_FWRITE);
+            return 0;
+        } 
+    }
+
+    /* Write content to file */
+    if(!(fprintf(log_file,"%s",content)))
+    {
+        t_print(ERROR_FWRITE);
+        return 0;
+    } 
+
+    /* Close file */
+    if(fclose(log_file)) {
+        t_print(ERROR_FCLOSE);
+    }
     return 1;
 }
