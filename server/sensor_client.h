@@ -15,4 +15,12 @@ struct config {
     char log_name[100];
 };
 
+/* Used by the client */
+struct raw_nmea_container {
+    /* Raw data */
+    char raw_gga[SENTENCE_LENGTH];
+    char raw_rmc[SENTENCE_LENGTH];
+    char output[200];
+};
+
 #endif /* !SENSOR_CLIENT_H */
