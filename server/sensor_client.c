@@ -246,7 +246,7 @@ static int start_client(int portno, char* ip)
         exit(0);
     }
 
-    if(cfg.log_name){
+    if(cfg.log_nmea){
         t_print("NMEA data logging enabled\n");
     }
 
@@ -255,7 +255,7 @@ static int start_client(int portno, char* ip)
         int trans_length = format_nmea(&nmea_c);
          /* Writing to socket (server) */
         write(session_fd, nmea_c.output, trans_length);
-        if(cfg.log_name){
+        if(cfg.log_nmea){
             make_log(&nmea_c, cfg.client_id, cfg.log_name);
         }
     }
