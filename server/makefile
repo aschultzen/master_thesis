@@ -1,5 +1,5 @@
 SERVER_OBJS = sensor_server.o net.o utils.o serial.o session.o filters.o actions.o
-CLIENT_OBJS = sensor_client.o net.o utils.o serial.o
+CLIENT_OBJS = sensor_client.o net.o utils.o gps_serial.o
 
 CC = gcc
 DEBUG = -g
@@ -9,7 +9,7 @@ CFLAGS = -Wall -Wextra -c $(DEBUG) -std=gnu99 -pedantic -O3
 cpu := $(shell uname -m)
 
 ifeq ($(cpu),armv7l)
-	CFLAGS = -Wall -c $(DEBUG) -march=armv7-a -mtune=arm7 -fsigned-char
+	CFLAGS = -Wall -Wextra -c $(DEBUG) -std=gnu99 -pedantic -O3 -march=armv7-a -mtune=arm7 -fsigned-char
 endif
 
 LFLAGS = -Wall $(DEBUG)
@@ -34,6 +34,9 @@ utils.o : utils.h list.h utils.c config.h
 
 serial.o : serial.h serial.c
 	$(CC) $(CFLAGS) serial.c
+	
+gps_serial.o : serial.h gps_serial.c
+	$(CC) $(CFLAGS) gps_serial.c
 
 session.o : session.h session.c sensor_server.h
 	$(CC) $(CFLAGS) session.c 
