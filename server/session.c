@@ -106,8 +106,8 @@ static void calculate_nmea_diff(struct client_table_entry *cte)
 /* Check if a client is still warming up */
 static void verify_warm_up(struct client_table_entry *cte)
 {
-    if(cte->warmup_started) {
-        double elapsed = difftime(time(NULL), cte->warmup_started);
+    if(cte->fs.mmf.warmup_started) {
+        double elapsed = difftime(time(NULL), cte->fs.mmf.warmup_started);
         double percent = (elapsed / s_conf->warm_up_seconds) * 100;
 
         if((int)percent % 10 == 0) {
@@ -116,10 +116,10 @@ static void verify_warm_up(struct client_table_entry *cte)
 
         if(elapsed >= s_conf->warm_up_seconds) {
             t_print("Client %d, warm-up finished!\n", cte->client_id);
-            cte->warmup = 0;
+            cte->fs.mmf.warmup = 0;
         }
     } else {
-        cte->warmup_started = time(NULL);
+        cte->fs.mmf.warmup_started = time(NULL);
     }
 }
 
@@ -489,7 +489,7 @@ static int respond(struct client_table_entry *cte)
                 cte->ready = 1;
 
                 /* Check if clients are in warm-up period */
-                if(cte->warmup) {
+                if(cte->fs.mmf.warmup) {
                     verify_warm_up(cte);
                     warm_up(cte);
                 }
@@ -505,7 +505,7 @@ static int respond(struct client_table_entry *cte)
                     /* Last process ready gets the job of analyzing the data */
                     ref_dev_filter();
 
-                    if(!cte->warmup) {
+                    if(!cte->fs.mmf.warmup) {
                         /* Perform min_max filter check */
                         min_max_filter();
                     }
@@ -697,8 +697,13 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     /* Initializing structure, zeroing just to be sure */
     new_client->client_id = 0;
     new_client->transmission.session_fd = session_fd;
-    new_client->moved = 0;
-    new_client->was_moved = 0;
+
+    /* Zeroing out filters */
+    new_client->fs.mmf.moved = 0;
+    new_client->fs.rdf.moved = 0;
+    new_client->fs.mmf.was_moved = 0;
+    new_client->fs.rdf.was_moved = 0;
+
     new_client->marked_for_kick = 0;
     new_client->ready = 0;
 
@@ -709,8 +714,8 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     }
 
     /* Marked for warm up */
-    new_client->warmup = 1;
-    new_client->warmup_started = 0;
+    new_client->fs.mmf.warmup = 1;
+    new_client->fs.mmf.warmup_started = 0;
 
     /* Setting low values */
     new_client->nmea.lat_low = 9999.999999;

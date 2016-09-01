@@ -119,7 +119,7 @@ void print_clients(struct client_table_entry *monitor)
         }
 
         if(client_list_iterate->client_type == SENSOR) {
-            double elapsed_warmup = difftime(time(NULL), client_list_iterate->warmup_started);
+            double elapsed_warmup = difftime(time(NULL), client_list_iterate->fs.mmf.warmup_started);
             time_left = s_conf->warm_up_seconds - elapsed_warmup;
         } else {
             time_left = 0;
@@ -260,8 +260,8 @@ void print_avg_diff(struct client_table_entry *client)
 /* Restart WARMUP procedure */
 void restart_warmup(struct client_table_entry* client)
 {
-    client->warmup = 1;
-    client->warmup_started = time(NULL);
+    client->fs.mmf.warmup = 1;
+    client->fs.mmf.warmup_started = time(NULL);
     client->ready = 0;
     t_print("Sensor %d warmup restarted\n", client->client_id);
 }
@@ -326,7 +326,7 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
         */
         fprintf(h_dump,DUMPDATA_HEADER);
         inner_counter = 0;
-        double *rdf = &client->rdd.alt_ref;
+        double *rdf = &client->fs.rdf.rdd.alt_ref;
         while(inner_counter < 8) {
             fprintf(h_dump, "%lf \n",*rdf);
             rdf++;
@@ -453,35 +453,35 @@ int load_ref_def_data(struct client_table_entry* target)
 
     conf_map[0].entry_name = ALT_REF;
     conf_map[0].modifier = FORMAT_DOUBLE;
-    conf_map[0].destination = &target->rdd.alt_ref;
+    conf_map[0].destination = &target->fs.rdf.rdd.alt_ref;
 
     conf_map[1].entry_name = LON_REF;
     conf_map[1].modifier = FORMAT_DOUBLE;
-    conf_map[1].destination = &target->rdd.lon_ref;
+    conf_map[1].destination = &target->fs.rdf.rdd.lon_ref;
 
     conf_map[2].entry_name = LAT_REF;
     conf_map[2].modifier = FORMAT_DOUBLE;
-    conf_map[2].destination = &target->rdd.lat_ref;
+    conf_map[2].destination = &target->fs.rdf.rdd.lat_ref;
 
     conf_map[3].entry_name = SPEED_REF;
     conf_map[3].modifier = FORMAT_DOUBLE;
-    conf_map[3].destination = &target->rdd.speed_ref;
+    conf_map[3].destination = &target->fs.rdf.rdd.speed_ref;
 
     conf_map[4].entry_name = ALT_DEV;
     conf_map[4].modifier = FORMAT_DOUBLE;
-    conf_map[4].destination = &target->rdd.alt_dev;
+    conf_map[4].destination = &target->fs.rdf.rdd.alt_dev;
 
     conf_map[5].entry_name = LON_DEV;
     conf_map[5].modifier = FORMAT_DOUBLE;
-    conf_map[5].destination = &target->rdd.lon_dev;
+    conf_map[5].destination = &target->fs.rdf.rdd.lon_dev;
 
     conf_map[6].entry_name = LAT_DEV;
     conf_map[6].modifier = FORMAT_DOUBLE;
-    conf_map[6].destination = &target->rdd.lat_dev;
+    conf_map[6].destination = &target->fs.rdf.rdd.lat_dev;
 
     conf_map[7].entry_name = SPEED_DEV;
     conf_map[7].modifier = FORMAT_DOUBLE;
-    conf_map[7].destination = &target->rdd.speed_dev;
+    conf_map[7].destination = &target->fs.rdf.rdd.speed_dev;
 
     int load_config_status = load_config(conf_map, filename, LOAD_REF_DEV_DATA_ENTRIES);
     return load_config_status;

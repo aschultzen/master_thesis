@@ -66,6 +66,33 @@ struct ref_dev_data {
 * are parsed by command parser.
 */
 
+struct disturbed_values{
+    int lat_disturbed;
+    int lon_disturbed;
+    int alt_disturbed;
+    int speed_disturbed;
+};
+
+struct ref_dev{
+    struct ref_dev_data rdd;
+    int moved;
+    int was_moved;
+    struct disturbed_values dv;
+};
+
+struct min_max{
+    int moved;
+    int was_moved;
+    int warmup;
+    struct disturbed_values dv;
+    time_t warmup_started; /** When warm-up of SENSOR started */
+};
+
+struct filters {
+    struct min_max mmf;
+    struct ref_dev rdf;
+};
+
 /*!@struct*/
 /*!@brief Contain information about every client that is connected.
 */
@@ -77,16 +104,16 @@ struct client_table_entry {
     struct nmea_container nmea;
     pid_t pid; /** The process ID */
     time_t timestamp; /** When last analyzed */
-    time_t warmup_started; /** When warm-up of SENSOR started */
     int client_id; /** Clients ID */
     int client_type; /** Client type, SENSOR or MONITOR */
-    int warmup; /** Currently warming up status */
-    int moved; /** Moved status */
+    //int warmup; /** Currently warming up status */
+    //int moved; /** Moved status */
     int ready;	/** Ready status */
-    int was_moved;	/** Moved when last checked. Used to check if returned */
+    //int was_moved;	/** Moved when last checked. Used to check if returned */
     int marked_for_kick; /** Marked for kicked at next opportunity */
     char ip[INET_ADDRSTRLEN]; /** Clients IP address */
-    struct ref_dev_data rdd;
+    struct filters fs;
+    //struct ref_dev_data rdd;
 };
 
 /* Server info shared with processes */
