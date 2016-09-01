@@ -266,7 +266,7 @@ int run_command(char *path, char *output)
 int log_to_file(char *path, char *content, int stamp_switch)
 {
     FILE *log_file;
-    log_file = fopen(path, "wb");
+    log_file = fopen(path, "a");
 
     /* Open file */
     if(!log_file) {

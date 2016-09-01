@@ -81,7 +81,7 @@ static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, cha
 /* Get chosen NMEA from GPS receiver */
 static void receive_nmea(int gps_serial, struct raw_nmea_container *nmea_c)
 {
-    char buffer[200];
+    char buffer[SENTENCE_LENGTH * 2];
     int position = 0;
     memset(buffer, '\0',sizeof(buffer));
 
@@ -142,7 +142,7 @@ static int format_nmea(struct raw_nmea_container *nmea_c)
     return total_length;
 }
 
-static int make_log(char *content, int id, char* log_name){
+static int make_log(struct raw_nmea_container *nmea_c, int id, char* log_name){
     /* Allocating memory for filename buffer */
     int filename_length = strlen(log_name) + 100;
     char filename[filename_length];
@@ -160,8 +160,16 @@ static int make_log(char *content, int id, char* log_name){
 
     /* Concating filename and ID */
     strcat(filename, id_string);
-
-    return log_to_file(filename, content, 1);
+    
+    char log_buffer[SENTENCE_LENGTH * 2];
+    memset(log_buffer, '\0', SENTENCE_LENGTH * 2);
+    strcat(log_buffer, nmea_c->raw_rmc);
+    log_buffer[strlen(log_buffer)-2] = '\0';
+    log_buffer[strlen(log_buffer)-1] = ',';
+  
+    strcat(log_buffer, nmea_c->raw_gga);
+    
+    return log_to_file(filename, log_buffer, 1);
 }
 
 /* Setting up the config structure specific for the server */
@@ -238,7 +246,7 @@ static int start_client(int portno, char* ip)
         int trans_length = format_nmea(&nmea_c);
          /* Writing to socket (server) */
         write(session_fd, nmea_c.output, trans_length);
-        make_log(nmea_c.output, cfg.client_id, cfg.log_name);
+        make_log(&nmea_c, cfg.client_id, cfg.log_name);
     }
     return 0;
 }
