@@ -4,7 +4,8 @@
 #define CONFIG_SERIAL_INTERFACE "serial_interface:"
 #define CONFIG_CLIENT_ID "client_id:"
 #define CONFIG_LOG_NAME "log_file_name:"
-#define CONFIG_ENTRIES 3
+#define CONFIG_LOG_NMEA "log_nmea:"
+#define CONFIG_ENTRIES 4
 #define CONFIG_FILE_PATH "client_config.ini"
 #define DEFAULT_SERIAL_INTERFACE "/dev/ttyACM0"
 
@@ -186,6 +187,10 @@ static void initialize_config(struct config_map_entry *conf_map, struct config *
     conf_map[2].entry_name = CONFIG_LOG_NAME;
     conf_map[2].modifier = FORMAT_STRING;
     conf_map[2].destination = &cfg->log_name;
+
+    conf_map[3].entry_name = CONFIG_LOG_NMEA;
+    conf_map[3].modifier = FORMAT_INT;
+    conf_map[3].destination = &cfg->log_nmea;
 }
 
 static int start_client(int portno, char* ip)
@@ -241,12 +246,18 @@ static int start_client(int portno, char* ip)
         exit(0);
     }
 
+    if(cfg.log_name){
+        t_print("NMEA data logging enabled\n");
+    }
+
     while (1) {
         receive_nmea(gps_serial, &nmea_c);
         int trans_length = format_nmea(&nmea_c);
          /* Writing to socket (server) */
         write(session_fd, nmea_c.output, trans_length);
-        make_log(&nmea_c, cfg.client_id, cfg.log_name);
+        if(cfg.log_name){
+            make_log(&nmea_c, cfg.client_id, cfg.log_name);
+        }
     }
     return 0;
 }

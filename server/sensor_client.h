@@ -13,6 +13,7 @@ struct config {
     char serial_interface[100];
     int client_id;
     char log_name[100];
+    int log_nmea;
 };
 
 /* Used by the client */
