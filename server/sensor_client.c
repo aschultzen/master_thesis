@@ -12,8 +12,8 @@ struct config_map_entry conf_map[1];
 
 static int identify(int session_fd, int id);
 static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno);
-static void receive_nmea(int gps_serial, struct nmea_container *nmea_c);
-static int format_nmea(struct nmea_container *nmea_c);
+static void receive_nmea(int gps_serial, struct raw_nmea_container *nmea_c);
+static int format_nmea(struct raw_nmea_container *nmea_c);
 static void initialize_config(struct config_map_entry *conf_map, struct config *cfg);
 static int start_client(int portno, char* ip);
 static int usage(char *argv[]);
@@ -79,7 +79,7 @@ static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, cha
 }
 
 /* Get chosen NMEA from GPS receiver */
-static void receive_nmea(int gps_serial, struct nmea_container *nmea_c)
+static void receive_nmea(int gps_serial, struct raw_nmea_container *nmea_c)
 {
     char buffer[200];
     int position = 0;
@@ -116,28 +116,25 @@ static void receive_nmea(int gps_serial, struct nmea_container *nmea_c)
 }
 
 /* Send received NMEA data to server */
-static int format_nmea(struct nmea_container *nmea_c)
+static int format_nmea(struct raw_nmea_container *nmea_c)
 {
-    /* The buffer size is dimensioned thinking that one sentence = 100B */
-    char buffer[200];
-    memset(buffer, '\0',sizeof(buffer));
     int nmea_prefix_length = 6;
-    memcpy(buffer, "NMEA \n", nmea_prefix_length);
+    memcpy(nmea_c->output, "NMEA \n", nmea_prefix_length);
     int total_length = 0;
     int newline_length = 1;
 
     /* RMC */
     int rmc_length = strlen(nmea_c->raw_rmc);
-    memcpy( buffer+nmea_prefix_length, nmea_c->raw_rmc, rmc_length );
-    //buffer[nmea_prefix_length + rmc_length + newline_length] = '\n';
+    memcpy( nmea_c->output+nmea_prefix_length, nmea_c->raw_rmc, rmc_length );
+    //nmea_c->output[nmea_prefix_length + rmc_length + newline_length] = '\n';
 
     /* Updating total length */
     total_length = rmc_length + nmea_prefix_length; //+ newline_length;
 
     /* GGA */
     int gga_length = strlen(nmea_c->raw_gga);
-    memcpy( buffer+total_length, nmea_c->raw_gga, gga_length );
-    buffer[total_length + gga_length + newline_length] = '\n';
+    memcpy( nmea_c->output+total_length, nmea_c->raw_gga, gga_length );
+    nmea_c->output[total_length + gga_length + newline_length] = '\n';
 
     /* Updating total length */
     total_length += gga_length + newline_length;
@@ -185,9 +182,6 @@ static void initialize_config(struct config_map_entry *conf_map, struct config *
 
 static int start_client(int portno, char* ip)
 {
-    char buffer[1024];
-    memset(buffer, '0',sizeof (buffer));
-
     struct termios tty;
     memset (&tty, 0, sizeof tty);
 
@@ -196,7 +190,7 @@ static int start_client(int portno, char* ip)
     int connection_attempts = 1;
     int con_status;
 
-    struct nmea_container nmea_c;
+    struct raw_nmea_container nmea_c;
     memset(&nmea_c, 0, sizeof(nmea_c));
 
     struct config cfg;
@@ -243,8 +237,8 @@ static int start_client(int portno, char* ip)
         receive_nmea(gps_serial, &nmea_c);
         int trans_length = format_nmea(&nmea_c);
          /* Writing to socket (server) */
-        write(session_fd, buffer, trans_length);
-        make_log(buffer, cfg.client_id, cfg.log_name);
+        write(session_fd, nmea_c.output, trans_length);
+        make_log(nmea_c.output, cfg.client_id, cfg.log_name);
     }
     return 0;
 }
