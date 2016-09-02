@@ -107,14 +107,10 @@ struct client_table_entry {
     int client_id; /** Clients ID */
     char client_id_string[ID_AS_STRING_MAX];
     int client_type; /** Client type, SENSOR or MONITOR */
-    //int warmup; /** Currently warming up status */
-    //int moved; /** Moved status */
     int ready;	/** Ready status */
-    //int was_moved;	/** Moved when last checked. Used to check if returned */
     int marked_for_kick; /** Marked for kicked at next opportunity */
     char ip[INET_ADDRSTRLEN]; /** Clients IP address */
     struct filters fs;
-    //struct ref_dev_data rdd;
 };
 
 /* Server info shared with processes */

@@ -441,7 +441,6 @@ int load_ref_def_data(struct client_table_entry* target)
     /* Request lock */
     sem_wait(&(s_synch->client_list_mutex));
     sem_wait(&(s_synch->ready_mutex));
-    
     struct config_map_entry conf_map[LOAD_REF_DEV_DATA_ENTRIES];
 
     int filename_length = strlen(REF_DEV_FILENAME) + 10;

@@ -33,12 +33,14 @@
 #define USAGE_USAGE "Usage: %s [ARGS]\n\n"
 
 /* CONFIG */
+#define CONFIG_FILE_PATH "config.ini"
 #define CONFIG_SERVER_MAX_CONNECTIONS "max_clients:"
 #define CONFIG_SERVER_WARM_UP "warm_up:"
 #define CONFIG_SERVER_HUMANLY_READABLE "humanly_readable_dumpdata:"
-#define CONFIG_FILE_PATH "config.ini"
 #define CONFIG_CSAC_PATH "csac_serial_interface:"
-#define CONFIG_ENTRIES 4
+#define CONFIG_LOGGING "logging:"
+#define CONFIG_LOG_PATH "log_path:"
+#define CONFIG_ENTRIES 6
 
 /* Server data and stats */
 struct server_data *s_data;
@@ -214,6 +216,14 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
     conf_map[3].entry_name = CONFIG_CSAC_PATH;
     conf_map[3].modifier = FORMAT_STRING;
     conf_map[3].destination = &s_conf->csac_path;
+
+    conf_map[4].entry_name = CONFIG_CSAC_PATH;
+    conf_map[4].modifier = FORMAT_INT;
+    conf_map[4].destination = &s_conf->logging;
+
+    conf_map[5].entry_name = CONFIG_CSAC_PATH;
+    conf_map[5].modifier = FORMAT_STRING;
+    conf_map[5].destination = &s_conf->log_path;
 }
 
 /*

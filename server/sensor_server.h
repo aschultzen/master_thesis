@@ -14,6 +14,7 @@
 #include "serial.h"
 #include "sensor_server_commons.h"
 
+#define PATH_LENGTH_MAX 1000
 
 /*!@struct*/
 /*!@brief Contains configuration values for the server
@@ -22,7 +23,9 @@ struct server_config {
     int max_clients;
     int warm_up_seconds;
     int human_readable_dumpdata;
-    char csac_path[100];
+    char csac_path[PATH_LENGTH_MAX];
+    int logging;
+    char log_path[PATH_LENGTH_MAX];
 };
 
 /*

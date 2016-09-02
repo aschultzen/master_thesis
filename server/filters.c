@@ -4,14 +4,13 @@
 #define ALARM_MMF_RETURNED "[ ALARM ] Client %d MIN_MAX returned!\n"
 #define ALARM_RDF "[ ALARM ] Client %d triggered REF_DEV!\n"
 #define ALARM_RDF_RETURNED "[ ALARM ] Client %d REF_DEV returned!\n"
-#define TEMP_LOG_FILE "server_log"
+
 #define LOG_FILE "server_log"
 #define LOG_STRING_LENGTH 100
 #define MJD_LENGTH 15
 
 
 static int log_alarm(int client_id, char *alarm){
-
     /* allocating memory for string */;
     char log_string[LOG_STRING_LENGTH];
     memset(log_string, '\0', LOG_STRING_LENGTH);
@@ -25,7 +24,7 @@ static int log_alarm(int client_id, char *alarm){
     snprintf(log_string, LOG_STRING_LENGTH, " %s", alarm_buffer);
 
     /* Logging */
-    return log_to_file(LOG_FILE, log_string, 1);
+    return log_to_file(s_conf->log_path, log_string, 1);
 } 
 
 
@@ -40,12 +39,16 @@ void raise_alarm(void)
             if(iterator->fs.mmf.moved == 1) {
                 iterator->fs.mmf.was_moved = 1;
                 iterator->fs.mmf.moved = 0;
-                log_alarm(iterator->client_id, ALARM_MMF);
+                if(s_conf->logging){
+                    log_alarm(iterator->client_id, ALARM_MMF);
+                }
                 t_print(ALARM_MMF, iterator->client_id);
             } else {
                 if(iterator->fs.mmf.was_moved) {
                     iterator->fs.mmf.was_moved = 0;
-                    log_alarm(iterator->client_id, ALARM_MMF_RETURNED);
+                    if(s_conf->logging){
+                        log_alarm(iterator->client_id, ALARM_MMF_RETURNED);
+                    }
                     t_print(ALARM_MMF_RETURNED, iterator->client_id);
                 }
             }
@@ -54,13 +57,17 @@ void raise_alarm(void)
             if(iterator->fs.rdf.moved == 1) {
                 iterator->fs.rdf.was_moved = 1;
                 iterator->fs.rdf.moved = 0;
-                log_alarm(iterator->client_id, ALARM_RDF);
+                if(s_conf->logging){
+                    log_alarm(iterator->client_id, ALARM_RDF);
+                }
                 t_print(ALARM_RDF, iterator->client_id);
 
             } else {
                 if(iterator->fs.rdf.was_moved) {
                     iterator->fs.rdf.was_moved = 0;
-                    log_alarm(iterator->client_id, ALARM_RDF_RETURNED);
+                    if(s_conf->logging){
+                        log_alarm(iterator->client_id, ALARM_RDF_RETURNED);
+                    }
                     t_print(ALARM_RDF_RETURNED, iterator->client_id);
                 }
             }
