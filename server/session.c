@@ -110,9 +110,9 @@ static void verify_warm_up(struct client_table_entry *cte)
         double elapsed = difftime(time(NULL), cte->fs.mmf.warmup_started);
         double percent = (elapsed / s_conf->warm_up_seconds) * 100;
 
-        if((int)percent % 10 == 0) {
+        /*if((int)percent % 10 == 0) {
             t_print("Client %d Warming up, %d%%\n", cte->client_id, (int)percent);
-        }
+        }*/
 
         if(elapsed >= s_conf->warm_up_seconds) {
             t_print("Client %d, warm-up finished!\n", cte->client_id);

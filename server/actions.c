@@ -438,6 +438,10 @@ int query_csac(struct client_table_entry *monitor, char *query)
 */
 int load_ref_def_data(struct client_table_entry* target)
 {
+    /* Request lock */
+    sem_wait(&(s_synch->client_list_mutex));
+    sem_wait(&(s_synch->ready_mutex));
+    
     struct config_map_entry conf_map[LOAD_REF_DEV_DATA_ENTRIES];
 
     int filename_length = strlen(REF_DEV_FILENAME) + 10;
@@ -486,5 +490,9 @@ int load_ref_def_data(struct client_table_entry* target)
     t_print("Loading filter data from: %s\n", filename);
 
     int load_config_status = load_config(conf_map, filename, LOAD_REF_DEV_DATA_ENTRIES);
+
+    /* releasing lock */
+    sem_post(&(s_synch->ready_mutex));
+    sem_post(&(s_synch->client_list_mutex));
     return load_config_status;
 }

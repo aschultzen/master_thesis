@@ -178,7 +178,7 @@ static void handle_sigchld(int signum)
 
         if(pid > 0) {
             remove_client_by_pid(pid);
-            t_print(PROCESS_REAPED, pid, status, signum);
+            //t_print(PROCESS_REAPED, pid, status, signum);
         }
     }
 }
