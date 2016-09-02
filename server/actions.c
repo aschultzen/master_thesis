@@ -445,7 +445,7 @@ int load_ref_def_data(struct client_table_entry* target)
     memset(filename,'\0' ,filename_length);
     strcpy(filename, REF_DEV_FILENAME);
 
-    /* Way overkill for itn to string, but still. */
+    /* Way overkill for int to string, but still. */
     char id[10];
     memset(id,'\0' ,10);
     sprintf(id, "%d", target->client_id);
@@ -482,6 +482,8 @@ int load_ref_def_data(struct client_table_entry* target)
     conf_map[7].entry_name = SPEED_DEV;
     conf_map[7].modifier = FORMAT_DOUBLE;
     conf_map[7].destination = &target->fs.rdf.rdd.speed_dev;
+
+    t_print("Loading filter data from: %s\n", filename);
 
     int load_config_status = load_config(conf_map, filename, LOAD_REF_DEV_DATA_ENTRIES);
     return load_config_status;

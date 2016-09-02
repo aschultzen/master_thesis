@@ -1,8 +1,8 @@
-alt_ref: 1.0
-lon_ref: 2.0
-lat_ref: 3.0
-speed_ref: 4.0
-alt_dev: 5.0
-lon_dev: 6.0
-lat_dev: 7.0
-speed_dev: 8.0
+alt_ref: 122.427
+lon_ref: 1102.1934
+lat_ref: 5958.5231
+speed_ref: 0
+alt_dev: 10
+lon_dev: 0.005
+lat_dev: 0.005
+speed_dev: 10

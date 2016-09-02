@@ -452,11 +452,16 @@ static int respond(struct client_table_entry *cte)
             s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
             cte->client_id = cte->cm.id_parameter;
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
-            if(load_ref_def_data(cte)) {
-                s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
-            } else {
-                s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED, sizeof(ERROR_LRFD_LOAD_FAILED));
+
+            if(cte->client_type == SENSOR){
+                if(load_ref_def_data(cte)) {
+                    s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
+                    t_print("Loaded filter data for client %d\n", cte->client_id);
+                } else {
+                    s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED, sizeof(ERROR_LRFD_LOAD_FAILED));
+                }
             }
+
             return 1;
         }
 

@@ -18,7 +18,7 @@
 #define ERROR_NO_CLIENT "ERROR: No such client\n"
 #define ERROR_NO_FILENAME "ERROR: No FILENAME specified\n"
 #define MAX_FILENAME_SIZE 30
-#define ID_AS_STRING_MAX 4
+#define ID_AS_STRING_MAX 10
 
 /* Errors */
 #define ERROR_CODE_NO_FILE -1
@@ -105,6 +105,7 @@ struct client_table_entry {
     pid_t pid; /** The process ID */
     time_t timestamp; /** When last analyzed */
     int client_id; /** Clients ID */
+    char client_id_string[ID_AS_STRING_MAX];
     int client_type; /** Client type, SENSOR or MONITOR */
     //int warmup; /** Currently warming up status */
     //int moved; /** Moved status */
