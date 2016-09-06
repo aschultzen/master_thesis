@@ -1,5 +1,6 @@
 SERVER_OBJS = sensor_server.o net.o utils.o serial.o session.o filters.o actions.o
 CLIENT_OBJS = sensor_client.o net.o utils.o gps_serial.o
+CSAC_FILTER = csac_filter.o utils.o
 
 CC = gcc
 DEBUG = -g
@@ -20,11 +21,17 @@ server : $(SERVER_OBJS)
 client : $(CLIENT_OBJS)
 	$(CC) $(LFLAGS) $(CLIENT_OBJS) -o client
 
+cfilter : $(CSAC_FILTER)
+	$(CC) $(LFLAGS) $(CSAC_FILTER) -o cfilter
+
 sensor_server.o : sensor_server.h net.h sensor_server.c
 	$(CC) $(CFLAGS) sensor_server.c 
 
 sensor_client.o : sensor_client.h sensor_client.c
 	$(CC) $(CFLAGS) sensor_client.c
+
+csac_filter.o : csac_filter.c utils.h
+	$(CC) $(CFLAGS) csac_filter.c 
 
 net.o : net.h utils.h net.c 
 	$(CC) $(CFLAGS) net.c
