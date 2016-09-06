@@ -87,6 +87,8 @@ int load_telemetry(struct csac_filter_data *cfd)
 		return 0;
 	}
 
+	printf("%lf\n", cfd->t_current);
+
 	return 1;
 }
 
