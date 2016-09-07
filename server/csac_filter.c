@@ -35,13 +35,27 @@ struct csac_filter_data {
 	double steer_smooth_previous;
 
 	/* Prediction */
-	double t_smooth_mjd;
-	double steer_smooth_mjd;
+	double t_smooth_today;
+	double steer_smooth_today;
 
 	/* Prediction previous */
-	double t_smooth_previousmjd;
-	double steer_smooth_previousmjd; 
+	double t_smooth_yesterday;
+	double steer_smooth_yesterday;
+
+	/* New day, 1 if yes, 0 if no */
+	int new_day;  
 };
+
+int new_day(double new_mjd, double old_mjd)
+{
+	int n_mjd = (int)new_mjd;
+	int o_mjd = (int)old_mjd;
+	
+	if(n_mjd > o_mjd){
+		return 1;
+	}
+	return 0;
+}
 
 int get_csac_line(char *buffer, FILE *log, int buffer_size)
 {
@@ -54,7 +68,7 @@ int get_csac_line(char *buffer, FILE *log, int buffer_size)
 
 int load_telemetry(struct csac_filter_data *cfd)
 {
-	/* NOTE! query_csac in complete implementation */
+	/* NOTE! query_csa0c in complete implementation */
 	const int BUFFER_LEN = 100;
 	char line[200];
 	char buffer[BUFFER_LEN];
@@ -78,21 +92,45 @@ int load_telemetry(struct csac_filter_data *cfd)
 		}
 	}
 
+	/* Use in finished implementation */
+	/*
+	double mjd_today = 0;
 	memset(buffer, '\0', BUFFER_LEN);
 	if(!get_today_mjd(buffer)){
 		printf("Failed to calculate current MJD\n");
 		return 0;
+	} else {
+		if(sscanf(buffer, "%lf", &mjd_today) == EOF){
+			return 0;
+		} else {
+			if(new_day(mjd_today, cfd->t_current)){
+				cfd->new_day = 1;
+			}
+			cfd->t_current = mjd_today;
+		}
 	}
-	if(sscanf(buffer, "%lf", &cfd->t_current) == EOF){
+	*/
+
+	/* Only used during testing */
+	double mjd_today = 0;
+	if(!substring_extractor(0,1,',',buffer,100,line,strlen(line))){
+		printf("Failed to extract substring from CSAC data\n");
 		return 0;
+	} else {
+		if(sscanf(buffer, "%lf", &mjd_today) == EOF){
+			return 0;
+		} else {
+			if(new_day(mjd_today, cfd->t_current)){
+				cfd->new_day = 1;
+			}
+			cfd->t_current = mjd_today;
+		}
 	}
-
-	printf("%lf\n", cfd->t_current);
-
 	return 1;
 }
 
-int calc_smooth(struct csac_filter_data *cfd){
+int calc_smooth(struct csac_filter_data *cfd)
+{
 	/* Setting previous values */
 	cfd->t_smooth_previous = cfd->t_smooth_current;
 	cfd->steer_smooth_previous = cfd->steer_smooth_current;
@@ -106,11 +144,20 @@ int calc_smooth(struct csac_filter_data *cfd){
 }
 
 /* Making sure there are no 0 values about */
-int init_values(struct csac_filter_data *cfd){
+int init_values(struct csac_filter_data *cfd)
+{
 	int status = load_telemetry(cfd);
 	cfd->t_smooth_current = cfd->t_current;
 	cfd->steer_smooth_current = cfd->steer_current;
 	return status;
+}
+
+void init_prediction(struct csac_filter_data *cfd)
+{
+	cfd->steer_smooth_today = cfd->steer_smooth_today; 
+	cfd->steer_smooth_previous = cfd->steer_smooth_today;
+	cfd->t_smooth_today = cfd->t_smooth_current;
+	cfd->t_smooth_yesterday = cfd->t_smooth_current -1;
 }
 
 /* 
@@ -143,6 +190,7 @@ int main (int argc, char *argv[])
         printf("Failed to load %s\n", argv[1]);
         return 0;
     }
+    rewind(csac_log);
 
 	struct csac_filter_data *cfd = calloc(1, sizeof(struct csac_filter_data));
 	
@@ -150,9 +198,16 @@ int main (int argc, char *argv[])
 	init_values(cfd);
 
 	/* While load_telemetry? */
-	load_telemetry(cfd);
-
-
+	while( load_telemetry(cfd) ){
+		/* New day!! */
+		if(cfd->new_day == 1){
+			cfd->new_day = 0;
+			/* First time */
+			if(!cfd->steer_smooth_today){
+				init_prediction(cfd);
+			}
+		}
+	}
 
 	/* ======================================== */
 	free(cfd);
