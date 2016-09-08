@@ -30,7 +30,7 @@ sensor_server.o : sensor_server.h net.h sensor_server.c
 sensor_client.o : sensor_client.h sensor_client.c
 	$(CC) $(CFLAGS) sensor_client.c
 
-csac_filter.o : csac_filter.c utils.h
+csac_filter.o : csac_filter.c utils.h csac_filter.h
 	$(CC) $(CFLAGS) csac_filter.c 
 
 net.o : net.h utils.h net.c 
