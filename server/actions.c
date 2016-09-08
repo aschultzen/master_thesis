@@ -412,7 +412,12 @@ int query_csac(struct client_table_entry *monitor, char *query)
     memset(buffer,'\0' ,buf_size);
 
     /* Quering CSAC */
+    
     int serial_query_r = serial_query(s_data->csac_fd, query,buffer, buf_size);
+    
+    while(serial_query_r == 3){    
+        serial_query_r = serial_query(s_data->csac_fd, "",buffer, buf_size);
+    }
 
     /* Checking return value */
     if(!serial_query_r) {
@@ -427,7 +432,8 @@ int query_csac(struct client_table_entry *monitor, char *query)
     * buffer+2 to avoid printing uncesseray CSAC specific output
     */
 
-    s_write(&(monitor->transmission), buffer+2, str_len_u(buffer, buf_size));
+    //s_write(&(monitor->transmission), buffer+2, str_len_u(buffer, buf_size));
+    s_write(&(monitor->transmission), buffer, strlen(buffer));
     return 0;
 }
 

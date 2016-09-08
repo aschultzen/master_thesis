@@ -133,23 +133,30 @@ int serial_query(int file_descriptor, char *query, char *buffer, int buf_len)
         t_print("Serial write failed\n");
         return -1;
     }
-
-    int write_status2 = write(file_descriptor, "\n\r", 2);
+    
+    memset(buffer, '\0', buf_len);
+    
+    /*int write_status2 = write(file_descriptor, "\xd\xa", 2);
     if( write_status2 < 0) {
         t_print("Serial write failed\n");
         return -1;
-    }
+    }*/
 
-    usleep(100000);
+    // Note! There has to be a sleep.
+   usleep(30000);
 
     int counter = 0;
 
-    while(counter <= buf_len) {
+    while(counter < buf_len) {
         char temp[1];
         read(file_descriptor, temp, 1);
+        //printf("%#x ", temp[0]);
         if(temp[0] != 0x58 && temp[0] != 0x38) {
             buffer[counter] = temp[0];
             counter++;
+            if(temp[0] == 0xa){
+                return counter;
+            }
         }
     }
     return counter;
