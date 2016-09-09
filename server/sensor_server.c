@@ -305,9 +305,26 @@ static void start_server(int port_number)
 
     f_pid = fork();
     if(f_pid == 0){
-        /* Getting a file descriptor to the csac */
-        int csac_fd = open_serial(s_conf->csac_path, CSAC);
-        char buffer[200];
+        /* Allocating buffer for run_program() */
+        char program_buf[200];
+        memset(program_buf, '\0', 200);  
+        
+        int filter_initialized = 0;
+        /* Running prgram requesting telemetry from CSAC */
+        while(run_command("python get_telemetry.py", program_buf) > 1){
+             if(!filter_initialized){
+                int stats = init_csac_filter(cfd, program_buf);
+                //printf("Init status: %d\n", stats);
+                filter_initialized = 1;
+             } else{
+                int status = update_csac_filter(cfd, program_buf);
+                printf("Update status: %d\n", status);
+             }
+            usleep(10000);
+            memset(program_buf, '\0', 200);  
+        }
+        
+        /* Updating filter */
         exit(0);
     } 
 

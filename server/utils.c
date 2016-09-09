@@ -260,7 +260,7 @@ int run_command(char *path, char *output)
 
     /* close */
     pclose(fp);
-    return 1;
+    return strlen(output);
 }
 
 int log_to_file(char *path, char *content, int stamp_switch)

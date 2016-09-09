@@ -25,7 +25,7 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
     const int BUFFER_LEN = 100;
     char buffer[BUFFER_LEN];
 
-    if(!substring_extractor(13,14,',',buffer,100,telemetry,strlen(telemetry))) {
+    if(!substring_extractor(12,13,',',buffer,100,telemetry,strlen(telemetry))) {
         printf("Failed to extract substring from CSAC data\n");
         return 0;
     } else {
@@ -34,7 +34,7 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
         }
     }
 
-    if(!substring_extractor(11,12,',',buffer,100,telemetry,strlen(telemetry))) {
+    if(!substring_extractor(10,11,',',buffer,100,telemetry,strlen(telemetry))) {
         printf("Failed to extract substring from CSAC data\n");
         return 0;
     } else {
@@ -44,7 +44,7 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
     }
 
     /* Use in finished implementation */
-    /*
+    
     double mjd_today = 0;
     memset(buffer, '\0', BUFFER_LEN);
     if(!get_today_mjd(buffer)){
@@ -58,7 +58,6 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
                 cfd->new_day = 1;
                 cfd->today_mjd = mjd_today;
                 cfd->days_passed++;
-                printf("MJD diff %lf %lf\n", cfd->t_current, mjd_today);
             }
             // Initializing today_mjd, only done once at startup
             if(cfd->today_mjd == 0){
@@ -68,9 +67,10 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
             // Updating running MJD
             cfd->t_current = mjd_today;
         }
-    }*/
+    }
 
     /* Only used during testing */
+    /*
     double mjd_today = 0;
     if(!substring_extractor(0,1,',',buffer,100,telemetry,strlen(telemetry))) {
         printf("Failed to extract substring from CSAC data\n");
@@ -84,15 +84,15 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
                 cfd->today_mjd = mjd_today;
                 cfd->days_passed++;
             }
-            /* Initializing today_mjd, only done once at startup */
+            // Initializing today_mjd, only done once at startup 
             if(cfd->today_mjd == 0){
             	cfd->today_mjd = mjd_today; 
             	cfd->days_passed = 0;
             }
-            /* Updating running MJD */
+            // Updating running MJD 
             cfd->t_current = mjd_today;
         }
-    }
+    }*/
 	return 1;
 }
 

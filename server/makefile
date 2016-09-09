@@ -1,4 +1,4 @@
-SERVER_OBJS = sensor_server.o net.o utils.o serial.o session.o filters.o actions.o
+SERVER_OBJS = sensor_server.o net.o utils.o serial.o session.o filters.o actions.o csac_filter.o
 CLIENT_OBJS = sensor_client.o net.o utils.o gps_serial.o
 CSAC_FILTER = csac_filter.o utils.o
 
