@@ -1,39 +1,9 @@
 #include "csac_filter.h"
 
-struct csac_filter_data {
-    /* Phase */
-    double phase_current;
-
-    /* Current */
-    double t_current;
-    double steer_current;
-    double steer_prediction;
-
-    /* Current smooth */
-    double t_smooth_current;
-    double steer_smooth_current;
-
-    /* Previous */
-    double t_smooth_previous;
-    double steer_smooth_previous;
-
- 
-    double t_smooth_today;
-    double steer_smooth_today;
-
-
-    double t_smooth_yesterday;
-    double steer_smooth_yesterday;
-
-    /* Changes once a day */
-    double today_mjd;
-
-    /* Days passed since startup */
-    int days_passed;
-
-    /* New day, 1 if yes, 0 if no */
-    int new_day;
-};
+const int PHASE_LIMIT = 50 ;	/* Load from config file in final impl */
+const int STEER_LIMIT = 50; 	/* Load from config file in final impl */
+const double W = 10000;		/* Sample rate */
+const int warmup_days = 2;
 
 static float mjd_diff_day(double mjd_a, double mjd_b){
 	float diff = mjd_a - mjd_b;
@@ -116,7 +86,7 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
             }
             /* Initializing today_mjd, only done once at startup */
             if(cfd->today_mjd == 0){
-            	cfd->today_mjd = mjd_today;
+            	cfd->today_mjd = mjd_today; 
             	cfd->days_passed = 0;
             }
             /* Updating running MJD */
@@ -161,9 +131,8 @@ static void update_prediction(struct csac_filter_data *cfd)
 	/* Updating steer_smooth */
 	cfd->steer_smooth_yesterday = cfd->steer_smooth_today;
 	cfd->steer_smooth_today = cfd->steer_smooth_current;
-
-	//printf("tsy: %lf, tst: %lf, ssy: %lf, sst: %lf ssc %lf\n", cfd->t_smooth_yesterday, cfd->t_smooth_today, cfd->steer_smooth_yesterday, cfd->steer_smooth_today, cfd->steer_smooth_current);
 }
+
 double get_steer_predict(struct csac_filter_data *cfd)
 {
 	if(cfd->days_passed >= warmup_days){
@@ -212,9 +181,10 @@ int update_csac_filter(struct csac_filter_data *cfd, char *telemetry)
 }
 
 /* Good ol' main */
+/*
 int main (int argc, char *argv[])
 {
-    /* getopt silent mode set */
+    // getopt silent mode set
     opterr = 0;
 
     if(argc < 2) {
@@ -227,7 +197,7 @@ int main (int argc, char *argv[])
     }
 
     FILE *csac_log;
-    /* Opening CSAC log */
+    // Opening CSAC log
     csac_log = fopen(argv[1], "r");
     if (csac_log == NULL) {
         printf("Failed to load %s\n", argv[1]);
@@ -238,11 +208,11 @@ int main (int argc, char *argv[])
     char buffer[200];
     struct csac_filter_data *cfd = calloc(1, sizeof(struct csac_filter_data));
 
-    /* init filter */
+    // init filter
     get_csac_line(buffer, csac_log, 200);
     init_csac_filter(cfd, buffer);
 
-    /* Update */
+    // Update
     while(get_csac_line(buffer,csac_log, 200)){
     	update_csac_filter(cfd, buffer);
     	printf("Steer prediction %lf\n",get_steer_predict(cfd));
@@ -252,3 +222,4 @@ int main (int argc, char *argv[])
     fclose(csac_log);
     exit(0);
 }
+*/

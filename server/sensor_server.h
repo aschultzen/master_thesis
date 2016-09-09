@@ -13,6 +13,7 @@
 #include "session.h"
 #include "serial.h"
 #include "sensor_server_commons.h"
+#include "csac_filter.h"
 
 #define PATH_LENGTH_MAX 1000
 

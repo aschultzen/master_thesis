@@ -57,6 +57,9 @@ struct client_table_entry *client_list;
 /* Pointer to shared memory containing config */
 struct server_config *s_conf;
 
+/* Pointer to shared CSAC_filter data */
+struct csac_filter_data *cfd;
+
 static void remove_client_by_pid(pid_t pid);
 void remove_client_by_id(int id);
 static struct client_table_entry* create_client(struct client_table_entry* ptr);
@@ -217,11 +220,11 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
     conf_map[3].modifier = FORMAT_STRING;
     conf_map[3].destination = &s_conf->csac_path;
 
-    conf_map[4].entry_name = CONFIG_CSAC_PATH;
+    conf_map[4].entry_name = CONFIG_LOGGING;
     conf_map[4].modifier = FORMAT_INT;
     conf_map[4].destination = &s_conf->logging;
 
-    conf_map[5].entry_name = CONFIG_CSAC_PATH;
+    conf_map[5].entry_name = CONFIG_LOG_PATH;
     conf_map[5].modifier = FORMAT_STRING;
     conf_map[5].destination = &s_conf->log_path;
 }
@@ -266,17 +269,14 @@ static void start_server(int port_number)
     sem_init(&(s_synch->ready_mutex), 1, 1);
     sem_init(&(s_synch->client_list_mutex), 1, 1);
 
+    /* Init pointer to shared CSAC_filter data */
+    cfd = mmap(NULL, sizeof(struct csac_filter_data), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
     if( &(s_synch->ready_mutex) == SEM_FAILED || &(s_synch->client_list_mutex) == SEM_FAILED) {
         t_print(ERROR_SEMAPHORE_CREATION_FAILED);
         sem_close(&(s_synch->ready_mutex));
         sem_close(&(s_synch->client_list_mutex));
         exit(1);
-    }
-
-    /* Initialize socket */
-    server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_sockfd < 0) {
-        die(62,ERROR_SOCKET_OPEN_FAILED);
     }
 
     /* Registering the SIGINT handler */
@@ -299,6 +299,22 @@ static void start_server(int port_number)
     if (sigaction(SIGCHLD, &child_action, 0) == -1) {
         perror(0);
         exit(1);
+    }
+
+    pid_t f_pid;
+
+    f_pid = fork();
+    if(f_pid == 0){
+        /* Getting a file descriptor to the csac */
+        int csac_fd = open_serial(s_conf->csac_path, CSAC);
+        char buffer[200];
+        exit(0);
+    } 
+
+    /* Initialize socket */
+    server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_sockfd < 0) {
+        die(62,ERROR_SOCKET_OPEN_FAILED);
     }
 
     /*
