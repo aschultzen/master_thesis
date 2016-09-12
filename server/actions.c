@@ -62,6 +62,8 @@
 "--------------------------------------------------------------------------------\n"\
 " LOADRFDATA   | LRFD  | ID        | Loads REF_DEV_FILTER data into clint<ID>\n"\
 "--------------------------------------------------------------------------------\n"\
+" PRINTCFD     | PFD   |           | Prints CSAC filter data\n"\
+"--------------------------------------------------------------------------------\n"\
 
 /* SIZES */
 #define DUMPDATA_TIME_SIZE 13
@@ -254,6 +256,45 @@ void print_avg_diff(struct client_table_entry *client)
     } else {
         s_write(&(client->transmission), ERROR_NO_SENSORS_CONNECTED, sizeof(ERROR_NO_SENSORS_CONNECTED));
     }
+}
+
+int print_cfd(struct client_table_entry *monitor)
+{
+    char buffer [1000];
+    int snprintf_status = 0;
+
+    snprintf_status = snprintf( buffer, 1000,
+                                "Phase %lf\n\n" \
+                                "T current %lf\n" \
+                                "T current (smooth) %lf\n" \
+                                "T previous (smooth) %lf\n" \
+                                "T today (smooth) %lf\n" \
+                                "T yesterday (smooth) %lf\n\n" \
+                                "Steer current %lf\n" \
+                                "Steer current (smooth) %lf\n" \
+                                "Steer previous (smooth) %lf\n" \
+                                "Steer today (smooth) %lf\n" \
+                                "Steer yesterday (smooth) %lf\n" \
+                                "Steer prediction %lf\n\n" \
+                                "MJD today %lf\n" \
+                                "Days passed since startup %d\n", 
+                                cfd->phase_current,
+                                cfd->t_current,
+                                cfd->t_smooth_current,
+                                cfd->t_smooth_previous,
+                                cfd->t_smooth_today,
+                                cfd->t_smooth_yesterday,
+                                cfd->steer_current,
+                                cfd->steer_smooth_current,
+                                cfd->steer_smooth_previous,
+                                cfd->steer_smooth_today,
+                                cfd->steer_smooth_yesterday,
+                                cfd->steer_prediction,
+                                cfd->today_mjd,
+                                cfd->days_passed);
+
+    s_write(&(monitor->transmission), buffer, strlen(buffer));
+    return snprintf_status;
 }
 
 

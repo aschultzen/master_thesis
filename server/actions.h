@@ -151,4 +151,11 @@ int query_csac(struct client_table_entry *monitor, char *query);
 * @param target Client to load the data into
 */
 int load_ref_def_data(struct client_table_entry* target);
+
+/** @brief Prints the current state of the CSAC filter.
+*
+* @param monitor Monitor to print the data to.
+* @return Status of sprintf() used to build string.
+*/
+int print_cfd(struct client_table_entry *monitor);
 #endif /* !ACTIONS_H */

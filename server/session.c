@@ -20,7 +20,6 @@ static void extract_nmea_data(struct client_table_entry *cte);
 static void calculate_nmea_average(struct client_table_entry *cte);
 static void calculate_nmea_diff(struct client_table_entry *cte);
 static void verify_warm_up(struct client_table_entry *cte);
-static void verify_warm_up(struct client_table_entry *cte);
 static void warm_up(struct client_table_entry *cte);
 static int set_timeout(struct client_table_entry *target, struct timeval h_timeout);
 static int parse_input(struct client_table_entry *cte);
@@ -108,9 +107,9 @@ static void verify_warm_up(struct client_table_entry *cte)
 {
     if(cte->fs.mmf.warmup_started) {
         double elapsed = difftime(time(NULL), cte->fs.mmf.warmup_started);
-        double percent = (elapsed / s_conf->warm_up_seconds) * 100;
+        /*double percent = (elapsed / s_conf->warm_up_seconds) * 100;
 
-        /*if((int)percent % 10 == 0) {
+        if((int)percent % 10 == 0) {
             t_print("Client %d Warming up, %d%%\n", cte->client_id, (int)percent);
         }*/
 
@@ -354,18 +353,33 @@ static int parse_input(struct client_table_entry *cte)
         cte->cm.code = CODE_QUERYCSAC;
     }
 
-    /* PRINT_LOCATION */
+    /* PRINT_LOADRFDATA */
+    else if(strstr((char*)incoming, PROTOCOL_LOADRFDATA ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_LOADRFDATA) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADRFDATA)*(sizeof(char))), length);
+        cte->cm.code = CODE_LOADRFDATA;
+    }
+
+    /* PRINT_LOADRFDATA_SHORT */
     else if(strstr((char*)incoming, PROTOCOL_LOADRFDATA_SHORT ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_LOADRFDATA_SHORT) );
         memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADRFDATA_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_LOADRFDATA;
     }
 
-    /* PRINT_LOCATION_SHORT */
-    else if(strstr((char*)incoming, PROTOCOL_LOADRFDATA_SHORT ) == (incoming)) {
-        int length = (strlen(incoming) - strlen(PROTOCOL_LOADRFDATA_SHORT) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADRFDATA_SHORT)*(sizeof(char))), length);
-        cte->cm.code = CODE_LOADRFDATA;
+    /* PROTOCOL_PRINTCFD */
+    else if(strstr((char*)incoming, PROTOCOL_PRINTCFD ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_PRINTCFD) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINTCFD)*(sizeof(char))), length);
+        cte->cm.code = CODE_PRINTCFD;
+        printf("PRINTCFD\n");
+    }
+
+    /* PROTOCOL_PRINTCFD_SHORT */
+    else if(strstr((char*)incoming, PROTOCOL_PRINTCFD_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_PRINTCFD_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINTCFD_SHORT)*(sizeof(char))), length);
+        cte->cm.code = CODE_PRINTCFD;
     }
 
     else {
@@ -678,6 +692,9 @@ static int respond(struct client_table_entry *cte)
                 return 1;
             }
             query_csac(cte, cte->cm.parameter);
+        }
+        else if(cte->cm.code == CODE_PRINTCFD) {
+            print_cfd(cte);
         }
 
         else {

@@ -40,6 +40,7 @@ extern struct client_table_entry *client_list;
 extern struct server_data *s_data;
 extern struct server_synchro *s_synch;
 extern struct server_config *s_conf;
+extern struct csac_filter_data *cfd;
 
 /** @brief Removes a client whose ID matches parameter
  *
