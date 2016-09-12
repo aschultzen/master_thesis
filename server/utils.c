@@ -115,6 +115,7 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
 
     int counter = 0;
     while(counter < entries) {
+	memset(temp_buffer, '\0',file_size);
         char *search_ptr = strstr(input_buffer,cme->entry_name);
         if(search_ptr != NULL) {
             int length = strlen(search_ptr) - strlen(cme->entry_name);
