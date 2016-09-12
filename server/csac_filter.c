@@ -2,8 +2,9 @@
 
 const int PHASE_LIMIT = 50 ;	/* Load from config file in final impl */
 const int STEER_LIMIT = 50; 	/* Load from config file in final impl */
-const double W = 10000;		/* Sample rate */
+const double W = 10000;			/* Sample rate */
 const int warmup_days = 2;
+
 
 static float mjd_diff_day(double mjd_a, double mjd_b){
 	float diff = mjd_a - mjd_b;
@@ -43,8 +44,6 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
         }
     }
 
-    /* Use in finished implementation */
-    
     double mjd_today = 0;
     memset(buffer, '\0', BUFFER_LEN);
     if(!get_today_mjd(buffer)){
@@ -68,31 +67,6 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
             cfd->t_current = mjd_today;
         }
     }
-
-    /* Only used during testing */
-    /*
-    double mjd_today = 0;
-    if(!substring_extractor(0,1,',',buffer,100,telemetry,strlen(telemetry))) {
-        printf("Failed to extract substring from CSAC data\n");
-        return 0;
-    } else {
-        if(sscanf(buffer, "%lf", &mjd_today) == EOF) {
-            return 0;
-        } else {
-            if(mjd_diff_day(mjd_today, cfd->today_mjd) >= 1 && cfd->t_current != 0) {
-                cfd->new_day = 1;
-                cfd->today_mjd = mjd_today;
-                cfd->days_passed++;
-            }
-            // Initializing today_mjd, only done once at startup 
-            if(cfd->today_mjd == 0){
-            	cfd->today_mjd = mjd_today; 
-            	cfd->days_passed = 0;
-            }
-            // Updating running MJD 
-            cfd->t_current = mjd_today;
-        }
-    }*/
 	return 1;
 }
 
@@ -181,46 +155,29 @@ int update_csac_filter(struct csac_filter_data *cfd, char *telemetry)
     return 1;
 }
 
-/* Good ol' main */
-/*
-int main (int argc, char *argv[])
+int start_csac_filter(struct csac_filter_data *cfd)
 {
-    // getopt silent mode set
-    opterr = 0;
-
-    if(argc < 2) {
-        printf("Too few parameters.\n");
-        return 0;
-    } else if(argc > 2) {
-        printf("Too many parameters, ignoring the rest.\n");
-    } else {
-        printf("Starting up!\n");
+    /* Allocating buffer for run_program() */
+    char program_buf[200];
+    memset(program_buf, '\0', 200);  
+            
+    int filter_initialized = 0;
+    /* Running prgram requesting telemetry from CSAC */
+    /* Rework this part, the whole shablang fucks up if the python script fails
+    to return data */
+    while( run_command("python get_telemetry.py", program_buf) > 1 && (!done)){
+        if(!filter_initialized){
+            init_csac_filter(cfd, program_buf);
+            filter_initialized = 1;
+        } else {
+            update_csac_filter(cfd, program_buf);
+        }
+    	//usleep(10000);
+    	if(s_conf->csac_logging){
+    		log_to_file(s_conf->csac_log_path, program_buf, 1);
+    	}
+    	sleep(1);
+        memset(program_buf, '\0', 200);  
     }
-
-    FILE *csac_log;
-    // Opening CSAC log
-    csac_log = fopen(argv[1], "r");
-    if (csac_log == NULL) {
-        printf("Failed to load %s\n", argv[1]);
-        return 0;
-    }
-    rewind(csac_log);
-
-    char buffer[200];
-    struct csac_filter_data *cfd = calloc(1, sizeof(struct csac_filter_data));
-
-    // init filter
-    get_csac_line(buffer, csac_log, 200);
-    init_csac_filter(cfd, buffer);
-
-    // Update
-    while(get_csac_line(buffer,csac_log, 200)){
-    	update_csac_filter(cfd, buffer);
-    	printf("Steer prediction %lf\n",get_steer_predict(cfd));
-    }
-
-    free(cfd);
-    fclose(csac_log);
-    exit(0);
+    return 0;	
 }
-*/

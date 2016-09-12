@@ -264,20 +264,20 @@ int print_cfd(struct client_table_entry *monitor)
     int snprintf_status = 0;
 
     snprintf_status = snprintf( buffer, 1000,
-                                "Phase %lf\n\n" \
-                                "T current %lf\n" \
-                                "T current (smooth) %lf\n" \
-                                "T previous (smooth) %lf\n" \
-                                "T today (smooth) %lf\n" \
-                                "T yesterday (smooth) %lf\n\n" \
-                                "Steer current %lf\n" \
-                                "Steer current (smooth) %lf\n" \
-                                "Steer previous (smooth) %lf\n" \
-                                "Steer today (smooth) %lf\n" \
-                                "Steer yesterday (smooth) %lf\n" \
-                                "Steer prediction %lf\n\n" \
-                                "MJD today %lf\n" \
-                                "Days passed since startup %d\n", 
+                                "Phase:                     %lf\n\n" \
+                                "T current:                 %lf\n" \
+                                "T current (smooth):        %lf\n" \
+                                "T previous (smooth):       %lf\n" \
+                                "T today (smooth):          %lf\n" \
+                                "T yesterday (smooth):      %lf\n\n" \
+                                "Steer current:             %lf\n" \
+                                "Steer current (smooth):    %lf\n" \
+                                "Steer previous (smooth):   %lf\n" \
+                                "Steer today (smooth):      %lf\n" \
+                                "Steer yesterday (smooth):  %lf\n" \
+                                "Steer prediction:          %lf\n\n" \
+                                "MJD today:                 %lf\n" \
+                                "Days passed since startup: %d\n", 
                                 cfd->phase_current,
                                 cfd->t_current,
                                 cfd->t_smooth_current,

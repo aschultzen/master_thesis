@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include "utils.h"
 #include "serial.h"
+#include "sensor_server.h"
 
 struct csac_filter_data {
     /* Phase */
@@ -77,5 +78,12 @@ int init_csac_filter(struct csac_filter_data *cfd, char *telemetry);
  *	@return The predicted steer value as double.
  */
 double get_steer_predict(struct csac_filter_data *cfd);
+
+/** @brief Starts the csac_filter
+ *
+ *  @param cfd State of filter
+ *  @return 1 if filter started successfully, 0 if not.
+ */
+int start_csac_filter(struct csac_filter_data *cfd);
 
 #endif /* !CSAC_FILTER_H */

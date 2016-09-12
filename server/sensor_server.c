@@ -32,7 +32,7 @@
 #define USAGE_PROGRAM_INTRO "Sensor_server: Server part of GPS Jamming/Spoofing system\n\n"
 #define USAGE_USAGE "Usage: %s [ARGS]\n\n"
 
-/* CONFIG */
+/* CONFIG CONSTANTS*/
 #define CONFIG_FILE_PATH "config.ini"
 #define CONFIG_SERVER_MAX_CONNECTIONS "max_clients:"
 #define CONFIG_SERVER_WARM_UP "warm_up:"
@@ -40,7 +40,9 @@
 #define CONFIG_CSAC_PATH "csac_serial_interface:"
 #define CONFIG_LOGGING "logging:"
 #define CONFIG_LOG_PATH "log_path:"
-#define CONFIG_ENTRIES 6
+#define CONFIG_CSAC_LOG_PATH "csac_log_path:"
+#define CONFIG_CSAC_LOGGING "csac_logging:"
+#define CONFIG_ENTRIES 8
 
 /* Server data and stats */
 struct server_data *s_data;
@@ -227,6 +229,14 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
     conf_map[5].entry_name = CONFIG_LOG_PATH;
     conf_map[5].modifier = FORMAT_STRING;
     conf_map[5].destination = &s_conf->log_path;
+
+    conf_map[6].entry_name = CONFIG_CSAC_LOG_PATH;
+    conf_map[6].modifier = FORMAT_STRING;
+    conf_map[6].destination = &s_conf->csac_log_path;
+
+    conf_map[7].entry_name = CONFIG_CSAC_LOGGING;
+    conf_map[7].modifier = FORMAT_INT;
+    conf_map[7].destination = &s_conf->csac_logging;
 }
 
 /*
@@ -283,26 +293,7 @@ static void start_server(int port_number)
     f_pid = fork();
     if(f_pid == 0){
         t_print("Forked out CSAC filter [%d]\n", getpid());
-     
-        /* Allocating buffer for run_program() */
-        char program_buf[200];
-        memset(program_buf, '\0', 200);  
-            
-        int filter_initialized = 0;
-        /* Running prgram requesting telemetry from CSAC */
-            
-        /* Rework this part, the whole shablang fucks up if the python script fails
-        to return data */
-        while( run_command("python get_telemetry.py", program_buf) > 1 && (!done)){
-            if(!filter_initialized){
-                init_csac_filter(cfd, program_buf);
-                filter_initialized = 1;
-            } else {
-                update_csac_filter(cfd, program_buf);
-            }
-                usleep(10000);
-                memset(program_buf, '\0', 200);  
-            }
+        start_csac_filter(cfd);
         _exit(0);
     }
 
