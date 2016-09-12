@@ -14,8 +14,18 @@ def main_routine():
     ser.write(b'^')
     time.sleep(0.1)
     telemetry = sio.readline()
-    print(telemetry)
-        
+
+    telemetry_len = 0
+
+    while (telemetry_len < 50):
+    	ser.write(b'^')
+    	time.sleep(0.1)
+    	telemetry = sio.readline()
+	telemetry = telemetry.strip("\r\n")
+        telemetry_len = len(telemetry)
+	
+    print(telemetry)        
+
 if __name__ == '__main__':
     main_routine()
 
