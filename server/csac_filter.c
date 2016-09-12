@@ -149,6 +149,7 @@ double get_steer_predict(struct csac_filter_data *cfd)
 /* Making sure there are no 0 values about */
 int init_csac_filter(struct csac_filter_data *cfd, char *telemetry)
 {
+
     int status = load_telemetry(cfd, telemetry);
     cfd->t_smooth_current = cfd->t_current;
     cfd->steer_smooth_current = cfd->steer_current;

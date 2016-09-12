@@ -183,7 +183,7 @@ static void handle_sigchld(int signum)
 
         if(pid > 0) {
             remove_client_by_pid(pid);
-            //t_print(PROCESS_REAPED, pid, status, signum);
+            t_print(PROCESS_REAPED, pid, status, signum);
         }
     }
 }
@@ -278,6 +278,33 @@ static void start_server(int port_number)
         sem_close(&(s_synch->client_list_mutex));
         exit(1);
     }
+       
+    pid_t f_pid;
+    f_pid = fork();
+    if(f_pid == 0){
+        t_print("Forked out CSAC filter [%d]\n", getpid());
+     
+        /* Allocating buffer for run_program() */
+        char program_buf[200];
+        memset(program_buf, '\0', 200);  
+            
+        int filter_initialized = 0;
+        /* Running prgram requesting telemetry from CSAC */
+            
+        /* Rework this part, the whole shablang fucks up if the python script fails
+        to return data */
+        while( run_command("python get_telemetry.py", program_buf) > 1 && (!done)){
+            if(!filter_initialized){
+                init_csac_filter(cfd, program_buf);
+                filter_initialized = 1;
+            } else {
+                update_csac_filter(cfd, program_buf);
+            }
+                usleep(10000);
+                memset(program_buf, '\0', 200);  
+            }
+        _exit(0);
+    }
 
     /* Registering the SIGINT handler */
     struct sigaction sigint_action;
@@ -299,35 +326,8 @@ static void start_server(int port_number)
     if (sigaction(SIGCHLD, &child_action, 0) == -1) {
         perror(0);
         exit(1);
-    }
-
-    pid_t f_pid;
-
-    f_pid = fork();
-    if(f_pid == 0){
-        /* Allocating buffer for run_program() */
-        char program_buf[200];
-        memset(program_buf, '\0', 200);  
-        
-        int filter_initialized = 0;
-        /* Running prgram requesting telemetry from CSAC */
-        while(run_command("python get_telemetry.py", program_buf) > 1){
-             if(!filter_initialized){
-                int stats = init_csac_filter(cfd, program_buf);
-                //printf("Init status: %d\n", stats);
-                filter_initialized = 1;
-             } else{
-                int status = update_csac_filter(cfd, program_buf);
-                printf("Update status: %d\n", status);
-             }
-            usleep(10000);
-            memset(program_buf, '\0', 200);  
-        }
-        
-        /* Updating filter */
-        exit(0);
     } 
-
+    
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sockfd < 0) {
@@ -360,7 +360,7 @@ static void start_server(int port_number)
 
     int session_fd = 0;
     t_print(SERVER_RUNNING);
-    while (!done) {
+    while (!done) {       
         t_print(WAITING_FOR_CONNECTIONS);
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
@@ -394,6 +394,7 @@ static void start_server(int port_number)
     /* Freeing and closing */
     munmap(client_list, sizeof(struct client_table_entry));
     munmap(s_data, sizeof(struct server_data));
+    munmap(cfd, sizeof(struct csac_filter_data));
     sem_close(&(s_synch->ready_mutex));
     sem_close(&(s_synch->client_list_mutex));
     munmap(s_synch, sizeof(struct server_synchro));
