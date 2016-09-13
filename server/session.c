@@ -694,7 +694,7 @@ static int respond(struct client_table_entry *cte)
             query_csac(cte, cte->cm.parameter);
         }
         else if(cte->cm.code == CODE_PRINTCFD) {
-            print_cfd(cte);
+            print_cfd(cte, cte->cm.id_parameter);
         }
 
         else {

@@ -258,7 +258,7 @@ void print_avg_diff(struct client_table_entry *client)
     }
 }
 
-int print_cfd(struct client_table_entry *monitor)
+int print_cfd(struct client_table_entry *monitor, int update_count)
 {
     char buffer [1000];
     int snprintf_status = 0;
@@ -293,7 +293,14 @@ int print_cfd(struct client_table_entry *monitor)
                                 cfd->today_mjd,
                                 cfd->days_passed);
 
-    s_write(&(monitor->transmission), buffer, strlen(buffer));
+    int counter = 0;
+    while(counter < update_count){
+        s_write(&(monitor->transmission), buffer, strlen(buffer));
+        counter++;
+        sleep(1);
+        cfd->phase_current++;
+    }
+
     return snprintf_status;
 }
 

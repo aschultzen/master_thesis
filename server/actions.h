@@ -157,5 +157,5 @@ int load_ref_def_data(struct client_table_entry* target);
 * @param monitor Monitor to print the data to.
 * @return Status of sprintf() used to build string.
 */
-int print_cfd(struct client_table_entry *monitor);
+int print_cfd(struct client_table_entry *monitor, int update_count);
 #endif /* !ACTIONS_H */
