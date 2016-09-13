@@ -10,22 +10,18 @@ def main_routine():
     ser = serial.Serial("/dev/ttyUSB0",57600, timeout=0.1)
     sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser),encoding='ascii',newline="\r")
 
-    log_file = open("csac.txt", "a+")
-    ser.write(b'^')
-    time.sleep(0.1)
-    telemetry = sio.readline()
+    log_file = open("telemetry.txt", "a+")
 
     telemetry_len = 0
-
-    while (telemetry_len < 50):
-    	ser.write(b'^')
-    	time.sleep(0.1)
+    while (telemetry_len < 60):
+   	ser.write(b'!^\r\n')
+    	time.sleep(0.01)
     	telemetry = sio.readline()
-	telemetry = telemetry.strip("\r\n")
-        telemetry_len = len(telemetry)
-	
-    print(telemetry)        
+    	telemetry = telemetry.strip("\r\n\x00")
+    	telemetry_len = len(telemetry)
 
+    print(telemetry)
+    log_file.write(telemetry + "\n")	
 if __name__ == '__main__':
     main_routine()
 
