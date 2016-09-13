@@ -45,7 +45,7 @@
 #define CONFIG_PRED_LOGGING "pred_logging: "
 #define CONFIG_PRED_LOG_PATH "pred_log_path: "
 #define CONFIG_CFD_PATH "cfd_state_path: "
-#define CONFIG_ENTRIES 10
+#define CONFIG_ENTRIES 11
 
 /* Server data and stats */
 struct server_data *s_data;

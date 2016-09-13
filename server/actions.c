@@ -321,10 +321,10 @@ int dump_cfd(char *path)
 
     /* Opening and writing to file */
     FILE *cfd_file;
-    cfd_file = fopen(path, "w");
+    cfd_file = fopen(path, "w+");
 
     if(!cfd_file) {
-        t_print(ERROR_FOPEN);
+        t_print("dump_cfd: %s: %s",ERROR_FOPEN, path);
         return 0;
     }
 
