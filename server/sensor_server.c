@@ -42,7 +42,9 @@
 #define CONFIG_LOG_PATH "log_path:"
 #define CONFIG_CSAC_LOG_PATH "csac_log_path:"
 #define CONFIG_CSAC_LOGGING "csac_logging:"
-#define CONFIG_ENTRIES 8
+#define CONFIG_PRED_LOGGING "pred_logging: "
+#define CONFIG_PRED_LOG_PATH "pred_log_path: "
+#define CONFIG_ENTRIES 10
 
 /* Server data and stats */
 struct server_data *s_data;
@@ -237,6 +239,14 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
     conf_map[7].entry_name = CONFIG_CSAC_LOGGING;
     conf_map[7].modifier = FORMAT_INT;
     conf_map[7].destination = &s_conf->csac_logging;
+
+    conf_map[8].entry_name = CONFIG_PRED_LOG_PATH;
+    conf_map[8].modifier = FORMAT_STRING;
+    conf_map[8].destination = &s_conf->pred_log_path;
+
+    conf_map[9].entry_name = CONFIG_PRED_LOGGING;
+    conf_map[9].modifier = FORMAT_INT;
+    conf_map[9].destination = &s_conf->pred_logging;
 }
 
 /*

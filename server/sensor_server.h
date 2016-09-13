@@ -29,6 +29,8 @@ struct server_config {
     char log_path[PATH_LENGTH_MAX];
     int csac_logging;
     char csac_log_path[PATH_LENGTH_MAX];
+    int pred_logging;
+    char pred_log_path[PATH_LENGTH_MAX];
 };
 
 /*

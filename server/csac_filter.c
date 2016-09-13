@@ -147,8 +147,14 @@ int update_csac_filter(struct csac_filter_data *cfd, char *telemetry)
 	/* Calculate smoothed values */
 	calc_smooth(cfd);
 
-	/* Updating prediciton if 24 hours has passed since the last update */
+	/* Updating prediction if 24 hours has passed since the last update */
 	if(cfd->new_day == 1) {
+        if(s_conf->pred_logging){
+            char log_output[200];
+            memset(log_output, '\0', 200);
+            snprintf(log_output, 100, "%lf\n", get_steer_predict(cfd));
+            log_to_file(s_conf->pred_log_path, log_output, 1);
+        }
         cfd->new_day = 0;
         update_prediction(cfd);
     }
