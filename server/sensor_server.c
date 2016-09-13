@@ -44,6 +44,7 @@
 #define CONFIG_CSAC_LOGGING "csac_logging:"
 #define CONFIG_PRED_LOGGING "pred_logging: "
 #define CONFIG_PRED_LOG_PATH "pred_log_path: "
+#define CONFIG_CFD_PATH "cfd_state_path: "
 #define CONFIG_ENTRIES 10
 
 /* Server data and stats */
@@ -247,6 +248,10 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
     conf_map[9].entry_name = CONFIG_PRED_LOGGING;
     conf_map[9].modifier = FORMAT_INT;
     conf_map[9].destination = &s_conf->pred_logging;
+
+    conf_map[10].entry_name = CONFIG_CFD_PATH;
+    conf_map[10].modifier = FORMAT_STRING;
+    conf_map[10].destination = &s_conf->cfd_log_path;
 }
 
 /*

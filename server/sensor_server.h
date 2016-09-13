@@ -31,6 +31,7 @@ struct server_config {
     char csac_log_path[PATH_LENGTH_MAX];
     int pred_logging;
     char pred_log_path[PATH_LENGTH_MAX];
+    char cfd_log_path[PATH_LENGTH_MAX];
 };
 
 /*

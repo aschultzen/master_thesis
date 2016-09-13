@@ -258,49 +258,85 @@ void print_avg_diff(struct client_table_entry *client)
     }
 }
 
-int print_cfd(struct client_table_entry *monitor, int update_count)
+static int get_pfd_string(char *buffer, int buf_len)
 {
-    char buffer [1000];
-    int snprintf_status = 0;
-    int counter = 0;
-    while(counter < update_count){
-        memset(buffer, '\0',1000);
-        snprintf_status = snprintf( buffer, 1000,
-                                    "Phase:                     %lf\n\n" \
-                                    "T current:                 %lf\n" \
-                                    "T current (smooth):        %lf\n" \
-                                    "T previous (smooth):       %lf\n" \
-                                    "T today (smooth):          %lf\n" \
-                                    "T yesterday (smooth):      %lf\n\n" \
-                                    "Steer current:             %lf\n" \
-                                    "Steer current (smooth):    %lf\n" \
-                                    "Steer previous (smooth):   %lf\n" \
-                                    "Steer today (smooth):      %lf\n" \
-                                    "Steer yesterday (smooth):  %lf\n" \
-                                    "Steer prediction:          %lf\n\n" \
-                                    "MJD today:                 %lf\n" \
-                                    "Days passed since startup: %d\n", 
-                                    cfd->phase_current,
-                                    cfd->t_current,
-                                    cfd->t_smooth_current,
-                                    cfd->t_smooth_previous,
-                                    cfd->t_smooth_today,
-                                    cfd->t_smooth_yesterday,
-                                    cfd->steer_current,
-                                    cfd->steer_smooth_current,
-                                    cfd->steer_smooth_previous,
-                                    cfd->steer_smooth_today,
-                                    cfd->steer_smooth_yesterday,
-                                    cfd->steer_prediction,
-                                    cfd->today_mjd,
-                                    cfd->days_passed);
+    memset(buffer, '\0',buf_len);
+    int snprintf_status = snprintf( buffer, 1000,
+                                "Phase:                     %lf\n\n" \
+                                "T current:                 %lf\n" \
+                                "T current (smooth):        %lf\n" \
+                                "T previous (smooth):       %lf\n" \
+                                "T today (smooth):          %lf\n" \
+                                "T yesterday (smooth):      %lf\n\n" \
+                                "Steer current:             %lf\n" \
+                                "Steer current (smooth):    %lf\n" \
+                                "Steer previous (smooth):   %lf\n" \
+                                "Steer today (smooth):      %lf\n" \
+                                "Steer yesterday (smooth):  %lf\n" \
+                                "Steer prediction:          %lf\n\n" \
+                                "MJD today:                 %lf\n" \
+                                "Days passed since startup: %d\n", 
+                                cfd->phase_current,
+                                cfd->t_current,
+                                cfd->t_smooth_current,
+                                cfd->t_smooth_previous,
+                                cfd->t_smooth_today,
+                                cfd->t_smooth_yesterday,
+                                cfd->steer_current,
+                                cfd->steer_smooth_current,
+                                cfd->steer_smooth_previous,
+                                cfd->steer_smooth_today,
+                                cfd->steer_smooth_yesterday,
+                                cfd->steer_prediction,
+                                cfd->today_mjd,
+                                cfd->days_passed); 
+    return snprintf_status;  
+}
 
+void print_cfd(struct client_table_entry *monitor, int update_count)
+{
+    int buf_len = 1000;
+    char buffer [buf_len];
+    int counter = 0;
+
+    if(update_count == 0){
+        update_count = 1;
+    }
+
+    while(counter < update_count){
+        get_pfd_string(buffer, buf_len);
         s_write(&(monitor->transmission), buffer, strlen(buffer));
         counter++;
         sleep(1);
     }
+}
 
-    return snprintf_status;
+int dump_cfd(char *path)
+{
+    int buf_len = 1000;
+    char buffer[buf_len];
+
+    /* Formating string with CSAC filter data */
+    get_pfd_string(buffer, buf_len);
+
+    /* Opening and writing to file */
+    FILE *cfd_file;
+    cfd_file = fopen(path, "w");
+
+    if(!cfd_file) {
+        t_print(ERROR_FOPEN);
+        return 0;
+    }
+
+    if(!fprintf(cfd_file,"%s", buffer) ){
+        t_print(ERROR_FWRITE);
+        return 0;
+    }
+
+    if(fclose(cfd_file)) {
+        t_print(ERROR_FCLOSE);
+    }
+    return 1;
 }
 
 

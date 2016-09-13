@@ -182,6 +182,7 @@ int start_csac_filter(struct csac_filter_data *cfd)
     	if(s_conf->csac_logging){
     		log_to_file(s_conf->csac_log_path, program_buf, 1);
     	}
+        dump_cfd(s_conf->cfd_log_path);
     	sleep(1);
         memset(program_buf, '\0', 200);  
     }
