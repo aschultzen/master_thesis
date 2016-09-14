@@ -45,7 +45,11 @@
 #define CONFIG_PRED_LOGGING "pred_logging: "
 #define CONFIG_PRED_LOG_PATH "pred_log_path: "
 #define CONFIG_CFD_PATH "cfd_state_path: "
-#define CONFIG_ENTRIES 11
+#define CONFIG_INIT_FROM_FILE "init_cfd_from_file: "
+#define CONFIG_INIT_SSC "init_cfd_steer_smooth_current: "
+#define CONFIG_INIT_SST "init_cfd_steer_smooth_today: "
+#define CONFIG_INIT_SSY "init_cfd_stter_smooth_yesterday: "
+#define CONFIG_ENTRIES 15
 
 /* Server data and stats */
 struct server_data *s_data;
@@ -252,6 +256,22 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
     conf_map[10].entry_name = CONFIG_CFD_PATH;
     conf_map[10].modifier = FORMAT_STRING;
     conf_map[10].destination = &s_conf->cfd_log_path;
+
+    conf_map[11].entry_name = CONFIG_INIT_FROM_FILE;
+    conf_map[11].modifier = FORMAT_INT;
+    conf_map[11].destination = &s_conf->init_cfd_from_file;
+
+    conf_map[12].entry_name = CONFIG_INIT_SSC;
+    conf_map[12].modifier = FORMAT_DOUBLE;
+    conf_map[12].destination = &s_conf->init_cfd_ssc;
+
+    conf_map[13].entry_name = CONFIG_INIT_SST;
+    conf_map[13].modifier = FORMAT_DOUBLE;
+    conf_map[13].destination = &s_conf->init_cfd_sst;
+
+    conf_map[14].entry_name = CONFIG_INIT_SSY;
+    conf_map[14].modifier = FORMAT_DOUBLE;
+    conf_map[14].destination = &s_conf->init_cfd_ssp;
 }
 
 /*

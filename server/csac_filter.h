@@ -51,6 +51,9 @@ struct csac_filter_data {
 
     /* New day, 1 if yes, 0 if no */
     int new_day;
+
+    /* Discipline mode */
+    int discok;
 };
 
 /** @brief Updates the state of the filter from data
