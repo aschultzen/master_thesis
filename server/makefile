@@ -1,4 +1,4 @@
-SERVER_OBJS = sensor_server.o net.o utils.o serial.o session.o filters.o actions.o csac_filter.o
+SERVER_OBJS = sensor_server.o net.o utils.o session.o filters.o actions.o csac_filter.o
 CLIENT_OBJS = sensor_client.o net.o utils.o gps_serial.o
 CSAC_FILTER = csac_filter.o utils.o
 
@@ -38,9 +38,6 @@ net.o : net.h utils.h net.c
 
 utils.o : utils.h list.h utils.c config.h
 	$(CC) $(CFLAGS) utils.c
-
-serial.o : serial.h serial.c
-	$(CC) $(CFLAGS) serial.c
 	
 gps_serial.o : serial.h gps_serial.c
 	$(CC) $(CFLAGS) gps_serial.c

@@ -203,14 +203,25 @@ int start_csac_filter(struct csac_filter_data *cfd)
     /* Allocating buffer for run_program() */
     char program_buf[200];
     memset(program_buf, '\0', 200);
+    int status = 0;
 
     int filter_initialized = 0;
     /* Running prgram requesting telemetry from CSAC */
     /* Rework this part, the whole shablang fucks up if the python script fails
     to return data */
 
-    while(run_command("python get_telemetry.py", program_buf) > 1 && (!done)) {
-        /* Initialize if not already initialized */
+    while(status > 1 && (!done)){ 
+
+        /* Acquiring lock*/
+        sem_wait(&(s_synch->csac_mutex));
+        
+        /* Querying CSAC */
+        status = run_command("python get_telemetry.py", program_buf);
+        
+        /* Releasing lock */
+        sem_post(&(s_synch->csac_mutex));
+
+        /* Initialize filter if not already initialized */
         if(!filter_initialized) {
             filter_initialized = init_csac_filter(cfd, program_buf);
 

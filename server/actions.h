@@ -139,12 +139,21 @@ void set_warmup(struct client_table_entry *client, int value);
 */
 int loaddata(struct client_table_entry* target,  char *filename);
 
-/** @brief Sends a COMMAND to the CSAC and prints the response back to the monitor
+/** @brief Uses the query_csac.py to communicate with the CSAC.
+*		   Stores the response in a buffer.
+*
+* @param buffer Buffer to store the response
+* @param query Command (query) to send to the CSAC.
+*/
+int query_csac(char *query, char *buffer);
+
+/** @brief Uses the query_csac.py to communicate with the CSAC
+*		   Prints the response from the CSAC back to the client
 *
 * @param monitor Monitor who made the request
 * @param query Command (query) to send to the CSAC.
 */
-int query_csac(struct client_table_entry *monitor, char *query);
+int client_query_csac(struct client_table_entry *monitor, char *query);
 
 /** @brief Loads data for the REF_DEV_FILTER into the client.
 *

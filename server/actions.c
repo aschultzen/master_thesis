@@ -9,6 +9,7 @@
 #define DATADUMP_EXTENSION ".bin"
 #define DATADUMP_HUMAN_EXTENSION ".txt"
 #define RDF_HEADER "\nREF_DEV_FILTER DATA\n"
+#define CSAC_SCRIPT_COMMAND "python query_csac.py "
 
 /* ERRORS */
 #define ERROR_APPEND_TOO_LONG "ERROR: TEXT TO APPEND TOO LONG\n"
@@ -480,44 +481,42 @@ int loaddata(struct client_table_entry* target, char *filename)
     return 1;
 }
 
-int query_csac(struct client_table_entry *monitor, char *query)
+int query_csac(char *query, char *buffer)
 {
-    /* Connect to CSAC */
-    s_data->csac_fd = open_serial(s_conf->csac_path, CSAC);
-    if(s_data->csac_fd == -1) {
-        t_print("Failed to connect to CSAC\n");
-        exit(0);
-    }
+    /* Building command */
+    char command[MAX_PARAMETER_SIZE + sizeof(CSAC_SCRIPT_COMMAND)];
+    strcat(command, CSAC_SCRIPT_COMMAND);
+    strcat(command, query);
 
-    /* Initializing buffer for CSAC query */
-    int buf_size = 220;
-    char buffer[buf_size];
-    memset(buffer,'\0' ,buf_size);
+    printf("Running command %s\n", command);
 
-    /* Quering CSAC */
+    /* Acquiring lock*/
+    sem_wait(&(s_synch->csac_mutex));
     
-    int serial_query_r = serial_query(s_data->csac_fd, query,buffer, buf_size);
-    
-    while(serial_query_r == 3){    
-        serial_query_r = serial_query(s_data->csac_fd, "",buffer, buf_size);
+    /* Running command */
+    if(!run_command(command, buffer)){
+        return 0;
     }
 
-    /* Checking return value */
-    if(!serial_query_r) {
-        s_write(&(monitor->transmission), ERROR_CSAC_FAILED, sizeof(ERROR_CSAC_FAILED));
+    /* Releasing lock */
+    sem_post(&(s_synch->csac_mutex));
+    return 1;
+}
+
+
+int client_query_csac(struct client_table_entry *monitor, char *query)
+{
+    char buffer[MAX_PARAMETER_SIZE];
+    memset(buffer, '\0', MAX_PARAMETER_SIZE);
+
+    if(!query_csac(query, buffer)){
+        return 0;
     }
 
-    /* Closing file descriptior */
-    close(s_data->csac_fd);
-
-    /*
-    * The data returned from serial query is not formatted, hence the
-    * buffer+2 to avoid printing uncesseray CSAC specific output
-    */
-
-    //s_write(&(monitor->transmission), buffer+2, str_len_u(buffer, buf_size));
-    s_write(&(monitor->transmission), buffer, strlen(buffer));
-    return 0;
+    if(!s_write(&(monitor->transmission), buffer, strlen(buffer))){
+        return 0;
+    }
+    return 1;
 }
 
 /*
