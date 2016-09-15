@@ -36,7 +36,7 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
             return 0;
         }
         /* CSAC is in holdover or acquiring */
-        if(cfd->discok != 1){
+        if(cfd->discok == 2){
             return 0;
         }
     }
