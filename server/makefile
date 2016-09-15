@@ -5,12 +5,12 @@ CSAC_FILTER = csac_filter.o utils.o
 CC = gcc
 DEBUG = -g
 
-CFLAGS = -Wall -Wextra -c $(DEBUG) -std=gnu99 -pedantic -O3
+CFLAGS = -Wall -Wextra -c -std=gnu99 -pedantic -O3
 
 cpu := $(shell uname -m)
 
 ifeq ($(cpu),armv7l)
-	CFLAGS = -Wall -Wextra -c $(DEBUG) -std=gnu99 -pedantic -O3 -march=armv7-a -mtune=arm7 -fsigned-char
+	CFLAGS = -Wall -Wextra -c -std=gnu99 -pedantic -O3 -march=armv7-a -mtune=arm7 -fsigned-char
 endif
 
 LFLAGS = -Wall $(DEBUG)

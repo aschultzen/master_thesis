@@ -313,6 +313,7 @@ static void start_server(int port_number)
     s_synch = mmap(NULL, sizeof(struct server_synchro), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     sem_init(&(s_synch->ready_mutex), 1, 1);
     sem_init(&(s_synch->client_list_mutex), 1, 1);
+    sem_init(&(s_synch->csac_mutex), 1, 1);
 
     /* Init pointer to shared CSAC_filter data */
     cfd = mmap(NULL, sizeof(struct csac_filter_data), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -323,7 +324,7 @@ static void start_server(int port_number)
         sem_close(&(s_synch->client_list_mutex));
         exit(1);
     }
-       
+
     pid_t f_pid;
     f_pid = fork();
     if(f_pid == 0){

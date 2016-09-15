@@ -210,14 +210,15 @@ int start_csac_filter(struct csac_filter_data *cfd)
     /* Rework this part, the whole shablang fucks up if the python script fails
     to return data */
 
-    while(status > 1 && (!done)){ 
-
+    /* Keep going as long as the server is running */
+    while(!done){ 
         /* Acquiring lock*/
         sem_wait(&(s_synch->csac_mutex));
-        
+
         /* Querying CSAC */
         status = run_command("python get_telemetry.py", program_buf);
-        
+	fprintf(stderr, "%s\nStatus %d\n", program_buf, status);
+
         /* Releasing lock */
         sem_post(&(s_synch->csac_mutex));
 

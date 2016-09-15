@@ -486,7 +486,9 @@ int loaddata(struct client_table_entry* target, char *filename)
 int query_csac(char *query, char *buffer)
 {
     /* Building command */
-    char command[MAX_PARAMETER_SIZE + sizeof(CSAC_SCRIPT_COMMAND)];
+    int command_size = MAX_PARAMETER_SIZE + sizeof(CSAC_SCRIPT_COMMAND);
+    char command[command_size];
+    memset(command,'\0', command_size);
     strcat(command, CSAC_SCRIPT_COMMAND);
     strcat(command, query);
 
@@ -497,6 +499,8 @@ int query_csac(char *query, char *buffer)
     
     /* Running command */
     if(!run_command(command, buffer)){
+        /* Releasing lock */
+        sem_post(&(s_synch->csac_mutex));
         return 0;
     }
 
