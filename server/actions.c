@@ -271,12 +271,13 @@ static int get_pfd_string(char *buffer, int buf_len)
                                 "T yesterday (smooth):      %lf\n\n" \
                                 "Steer current:             %lf\n" \
                                 "Steer current (smooth):    %lf\n" \
-                                "Steer previous (smooth):   %lf\n" \
+                                "Steer previous (smooth):   %lf\n\n" \
                                 "Steer today (smooth):      %lf\n" \
-                                "Steer yesterday (smooth):  %lf\n" \
+                                "Steer yesterday (smooth):  %lf\n\n" \
                                 "Steer prediction:          %lf\n\n" \
                                 "MJD today:                 %lf\n" \
-                                "Days passed since startup: %d\n", 
+                                "Days passed since startup: %d\n\n" \
+				"Discipline status:         %d\n",
                                 cfd->phase_current,
                                 cfd->t_current,
                                 cfd->t_smooth_current,
@@ -290,7 +291,8 @@ static int get_pfd_string(char *buffer, int buf_len)
                                 cfd->steer_smooth_yesterday,
                                 cfd->steer_prediction,
                                 cfd->today_mjd,
-                                cfd->days_passed); 
+                                cfd->days_passed,
+				cfd->discok); 
     return snprintf_status;  
 }
 
