@@ -277,7 +277,7 @@ static int get_pfd_string(char *buffer, int buf_len)
                                 "Steer prediction:          %lf\n\n" \
                                 "MJD today:                 %lf\n" \
                                 "Days passed since startup: %d\n\n" \
-				"Discipline status:         %d\n",
+				"Discipline status:         %d\n\n",
                                 cfd->phase_current,
                                 cfd->t_current,
                                 cfd->t_smooth_current,

@@ -1,7 +1,7 @@
 #include "csac_filter.h"
 
 /* PATH TO CONFIG FILE */
-#define CFILTER_CONFIG_PATH "cfilter_config.ini"
+#define CSAC_FILTER_CONFIG_PATH "cfilter_config.ini"
 
 /* CONFIG CONSTANTS */
 #define CONFIG_PRED_LOGGING "pred_logging: "
@@ -197,6 +197,12 @@ int update_csac_filter(struct csac_filter_data *cfd, char *telemetry)
         /* Update prediction */
         update_prediction(cfd);
 
+        /* Updating fast timing filter status */
+        cfd->ftf_status = fast_timing_filter(cfd->phase_current, cfd->cf_conf.phase_limit);
+
+        /* Updating frequency correction filter status */
+        cfd->fqf_status = freq_cor_filter(cfd);
+
         /* Clearing new day variable*/
         cfd->new_day = 0;
 
@@ -271,7 +277,7 @@ int start_csac_filter(struct csac_filter_data *cfd)
     /* csac_filter config */
     struct config_map_entry conf_map[CSAC_FILTER_CONFIG_ENTRIES];
     initialize_config(conf_map, &cfd->cf_conf);
-
+    load_config(conf_map, CSAC_FILTER_CONFIG_PATH, CSAC_FILTER_CONFIG_ENTRIES);
 
     /* Keep going as long as the server is running */
     while(!done){ 

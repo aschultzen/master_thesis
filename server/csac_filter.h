@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include "utils.h"
 #include "serial.h"
- 
+
 #include "sensor_server.h"
 
 struct csac_filter_config {
@@ -69,6 +69,12 @@ struct csac_filter_data {
 
     /* Discipline mode */
     int discok;
+
+    /* fast timing filter status */
+    int ftf_status;
+
+    /* Frequency correction filter status */
+    int fqf_status;
 
     /* Config */
     struct csac_filter_config cf_conf;
