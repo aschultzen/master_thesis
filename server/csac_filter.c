@@ -1,25 +1,27 @@
 #include "csac_filter.h"
 
-const int PHASE_LIMIT = 50 ;	/* Load from config file in final impl */
-const int STEER_LIMIT = 50; 	/* Load from config file in final impl */
-const double W = 10000;			/* Sample rate */
-const int warmup_days = 0;
+/* PATH TO CONFIG FILE */
+#define CFILTER_CONFIG_PATH "cfilter_config.ini"
+
+/* CONFIG CONSTANTS */
+#define CONFIG_PRED_LOGGING "pred_logging: "
+#define CONFIG_PRED_LOG_PATH "pred_log_path: "
+#define CONFIG_CFD_PATH "cfd_state_path: "
+#define CONFIG_INIT_FROM_FILE "init_cfd_from_file: "
+#define CONFIG_INIT_SSC "init_cfd_steer_smooth_current: "
+#define CONFIG_INIT_SST "init_cfd_steer_smooth_today: "
+#define CONFIG_INIT_SSY "init_cfd_stter_smooth_yesterday: "
+#define CONFIG_PHASE_LIMIT "phase_limit: "
+#define CONFIG_STEER_LIMIT "steer_limit: "
+#define CONFIG_TIME_CONSTANT "time_constant: "
+#define CONFIG_WARMUP_DAYS "warmup_days: "
+#define CSAC_FILTER_CONFIG_ENTRIES 11
 
 
 static float mjd_diff_day(double mjd_a, double mjd_b)
 {
     float diff = mjd_a - mjd_b;
     return diff;
-}
-
-/* Used during tests to read line by line from text file */
-int get_csac_line(char *buffer, FILE *log, int buffer_size)
-{
-    memset(buffer, '\0', buffer_size);
-    if(fgets(buffer, buffer_size, log)) {
-        return 1;
-    }
-    return 0;
 }
 
 static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
@@ -87,6 +89,8 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
 
 static void calc_smooth(struct csac_filter_data *cfd)
 {
+    double W = cfd->cf_conf.time_constant;
+
     /* Setting previous values */
     cfd->t_smooth_previous = cfd->t_smooth_current;
     cfd->steer_smooth_previous = cfd->steer_smooth_current;
@@ -101,14 +105,23 @@ static void calc_smooth(struct csac_filter_data *cfd)
 /*
 * Returns 0 if abs(phase_current) is bigger
 */
-int fast_timing_filter(int phase_current)
+int fast_timing_filter(int phase_current, int phase_limit)
 {
-    return abs(phase_current) > PHASE_LIMIT;
+    if(abs(phase_current) > phase_limit){
+        return 0;
+    }
+    return 1;
 }
 
+/*
+* Returns 0 if abs(cfd->steer_current - cfd->steer_prediction) is bigger
+*/
 int freq_cor_filter(struct csac_filter_data *cfd)
 {
-    return abs(cfd->steer_current - cfd->steer_prediction) > STEER_LIMIT;
+    if ( abs(cfd->steer_current - cfd->steer_prediction) > cfd->cf_conf.steer_limit){
+        return 0;
+    }
+    return 1;
 }
 
 static void update_prediction(struct csac_filter_data *cfd)
@@ -127,7 +140,7 @@ static void update_prediction(struct csac_filter_data *cfd)
 
 double get_steer_predict(struct csac_filter_data *cfd)
 {
-    if(cfd->days_passed >= warmup_days) {
+    if(cfd->days_passed >= cfd->cf_conf.warmup_days) {
         cfd->steer_prediction = cfd->t_current - cfd->t_smooth_today;
         cfd->steer_prediction = cfd->steer_prediction * (cfd->steer_smooth_today - cfd->steer_smooth_yesterday);
         cfd->steer_prediction = cfd->steer_prediction / (cfd->t_smooth_today - cfd->t_smooth_yesterday);
@@ -152,10 +165,10 @@ int init_csac_filter(struct csac_filter_data *cfd, char *telemetry)
     cfd->t_smooth_yesterday = cfd->t_smooth_current -0.1;
 
     /* Setting values from config if preset */
-    if(s_conf->init_cfd_from_file){
-        cfd->steer_smooth_current = s_conf->init_cfd_ssc;
-        cfd->steer_smooth_today = s_conf->init_cfd_sst;
-        cfd->steer_smooth_previous = s_conf->init_cfd_ssp;
+    if(cfd->cf_conf.init_cfd_from_file){
+        cfd->steer_smooth_current = cfd->cf_conf.init_cfd_ssc;
+        cfd->steer_smooth_today = cfd->cf_conf.init_cfd_sst;
+        cfd->steer_smooth_previous = cfd->cf_conf.init_cfd_ssp;
     
     /* Setting preliminary values, don't want to divide by zero */
     } else {
@@ -188,14 +201,62 @@ int update_csac_filter(struct csac_filter_data *cfd, char *telemetry)
         cfd->new_day = 0;
 
         /* If logging is enabled, log steer predicted */
-        if(s_conf->pred_logging) {
+        if(cfd->cf_conf.pred_logging) {
             char log_output[200];
             memset(log_output, '\0', 200);
             snprintf(log_output, 100, "%lf\n", cfd->steer_prediction);
-            log_to_file(s_conf->pred_log_path, log_output, 1);
+            log_to_file(cfd->cf_conf.pred_log_path, log_output, 1);
         }
     }
     return 1;
+}
+
+/* Setting up the config structure specific for the server */
+static void initialize_config(struct config_map_entry *conf_map, struct csac_filter_config *cf_conf)
+{
+    conf_map[0].entry_name = CONFIG_PRED_LOG_PATH;
+    conf_map[0].modifier = FORMAT_STRING;
+    conf_map[0].destination = &cf_conf->pred_log_path;
+
+    conf_map[1].entry_name = CONFIG_PRED_LOGGING;
+    conf_map[1].modifier = FORMAT_INT;
+    conf_map[1].destination = &cf_conf->pred_logging;
+
+    conf_map[2].entry_name = CONFIG_CFD_PATH;
+    conf_map[2].modifier = FORMAT_STRING;
+    conf_map[2].destination = &cf_conf->cfd_log_path;
+
+    conf_map[3].entry_name = CONFIG_INIT_FROM_FILE;
+    conf_map[3].modifier = FORMAT_INT;
+    conf_map[3].destination = &cf_conf->init_cfd_from_file;
+
+    conf_map[4].entry_name = CONFIG_INIT_SSC;
+    conf_map[4].modifier = FORMAT_DOUBLE;
+    conf_map[4].destination = &cf_conf->init_cfd_ssc;
+
+    conf_map[5].entry_name = CONFIG_INIT_SST;
+    conf_map[5].modifier = FORMAT_DOUBLE;
+    conf_map[5].destination = &cf_conf->init_cfd_sst;
+
+    conf_map[6].entry_name = CONFIG_INIT_SSY;
+    conf_map[6].modifier = FORMAT_DOUBLE;
+    conf_map[6].destination = &cf_conf->init_cfd_ssp;
+
+    conf_map[7].entry_name = CONFIG_PHASE_LIMIT;
+    conf_map[7].modifier = FORMAT_DOUBLE;
+    conf_map[7].destination = &cf_conf->phase_limit;
+
+    conf_map[8].entry_name = CONFIG_STEER_LIMIT;
+    conf_map[8].modifier = FORMAT_DOUBLE;
+    conf_map[8].destination = &cf_conf->steer_limit;
+
+    conf_map[9].entry_name = CONFIG_TIME_CONSTANT;
+    conf_map[9].modifier = FORMAT_DOUBLE;
+    conf_map[9].destination = &cf_conf->time_constant;
+
+    conf_map[10].entry_name = CONFIG_WARMUP_DAYS;
+    conf_map[10].modifier = FORMAT_INT;
+    conf_map[10].destination = &cf_conf->warmup_days;
 }
 
 int start_csac_filter(struct csac_filter_data *cfd)
@@ -203,12 +264,14 @@ int start_csac_filter(struct csac_filter_data *cfd)
     /* Allocating buffer for run_program() */
     char program_buf[200];
     memset(program_buf, '\0', 200);
-    int status = 0;
 
+    int rc_status = 0;
     int filter_initialized = 0;
-    /* Running prgram requesting telemetry from CSAC */
-    /* Rework this part, the whole shablang fucks up if the python script fails
-    to return data */
+
+    /* csac_filter config */
+    struct config_map_entry conf_map[CSAC_FILTER_CONFIG_ENTRIES];
+    initialize_config(conf_map, &cfd->cf_conf);
+
 
     /* Keep going as long as the server is running */
     while(!done){ 
@@ -216,8 +279,7 @@ int start_csac_filter(struct csac_filter_data *cfd)
         sem_wait(&(s_synch->csac_mutex));
 
         /* Querying CSAC */
-        status = run_command("python get_telemetry.py", program_buf);
-	fprintf(stderr, "%s\nStatus %d\n", program_buf, status);
+        rc_status = run_command("python get_telemetry.py", program_buf);
 
         /* Releasing lock */
         sem_post(&(s_synch->csac_mutex));
@@ -237,7 +299,7 @@ int start_csac_filter(struct csac_filter_data *cfd)
         }
 
         /* Dump filter data for every iteration */
-        dump_cfd(s_conf->cfd_log_path);
+        dump_cfd(cfd->cf_conf.cfd_log_path);
 
         sleep(0.5);
         memset(program_buf, '\0', 200);

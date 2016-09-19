@@ -1,7 +1,7 @@
 #include "sensor_server.h"
 
 /* VERSION */
-#define PROGRAM_VERSION "0.7a"
+#define PROGRAM_VERSION "0.8c"
 
 /* ERRORS */
 #define ERROR_MAX_CLIENTS_REACHED "CONNECTION REJECTED: MAXIMUM NUMBER OF CLIENTS REACHED\n"
@@ -42,14 +42,7 @@
 #define CONFIG_LOG_PATH "log_path:"
 #define CONFIG_CSAC_LOG_PATH "csac_log_path:"
 #define CONFIG_CSAC_LOGGING "csac_logging:"
-#define CONFIG_PRED_LOGGING "pred_logging: "
-#define CONFIG_PRED_LOG_PATH "pred_log_path: "
-#define CONFIG_CFD_PATH "cfd_state_path: "
-#define CONFIG_INIT_FROM_FILE "init_cfd_from_file: "
-#define CONFIG_INIT_SSC "init_cfd_steer_smooth_current: "
-#define CONFIG_INIT_SST "init_cfd_steer_smooth_today: "
-#define CONFIG_INIT_SSY "init_cfd_stter_smooth_yesterday: "
-#define CONFIG_ENTRIES 15
+#define SERVER_CONFIG_ENTRIES 8
 
 /* Server data and stats */
 struct server_data *s_data;
@@ -244,34 +237,6 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
     conf_map[7].entry_name = CONFIG_CSAC_LOGGING;
     conf_map[7].modifier = FORMAT_INT;
     conf_map[7].destination = &s_conf->csac_logging;
-
-    conf_map[8].entry_name = CONFIG_PRED_LOG_PATH;
-    conf_map[8].modifier = FORMAT_STRING;
-    conf_map[8].destination = &s_conf->pred_log_path;
-
-    conf_map[9].entry_name = CONFIG_PRED_LOGGING;
-    conf_map[9].modifier = FORMAT_INT;
-    conf_map[9].destination = &s_conf->pred_logging;
-
-    conf_map[10].entry_name = CONFIG_CFD_PATH;
-    conf_map[10].modifier = FORMAT_STRING;
-    conf_map[10].destination = &s_conf->cfd_log_path;
-
-    conf_map[11].entry_name = CONFIG_INIT_FROM_FILE;
-    conf_map[11].modifier = FORMAT_INT;
-    conf_map[11].destination = &s_conf->init_cfd_from_file;
-
-    conf_map[12].entry_name = CONFIG_INIT_SSC;
-    conf_map[12].modifier = FORMAT_DOUBLE;
-    conf_map[12].destination = &s_conf->init_cfd_ssc;
-
-    conf_map[13].entry_name = CONFIG_INIT_SST;
-    conf_map[13].modifier = FORMAT_DOUBLE;
-    conf_map[13].destination = &s_conf->init_cfd_sst;
-
-    conf_map[14].entry_name = CONFIG_INIT_SSY;
-    conf_map[14].modifier = FORMAT_DOUBLE;
-    conf_map[14].destination = &s_conf->init_cfd_ssp;
 }
 
 /*
@@ -283,14 +248,14 @@ static void start_server(int port_number)
     /* Initializing variables */
     int server_sockfd;
     struct sockaddr_in serv_addr;
-    struct config_map_entry conf_map[CONFIG_ENTRIES];
+    struct config_map_entry conf_map[SERVER_CONFIG_ENTRIES];
 
     /* Initializing config structure */
     s_conf = mmap(NULL, sizeof(struct server_config), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     initialize_config(conf_map, s_conf);
 
     /* Loading config */
-    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
+    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, SERVER_CONFIG_ENTRIES);
 
     /* Falling back to default if load_config fails */
     if(load_config_status) {

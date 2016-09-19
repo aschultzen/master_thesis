@@ -8,14 +8,14 @@
 #ifndef SENSOR_SERVER_H
 #define SENSOR_SERVER_H
 
+#define PATH_LENGTH_MAX 1000
+
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "session.h"
 #include "serial.h"
 #include "sensor_server_commons.h"
 #include "csac_filter.h"
-
-#define PATH_LENGTH_MAX 1000
 
 /*!@struct*/
 /*!@brief Contains configuration values for the server
@@ -29,13 +29,6 @@ struct server_config {
     char log_path[PATH_LENGTH_MAX];
     int csac_logging;
     char csac_log_path[PATH_LENGTH_MAX];
-    int pred_logging;
-    char pred_log_path[PATH_LENGTH_MAX];
-    char cfd_log_path[PATH_LENGTH_MAX];
-    int init_cfd_from_file;
-    double init_cfd_ssc;
-    double init_cfd_sst;
-    double init_cfd_ssp;
 };
 
 /*

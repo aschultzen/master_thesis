@@ -16,7 +16,22 @@
 #include <unistd.h>
 #include "utils.h"
 #include "serial.h"
+ 
 #include "sensor_server.h"
+
+struct csac_filter_config {
+    int pred_logging;
+    char pred_log_path[PATH_LENGTH_MAX];
+    char cfd_log_path[PATH_LENGTH_MAX];
+    int init_cfd_from_file;
+    double init_cfd_ssc;
+    double init_cfd_sst;
+    double init_cfd_ssp;
+    double phase_limit;
+    double steer_limit;
+    double time_constant;
+    int warmup_days;
+};
 
 struct csac_filter_data {
     /* Phase */
@@ -54,6 +69,9 @@ struct csac_filter_data {
 
     /* Discipline mode */
     int discok;
+
+    /* Config */
+    struct csac_filter_config cf_conf;
 };
 
 /** @brief Updates the state of the filter from data
