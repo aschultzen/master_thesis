@@ -277,7 +277,9 @@ static int get_pfd_string(char *buffer, int buf_len)
                                 "Steer prediction:          %lf\n\n" \
                                 "MJD today:                 %lf\n" \
                                 "Days passed since startup: %d\n\n" \
-				"Discipline status:         %d\n\n",
+				"Discipline status:         %d\n" \
+				"Fast timing filter status  %d\n" \
+				"Freq corr. filter status   %d\n\n",
                                 cfd->phase_current,
                                 cfd->t_current,
                                 cfd->t_smooth_current,
@@ -292,8 +294,10 @@ static int get_pfd_string(char *buffer, int buf_len)
                                 cfd->steer_prediction,
                                 cfd->today_mjd,
                                 cfd->days_passed,
-				cfd->discok); 
-    return snprintf_status;  
+				cfd->discok,
+				cfd->ftf_status,
+				cfd->fqf_status);
+    return snprintf_status;
 }
 
 void print_cfd(struct client_table_entry *monitor, int update_count)
