@@ -27,6 +27,7 @@ struct csac_filter_config {
     double init_cfd_ssc;
     double init_cfd_sst;
     double init_cfd_ssp;
+    double init_cfd_ssy;
     double phase_limit;
     double steer_limit;
     double time_constant;

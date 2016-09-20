@@ -10,7 +10,8 @@
 #define CONFIG_INIT_FROM_FILE "init_cfd_from_file: "
 #define CONFIG_INIT_SSC "init_cfd_steer_smooth_current: "
 #define CONFIG_INIT_SST "init_cfd_steer_smooth_today: "
-#define CONFIG_INIT_SSY "init_cfd_stter_smooth_yesterday: "
+#define CONFIG_INIT_SSP "init_cfd_steer_smooth_previous: "
+#define CONFIG_INIT_SSY "init_cfd_steer_smooth_yesterday: "
 #define CONFIG_PHASE_LIMIT "phase_limit: "
 #define CONFIG_STEER_LIMIT "steer_limit: "
 #define CONFIG_TIME_CONSTANT "time_constant: "
@@ -75,7 +76,7 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
                 cfd->today_mjd = mjd_today;
                 cfd->days_passed++;
             }
-            // Initializing today_mjd, only done once at startup
+            // Initializi      ng today_mjd, only done once at startup
             if(cfd->today_mjd == 0) {
                 cfd->today_mjd = mjd_today;
                 cfd->days_passed = 0;
@@ -169,6 +170,7 @@ int init_csac_filter(struct csac_filter_data *cfd, char *telemetry)
         cfd->steer_smooth_current = cfd->cf_conf.init_cfd_ssc;
         cfd->steer_smooth_today = cfd->cf_conf.init_cfd_sst;
         cfd->steer_smooth_previous = cfd->cf_conf.init_cfd_ssp;
+        cfd->steer_smooth_yesterday = cfd->cf_conf.init_cfd_ssy;
     
     /* Setting preliminary values, don't want to divide by zero */
     } else {
@@ -244,7 +246,7 @@ static void initialize_config(struct config_map_entry *conf_map, struct csac_fil
     conf_map[5].modifier = FORMAT_DOUBLE;
     conf_map[5].destination = &cf_conf->init_cfd_sst;
 
-    conf_map[6].entry_name = CONFIG_INIT_SSY;
+    conf_map[6].entry_name = CONFIG_INIT_SSP;
     conf_map[6].modifier = FORMAT_DOUBLE;
     conf_map[6].destination = &cf_conf->init_cfd_ssp;
 
@@ -263,6 +265,10 @@ static void initialize_config(struct config_map_entry *conf_map, struct csac_fil
     conf_map[10].entry_name = CONFIG_WARMUP_DAYS;
     conf_map[10].modifier = FORMAT_INT;
     conf_map[10].destination = &cf_conf->warmup_days;
+
+    conf_map[11].entry_name = CONFIG_INIT_SSY;
+    conf_map[11].modifier = FORMAT_DOUBLE;
+    conf_map[11].destination = &cf_conf->init_cfd_ssy;
 }
 
 int start_csac_filter(struct csac_filter_data *cfd)
