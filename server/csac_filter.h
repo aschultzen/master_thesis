@@ -31,6 +31,7 @@ struct csac_filter_config {
     double phase_limit;
     double steer_limit;
     double time_constant;
+    double pred_limit;
     int warmup_days;
 };
 

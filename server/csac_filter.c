@@ -14,9 +14,10 @@
 #define CONFIG_INIT_SSY "init_cfd_steer_smooth_yesterday: "
 #define CONFIG_PHASE_LIMIT "phase_limit: "
 #define CONFIG_STEER_LIMIT "steer_limit: "
+#define CONFIG_PRED_LIMIT "pred_limit: "
 #define CONFIG_TIME_CONSTANT "time_constant: "
 #define CONFIG_WARMUP_DAYS "warmup_days: "
-#define CSAC_FILTER_CONFIG_ENTRIES 12
+#define CSAC_FILTER_CONFIG_ENTRIES 13
 
 
 static float mjd_diff_day(double mjd_a, double mjd_b)
@@ -273,6 +274,10 @@ static void initialize_config(struct config_map_entry *conf_map, struct csac_fil
     conf_map[11].entry_name = CONFIG_INIT_SSY;
     conf_map[11].modifier = FORMAT_DOUBLE;
     conf_map[11].destination = &cf_conf->init_cfd_ssy;
+
+    conf_map[12].entry_name = CONFIG_PRED_LIMIT;
+    conf_map[12].modifier = FORMAT_DOUBLE;
+    conf_map[12].destination = &cf_conf->pred_limit;
 }
 
 int start_csac_filter(struct csac_filter_data *cfd)
