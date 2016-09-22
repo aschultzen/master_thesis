@@ -16,7 +16,7 @@
 #define CONFIG_STEER_LIMIT "steer_limit: "
 #define CONFIG_TIME_CONSTANT "time_constant: "
 #define CONFIG_WARMUP_DAYS "warmup_days: "
-#define CSAC_FILTER_CONFIG_ENTRIES 11
+#define CSAC_FILTER_CONFIG_ENTRIES 12
 
 
 static float mjd_diff_day(double mjd_a, double mjd_b)
@@ -104,25 +104,25 @@ static void calc_smooth(struct csac_filter_data *cfd)
 }
 
 /*
-* Returns 0 if abs(phase_current) is bigger
+* Returns 1 if abs(phase_current) is bigger
 */
 int fast_timing_filter(int phase_current, int phase_limit)
 {
     if(abs(phase_current) > phase_limit){
-        return 0;
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 /*
-* Returns 0 if abs(cfd->steer_current - cfd->steer_prediction) is bigger
+* Returns 1 if abs(cfd->steer_current - cfd->steer_prediction) is bigger
 */
 int freq_cor_filter(struct csac_filter_data *cfd)
 {
     if ( abs(cfd->steer_current - cfd->steer_prediction) > cfd->cf_conf.steer_limit){
-        return 0;
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 static void update_prediction(struct csac_filter_data *cfd)
@@ -177,6 +177,10 @@ int init_csac_filter(struct csac_filter_data *cfd, char *telemetry)
         cfd->steer_smooth_current = cfd->steer_current;
         cfd->steer_smooth_today = cfd->steer_smooth_current;
         cfd->steer_smooth_previous = cfd->steer_smooth_today;
+    }
+
+    if(cfd->cf_conf.warmup_days == 0){
+        cfd->new_day = 1;
     }
 
     return 1;
