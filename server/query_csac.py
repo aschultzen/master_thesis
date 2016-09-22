@@ -53,6 +53,7 @@ def main_routine():
 		retry_count = retry_count + 1
 
 	print(response)
+	ser.close()
 	query = query.strip("\n")
 	log_string = ("Issued query " + "'" +  query + "' " + str(retry_count) + " times\n")	
 	log_file.write(log_string)
