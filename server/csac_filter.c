@@ -198,6 +198,44 @@ int update_csac_filter(struct csac_filter_data *cfd, char *telemetry)
     /* Calculate smoothed values */
     calc_smooth(cfd);
 
+    /* If current steer is bigger than the predicted limit */
+    if( abs(cfd->steer_current) > cfd->cf_conf.pred_limit){
+        
+        /* Allocating buffer for run_program() */
+        char program_buf[200];
+        memset(program_buf, '\0', 200);
+
+        /* Buffer for the prediction */ 
+        char pred_string[200];
+        memset(pred_string, '\0', 200);
+        sprintf(pred_string, "%lf", cfd->steer_prediction);
+
+        /* Buffer for the steer adjust command string */ 
+        char steer_com_string[200];
+        memset(steer_com_string, '\0', 200);
+        /* Building the string */
+        strcat(steer_com_string, "python query_csac.py FA");
+        strcat(steer_com_string, pred_string);
+
+        /* Print warning message */
+        fprintf(stderr,"CLOCK CONCISTENCY ALARM!\n");
+
+        /* Acquiring lock on CSAC serial*/
+        sem_wait(&(s_synch->csac_mutex));
+
+        /* Disabling disciplining */
+        run_command("python query_csac.py Md", program_buf);
+        fprintf(stderr, "Disabling CSAC disciplining: [%s]\n", program_buf);
+        memset(program_buf, '\0', 200);
+
+        /* Adjusting frequency according to the models prediction */
+        run_command(steer_com_string, program_buf);
+        fprintf(stderr, "Setting steer value %lf: [%s]\n", cfd->steer_prediction,program_buf);
+
+        /* Releasing lock on CSAC serial*/
+        sem_post(&(s_synch->csac_mutex));
+    }
+
     /* Updating prediction if 24 hours has passed since the last update */
     if(cfd->new_day == 1) {
 
