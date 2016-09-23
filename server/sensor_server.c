@@ -290,6 +290,7 @@ static void start_server(int port_number)
         exit(1);
     }
 
+    
     pid_t f_pid;
     f_pid = fork();
     if(f_pid == 0){
@@ -383,13 +384,19 @@ static void start_server(int port_number)
             }
         }
     }
-    /* Freeing and closing */
+
+    /* Destroying semaphores */
+    sem_destroy(&(s_synch->csac_mutex));
+    sem_destroy(&(s_synch->ready_mutex));
+    sem_destroy(&(s_synch->client_list_mutex));
+
+    /* Freeing */
     munmap(client_list, sizeof(struct client_table_entry));
     munmap(s_data, sizeof(struct server_data));
     munmap(cfd, sizeof(struct csac_filter_data));
-    sem_close(&(s_synch->ready_mutex));
-    sem_close(&(s_synch->client_list_mutex));
     munmap(s_synch, sizeof(struct server_synchro));
+
+    /* Closing server FD */
     close(server_sockfd);
     t_print(SERVER_STOPPED);
 }

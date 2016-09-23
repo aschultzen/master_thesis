@@ -10,12 +10,14 @@
 #define CONFIG_INIT_FROM_FILE "init_cfd_from_file: "
 #define CONFIG_INIT_SSC "init_cfd_steer_smooth_current: "
 #define CONFIG_INIT_SST "init_cfd_steer_smooth_today: "
-#define CONFIG_INIT_SSY "init_cfd_stter_smooth_yesterday: "
+#define CONFIG_INIT_SSP "init_cfd_steer_smooth_previous: "
+#define CONFIG_INIT_SSY "init_cfd_steer_smooth_yesterday: "
 #define CONFIG_PHASE_LIMIT "phase_limit: "
 #define CONFIG_STEER_LIMIT "steer_limit: "
+#define CONFIG_PRED_LIMIT "pred_limit: "
 #define CONFIG_TIME_CONSTANT "time_constant: "
 #define CONFIG_WARMUP_DAYS "warmup_days: "
-#define CSAC_FILTER_CONFIG_ENTRIES 11
+#define CSAC_FILTER_CONFIG_ENTRIES 13
 
 
 static float mjd_diff_day(double mjd_a, double mjd_b)
@@ -75,7 +77,7 @@ static int load_telemetry(struct csac_filter_data *cfd, char *telemetry)
                 cfd->today_mjd = mjd_today;
                 cfd->days_passed++;
             }
-            // Initializing today_mjd, only done once at startup
+            // Initializi      ng today_mjd, only done once at startup
             if(cfd->today_mjd == 0) {
                 cfd->today_mjd = mjd_today;
                 cfd->days_passed = 0;
@@ -103,25 +105,25 @@ static void calc_smooth(struct csac_filter_data *cfd)
 }
 
 /*
-* Returns 0 if abs(phase_current) is bigger
+* Returns 1 if abs(phase_current) is bigger
 */
 int fast_timing_filter(int phase_current, int phase_limit)
 {
     if(abs(phase_current) > phase_limit){
-        return 0;
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 /*
-* Returns 0 if abs(cfd->steer_current - cfd->steer_prediction) is bigger
+* Returns 1 if abs(cfd->steer_current - cfd->steer_prediction) is bigger
 */
 int freq_cor_filter(struct csac_filter_data *cfd)
 {
     if ( abs(cfd->steer_current - cfd->steer_prediction) > cfd->cf_conf.steer_limit){
-        return 0;
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 static void update_prediction(struct csac_filter_data *cfd)
@@ -169,12 +171,17 @@ int init_csac_filter(struct csac_filter_data *cfd, char *telemetry)
         cfd->steer_smooth_current = cfd->cf_conf.init_cfd_ssc;
         cfd->steer_smooth_today = cfd->cf_conf.init_cfd_sst;
         cfd->steer_smooth_previous = cfd->cf_conf.init_cfd_ssp;
+        cfd->steer_smooth_yesterday = cfd->cf_conf.init_cfd_ssy;
     
     /* Setting preliminary values, don't want to divide by zero */
     } else {
         cfd->steer_smooth_current = cfd->steer_current;
         cfd->steer_smooth_today = cfd->steer_smooth_current;
         cfd->steer_smooth_previous = cfd->steer_smooth_today;
+    }
+
+    if(cfd->cf_conf.warmup_days == 0){
+        cfd->new_day = 1;
     }
 
     return 1;
@@ -190,6 +197,44 @@ int update_csac_filter(struct csac_filter_data *cfd, char *telemetry)
 
     /* Calculate smoothed values */
     calc_smooth(cfd);
+
+    /* If current steer is bigger than the predicted limit */
+    if( abs(cfd->steer_current) > cfd->cf_conf.pred_limit){
+        
+        /* Allocating buffer for run_program() */
+        char program_buf[200];
+        memset(program_buf, '\0', 200);
+
+        /* Buffer for the prediction */ 
+        char pred_string[200];
+        memset(pred_string, '\0', 200);
+        sprintf(pred_string, "%lf", cfd->steer_prediction);
+
+        /* Buffer for the steer adjust command string */ 
+        char steer_com_string[200];
+        memset(steer_com_string, '\0', 200);
+        /* Building the string */
+        strcat(steer_com_string, "python query_csac.py FA");
+        strcat(steer_com_string, pred_string);
+
+        /* Print warning message */
+        fprintf(stderr,"CLOCK CONCISTENCY ALARM!\n");
+
+        /* Acquiring lock on CSAC serial*/
+        sem_wait(&(s_synch->csac_mutex));
+
+        /* Disabling disciplining */
+        run_command("python query_csac.py Md", program_buf);
+        fprintf(stderr, "Disabling CSAC disciplining: [%s]\n", program_buf);
+        memset(program_buf, '\0', 200);
+
+        /* Adjusting frequency according to the models prediction */
+        run_command(steer_com_string, program_buf);
+        fprintf(stderr, "Setting steer value %lf: [%s]\n", cfd->steer_prediction,program_buf);
+
+        /* Releasing lock on CSAC serial*/
+        sem_post(&(s_synch->csac_mutex));
+    }
 
     /* Updating prediction if 24 hours has passed since the last update */
     if(cfd->new_day == 1) {
@@ -244,7 +289,7 @@ static void initialize_config(struct config_map_entry *conf_map, struct csac_fil
     conf_map[5].modifier = FORMAT_DOUBLE;
     conf_map[5].destination = &cf_conf->init_cfd_sst;
 
-    conf_map[6].entry_name = CONFIG_INIT_SSY;
+    conf_map[6].entry_name = CONFIG_INIT_SSP;
     conf_map[6].modifier = FORMAT_DOUBLE;
     conf_map[6].destination = &cf_conf->init_cfd_ssp;
 
@@ -263,6 +308,14 @@ static void initialize_config(struct config_map_entry *conf_map, struct csac_fil
     conf_map[10].entry_name = CONFIG_WARMUP_DAYS;
     conf_map[10].modifier = FORMAT_INT;
     conf_map[10].destination = &cf_conf->warmup_days;
+
+    conf_map[11].entry_name = CONFIG_INIT_SSY;
+    conf_map[11].modifier = FORMAT_DOUBLE;
+    conf_map[11].destination = &cf_conf->init_cfd_ssy;
+
+    conf_map[12].entry_name = CONFIG_PRED_LIMIT;
+    conf_map[12].modifier = FORMAT_DOUBLE;
+    conf_map[12].destination = &cf_conf->pred_limit;
 }
 
 int start_csac_filter(struct csac_filter_data *cfd)

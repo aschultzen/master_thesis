@@ -21,6 +21,7 @@ def main_routine():
     	telemetry_len = len(telemetry)
 
     print(telemetry)
+    ser.close()
     log_file.write(telemetry + "\n")	
 if __name__ == '__main__':
     main_routine()

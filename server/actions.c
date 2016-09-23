@@ -496,8 +496,6 @@ int query_csac(char *query, char *buffer)
     strcat(command, CSAC_SCRIPT_COMMAND);
     strcat(command, query);
 
-    printf("Running command %s\n", command);
-
     /* Acquiring lock*/
     sem_wait(&(s_synch->csac_mutex));
     
