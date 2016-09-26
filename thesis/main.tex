@@ -91,44 +91,19 @@ Here goes foreword
 % Chapter about the csac and it's connectivity?
 
 \chapter{Method}
-\section{Choice of hardware}
-
-
-\section{Data acquisition}
-In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the CSAC will correct it's frequency based on either a 1 PPS (Pulse per second) signal or 10 MHz signal. The Ublox-M8T GPS receiver was specifically designed for timing purposes and was used in this instance to provide the 1 PPS signal for disciplining purposes. A similar approach was used in order to collect GPS data. Data from two Ublox-M8T was gathered over the same time period as the data gathered from the CSAC. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the CSAC. It also provided valuable data that could be used to tune the spoofing detection algorithms in the CSAC SMACC. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the receivers and the CSAC (\ref{CLS})
-
 \section{SMACC software programming}
 
 \subsection{Intro}
-The software that makes the SMACC smart, consists of multiple modules. There is a server that manages connection and acts as an interface to the system as a whole. There is a client that connects to the server and relays relevant GPS data and finally, the software running on the micro-controller embedded in the CSAC. The latter is of course not made by us, but paramount in order for our proposal to work. In this chapter, these different parts or modules will be explained.
-
+% Make sure that this is true!
 \subsection{Choice of language}
-The SMACC software was written in C99. This might seem like a strange choice when given alternatives like C++, Java or Python, but C99 offered the following for me:
-\begin{itemize}
-  \item Better portability than C11
-  \item More modern than C89
-  \item Efficient and fast
-  \item Opportunity for me to learn something new
-\end{itemize}
-The three first points probably makes perfect sense, but to me it was just as important that i learned a new and exciting language. 
+The SMACC software was originally planned to be written in Java since this was my most fluent programming language. Java is great language, it's object oriented, it has a garbage collector and a lot of useful libraries. As development started, it quickly became apparent that some parts of the code would be performance critical and that portability really wasn't that important anyway. The platform was already decided and there was no reason to believe that it would change in the near future. As we all know, premature optimization is the root of all evil. Being reluctant to commit a deadly programming sin, i decided to look at other languages. Since performance was a concern, Python was also quickly dismissed as an option. C++ would probably have been the best choice, but having never written anything in C before, made it sound more exciting and a nice opportunity to learn something new. During the planning phase of SMACC development, raspbian-2015-05-07 was the latest build. It came with GCC 4.6 which only had experimental support for C11(\cite{GCC11}), this meant that C99 was the safest choice. 
 
-\subsection{The client software}
-The client software takes the servers IP and port as parameter. It then loads its configuration file and reads the path to the connected GPS receiver and an ID number. The GPS receiver is used to fetch GPS data and the ID number is used to identify itself for the server. It then parses the NMEA data it receives and relays the relevant data to the server. 
+% Insert graph showing spread in GPS data
+\subsection{Client-server model}
+Originally, the SMACC software was planned to be a simple program running a RASPI with GPS receivers connected to it through the USB ports. After having collected a considerable amount of data (\ref{data_aquisition}) it became obvious that the two GPS receivers probably should be placed at a distance of at least X meter from each other. This also meant that long coaxial cables had to be made. I proposed to instead change the plans for the SMACC software to use a Client-server model where each GNSS receiver had a RASPI attached and could be viewed as a single unit, or "sensor". The RASPI's connected to the GNSS receivers would not do any heavy lifting, but instead work as network card with a completely overkill Linux system attached. This way, a sensor could communicate with the SMACC software, now a "server", over TCP/IP and thus be placed much farther away. This also removed the restrictions on possible number of GNSS receivers as one would eventually run out of USB ports.  
 
-\subsection{The server}
-The server follows a standard web server-like pattern:
-\begin{itemize}
-  \item Wait for connections
-  \item Fork out a new process for the new connection
-  \item Repeat
-\end{itemize}
-However, the similarities end there. The servers job can be divided into four parts:
-\begin{itemize}
-  \item Manage connections
-  \item Handle information received from clients (state)
-  \item Process information received from clients
-  \item Raise alarm, trigger event etc.
-\end{itemize}
+\subsubsection{The client}
+The sensor\_client software is a simple program that reads from the GNSS receivers and "looks" for lines starting with either \texttt{\$GNRMC} or \texttt{\$GNGGA}. %Continue here
 
 \subsection{Components}
 
@@ -152,7 +127,8 @@ The example over shows how shared memory is allocated. The observant reader will
 Write about the CSAC and the serial communication. Perhaps mention the how the communication between the server and the CSAC works?
 
 \subsection{Detection algorithms: Filters}
-Write about our filters.
+\section{Data acquisition}\label{data_aquisition}
+In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the CSAC will correct it's frequency based on either a 1 PPS (Pulse per second) signal or a 10 MHz signal. A similar approach was used in order to collect GPS data. Data from two u-blox M8T was gathered over the same time period as the data gathered from the CSAC. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the CSAC. It also provided valuable data that could be used to tune the spoofing detection algorithms in the CSAC SMACC. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the receivers and the CSAC (\ref{CLS})
 
 \subsubsection{Clock Model}
 Write about Harald's clock model
