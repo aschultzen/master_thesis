@@ -8,6 +8,8 @@
 #define PRINT_AVG_DIFF_HEADER "ID     LAT        LON       ALT       SPEED\n"
 #define DATADUMP_EXTENSION ".bin"
 #define DATADUMP_HUMAN_EXTENSION ".txt"
+#define RDF_HEADER "\nREF_DEV_FILTER DATA\n"
+#define CSAC_SCRIPT_COMMAND "python query_csac.py "
 
 /* ERRORS */
 #define ERROR_APPEND_TOO_LONG "ERROR: TEXT TO APPEND TOO LONG\n"
@@ -18,6 +20,18 @@
 #define ERROR_FOPEN "Failed to open file, aborting.\n"
 #define ERROR_UPDATE_WARMUP_ILLEGAL "Warm-up time value has to be greater than 0!\n"
 #define ERROR_CSAC_FAILED "Communication with CSAC failed!\n"
+
+/* LOAD_REF_DEV_DATA */
+#define REF_DEV_FILENAME "ref_dev_sensor"
+#define ALT_REF "alt_ref:"
+#define LON_REF "lon_ref:"
+#define LAT_REF "lat_ref:"
+#define SPEED_REF "speed_ref:"
+#define ALT_DEV "alt_dev:"
+#define LON_DEV "lon_dev:"
+#define LAT_DEV "lat_dev:"
+#define SPEED_DEV "speed_dev:"
+#define LOAD_REF_DEV_DATA_ENTRIES 8
 
 /* HELP */
 #define HELP "\n"\
@@ -46,6 +60,10 @@
 " LOADDATA     | LD    | ID & FILE | Loads NMEA of FILE into sensor ID\n"\
 "--------------------------------------------------------------------------------\n"\
 " QUERYCSAC    | QC    | COMMAND   | Queries the CSAC with parameter COMMAND\n"\
+"--------------------------------------------------------------------------------\n"\
+" LOADRFDATA   | LRFD  | ID        | Loads REF_DEV_FILTER data into clint<ID>\n"\
+"--------------------------------------------------------------------------------\n"\
+" PRINTCFD     | PFD   |           | Prints CSAC filter data\n"\
 "--------------------------------------------------------------------------------\n"\
 
 /* SIZES */
@@ -104,7 +122,7 @@ void print_clients(struct client_table_entry *monitor)
         }
 
         if(client_list_iterate->client_type == SENSOR) {
-            double elapsed_warmup = difftime(time(NULL), client_list_iterate->warmup_started);
+            double elapsed_warmup = difftime(time(NULL), client_list_iterate->fs.mmf.warmup_started);
             time_left = s_conf->warm_up_seconds - elapsed_warmup;
         } else {
             time_left = 0;
@@ -241,12 +259,99 @@ void print_avg_diff(struct client_table_entry *client)
     }
 }
 
+static int get_pfd_string(char *buffer, int buf_len)
+{
+    memset(buffer, '\0',buf_len);
+    int snprintf_status = snprintf( buffer, 1000,
+                                "Phase:                     %lf\n\n" \
+                                "T current:                 %lf\n" \
+                                "T current (smooth):        %lf\n" \
+                                "T previous (smooth):       %lf\n" \
+                                "T today (smooth):          %lf\n" \
+                                "T yesterday (smooth):      %lf\n\n" \
+                                "Steer current:             %lf\n" \
+                                "Steer current (smooth):    %lf\n" \
+                                "Steer previous (smooth):   %lf\n\n" \
+                                "Steer today (smooth):      %lf\n" \
+                                "Steer yesterday (smooth):  %lf\n\n" \
+                                "Steer prediction:          %lf\n\n" \
+                                "MJD today:                 %lf\n" \
+                                "Days passed since startup: %d\n\n" \
+				"Discipline status:         %d\n" \
+				"Fast timing filter status  %d\n" \
+				"Freq corr. filter status   %d\n\n",
+                                cfd->phase_current,
+                                cfd->t_current,
+                                cfd->t_smooth_current,
+                                cfd->t_smooth_previous,
+                                cfd->t_smooth_today,
+                                cfd->t_smooth_yesterday,
+                                cfd->steer_current,
+                                cfd->steer_smooth_current,
+                                cfd->steer_smooth_previous,
+                                cfd->steer_smooth_today,
+                                cfd->steer_smooth_yesterday,
+                                cfd->steer_prediction,
+                                cfd->today_mjd,
+                                cfd->days_passed,
+				cfd->discok,
+				cfd->ftf_status,
+				cfd->fqf_status);
+    return snprintf_status;
+}
+
+void print_cfd(struct client_table_entry *monitor, int update_count)
+{
+    int buf_len = 1000;
+    char buffer [buf_len];
+    int counter = 0;
+
+    if(update_count == 0){
+        update_count = 1;
+    }
+
+    while(counter < update_count){
+        get_pfd_string(buffer, buf_len);
+        s_write(&(monitor->transmission), buffer, strlen(buffer));
+        counter++;
+        sleep(1);
+    }
+}
+
+int dump_cfd(char *path)
+{
+    int buf_len = 1000;
+    char buffer[buf_len];
+
+    /* Formating string with CSAC filter data */
+    get_pfd_string(buffer, buf_len);
+
+    /* Opening and writing to file */
+    FILE *cfd_file;
+    cfd_file = fopen(path, "w+");
+
+    if(!cfd_file) {
+        t_print("dump_cfd: %s: %s",ERROR_FOPEN, path);
+        return 0;
+    }
+
+    if(!fprintf(cfd_file,"%s", buffer) ){
+        t_print(ERROR_FWRITE);
+        return 0;
+    }
+
+    if(fclose(cfd_file)) {
+        t_print(ERROR_FCLOSE);
+    }
+    return 1;
+}
+
 
 /* Restart WARMUP procedure */
 void restart_warmup(struct client_table_entry* client)
 {
-    client->warmup = 1;
-    client->warmup_started = time(NULL);
+    client->fs.mmf.warmup = 1;
+    client->fs.mmf.warmup_started = time(NULL);
     client->ready = 0;
     t_print("Sensor %d warmup restarted\n", client->client_id);
 }
@@ -266,7 +371,7 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
         return 0;
     }
 
-    if(!fwrite(&client->nmea, sizeof(struct nmea_container), 1, bin_file)){
+    if(!fwrite(&client->nmea, sizeof(struct nmea_container), 1, bin_file)) {
         t_print(ERROR_FWRITE);
         return 0;
     }
@@ -275,7 +380,7 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
         t_print(ERROR_FCLOSE);
     }
 
-    if(dump_human_read){
+    if(dump_human_read) {
         /* Dumping humanly readable data */
         FILE *h_dump;
         char h_name[strlen(filename) + strlen(DATADUMP_HUMAN_EXTENSION)];
@@ -286,10 +391,14 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
 
         fprintf(h_dump, "Sensor Server dumpfile created for client %d\n", client->client_id);
 
+        /*
+        * Dumping all from NMEA container
+        * after raw_rmc and including speed_disturbed
+        */
         int inner_counter = 0;
         int outer_counter = 0;
         double *data = &client->nmea.lat_current;
- 
+
         fprintf(h_dump,DUMPDATA_HEADER);
         while(outer_counter < 4) {
             while(inner_counter < 7) {
@@ -297,9 +406,21 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
                 data++;
                 inner_counter++;
             }
-            fprintf(h_dump, "%s", "\n");
+            fprintf(h_dump, "%f", *data);
             inner_counter = 0;
             outer_counter++;
+        }
+
+        /*
+        * Dumping ref_dev_data
+        */
+        fprintf(h_dump,DUMPDATA_HEADER);
+        inner_counter = 0;
+        double *rdf = &client->fs.rdf.rdd.alt_ref;
+        while(inner_counter < 8) {
+            fprintf(h_dump, "%lf \n",*rdf);
+            rdf++;
+            inner_counter++;
         }
 
         if(fclose(h_dump)) {
@@ -309,27 +430,29 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
     return 1;
 }
 
+/* Print list of dumped data */
 int listdumps(struct client_table_entry* monitor)
 {
-  DIR *dp;
-  struct dirent *ep;
+    DIR *dp;
+    struct dirent *ep;
 
-  dp = opendir ("./");
-  if(dp != NULL){
-      while ( (ep = readdir(dp)) ){
-        if(strstr(ep->d_name,DATADUMP_EXTENSION) != NULL){
-            s_write(&(monitor->transmission),ep->d_name, strlen(ep->d_name));
-            s_write(&(monitor->transmission),NEW_LINE, sizeof(NEW_LINE));
+    dp = opendir ("./");
+    if(dp != NULL) {
+        while ( (ep = readdir(dp)) ) {
+            if(strstr(ep->d_name,DATADUMP_EXTENSION) != NULL) {
+                s_write(&(monitor->transmission),ep->d_name, strlen(ep->d_name));
+                s_write(&(monitor->transmission),NEW_LINE, sizeof(NEW_LINE));
+            }
         }
-      }
-      closedir (dp);
-    }else{
-    return 0;
-  }
+        closedir (dp);
+    } else {
+        return 0;
+    }
 
-  return 1;
+    return 1;
 }
 
+/* Load dumped data into the client */
 int loaddata(struct client_table_entry* target, char *filename)
 {
     FILE *dump_file;
@@ -352,7 +475,7 @@ int loaddata(struct client_table_entry* target, char *filename)
 
     t_print("Read %d/%d bytes successfully from %s\n", f_s, file_len,filename);
 
-    if(f_s == 0){
+    if(f_s == 0) {
         t_print(ERROR_FREAD);
         return ERROR_CODE_READ_FAILED;
     }
@@ -364,36 +487,107 @@ int loaddata(struct client_table_entry* target, char *filename)
     return 1;
 }
 
-int query_csac(struct client_table_entry *monitor, char *query)
+int query_csac(char *query, char *buffer)
 {
-    /* Connect to CSAC */
-    s_data->csac_fd = open_serial(s_conf->csac_path, CSAC);
-    if(s_data->csac_fd == -1){ 
-        t_print("Failed to connect to CSAC\n");
-        exit(0);
+    /* Building command */
+    int command_size = MAX_PARAMETER_SIZE + sizeof(CSAC_SCRIPT_COMMAND);
+    char command[command_size];
+    memset(command,'\0', command_size);
+    strcat(command, CSAC_SCRIPT_COMMAND);
+    strcat(command, query);
+
+    /* Acquiring lock*/
+    sem_wait(&(s_synch->csac_mutex));
+    
+    /* Running command */
+    if(!run_command(command, buffer)){
+        /* Releasing lock */
+        sem_post(&(s_synch->csac_mutex));
+        return 0;
     }
 
-    /* Initializing buffer for CSAC query */
-    int buf_size = 220;
-    char buffer[buf_size];
-    memset(buffer,'\0' ,buf_size);
+    /* Releasing lock */
+    sem_post(&(s_synch->csac_mutex));
+    return 1;
+}
 
-    /* Quering CSAC */
-    int serial_query_r = serial_query(s_data->csac_fd, query,buffer, buf_size);
 
-    /* Checking return value */
-    if(!serial_query_r){
-        s_write(&(monitor->transmission), ERROR_CSAC_FAILED, sizeof(ERROR_CSAC_FAILED));
+int client_query_csac(struct client_table_entry *monitor, char *query)
+{
+    char buffer[MAX_PARAMETER_SIZE];
+    memset(buffer, '\0', MAX_PARAMETER_SIZE);
+
+    if(!query_csac(query, buffer)){
+        return 0;
     }
 
-    /* Closing file descriptior */
-    close(s_data->csac_fd);
+    if(!s_write(&(monitor->transmission), buffer, strlen(buffer))){
+        return 0;
+    }
+    return 1;
+}
 
-    /*
-    * The data returned from serial query is not formatted, hence the
-    * buffer+2 to avoid printing uncesseray CSAC specific output
-    */
+/*
+* Load ref_dev data into the client struct.
+* Re-using the config loader.
+* This whole function needs some work! Magic numbers beware.
+*/
+int load_ref_def_data(struct client_table_entry* target)
+{
+    /* Request lock */
+    sem_wait(&(s_synch->client_list_mutex));
+    sem_wait(&(s_synch->ready_mutex));
+    struct config_map_entry conf_map[LOAD_REF_DEV_DATA_ENTRIES];
 
-    s_write(&(monitor->transmission), buffer+2, str_len_u(buffer, buf_size));
-    return 0;
+    int filename_length = strlen(REF_DEV_FILENAME) + 10;
+    char filename[filename_length];
+    memset(filename,'\0' ,filename_length);
+    strcpy(filename, REF_DEV_FILENAME);
+
+    /* Way overkill for int to string, but still. */
+    char id[10];
+    memset(id,'\0' ,10);
+    sprintf(id, "%d", target->client_id);
+    strcat(filename, id);
+
+    conf_map[0].entry_name = ALT_REF;
+    conf_map[0].modifier = FORMAT_DOUBLE;
+    conf_map[0].destination = &target->fs.rdf.rdd.alt_ref;
+
+    conf_map[1].entry_name = LON_REF;
+    conf_map[1].modifier = FORMAT_DOUBLE;
+    conf_map[1].destination = &target->fs.rdf.rdd.lon_ref;
+
+    conf_map[2].entry_name = LAT_REF;
+    conf_map[2].modifier = FORMAT_DOUBLE;
+    conf_map[2].destination = &target->fs.rdf.rdd.lat_ref;
+
+    conf_map[3].entry_name = SPEED_REF;
+    conf_map[3].modifier = FORMAT_DOUBLE;
+    conf_map[3].destination = &target->fs.rdf.rdd.speed_ref;
+
+    conf_map[4].entry_name = ALT_DEV;
+    conf_map[4].modifier = FORMAT_DOUBLE;
+    conf_map[4].destination = &target->fs.rdf.rdd.alt_dev;
+
+    conf_map[5].entry_name = LON_DEV;
+    conf_map[5].modifier = FORMAT_DOUBLE;
+    conf_map[5].destination = &target->fs.rdf.rdd.lon_dev;
+
+    conf_map[6].entry_name = LAT_DEV;
+    conf_map[6].modifier = FORMAT_DOUBLE;
+    conf_map[6].destination = &target->fs.rdf.rdd.lat_dev;
+
+    conf_map[7].entry_name = SPEED_DEV;
+    conf_map[7].modifier = FORMAT_DOUBLE;
+    conf_map[7].destination = &target->fs.rdf.rdd.speed_dev;
+
+    t_print("Loading filter data from: %s\n", filename);
+
+    int load_config_status = load_config(conf_map, filename, LOAD_REF_DEV_DATA_ENTRIES);
+
+    /* releasing lock */
+    sem_post(&(s_synch->ready_mutex));
+    sem_post(&(s_synch->client_list_mutex));
+    return load_config_status;
 }

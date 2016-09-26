@@ -3,7 +3,7 @@ echo Resetting ttyACM0
 stty -F /dev/ttyACM0 icanon
 echo Done
 
-echo Resetting ttyS0
-stty -F /dev/ttyS0 icanon
+echo Resetting ttyACM1
+stty -F /dev/ttyACM1 icanon
 echo Done
 

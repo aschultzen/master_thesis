@@ -18,9 +18,9 @@
 #define ERROR_NO_CLIENT "ERROR: No such client\n"
 #define ERROR_NO_FILENAME "ERROR: No FILENAME specified\n"
 #define MAX_FILENAME_SIZE 30
-#define ID_AS_STRING_MAX 4
+#define ID_AS_STRING_MAX 10
 
- /* Errors */
+/* Errors */
 #define ERROR_CODE_NO_FILE -1
 #define ERROR_CODE_READ_FAILED -2
 #define ERROR_NO_FILE "ERROR:No such file\n"
@@ -37,6 +37,21 @@ struct command_code {
     int id_parameter;
 };
 
+/*!@struct*/
+/*!@brief Data used by the red_dev_filter.
+* Read from file.
+*/
+struct ref_dev_data {
+    double alt_ref;
+    double lon_ref;
+    double lat_ref;
+    double speed_ref;
+    double alt_dev;
+    double lon_dev;
+    double lat_dev;
+    double speed_dev;
+};
+
 /*
 * CLIENT TABLE STRUCT
 *
@@ -51,6 +66,33 @@ struct command_code {
 * are parsed by command parser.
 */
 
+struct disturbed_values{
+    int lat_disturbed;
+    int lon_disturbed;
+    int alt_disturbed;
+    int speed_disturbed;
+};
+
+struct ref_dev{
+    struct ref_dev_data rdd;
+    int moved;
+    int was_moved;
+    struct disturbed_values dv;
+};
+
+struct min_max{
+    int moved;
+    int was_moved;
+    int warmup;
+    struct disturbed_values dv;
+    time_t warmup_started; /** When warm-up of SENSOR started */
+};
+
+struct filters {
+    struct min_max mmf;
+    struct ref_dev rdf;
+};
+
 /*!@struct*/
 /*!@brief Contain information about every client that is connected.
 */
@@ -62,15 +104,13 @@ struct client_table_entry {
     struct nmea_container nmea;
     pid_t pid; /** The process ID */
     time_t timestamp; /** When last analyzed */
-    time_t warmup_started; /** When warm-up of SENSOR started */
     int client_id; /** Clients ID */
+    char client_id_string[ID_AS_STRING_MAX];
     int client_type; /** Client type, SENSOR or MONITOR */
-    int warmup; /** Currently warming up status */
-    int moved; /** Moved status */
     int ready;	/** Ready status */
-    int was_moved;	/** Moved when last checked. Used to check if returned */
     int marked_for_kick; /** Marked for kicked at next opportunity */
     char ip[INET_ADDRSTRLEN]; /** Clients IP address */
+    struct filters fs;
 };
 
 /* Server info shared with processes */
@@ -86,6 +126,7 @@ struct server_data {
 /* Synchronization elements shared with processes */
 struct server_synchro {
     sem_t ready_mutex;
+    sem_t csac_mutex;
     sem_t client_list_mutex;
     volatile int ready_counter;
 };

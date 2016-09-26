@@ -8,17 +8,17 @@
 #define ERROR_ILLEGAL_COMMAND "ERROR:Illegal command\n"
 #define ERROR_NO_ID "ERROR:Client not identified\n"
 #define ERROR_ID_IN_USE "ERROR:ID in use\n"
-#define ERROR_ILLEGAL_MESSAGE_SIZE "ERROR:Illegal message size\n"
+#define ERROR_ILLEGAL_MESSAGE_SIZE "\rERROR:Illegal message size\n"
 #define ERROR_WARMUP_NOT_SENSOR "ERROR:Warm-up only applies to sensors\n"
 #define ERROR_DUMPDATA_FAILED "ERROR:Failed to dump data\n"
 #define ERROR_LOADDATA_FAILED "ERROR:Failed to load data\n"
 #define ERROR_NO_COMMAND  "ERROR:No command specified\n"
+#define ERROR_LRFD_LOAD_FAILED "ERROR:Failed to laod REF_DEV_FILTER data from file\n"
 
 static int nmea_ready();
 static void extract_nmea_data(struct client_table_entry *cte);
 static void calculate_nmea_average(struct client_table_entry *cte);
 static void calculate_nmea_diff(struct client_table_entry *cte);
-static void verify_warm_up(struct client_table_entry *cte);
 static void verify_warm_up(struct client_table_entry *cte);
 static void warm_up(struct client_table_entry *cte);
 static int set_timeout(struct client_table_entry *target, struct timeval h_timeout);
@@ -105,20 +105,20 @@ static void calculate_nmea_diff(struct client_table_entry *cte)
 /* Check if a client is still warming up */
 static void verify_warm_up(struct client_table_entry *cte)
 {
-    if(cte->warmup_started) {
-        double elapsed = difftime(time(NULL), cte->warmup_started);
-        double percent = (elapsed / s_conf->warm_up_seconds) * 100;
+    if(cte->fs.mmf.warmup_started) {
+        double elapsed = difftime(time(NULL), cte->fs.mmf.warmup_started);
+        /*double percent = (elapsed / s_conf->warm_up_seconds) * 100;
 
         if((int)percent % 10 == 0) {
             t_print("Client %d Warming up, %d%%\n", cte->client_id, (int)percent);
-        }
+        }*/
 
         if(elapsed >= s_conf->warm_up_seconds) {
             t_print("Client %d, warm-up finished!\n", cte->client_id);
-            cte->warmup = 0;
+            cte->fs.mmf.warmup = 0;
         }
     } else {
-        cte->warmup_started = time(NULL);
+        cte->fs.mmf.warmup_started = time(NULL);
     }
 }
 
@@ -353,6 +353,35 @@ static int parse_input(struct client_table_entry *cte)
         cte->cm.code = CODE_QUERYCSAC;
     }
 
+    /* PRINT_LOADRFDATA */
+    else if(strstr((char*)incoming, PROTOCOL_LOADRFDATA ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_LOADRFDATA) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADRFDATA)*(sizeof(char))), length);
+        cte->cm.code = CODE_LOADRFDATA;
+    }
+
+    /* PRINT_LOADRFDATA_SHORT */
+    else if(strstr((char*)incoming, PROTOCOL_LOADRFDATA_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_LOADRFDATA_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADRFDATA_SHORT)*(sizeof(char))), length);
+        cte->cm.code = CODE_LOADRFDATA;
+    }
+
+    /* PROTOCOL_PRINTCFD */
+    else if(strstr((char*)incoming, PROTOCOL_PRINTCFD ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_PRINTCFD) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINTCFD)*(sizeof(char))), length);
+        cte->cm.code = CODE_PRINTCFD;
+        printf("PRINTCFD\n");
+    }
+
+    /* PROTOCOL_PRINTCFD_SHORT */
+    else if(strstr((char*)incoming, PROTOCOL_PRINTCFD_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_PRINTCFD_SHORT) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINTCFD_SHORT)*(sizeof(char))), length);
+        cte->cm.code = CODE_PRINTCFD;
+    }
+
     else {
         return 0;
     }
@@ -410,6 +439,7 @@ static int respond(struct client_table_entry *cte)
                 return 0;
             }
 
+            /* Checking to see if the ID is in use */
             struct client_table_entry* client_list_iterate;
             list_for_each_entry(client_list_iterate, &client_list->list, list) {
                 if(client_list_iterate->client_id == cte->cm.id_parameter) {
@@ -420,6 +450,7 @@ static int respond(struct client_table_entry *cte)
                 }
             }
 
+            /* Determining role */
             if(cte->cm.id_parameter < 0) {
                 cte->client_type = MONITOR;
                 struct timeval timeout = {MONITOR_TIMEOUT, 0};
@@ -431,10 +462,20 @@ static int respond(struct client_table_entry *cte)
                 s_data->number_of_sensors++;
                 sem_post(&(s_synch->client_list_mutex));
             }
-	    /* Everything is good, setting id and responding*/
-    	    s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
+            /* Everything is good, setting id and responding*/
+            s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
             cte->client_id = cte->cm.id_parameter;
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
+
+            if(cte->client_type == SENSOR){
+                if(load_ref_def_data(cte)) {
+                    s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
+                    t_print("Loaded filter data for client %d\n", cte->client_id);
+                } else {
+                    s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED, sizeof(ERROR_LRFD_LOAD_FAILED));
+                }
+            }
+
             return 1;
         }
 
@@ -454,24 +495,44 @@ static int respond(struct client_table_entry *cte)
             /* Checking NMEA checksum */
             int rmc_checksum = calculate_nmea_checksum(cte->nmea.raw_rmc);
             int gga_checksum = calculate_nmea_checksum(cte->nmea.raw_gga);
+
+            /* Continue to filters if ok */
             if(rmc_checksum && gga_checksum) {
                 cte->timestamp = time(NULL);
                 cte->nmea.checksum_passed = 1;
                 extract_nmea_data(cte);
                 calculate_nmea_average(cte);
                 calculate_nmea_diff(cte);
-                if(cte->warmup) {
+
+                /* Checksums where OK, client marked ready */
+                cte->ready = 1;
+
+                /* Check if clients are in warm-up period */
+                if(cte->fs.mmf.warmup) {
                     verify_warm_up(cte);
                     warm_up(cte);
-                } else {
-                    cte->ready = 1;
-                    sem_wait(&(s_synch->ready_mutex));
-                    int ready = nmea_ready();
-                    if(ready) {
-                        analyze();
-                    }
-                    sem_post(&(s_synch->ready_mutex));
                 }
+
+                /* Acquiring ready-lock */
+                sem_wait(&(s_synch->ready_mutex));
+
+                /* Checking if the other clients are ready as well*/
+                int ready = nmea_ready();
+
+                /* If everyone is ready, process data */
+                if(ready) {
+                    /* Last process ready gets the job of analyzing the data */
+                    ref_dev_filter();
+
+                    if(!cte->fs.mmf.warmup) {
+                        /* Perform min_max filter check */
+                        min_max_filter();
+                    }
+                    /* Check the results of the filters */
+                    raise_alarm();
+                }
+                /* Releasing ready-lock */
+                sem_post(&(s_synch->ready_mutex));
             } else {
                 cte->nmea.checksum_passed = 0;
                 t_print("RMC and GGA received, checksum failed!\n");
@@ -484,6 +545,19 @@ static int respond(struct client_table_entry *cte)
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             } else {
                 print_location(cte, candidate);
+            }
+        }
+
+        else if(cte->cm.code == CODE_LOADRFDATA) {
+            struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
+            if(candidate == NULL) {
+                s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
+            } else {
+                if(load_ref_def_data(candidate)) {
+                    s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
+                } else {
+                    s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED, sizeof(ERROR_LRFD_LOAD_FAILED));
+                }
             }
         }
 
@@ -613,11 +687,14 @@ static int respond(struct client_table_entry *cte)
         }
 
         else if(cte->cm.code == CODE_QUERYCSAC) {
-            if(strlen(cte->cm.parameter) < 3){
+            if(strlen(cte->cm.parameter) < 3) {
                 s_write(&(cte->transmission), ERROR_NO_COMMAND, sizeof(ERROR_NO_COMMAND));
                 return 1;
             }
-            query_csac(cte, cte->cm.parameter);
+            client_query_csac(cte, cte->cm.parameter);
+        }
+        else if(cte->cm.code == CODE_PRINTCFD) {
+            print_cfd(cte, cte->cm.id_parameter);
         }
 
         else {
@@ -642,8 +719,13 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     /* Initializing structure, zeroing just to be sure */
     new_client->client_id = 0;
     new_client->transmission.session_fd = session_fd;
-    new_client->moved = 0;
-    new_client->was_moved = 0;
+
+    /* Zeroing out filters */
+    new_client->fs.mmf.moved = 0;
+    new_client->fs.rdf.moved = 0;
+    new_client->fs.mmf.was_moved = 0;
+    new_client->fs.rdf.was_moved = 0;
+
     new_client->marked_for_kick = 0;
     new_client->ready = 0;
 
@@ -654,8 +736,8 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     }
 
     /* Marked for warm up */
-    new_client->warmup = 1;
-    new_client->warmup_started = 0;
+    new_client->fs.mmf.warmup = 1;
+    new_client->fs.mmf.warmup_started = 0;
 
     /* Setting low values */
     new_client->nmea.lat_low = 9999.999999;

@@ -133,16 +133,45 @@ void set_warmup(struct client_table_entry *client, int value);
 
 /** @brief Loads NMEA data into the NMEA struct of a given client (target).
 *
-* @param target Pointer to the client whose NMEA data should be loaded 
+* @param target Pointer to the client whose NMEA data should be loaded
 * from file.
 * @param filename Pointer to the filename of the data file.
-*/ 
+*/
 int loaddata(struct client_table_entry* target,  char *filename);
 
-/** @brief Sends a COMMAND to the CSAC and prints the response back to the monitor
+/** @brief Uses the query_csac.py to communicate with the CSAC.
+*		   Stores the response in a buffer.
+*
+* @param buffer Buffer to store the response
+* @param query Command (query) to send to the CSAC.
+*/
+int query_csac(char *query, char *buffer);
+
+/** @brief Uses the query_csac.py to communicate with the CSAC
+*		   Prints the response from the CSAC back to the client
 *
 * @param monitor Monitor who made the request
 * @param query Command (query) to send to the CSAC.
-*/ 
-int query_csac(struct client_table_entry *monitor, char *query);
+*/
+int client_query_csac(struct client_table_entry *monitor, char *query);
+
+/** @brief Loads data for the REF_DEV_FILTER into the client.
+*
+* @param target Client to load the data into
+*/
+int load_ref_def_data(struct client_table_entry* target);
+
+/** @brief Prints the current state of the CSAC filter.
+*
+* @param monitor Monitor to print the data to.
+* @return Status of sprintf() used to build string.
+*/
+void print_cfd(struct client_table_entry *monitor, int update_count);
+
+/** @brief Dumps the state of the CSAC filter to file.
+*
+* @param Path to desired file to use.
+* @return 1 if successful, 0 else.
+*/
+int dump_cfd(char *path);
 #endif /* !ACTIONS_H */

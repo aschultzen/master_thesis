@@ -26,7 +26,7 @@
 #include "nmea.h"
 
 /* GENERAL */
-#define IO_BUFFER_SIZE MAX_PARAMETER_SIZE
+#define IO_BUFFER_SIZE MAX_PARAMETER_SIZE + MAX_COMMAND_SIZE
 
 struct transmission_s {
     int session_fd;

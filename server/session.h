@@ -9,7 +9,7 @@
 #define SESSION_H
 
 #include "sensor_server_commons.h"
-#include "analyzer.h"
+#include "filters.h"
 #include "actions.h"
 #include "sensor_server.h"
 

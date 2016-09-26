@@ -2,19 +2,18 @@
 
 void set_blocking (int fd, int should_block)
 {
-        struct termios tty;
-        memset (&tty, 0, sizeof tty);
-        if (tcgetattr (fd, &tty) != 0)
-        {
-                t_print("error %d from tggetattr", errno);
-                return;
-        }
+    struct termios tty;
+    memset (&tty, 0, sizeof tty);
+    if (tcgetattr (fd, &tty) != 0) {
+        t_print("error %d from tggetattr", errno);
+        return;
+    }
 
-        tty.c_cc[VMIN]  = should_block ? 1 : 0;
-        tty.c_cc[VTIME] = 100;            // 0.5 seconds read timeout
+    tty.c_cc[VMIN]  = should_block ? 1 : 0;
+    tty.c_cc[VTIME] = 100;            // 0.5 seconds read timeout
 
-        if (tcsetattr (fd, TCSANOW, &tty) != 0)
-                t_print ("error %d setting term attributes", errno);
+    if (tcsetattr (fd, TCSANOW, &tty) != 0)
+        t_print ("error %d setting term attributes", errno);
 }
 
 /*
@@ -56,10 +55,10 @@ int configure_gps_serial(int fd)
     return 0;
 }
 
-/* 
+/*
 * This function is pretty much identical
 * to configure_gps_serial. Consider removing
-* one of them 
+* one of them
 */
 int configure_csac_serial(int fd)
 {
@@ -82,15 +81,15 @@ int configure_csac_serial(int fd)
 
     /* Disable HW flow control */
     tty.c_cflag &= ~CRTSCTS;
-                            
+
     /* Enable the receiver and set local mode */
     tty.c_cflag |= CREAD | CLOCAL;
-    
+
     /* Disable SW flow control */
     tty.c_iflag &= ~(IXON | IXOFF | IXANY);
 
     /* Disable canonical input */
-    tty.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
+    tty.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 
     tty.c_oflag &= ~OPOST;
     tty.c_cc[VMIN] = 0;
@@ -112,17 +111,17 @@ int open_serial(char *portname, serial_device device)
     }
 
     switch(device) {
-        case GPS:
-            if(configure_gps_serial(fd) < 0) {
-                t_print("Serial config failed...\n");
-                return -1;
-            }
-        case CSAC:
-            if(configure_csac_serial(fd) < 0) {
-                set_blocking(fd, 1);
-                t_print("Serial config failed...\n");                
-                return -1;
-            }            
+    case GPS:
+        if(configure_gps_serial(fd) < 0) {
+            t_print("Serial config failed...\n");
+            return -1;
+        }
+    case CSAC:
+        if(configure_csac_serial(fd) < 0) {
+            set_blocking(fd, 1);
+            t_print("Serial config failed...\n");
+            return -1;
+        }
     }
     return fd;
 }
@@ -130,28 +129,35 @@ int open_serial(char *portname, serial_device device)
 int serial_query(int file_descriptor, char *query, char *buffer, int buf_len)
 {
     int write_status = write(file_descriptor, query, strlen(query));
-    if( write_status < 0){
+    if( write_status < 0) {
         t_print("Serial write failed\n");
         return -1;
     }
-
-    int write_status2 = write(file_descriptor, "\n\r", 2);
-    if( write_status2 < 0){
+    
+    memset(buffer, '\0', buf_len);
+    
+    /*int write_status2 = write(file_descriptor, "\xd\xa", 2);
+    if( write_status2 < 0) {
         t_print("Serial write failed\n");
         return -1;
-    }
+    }*/
 
-    usleep(100000);
+    // Note! There has to be a sleep.
+   usleep(30000);
 
     int counter = 0;
 
-    while(counter <= buf_len){
+    while(counter < buf_len) {
         char temp[1];
-        int read_status = read(file_descriptor, temp, 1);
-           if(temp[0] != 0x58 && temp[0] != 0x38){
-                buffer[counter] = temp[0];
-                counter++;
+        read(file_descriptor, temp, 1);
+        //printf("%#x ", temp[0]);
+        if(temp[0] != 0x58 && temp[0] != 0x38) {
+            buffer[counter] = temp[0];
+            counter++;
+            if(temp[0] == 0xa){
+                return counter;
             }
+        }
     }
     return counter;
 }

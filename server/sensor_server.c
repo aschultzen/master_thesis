@@ -1,7 +1,7 @@
 #include "sensor_server.h"
 
 /* VERSION */
-#define PROGRAM_VERSION "0.7a"
+#define PROGRAM_VERSION "0.8c"
 
 /* ERRORS */
 #define ERROR_MAX_CLIENTS_REACHED "CONNECTION REJECTED: MAXIMUM NUMBER OF CLIENTS REACHED\n"
@@ -32,13 +32,17 @@
 #define USAGE_PROGRAM_INTRO "Sensor_server: Server part of GPS Jamming/Spoofing system\n\n"
 #define USAGE_USAGE "Usage: %s [ARGS]\n\n"
 
-/* CONFIG */
+/* CONFIG CONSTANTS*/
+#define CONFIG_FILE_PATH "config.ini"
 #define CONFIG_SERVER_MAX_CONNECTIONS "max_clients:"
 #define CONFIG_SERVER_WARM_UP "warm_up:"
 #define CONFIG_SERVER_HUMANLY_READABLE "humanly_readable_dumpdata:"
-#define CONFIG_FILE_PATH "config.ini"
 #define CONFIG_CSAC_PATH "csac_serial_interface:"
-#define CONFIG_ENTRIES 4
+#define CONFIG_LOGGING "logging:"
+#define CONFIG_LOG_PATH "log_path:"
+#define CONFIG_CSAC_LOG_PATH "csac_log_path:"
+#define CONFIG_CSAC_LOGGING "csac_logging:"
+#define SERVER_CONFIG_ENTRIES 8
 
 /* Server data and stats */
 struct server_data *s_data;
@@ -54,6 +58,9 @@ struct client_table_entry *client_list;
 
 /* Pointer to shared memory containing config */
 struct server_config *s_conf;
+
+/* Pointer to shared CSAC_filter data */
+struct csac_filter_data *cfd;
 
 static void remove_client_by_pid(pid_t pid);
 void remove_client_by_id(int id);
@@ -214,6 +221,22 @@ static void initialize_config(struct config_map_entry *conf_map, struct server_c
     conf_map[3].entry_name = CONFIG_CSAC_PATH;
     conf_map[3].modifier = FORMAT_STRING;
     conf_map[3].destination = &s_conf->csac_path;
+
+    conf_map[4].entry_name = CONFIG_LOGGING;
+    conf_map[4].modifier = FORMAT_INT;
+    conf_map[4].destination = &s_conf->logging;
+
+    conf_map[5].entry_name = CONFIG_LOG_PATH;
+    conf_map[5].modifier = FORMAT_STRING;
+    conf_map[5].destination = &s_conf->log_path;
+
+    conf_map[6].entry_name = CONFIG_CSAC_LOG_PATH;
+    conf_map[6].modifier = FORMAT_STRING;
+    conf_map[6].destination = &s_conf->csac_log_path;
+
+    conf_map[7].entry_name = CONFIG_CSAC_LOGGING;
+    conf_map[7].modifier = FORMAT_INT;
+    conf_map[7].destination = &s_conf->csac_logging;
 }
 
 /*
@@ -225,14 +248,14 @@ static void start_server(int port_number)
     /* Initializing variables */
     int server_sockfd;
     struct sockaddr_in serv_addr;
-    struct config_map_entry conf_map[CONFIG_ENTRIES];
+    struct config_map_entry conf_map[SERVER_CONFIG_ENTRIES];
 
     /* Initializing config structure */
     s_conf = mmap(NULL, sizeof(struct server_config), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     initialize_config(conf_map, s_conf);
 
     /* Loading config */
-    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
+    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, SERVER_CONFIG_ENTRIES);
 
     /* Falling back to default if load_config fails */
     if(load_config_status) {
@@ -255,6 +278,10 @@ static void start_server(int port_number)
     s_synch = mmap(NULL, sizeof(struct server_synchro), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     sem_init(&(s_synch->ready_mutex), 1, 1);
     sem_init(&(s_synch->client_list_mutex), 1, 1);
+    sem_init(&(s_synch->csac_mutex), 1, 1);
+
+    /* Init pointer to shared CSAC_filter data */
+    cfd = mmap(NULL, sizeof(struct csac_filter_data), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
     if( &(s_synch->ready_mutex) == SEM_FAILED || &(s_synch->client_list_mutex) == SEM_FAILED) {
         t_print(ERROR_SEMAPHORE_CREATION_FAILED);
@@ -263,10 +290,13 @@ static void start_server(int port_number)
         exit(1);
     }
 
-    /* Initialize socket */
-    server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_sockfd < 0) {
-        die(62,ERROR_SOCKET_OPEN_FAILED);
+    
+    pid_t f_pid;
+    f_pid = fork();
+    if(f_pid == 0){
+        t_print("Forked out CSAC filter [%d]\n", getpid());
+        start_csac_filter(cfd);
+        _exit(0);
     }
 
     /* Registering the SIGINT handler */
@@ -289,6 +319,12 @@ static void start_server(int port_number)
     if (sigaction(SIGCHLD, &child_action, 0) == -1) {
         perror(0);
         exit(1);
+    } 
+    
+    /* Initialize socket */
+    server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_sockfd < 0) {
+        die(62,ERROR_SOCKET_OPEN_FAILED);
     }
 
     /*
@@ -317,7 +353,7 @@ static void start_server(int port_number)
 
     int session_fd = 0;
     t_print(SERVER_RUNNING);
-    while (!done) {
+    while (!done) {       
         t_print(WAITING_FOR_CONNECTIONS);
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
@@ -348,12 +384,19 @@ static void start_server(int port_number)
             }
         }
     }
-    /* Freeing and closing */
+
+    /* Destroying semaphores */
+    sem_destroy(&(s_synch->csac_mutex));
+    sem_destroy(&(s_synch->ready_mutex));
+    sem_destroy(&(s_synch->client_list_mutex));
+
+    /* Freeing */
     munmap(client_list, sizeof(struct client_table_entry));
     munmap(s_data, sizeof(struct server_data));
-    sem_close(&(s_synch->ready_mutex));
-    sem_close(&(s_synch->client_list_mutex));
+    munmap(cfd, sizeof(struct csac_filter_data));
     munmap(s_synch, sizeof(struct server_synchro));
+
+    /* Closing server FD */
     close(server_sockfd);
     t_print(SERVER_STOPPED);
 }

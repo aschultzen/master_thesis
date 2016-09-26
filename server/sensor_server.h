@@ -8,11 +8,14 @@
 #ifndef SENSOR_SERVER_H
 #define SENSOR_SERVER_H
 
+#define PATH_LENGTH_MAX 1000
+
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "session.h"
 #include "serial.h"
 #include "sensor_server_commons.h"
+#include "csac_filter.h"
 
 /*!@struct*/
 /*!@brief Contains configuration values for the server
@@ -21,7 +24,11 @@ struct server_config {
     int max_clients;
     int warm_up_seconds;
     int human_readable_dumpdata;
-    char csac_path[100];
+    char csac_path[PATH_LENGTH_MAX];
+    int logging;
+    char log_path[PATH_LENGTH_MAX];
+    int csac_logging;
+    char csac_log_path[PATH_LENGTH_MAX];
 };
 
 /*
@@ -35,6 +42,7 @@ extern struct client_table_entry *client_list;
 extern struct server_data *s_data;
 extern struct server_synchro *s_synch;
 extern struct server_config *s_conf;
+extern struct csac_filter_data *cfd;
 
 /** @brief Removes a client whose ID matches parameter
  *

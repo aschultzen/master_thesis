@@ -1,5 +1,13 @@
 #include "utils.h"
 
+/* These are also in action.c, duplicates are no solution */
+#define ERROR_FCLOSE "Failed to close file, out of space?\n"
+#define ERROR_FWRITE "Failed to write to file, aborting.\n"
+#define ERROR_FREAD "Failed to read file, aborting.\n"
+#define ERROR_FOPEN "Failed to open file, aborting.\n"
+
+#define MJD_SCRIPT_PATH "./get_mjd.py"
+
 void die (int line_number, const char * format, ...)
 {
     va_list vargs;
@@ -67,14 +75,14 @@ void t_print(const char* format, ...)
 
 /*
 * Loads config.
-* Returns: -1 fail | 0 success
+* Returns: 0 fail | 1 success
 */
 int load_config(struct config_map_entry *cme, char *path, int entries)
 {
     FILE *config_file;
     long file_size;
     char *input_buffer;
-    char temp_buffer[100];
+
     int status = 0;
 
     config_file=fopen(path, "r");
@@ -86,6 +94,8 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
     fseek(config_file , 0L , SEEK_END);
     file_size = ftell(config_file);
     rewind(config_file);
+
+    char temp_buffer[file_size];
 
     /* Alocating memory for the file buffer */
     input_buffer = calloc( 1, file_size+1 );
@@ -105,12 +115,12 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
 
     int counter = 0;
     while(counter < entries) {
+	memset(temp_buffer, '\0',file_size);
         char *search_ptr = strstr(input_buffer,cme->entry_name);
         if(search_ptr != NULL) {
             int length = strlen(search_ptr) - strlen(cme->entry_name);
             memcpy(temp_buffer, search_ptr+(strlen(cme->entry_name)*(sizeof(char))), length);
             status = sscanf(temp_buffer, cme->modifier, cme->destination);
-
             if(status == EOF || status == 0) {
                 fclose(config_file);
                 free(input_buffer);
@@ -126,7 +136,8 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
     return 1;
 }
 
-int calculate_nmea_checksum(char *nmea) {
+int calculate_nmea_checksum(char *nmea)
+{
     char checksum = 0;
     int i;
     int received_checksum = 0;
@@ -163,8 +174,7 @@ int calculate_nmea_checksum(char *nmea) {
     /* Comparing checksum */
     if(received_checksum == calculated_checksum) {
         return 1;
-    }
-    else {
+    } else {
         return 0;
     }
 
@@ -184,27 +194,19 @@ int substring_extractor(int start, int end, char delimiter, char *buffer, int bu
     int delim_counter = 0;
     int buffer_index = 0;
 
-    /*
-    * The MYSTERY_ENDING is used to detect the end of input.
-    * It probably originates from some dodgy null-terminating
-    * or bad input parsing.
-    *
-    * 
-    */
-    const int MYSTERY_ENDING = 13;
+    const int carriage_return = 13;
 
     bzero(buffer, buffsize);
 
     for(i = 0; i < str_len; i++) {
         /* Second delim (end) reached, stopping. */
-        if(delim_counter == end || (int)string[i] == MYSTERY_ENDING) {
+        if(delim_counter == end || (int)string[i] == carriage_return) {
             return 1;
         }
 
         if(string[i] == delimiter) {
             delim_counter++;
-        }
-        else {
+        } else {
             /* The first delim is reached */
             if(delim_counter >= start) {
                 buffer[buffer_index] = string[i];
@@ -220,11 +222,81 @@ int str_len_u(char *buffer, int buf_len)
 {
     int i;
     char prev = 'X';
-    for(i = 0; i < buf_len; i++){
-        if(buffer[i] == 0x0a && prev == 0x0a){
+    for(i = 0; i < buf_len; i++) {
+        if(buffer[i] == 0x0a && prev == 0x0a) {
             return i;
         }
         prev = buffer[i];
     }
     return -1;
+}
+
+/* Mega hackish code for getting MJD */
+int get_today_mjd(char *buffer)
+{
+    int status = run_command(MJD_SCRIPT_PATH, buffer);
+    /* Removing newline */
+    buffer[strcspn(buffer, "\n")] = 0;
+    return status;
+}
+
+int run_command(char *path, char *output)
+{
+    FILE *fp;
+    int buffer_size = 1000;
+    char buffer[buffer_size];
+    memset(buffer, '\0', buffer_size);
+
+    /* Open the command for reading. */
+    fp = popen(path, "r");
+    if (fp == NULL) {
+        t_print("Failed to run command\n");
+        return 0;
+    }
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(buffer, sizeof(buffer)-1, fp) != NULL) {
+        strcat(output,buffer);
+    }
+
+    /* close */
+    pclose(fp);
+    return strlen(output);
+}
+
+int log_to_file(char *path, char *content, int stamp_switch)
+{
+    FILE *log_file;
+    log_file = fopen(path, "a+");
+
+    /* Open file */
+    if(!log_file) {
+        t_print(ERROR_FOPEN);
+        return 0;
+    }
+
+    /* Add timestamp */
+    if(stamp_switch) {
+        int timestamp_size = 50;
+        char timestamp[timestamp_size];
+        memset(timestamp,'\0', timestamp_size);
+
+        get_today_mjd(timestamp);
+        if(!fprintf(log_file,"%s,",timestamp)) {
+            t_print(ERROR_FWRITE);
+            return 0;
+        }
+    }
+
+    /* Write content to file */
+    if(!(fprintf(log_file,"%s",content))) {
+        t_print(ERROR_FWRITE);
+        return 0;
+    }
+
+    /* Close file */
+    if(fclose(log_file)) {
+        t_print(ERROR_FCLOSE);
+    }
+    return 1;
 }
