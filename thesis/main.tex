@@ -92,12 +92,12 @@ Here goes foreword
 
 \chapter{Method}
 \section{Choice of hardware}
-Why did you opt for the Raspberry PI?
+
 
 \section{Data acquisition}
 In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the CSAC will correct it's frequency based on either a 1 PPS (Pulse per second) signal or 10 MHz signal. The Ublox-M8T GPS receiver was specifically designed for timing purposes and was used in this instance to provide the 1 PPS signal for disciplining purposes. A similar approach was used in order to collect GPS data. Data from two Ublox-M8T was gathered over the same time period as the data gathered from the CSAC. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the CSAC. It also provided valuable data that could be used to tune the spoofing detection algorithms in the CSAC SMACC. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the receivers and the CSAC (\ref{CLS})
 
-\section{SMACC software Programming}
+\section{SMACC software programming}
 
 \subsection{Intro}
 The software that makes the SMACC smart, consists of multiple modules. There is a server that manages connection and acts as an interface to the system as a whole. There is a client that connects to the server and relays relevant GPS data and finally, the software running on the micro-controller embedded in the CSAC. The latter is of course not made by us, but paramount in order for our proposal to work. In this chapter, these different parts or modules will be explained.
@@ -108,8 +108,7 @@ The SMACC software was written in C99. This might seem like a strange choice whe
   \item Better portability than C11
   \item More modern than C89
   \item Efficient and fast
-  \item Exciting
-  \item I have limited experience with it
+  \item Opportunity for me to learn something new
 \end{itemize}
 The three first points probably makes perfect sense, but to me it was just as important that i learned a new and exciting language. 
 
@@ -123,13 +122,16 @@ The server follows a standard web server-like pattern:
   \item Fork out a new process for the new connection
   \item Repeat
 \end{itemize}
-However, the similarities end there. The servers job can be divided into three parts:
+However, the similarities end there. The servers job can be divided into four parts:
 \begin{itemize}
   \item Manage connections
   \item Handle information received from clients (state)
   \item Process information received from clients
   \item Raise alarm, trigger event etc.
 \end{itemize}
+
+\subsection{Components}
+
 
 \subsection{Data structures and shared memory}
 Since the server needs to have access to all the data the clients transmit, it uses a shared memory model. Every process that forks out from the server is given access to this memory area. Even the processes themselves have access to each others memory. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which are not connected to file but rather for sharing data between tasks without using files.
