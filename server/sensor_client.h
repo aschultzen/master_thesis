@@ -14,6 +14,7 @@ struct config {
     int client_id;
     char log_name[100];
     int log_nmea;
+    int con_attempt_max;
 };
 
 /* Used by the client */

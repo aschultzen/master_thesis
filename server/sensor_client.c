@@ -5,9 +5,10 @@
 #define CONFIG_CLIENT_ID "client_id:"
 #define CONFIG_LOG_NAME "log_file_name:"
 #define CONFIG_LOG_NMEA "log_nmea:"
-#define CONFIG_ENTRIES 4
 #define CONFIG_FILE_PATH "client_config.ini"
 #define DEFAULT_SERIAL_INTERFACE "/dev/ttyACM0"
+#define CONFIG_CONNECTION_ATTEMPTS_MAX "connection_attempts_max:"
+#define CONFIG_ENTRIES 5
 
 struct config_map_entry conf_map[1];
 
@@ -191,6 +192,10 @@ static void initialize_config(struct config_map_entry *conf_map, struct config *
     conf_map[3].entry_name = CONFIG_LOG_NMEA;
     conf_map[3].modifier = FORMAT_INT;
     conf_map[3].destination = &cfg->log_nmea;
+
+    conf_map[4].entry_name = CONFIG_CONNECTION_ATTEMPTS_MAX;
+    conf_map[4].modifier = FORMAT_INT;
+    conf_map[4].destination = &cfg->con_attempt_max;
 }
 
 static int start_client(int portno, char* ip)
@@ -213,6 +218,16 @@ static int start_client(int portno, char* ip)
     if(!load_config_status) {
         t_print("Failed to load the config, using default values\n");
         memcpy(cfg.serial_interface, DEFAULT_SERIAL_INTERFACE, strlen(DEFAULT_SERIAL_INTERFACE)*sizeof(char));
+        
+        /* Picking ID number for client at random */
+        cfg.client_id = rand() % ID_MAX;
+        t_print("Picked ID %d at random\n", cfg.client_id);
+
+        /* Disabling logging */
+        cfg.log_nmea = 0;
+
+        /* Setting retry times to 10 */
+        cfg.con_attempt_max = 10;
     } else {
         if(cfg.client_id == 0 || cfg.client_id > ID_MAX) {
             t_print("Client ID can not be less than 1 or more than %d!\n", ID_MAX);
@@ -230,7 +245,7 @@ static int start_client(int portno, char* ip)
     }
 
     /* Establishing connection to server */
-    while(connection_attempts <= CONNECTION_ATTEMPTS_MAX) {
+    while(connection_attempts <= cfg.con_attempt_max) {
         con_status = create_connection(&serv_addr, &session_fd, ip, portno);
         if(con_status == 0) {
             t_print("Connected to server!\n");
