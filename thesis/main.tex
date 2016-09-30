@@ -111,9 +111,9 @@ I propose to use at least two GNSS receivers. Both of the receivers should simpl
 \section{Choice of programming language}
 The SMACC software was originally planned to be written in Java since this was my most fluent programming language. Java is great language, it's object oriented, it has a garbage collector and a lot of useful libraries. As development started, it quickly became apparent that some parts of the code would be performance critical and that portability really wasn't that important anyway. The platform was already decided and there was no reason to believe that it would change in the near future. As we all know, premature optimization is the root of all evil. Being reluctant to commit a deadly programming sin, i decided to look at other languages. Since performance was a concern, Python was also quickly dismissed as an option. C++ would probably have been the best choice, but having never written anything in C before made it sound more exciting and like a nice opportunity to learn something new. During the planning phase of SMACC development, raspbian-2015-05-07 was the latest build. It came with GCC 4.6.3 which only had experimental support for C11(\cite{GCC11}). With C11 no longer considered an option, C99 was the obvious choice given it's attractive features like:
 \begin{itemize}
-  \item Variable-length arrays
-  \item Single line comments
-  \item snprintf() as standard (\cite{C_RATIONAL})
+  \item Variable-length arrays.
+  \item Single line comments.
+  \item snprintf() as standard (\cite{C_RATIONAL}).
 \end{itemize}
 
 \section{The Sensor Server/Client model}
@@ -133,12 +133,12 @@ The sensor client software is a simple program written in C99 whose only task is
     \item The ID number is chosen at random but within legal limits.
     \item Logging is disabled.
     \item Maximum of server connection attempts are set to 10.
-    \item Path to GNSS receiver is set to \texttt{/dev/ttyACM0} which should be the path to the receiver unless another similar address is connected to the computer given it is a Raspberry Pi running Raspbian.
+    \item Path to GNSS receiver is set to \texttt{/dev/ttyACM0}. This should be the path to the receiver unless another similar device is connected to the computer and given it is a Raspberry Pi running Raspbian.
   \end{itemize}
   \item Establishes communication with GNSS receiver, exits if it fails.
   \item Attempts to establish communication with the server, retries for a configurable amount of times at 1 second intervals.
   \item Identifies the client for the server according to protocol.
-  \item Reads from the GNSS receiver, "looks" for lines starting with either \texttt{\$GNRMC} or \texttt{\$GNGGA}. When both lines are found, the data is stored in a buffer.
+  \item Reads from the GNSS receiver, scans for lines starting with either \texttt{\$GNRMC} or \texttt{\$GNGGA}. When both lines are found, the data is stored in a buffer.
   \item Sends the GNSS data to the server according to protocol.
   \item Repeats.
 \end{itemize}
@@ -161,7 +161,7 @@ The example over shows how shared memory is allocated. The observant reader will
 Write in detail about the server like i did with the client?
 
 \subsubsection{The CSAC}
-Write about the CSAC and the serial communication. Perhaps mention the how the communication between the server and the CSAC works?
+Write about the CSAC and the serial communication. Perhaps mention how the communication between the server and the CSAC works?
 
 \section{Detection algorithms: Filters}
 \subsection{Data acquisition}\label{data_aquisition}
