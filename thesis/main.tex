@@ -160,8 +160,28 @@ The example over shows how shared memory is allocated. The observant reader will
 \subsubsection{Components}
 Write in detail about the server like i did with the client?
 
-\subsubsection{The CSAC}
-Write about the CSAC and the serial communication. Perhaps mention how the communication between the server and the CSAC works?
+\subsubsection{CSAC Communication}
+  \includegraphics[width=1\textwidth]{csac_serial.pdf}
+The SA.45 CSAC includes a serial interface that enables communication with a PC by using a COM port. As mentioned earlier, our approach relies heavily on the ability to communicate with the CSAC.
+Information can be queried by sending commands to the CSAC. These commands are explained in table \ref{CSAC_COMMANDS}. 
+\begin{table}[]
+\centering
+\caption{Commands for the SA.45 CSAC}
+\label{CSAC_COMMANDS}
+\begin{tabular}{|l|l|l|}
+\hline
+Shortcut          & Description                                        & Command                       \\ \hline
+6                 & Return telemetry headers as comma-delimited string & !6{[}CRLF{]}                  \\ \hline
+\textasciicircum  & Return telemetry as comma-delimited string         & !\textasciicircum  {[}CRLF{]} \\ \hline
+F                 & Adjust frequency                                   & !F?{[}CRLF{]}                 \\ \hline
+M                 & Set operating mode register bits                   & !M?{[}CRLF{]}                 \\ \hline
+S                 & Sync CSAC 1 PPS to external 1 PPS                  & !S{[}CRLF{]}                  \\ \hline
+D                 & Set 1 PPS disciplining time constant               & !D?{[}CRLF{]}                 \\ \hline
+U                 & Set ultra-low power mode parameters                & !U?{[}CRLF{]}                 \\ \hline
+T                 & Set/report time-of-day                             & !T?{[}CRLF{]}                 \\ \hline
+\end{tabular}
+\caption*{Source: \cite{CSAC_USERGUIDE}}
+\end{table}
 
 \section{Detection algorithms: Filters}
 \subsection{Data acquisition}\label{data_aquisition}
