@@ -44,17 +44,32 @@
 \graphicspath{{./graphics/}}
 
 % Setting tty font?
-\lstset{ %
-  basicstyle=\ttfamily\small,     
-  backgroundcolor=\color{white},   % choose the background color
-  breaklines=true,                 % automatic line breaking only at whitespace
-  captionpos=b,                    % sets the caption-position to bottom
-  commentstyle=\color{mygreen},    % comment style
-  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
-  keywordstyle=\color{blue},       % keyword style
-  stringstyle=\color{mymauve},     % string literal style
+%\lstset{ %
+%  basicstyle=\ttfamily\small,     
+%  backgroundcolor=\color{white},   % choose the background color
+%  breaklines=true,                 % automatic line breaking only at whitespace
+%  captionpos=b,                    % sets the caption-position to bottom
+%  commentstyle=\color{mygreen},    % comment style
+%  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+%  keywordstyle=\color{blue},       % keyword style
+%  stringstyle=\color{mymauve},     % string literal style
+%  showspaces=false,
+%  showstringspaces=false,
+%}
+
+\lstset{language=C,
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{blue}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  commentstyle=\color{green}\ttfamily,
+  breaklines=true,
   showspaces=false,
   showstringspaces=false,
+  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+  numbersep=5pt,    
+  frame=single,                 % how far the line-numbers are from the code
+  numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+  rulecolor=\color{black}         % if not set, the frame-color may be changed on line-breaks 
 }
 
 \title{GPS Spoofing}
@@ -117,10 +132,10 @@ The SMACC software was originally planned to be written in Java since this was m
 \end{itemize}
 
 \section{The Sensor Server/Client model}
-Numerous approaches where considered when planning the implementation of the SMACC software (\ref{da}). The approach that got selected is what I have named the "Sensor Server". The Sensor Server is based on the idea that a GNSS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Sensor runs the sensor client software that communicates with the server. With this approach, a great number of GNSS receivers can be connected to the SMACC using existing infrastructure, communicating over IP. The Sensor Server implements the functionality that was planned for the SMACC to implement (\ref{op}) and then some more.
+Numerous approaches where considered when planning the implementation of the SMACC software (\ref{da}). The approach that was chosen is what I have named the "Sensor Server". The Sensor Server is based on the idea that a GNSS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Sensor runs the sensor client software that communicates with the server. With this approach, a great number of GNSS receivers can be connected to the SMACC using existing infrastructure, communicating over IP. The Sensor Server implements the functionality that was planned for the SMACC to implement (\ref{op}) and then some more.
 
 % Refer to protocol.h at the point when describing the ID process?
-\subsection{The Sensor Client}
+\section{The Sensor Client}
 The sensor client software is a simple program written in C99 whose only task is to relay information read from the GNSS receivers. Summed up shortly:
 \begin{itemize}
   \item The client software takes two parameters to start, the servers IP and port. If parameters are missing, the program exits.
@@ -143,9 +158,9 @@ The sensor client software is a simple program written in C99 whose only task is
   \item Repeats.
 \end{itemize}
 
-\subsection{The Sensor Server }
+\section{The Sensor Server }
 
-\subsubsection{Shared memory}
+\subsection{Shared memory}
 Since the server needs to have access to all the data the clients transmit, it uses a shared memory model. Every process that forks out from the server is given access to this memory area. Even the processes themselves have access to each others memory. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
 
 \begin{lstlisting}
@@ -157,29 +172,21 @@ client_list = mmap(NULL,
 \end{lstlisting}
 The example over shows how shared memory is allocated. The observant reader will notice that there memory is allocated for a finite number of clients. This is unfortunate but necessary: The fork operation creates a completely separate address space for the child process but the child still has a complete copy of parents memory segments. Since the child process is completely separated from the parent, any changes in the shared memory done by the parent will not be "reflected" in the child's memory. In other words, the entire shared memory \textit{has} to be initialized before any fork operations are done. Failing to do so will result in a segmentation fault once a process attempts to access the memory of a younger sibling. In this application however, we always know how many clients are going to connect. Even when in doubt, the maximum number of clients can be grossly overestimated and configured in order to make sure that there is room for more clients.
 
-\subsubsection{Structs}
+\subsection{Structs}
 In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
 
-\paragraph client_table_entry
-\begin{lstlisting}
-struct client_table_entry {
-    struct list_head list;              /* The head of the client list */
-    struct transmission_s transmission; /* Everything needed for socket com. */
-    struct timeval heartbeat_timeout;   /* Timeout in seconds if not activity */
-    struct command_code cm;             /* See command code */
-    struct nmea_container nmea;         /* All NMEA data associated with the client */
-    pid_t pid;                          /* The process ID */
-    time_t timestamp;                   /* When last analyzed */
-    int client_id;                      /* Clients ID */
-    int client_type;                    /* Client type, SENSOR or MONITOR */
-    int ready;                          /* Ready status */
-    int marked_for_kick;                /* Marked for kicked at next opportunity */
-    char ip[INET_ADDRSTRLEN];           /* Clients IP address */
-    struct filters fs;
-};
+\subsubsection{Client table entry}
+The client\_table\_entry is what the name suggests, it's an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. The entry in the list contains information about the client including but not limited to:
+\begin{itemize}
+  \item Process ID
+  \item IP Address
+  \item Client ID
+  \item NMEA data (\ref{nmea_cont}).
+  \item Filer data
+\end{itemize}
+Of all the pointers tossed about in the sensor server, this type is the most common one. 
 
-\end{lstlisting} 
-
+\subsubsection{NMEA container}\label{nmea_cont}
 
 
 \subsubsection{Components}
