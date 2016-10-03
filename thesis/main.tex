@@ -145,7 +145,7 @@ The sensor client software is a simple program written in C99 whose only task is
 
 \subsection{The Sensor Server }
 
-\subsubsection{Data structures and shared memory}
+\subsubsection{Shared memory}
 Since the server needs to have access to all the data the clients transmit, it uses a shared memory model. Every process that forks out from the server is given access to this memory area. Even the processes themselves have access to each others memory. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
 
 \begin{lstlisting}
@@ -157,8 +157,33 @@ client_list = mmap(NULL,
 \end{lstlisting}
 The example over shows how shared memory is allocated. The observant reader will notice that there memory is allocated for a finite number of clients. This is unfortunate but necessary: The fork operation creates a completely separate address space for the child process but the child still has a complete copy of parents memory segments. Since the child process is completely separated from the parent, any changes in the shared memory done by the parent will not be "reflected" in the child's memory. In other words, the entire shared memory \textit{has} to be initialized before any fork operations are done. Failing to do so will result in a segmentation fault once a process attempts to access the memory of a younger sibling. In this application however, we always know how many clients are going to connect. Even when in doubt, the maximum number of clients can be grossly overestimated and configured in order to make sure that there is room for more clients.
 
+\subsubsection{Structs}
+In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
+
+\paragraph client_table_entry
+\begin{lstlisting}
+struct client_table_entry {
+    struct list_head list;              /* The head of the client list */
+    struct transmission_s transmission; /* Everything needed for socket com. */
+    struct timeval heartbeat_timeout;   /* Timeout in seconds if not activity */
+    struct command_code cm;             /* See command code */
+    struct nmea_container nmea;         /* All NMEA data associated with the client */
+    pid_t pid;                          /* The process ID */
+    time_t timestamp;                   /* When last analyzed */
+    int client_id;                      /* Clients ID */
+    int client_type;                    /* Client type, SENSOR or MONITOR */
+    int ready;                          /* Ready status */
+    int marked_for_kick;                /* Marked for kicked at next opportunity */
+    char ip[INET_ADDRSTRLEN];           /* Clients IP address */
+    struct filters fs;
+};
+
+\end{lstlisting} 
+
+
+
 \subsubsection{Components}
-Write in detail about the server like i did with the client?
+In the following sections, the different components that comprises the sensor server will be explained. 
 
 \subsubsection{CSAC Communication}
   \includegraphics[width=1\textwidth]{csac_serial.pdf}
