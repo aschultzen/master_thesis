@@ -97,19 +97,18 @@ struct filters {
 /*!@brief Contain information about every client that is connected.
 */
 struct client_table_entry {
-    struct list_head list; /** The head in the list of clients */
-    struct transmission_s transmission;
-    struct timeval heartbeat_timeout;
-    struct command_code cm;
-    struct nmea_container nmea;
-    pid_t pid; /** The process ID */
-    time_t timestamp; /** When last analyzed */
-    int client_id; /** Clients ID */
-    char client_id_string[ID_AS_STRING_MAX];
-    int client_type; /** Client type, SENSOR or MONITOR */
-    int ready;	/** Ready status */
-    int marked_for_kick; /** Marked for kicked at next opportunity */
-    char ip[INET_ADDRSTRLEN]; /** Clients IP address */
+    struct list_head list;              /* The head of the client list */
+    struct transmission_s transmission; /* Everything needed for socket com. */
+    struct timeval heartbeat_timeout;   /* Timeout in seconds if not activity */
+    struct command_code cm;             /* See command code */
+    struct nmea_container nmea;         /* All NMEA data associated with the client */
+    pid_t pid;                          /* The process ID */
+    time_t timestamp;                   /* When last analyzed */
+    int client_id;                      /* Clients ID */
+    int client_type;                    /* Client type, SENSOR or MONITOR */
+    int ready;	                        /* Ready status */
+    int marked_for_kick;                /* Marked for kicked at next opportunity */
+    char ip[INET_ADDRSTRLEN];           /* Clients IP address */
     struct filters fs;
 };
 
@@ -118,9 +117,8 @@ struct server_data {
     int number_of_clients;	/* Number of clients currently connected */
     int number_of_sensors;	/* Number of sensors, subset of clients */
     time_t started;			/* When the server was started */
-    pid_t pid;
-    char version[4];
-    int csac_fd;
+    pid_t pid;              /* Servers PID */
+    char version[4];        /* Version of server software */
 };
 
 /* Synchronization elements shared with processes */
