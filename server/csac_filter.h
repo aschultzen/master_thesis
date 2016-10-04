@@ -52,7 +52,7 @@ struct csac_filter_data {
     double t_smooth_previous;
     double steer_smooth_previous;
 
- 
+
     double t_smooth_today;
     double steer_smooth_today;
 
@@ -91,7 +91,7 @@ struct csac_filter_data {
  */
 int update_csac_filter(struct csac_filter_data *cfd, char *telemetry);
 
-/** @brief Initializes the state of the filter by using 
+/** @brief Initializes the state of the filter by using
  *		   telemetry from the CSAC.
  *
  *  @param cfd State of filter

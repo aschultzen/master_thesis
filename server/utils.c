@@ -115,11 +115,12 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
 
     int counter = 0;
     while(counter < entries) {
-	memset(temp_buffer, '\0',file_size);
+        memset(temp_buffer, '\0',file_size);
         char *search_ptr = strstr(input_buffer,cme->entry_name);
         if(search_ptr != NULL) {
             int length = strlen(search_ptr) - strlen(cme->entry_name);
-            memcpy(temp_buffer, search_ptr+(strlen(cme->entry_name)*(sizeof(char))), length);
+            memcpy(temp_buffer, search_ptr+(strlen(cme->entry_name)*(sizeof(char))),
+                   length);
             status = sscanf(temp_buffer, cme->modifier, cme->destination);
             if(status == EOF || status == 0) {
                 fclose(config_file);
@@ -188,7 +189,8 @@ int calculate_nmea_checksum(char *nmea)
 * string -> Input
 * buffer -> To transport the string
 */
-int substring_extractor(int start, int end, char delimiter, char *buffer, int buffsize, char *string, int str_len)
+int substring_extractor(int start, int end, char delimiter, char *buffer,
+                        int buffsize, char *string, int str_len)
 {
     int i;
     int delim_counter = 0;

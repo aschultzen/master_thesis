@@ -95,7 +95,8 @@ int calculate_nmea_checksum(char *s);
  *	@param str_len Length of parent string
  *	@return 1 if success, 0 if no string within the delimits was found.
  */
-int substring_extractor(int start, int end, char delimiter, char *buffer, int buffsize, char *string, int str_len);
+int substring_extractor(int start, int end, char delimiter, char *buffer,
+                        int buffsize, char *string, int str_len);
 
 /** @brief Counts bytes from start to first occurence of null character
  *

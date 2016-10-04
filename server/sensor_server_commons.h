@@ -66,21 +66,21 @@ struct ref_dev_data {
 * are parsed by command parser.
 */
 
-struct disturbed_values{
+struct disturbed_values {
     int lat_disturbed;
     int lon_disturbed;
     int alt_disturbed;
     int speed_disturbed;
 };
 
-struct ref_dev{
+struct ref_dev {
     struct ref_dev_data rdd;
     int moved;
     int was_moved;
     struct disturbed_values dv;
 };
 
-struct min_max{
+struct min_max {
     int moved;
     int was_moved;
     int warmup;
@@ -101,7 +101,8 @@ struct client_table_entry {
     struct transmission_s transmission; /* Everything needed for socket com. */
     struct timeval heartbeat_timeout;   /* Timeout in seconds if not activity */
     struct command_code cm;             /* See command code */
-    struct nmea_container nmea;         /* All NMEA data associated with the client */
+    struct nmea_container
+        nmea;         /* All NMEA data associated with the client */
     pid_t pid;                          /* The process ID */
     time_t timestamp;                   /* When last analyzed */
     int client_id;                      /* Clients ID */

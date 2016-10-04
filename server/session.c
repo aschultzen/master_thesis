@@ -21,7 +21,8 @@ static void calculate_nmea_average(struct client_table_entry *cte);
 static void calculate_nmea_diff(struct client_table_entry *cte);
 static void verify_warm_up(struct client_table_entry *cte);
 static void warm_up(struct client_table_entry *cte);
-static int set_timeout(struct client_table_entry *target, struct timeval h_timeout);
+static int set_timeout(struct client_table_entry *target,
+                       struct timeval h_timeout);
 static int parse_input(struct client_table_entry *cte);
 static int respond(struct client_table_entry *cte);
 
@@ -56,19 +57,23 @@ static void extract_nmea_data(struct client_table_entry *cte)
     memset(&buffer, 0, buffsize);
 
     /* Extracting latitude */
-    substring_extractor(LATITUDE_START,LATITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
+    substring_extractor(LATITUDE_START,LATITUDE_START + 1,',',buffer, buffsize,
+                        cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
     cte->nmea.lat_current = atof(buffer);
 
     /* Extracting longitude */
-    substring_extractor(LONGITUDE_START,LONGITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
+    substring_extractor(LONGITUDE_START,LONGITUDE_START + 1,',',buffer, buffsize,
+                        cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
     cte->nmea.lon_current = atof(buffer);
 
     /* Extracting altitude */
-    substring_extractor(ALTITUDE_START,ALTITUDE_START + 1,',',buffer, buffsize,cte->nmea.raw_gga, strlen(cte->nmea.raw_gga));
+    substring_extractor(ALTITUDE_START,ALTITUDE_START + 1,',',buffer, buffsize,
+                        cte->nmea.raw_gga, strlen(cte->nmea.raw_gga));
     cte->nmea.alt_current = atof(buffer);
 
     /* Extracting speed */
-    substring_extractor(SPEED_START,SPEED_START + 1,',',buffer, buffsize,cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
+    substring_extractor(SPEED_START,SPEED_START + 1,',',buffer, buffsize,
+                        cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
     cte->nmea.speed_current = atof(buffer);
 }
 
@@ -162,7 +167,8 @@ static void warm_up(struct client_table_entry *cte)
     }
 }
 
-static int set_timeout(struct client_table_entry *target, struct timeval h_timeout)
+static int set_timeout(struct client_table_entry *target,
+                       struct timeval h_timeout)
 {
     /* setsockopt return -1 on error and 0 on success */
     target->heartbeat_timeout = h_timeout;
@@ -210,70 +216,80 @@ static int parse_input(struct client_table_entry *cte)
     /* IDENTIFY */
     else if(strstr((char*)incoming, PROTOCOL_IDENTIFY ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_IDENTIFY) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))),
+               length);
         cte->cm.code = CODE_IDENTIFY;
     }
 
     /* IDENTIFY SHORT */
     else if(strstr((char*)incoming, PROTOCOL_IDENTIFY_SHORT ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_IDENTIFY_SHORT) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_IDENTIFY_SHORT)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_IDENTIFY_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_IDENTIFY;
     }
 
     /* DUMPDATA */
     else if(strstr((char*)incoming, PROTOCOL_DUMPDATA ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_DUMPDATA) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_DUMPDATA)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_DUMPDATA)*(sizeof(char))),
+               length);
         cte->cm.code = CODE_DUMPDATA;
     }
 
     /* DUMPDATA_SHORT */
     else if(strstr((char*)incoming, PROTOCOL_DUMPDATA_SHORT ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_DUMPDATA_SHORT) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_DUMPDATA_SHORT)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_DUMPDATA_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_DUMPDATA;
     }
 
     /* PRINT_LOCATION */
     else if(strstr((char*)incoming, PROTOCOL_PRINT_LOCATION ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_PRINT_LOCATION) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINT_LOCATION)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_PRINT_LOCATION)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINT_LOCATION;
     }
 
     /* PRINT_LOCATION_SHORT */
     else if(strstr((char*)incoming, PROTOCOL_PRINT_LOCATION_SHORT ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_PRINT_LOCATION_SHORT) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINT_LOCATION_SHORT)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_PRINT_LOCATION_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINT_LOCATION;
     }
 
     /* PRINTTIME */
     else if(strstr((char*)incoming, PROTOCOL_PRINTTIME ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_PRINTTIME) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINTTIME)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_PRINTTIME)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINTTIME;
     }
 
     /* WARMUP */
     else if(strstr((char*)incoming, PROTOCOL_WARMUP ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_WARMUP) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_WARMUP)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_WARMUP)*(sizeof(char))),
+               length);
         cte->cm.code = CODE_WARMUP;
     }
 
     /* UPDATE WARMUP */
     else if(strstr((char*)incoming, PROTOCOL_SET_WARMUP ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_SET_WARMUP) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_SET_WARMUP)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_SET_WARMUP)*(sizeof(char))), length);
         cte->cm.code = CODE_SET_WARMUP;
     }
 
     /* UPDATE WARMUP SHORT */
     else if(strstr((char*)incoming, PROTOCOL_SET_WARMUP_SHORT ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_SET_WARMUP_SHORT) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_SET_WARMUP_SHORT)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_SET_WARMUP_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_SET_WARMUP;
     }
 
@@ -292,7 +308,8 @@ static int parse_input(struct client_table_entry *cte)
     /* KICK */
     else if(strstr((char*)incoming, PROTOCOL_KICK ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_KICK) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_KICK)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_KICK)*(sizeof(char))),
+               length);
         cte->cm.code = CODE_KICK;
     }
 
@@ -328,49 +345,56 @@ static int parse_input(struct client_table_entry *cte)
     /* LOADDATA */
     else if(strstr((char*)incoming, PROTOCOL_LOADDATA ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_LOADDATA) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADDATA)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADDATA)*(sizeof(char))),
+               length);
         cte->cm.code = CODE_LOADDATA;
     }
 
     /* LOADDATA_SHORT */
     else if(strstr((char*)incoming, PROTOCOL_LOADDATA_SHORT ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_LOADDATA_SHORT) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADDATA_SHORT)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_LOADDATA_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_LOADDATA;
     }
 
     /* QUERYCSAC */
     else if(strstr((char*)incoming, PROTOCOL_QUERYCSAC ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_QUERYCSAC) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_QUERYCSAC)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_QUERYCSAC)*(sizeof(char))), length);
         cte->cm.code = CODE_QUERYCSAC;
     }
 
     /* QUERYCSAC_SHORT */
     else if(strstr((char*)incoming, PROTOCOL_QUERYCSAC_SHORT ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_QUERYCSAC_SHORT) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_QUERYCSAC_SHORT)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_QUERYCSAC_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_QUERYCSAC;
     }
 
     /* PRINT_LOADRFDATA */
     else if(strstr((char*)incoming, PROTOCOL_LOADRFDATA ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_LOADRFDATA) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADRFDATA)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_LOADRFDATA)*(sizeof(char))), length);
         cte->cm.code = CODE_LOADRFDATA;
     }
 
     /* PRINT_LOADRFDATA_SHORT */
     else if(strstr((char*)incoming, PROTOCOL_LOADRFDATA_SHORT ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_LOADRFDATA_SHORT) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_LOADRFDATA_SHORT)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_LOADRFDATA_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_LOADRFDATA;
     }
 
     /* PROTOCOL_PRINTCFD */
     else if(strstr((char*)incoming, PROTOCOL_PRINTCFD ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_PRINTCFD) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINTCFD)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINTCFD)*(sizeof(char))),
+               length);
         cte->cm.code = CODE_PRINTCFD;
         printf("PRINTCFD\n");
     }
@@ -378,7 +402,8 @@ static int parse_input(struct client_table_entry *cte)
     /* PROTOCOL_PRINTCFD_SHORT */
     else if(strstr((char*)incoming, PROTOCOL_PRINTCFD_SHORT ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_PRINTCFD_SHORT) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_PRINTCFD_SHORT)*(sizeof(char))), length);
+        memcpy(cte->cm.parameter,
+               (incoming)+(strlen(PROTOCOL_PRINTCFD_SHORT)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINTCFD;
     }
 
@@ -435,7 +460,8 @@ static int respond(struct client_table_entry *cte)
 
         else if(cte->cm.code == CODE_IDENTIFY) {
             if(cte->cm.id_parameter == 0) {
-                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
+                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND,
+                        sizeof(ERROR_ILLEGAL_COMMAND));
                 return 0;
             }
 
@@ -467,12 +493,13 @@ static int respond(struct client_table_entry *cte)
             cte->client_id = cte->cm.id_parameter;
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
 
-            if(cte->client_type == SENSOR){
+            if(cte->client_type == SENSOR) {
                 if(load_ref_def_data(cte)) {
                     s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
                     t_print("Loaded filter data for client %d\n", cte->client_id);
                 } else {
-                    s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED, sizeof(ERROR_LRFD_LOAD_FAILED));
+                    s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED,
+                            sizeof(ERROR_LRFD_LOAD_FAILED));
                 }
             }
 
@@ -490,7 +517,9 @@ static int respond(struct client_table_entry *cte)
             char *rmc_start = strstr(cte->transmission.iobuffer, RMC);
             char *gga_start = strstr(cte->transmission.iobuffer, GGA);
             memcpy(cte->nmea.raw_rmc, rmc_start, gga_start - rmc_start);
-            memcpy(cte->nmea.raw_gga, gga_start, ( strlen(cte->transmission.iobuffer) - (rmc_start - cte->transmission.iobuffer) - (gga_start - rmc_start)));
+            memcpy(cte->nmea.raw_gga, gga_start,
+                   ( strlen(cte->transmission.iobuffer) - (rmc_start - cte->transmission.iobuffer)
+                     - (gga_start - rmc_start)));
 
             /* Checking NMEA checksum */
             int rmc_checksum = calculate_nmea_checksum(cte->nmea.raw_rmc);
@@ -556,7 +585,8 @@ static int respond(struct client_table_entry *cte)
                 if(load_ref_def_data(candidate)) {
                     s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
                 } else {
-                    s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED, sizeof(ERROR_LRFD_LOAD_FAILED));
+                    s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED,
+                            sizeof(ERROR_LRFD_LOAD_FAILED));
                 }
             }
         }
@@ -570,7 +600,8 @@ static int respond(struct client_table_entry *cte)
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
                 }
             } else {
-                s_write(&(cte->transmission), ERROR_WARMUP_NOT_SENSOR, sizeof(ERROR_WARMUP_NOT_SENSOR));
+                s_write(&(cte->transmission), ERROR_WARMUP_NOT_SENSOR,
+                        sizeof(ERROR_WARMUP_NOT_SENSOR));
             }
         }
 
@@ -609,7 +640,8 @@ static int respond(struct client_table_entry *cte)
             bzero(filename, filename_buffer_size);
 
             /* Attempting to extract filename */
-            substring_extractor(2,3, ' ', filename, filename_buffer_size,cte->cm.parameter, MAX_FILENAME_SIZE);
+            substring_extractor(2,3, ' ', filename, filename_buffer_size,cte->cm.parameter,
+                                MAX_FILENAME_SIZE);
 
             /* If length of filename = 0 (no filename specified).. */
             if(strlen(filename) == 0) {
@@ -618,17 +650,20 @@ static int respond(struct client_table_entry *cte)
             }
             /* Else, extract ID */
             else {
-                substring_extractor(1,2, ' ', id_buffer, ID_AS_STRING_MAX,cte->cm.parameter, ID_AS_STRING_MAX);
+                substring_extractor(1,2, ' ', id_buffer, ID_AS_STRING_MAX,cte->cm.parameter,
+                                    ID_AS_STRING_MAX);
                 target_id = atoi(id_buffer);
             }
 
             if(!target_id) {
-                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
+                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND,
+                        sizeof(ERROR_ILLEGAL_COMMAND));
             } else {
                 struct client_table_entry* candidate = get_client_by_id(target_id);
                 if(candidate != NULL) {
                     if(!datadump(candidate,filename, s_conf->human_readable_dumpdata)) {
-                        s_write(&(cte->transmission), ERROR_DUMPDATA_FAILED, sizeof(ERROR_DUMPDATA_FAILED));
+                        s_write(&(cte->transmission), ERROR_DUMPDATA_FAILED,
+                                sizeof(ERROR_DUMPDATA_FAILED));
                     }
                 } else {
                     s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
@@ -644,7 +679,8 @@ static int respond(struct client_table_entry *cte)
             bzero(id_buffer, ID_AS_STRING_MAX);
             bzero(filename, filename_buffer_size);
 
-            substring_extractor(2,3, ' ', filename, filename_buffer_size,cte->cm.parameter, MAX_FILENAME_SIZE);
+            substring_extractor(2,3, ' ', filename, filename_buffer_size,cte->cm.parameter,
+                                MAX_FILENAME_SIZE);
 
             /* No filename specified, abort */
             if(strlen(filename) == 0) {
@@ -653,12 +689,14 @@ static int respond(struct client_table_entry *cte)
             }
             /* Extract target id and move on */
             else {
-                substring_extractor(1,2, ' ', id_buffer, ID_AS_STRING_MAX,cte->cm.parameter, ID_AS_STRING_MAX);
+                substring_extractor(1,2, ' ', id_buffer, ID_AS_STRING_MAX,cte->cm.parameter,
+                                    ID_AS_STRING_MAX);
                 target_id = atoi(id_buffer);
             }
 
             if(!target_id) {
-                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND, sizeof(ERROR_ILLEGAL_COMMAND));
+                s_write(&(cte->transmission), ERROR_ILLEGAL_COMMAND,
+                        sizeof(ERROR_ILLEGAL_COMMAND));
             } else {
                 struct client_table_entry* candidate = get_client_by_id(target_id);
                 if(candidate != NULL) {
@@ -692,8 +730,7 @@ static int respond(struct client_table_entry *cte)
                 return 1;
             }
             client_query_csac(cte, cte->cm.parameter);
-        }
-        else if(cte->cm.code == CODE_PRINTCFD) {
+        } else if(cte->cm.code == CODE_PRINTCFD) {
             print_cfd(cte, cte->cm.id_parameter);
         }
 

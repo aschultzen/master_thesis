@@ -16,8 +16,54 @@
 \usepackage{multirow}
 \usepackage{tabularx}
 \usepackage{footnote}
-
 \usepackage{subfiles}
+\usepackage{minted}
+\usepackage{fancyvrb}
+\usemintedstyle{friendly}
+
+\newmintedfile[ccode]{c}{
+fontsize=\scriptsize,
+fontfamily=tt,
+linenos=true,
+numberblanklines=true,
+numbersep=12pt,
+numbersep=5pt,
+gobble=0,
+frame=leftline,
+framerule=0.4pt,
+framesep=2mm,
+funcnamehighlighting=true,
+tabsize=4,
+obeytabs=false,
+mathescape=false
+samepage=false, %with this setting you can force the list to appear on the same page
+showspaces=false,
+showtabs =false,
+texcl=false,
+breaklines = true
+}
+
+\newmintedfile[makecode]{make}{
+fontsize=\scriptsize,
+fontfamily=tt,
+linenos=true,
+numberblanklines=true,
+numbersep=12pt,
+numbersep=5pt,
+gobble=0,
+frame=leftline,
+framerule=0.4pt,
+framesep=2mm,
+funcnamehighlighting=true,
+tabsize=4,
+obeytabs=false,
+mathescape=false
+samepage=false, %with this setting you can force the list to appear on the same page
+showspaces=false,
+showtabs =false,
+texcl=false,
+breaklines =true
+}
 
 % Making the whole paragraph biz possible
 %\usepackage{titlesec}

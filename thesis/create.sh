@@ -1,6 +1,6 @@
 #!/bin/bash
-pdflatex main.tex
+pdflatex -shell-escape main.tex
 biber main
 biber main
-pdflatex main.tex
+pdflatex -shell-escape main.tex
 atril main.pdf &

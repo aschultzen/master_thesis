@@ -75,7 +75,8 @@ void set_warmup(struct client_table_entry *client, int new_value)
     if(new_value > 0) {
         s_conf->warm_up_seconds = new_value;
     } else {
-        s_write(&(client->transmission), ERROR_UPDATE_WARMUP_ILLEGAL, sizeof(ERROR_UPDATE_WARMUP_ILLEGAL));
+        s_write(&(client->transmission), ERROR_UPDATE_WARMUP_ILLEGAL,
+                sizeof(ERROR_UPDATE_WARMUP_ILLEGAL));
     }
 
 }
@@ -90,13 +91,15 @@ void kick_client(struct client_table_entry* client)
 }
 
 /* Prints client X's solved time back to monitor */
-void print_client_time(struct client_table_entry *monitor, struct client_table_entry* client)
+void print_client_time(struct client_table_entry *monitor,
+                       struct client_table_entry* client)
 {
     int buffsize = 100;
     char buffer[buffsize];
     memset(&buffer, 0, buffsize);
 
-    substring_extractor(RMC_TIME_START,RMC_TIME_START + 1,',',buffer, buffsize,client->nmea.raw_rmc, strlen(client->nmea.raw_rmc));
+    substring_extractor(RMC_TIME_START,RMC_TIME_START + 1,',',buffer, buffsize,
+                        client->nmea.raw_rmc, strlen(client->nmea.raw_rmc));
     s_write(&(monitor->transmission), buffer, 12);
     s_write(&(monitor->transmission), "\n", 1);
 }
@@ -111,7 +114,8 @@ void print_clients(struct client_table_entry *monitor)
     int time_left = 0;
 
     struct client_table_entry* client_list_iterate;
-    s_write(&(monitor->transmission), CLIENT_TABLE_LABEL, sizeof(CLIENT_TABLE_LABEL));
+    s_write(&(monitor->transmission), CLIENT_TABLE_LABEL,
+            sizeof(CLIENT_TABLE_LABEL));
     s_write(&(monitor->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
     list_for_each_entry(client_list_iterate,&client_list->list, list) {
 
@@ -122,7 +126,8 @@ void print_clients(struct client_table_entry *monitor)
         }
 
         if(client_list_iterate->client_type == SENSOR) {
-            double elapsed_warmup = difftime(time(NULL), client_list_iterate->fs.mmf.warmup_started);
+            double elapsed_warmup = difftime(time(NULL),
+                                             client_list_iterate->fs.mmf.warmup_started);
             time_left = s_conf->warm_up_seconds - elapsed_warmup;
         } else {
             time_left = 0;
@@ -168,7 +173,8 @@ void print_help(struct client_table_entry *monitor)
 * Prints MAX, MIN, CURRENT and AVERAGE position
 * for client X back to the monitor
 */
-void print_location(struct client_table_entry *monitor, struct client_table_entry* client)
+void print_location(struct client_table_entry *monitor,
+                    struct client_table_entry* client)
 {
     char buffer [1000];
     int snprintf_status = 0;
@@ -186,7 +192,8 @@ void print_location(struct client_table_entry *monitor, struct client_table_entr
     struct nmea_container nc;
 
     nc = client->nmea;
-    s_write(&(monitor->transmission), PRINT_LOCATION_HEADER, sizeof(PRINT_LOCATION_HEADER));
+    s_write(&(monitor->transmission), PRINT_LOCATION_HEADER,
+            sizeof(PRINT_LOCATION_HEADER));
 
     /*Determining colors*/
     if(!nc.lat_disturbed) {
@@ -226,10 +233,14 @@ void print_location(struct client_table_entry *monitor, struct client_table_entr
                                 "LON: %s%f%s  %s%f%s  %s%f%s %f\n" \
                                 "ALT: %s %f%s  %s %f%s  %s %f%s  %f\n" \
                                 "SPD: %s   %f%s  %s   %f%s  %s   %f%s    %f\n",
-                                lat_modifier,nc.lat_current,reset, low_modifier,nc.lat_low,reset, high_modifier,nc.lat_high,reset,nc.lat_average,
-                                lon_modifier, nc.lon_current,reset, low_modifier,nc.lon_low,reset, high_modifier,nc.lon_high,reset,nc.lon_average,
-                                alt_modifier, nc.alt_current,reset, low_modifier,nc.alt_low,reset, high_modifier,nc.alt_high,reset,nc.alt_average,
-                                speed_modifier, nc.speed_current,reset, low_modifier,nc.speed_low,reset, high_modifier,nc.speed_high,reset,nc.speed_average);
+                                lat_modifier,nc.lat_current,reset, low_modifier,nc.lat_low,reset, high_modifier,
+                                nc.lat_high,reset,nc.lat_average,
+                                lon_modifier, nc.lon_current,reset, low_modifier,nc.lon_low,reset,
+                                high_modifier,nc.lon_high,reset,nc.lon_average,
+                                alt_modifier, nc.alt_current,reset, low_modifier,nc.alt_low,reset,
+                                high_modifier,nc.alt_high,reset,nc.alt_average,
+                                speed_modifier, nc.speed_current,reset, low_modifier,nc.speed_low,reset,
+                                high_modifier,nc.speed_high,reset,nc.speed_average);
     s_write(&(monitor->transmission), buffer, snprintf_status);
 }
 
@@ -244,18 +255,21 @@ void print_avg_diff(struct client_table_entry *client)
     struct nmea_container nc;
 
     if(s_data->number_of_sensors > 0) {
-        s_write(&(client->transmission), PRINT_AVG_DIFF_HEADER, sizeof(PRINT_AVG_DIFF_HEADER));
+        s_write(&(client->transmission), PRINT_AVG_DIFF_HEADER,
+                sizeof(PRINT_AVG_DIFF_HEADER));
         struct client_table_entry* client_list_iterate;
         list_for_each_entry(client_list_iterate,&client_list->list, list) {
             if(client_list_iterate->client_id > 0) {
                 nc = client_list_iterate->nmea;
                 snprintf_status = snprintf( buffer, 1000, "%d   %f  %f  %f  %f\n",
-                                            client_list_iterate->client_id, nc.lat_avg_diff, nc.lon_avg_diff, nc.alt_avg_diff, nc.speed_avg_diff);
+                                            client_list_iterate->client_id, nc.lat_avg_diff, nc.lon_avg_diff,
+                                            nc.alt_avg_diff, nc.speed_avg_diff);
                 s_write(&(client->transmission), buffer, snprintf_status);
             }
         }
     } else {
-        s_write(&(client->transmission), ERROR_NO_SENSORS_CONNECTED, sizeof(ERROR_NO_SENSORS_CONNECTED));
+        s_write(&(client->transmission), ERROR_NO_SENSORS_CONNECTED,
+                sizeof(ERROR_NO_SENSORS_CONNECTED));
     }
 }
 
@@ -263,40 +277,40 @@ static int get_pfd_string(char *buffer, int buf_len)
 {
     memset(buffer, '\0',buf_len);
     int snprintf_status = snprintf( buffer, 1000,
-                                "Phase:                     %lf\n\n" \
-                                "T current:                 %lf\n" \
-                                "T current (smooth):        %lf\n" \
-                                "T previous (smooth):       %lf\n" \
-                                "T today (smooth):          %lf\n" \
-                                "T yesterday (smooth):      %lf\n\n" \
-                                "Steer current:             %lf\n" \
-                                "Steer current (smooth):    %lf\n" \
-                                "Steer previous (smooth):   %lf\n\n" \
-                                "Steer today (smooth):      %lf\n" \
-                                "Steer yesterday (smooth):  %lf\n\n" \
-                                "Steer prediction:          %lf\n\n" \
-                                "MJD today:                 %lf\n" \
-                                "Days passed since startup: %d\n\n" \
-				"Discipline status:         %d\n" \
-				"Fast timing filter status  %d\n" \
-				"Freq corr. filter status   %d\n\n",
-                                cfd->phase_current,
-                                cfd->t_current,
-                                cfd->t_smooth_current,
-                                cfd->t_smooth_previous,
-                                cfd->t_smooth_today,
-                                cfd->t_smooth_yesterday,
-                                cfd->steer_current,
-                                cfd->steer_smooth_current,
-                                cfd->steer_smooth_previous,
-                                cfd->steer_smooth_today,
-                                cfd->steer_smooth_yesterday,
-                                cfd->steer_prediction,
-                                cfd->today_mjd,
-                                cfd->days_passed,
-				cfd->discok,
-				cfd->ftf_status,
-				cfd->fqf_status);
+                                    "Phase:                     %lf\n\n" \
+                                    "T current:                 %lf\n" \
+                                    "T current (smooth):        %lf\n" \
+                                    "T previous (smooth):       %lf\n" \
+                                    "T today (smooth):          %lf\n" \
+                                    "T yesterday (smooth):      %lf\n\n" \
+                                    "Steer current:             %lf\n" \
+                                    "Steer current (smooth):    %lf\n" \
+                                    "Steer previous (smooth):   %lf\n\n" \
+                                    "Steer today (smooth):      %lf\n" \
+                                    "Steer yesterday (smooth):  %lf\n\n" \
+                                    "Steer prediction:          %lf\n\n" \
+                                    "MJD today:                 %lf\n" \
+                                    "Days passed since startup: %d\n\n" \
+                                    "Discipline status:         %d\n" \
+                                    "Fast timing filter status  %d\n" \
+                                    "Freq corr. filter status   %d\n\n",
+                                    cfd->phase_current,
+                                    cfd->t_current,
+                                    cfd->t_smooth_current,
+                                    cfd->t_smooth_previous,
+                                    cfd->t_smooth_today,
+                                    cfd->t_smooth_yesterday,
+                                    cfd->steer_current,
+                                    cfd->steer_smooth_current,
+                                    cfd->steer_smooth_previous,
+                                    cfd->steer_smooth_today,
+                                    cfd->steer_smooth_yesterday,
+                                    cfd->steer_prediction,
+                                    cfd->today_mjd,
+                                    cfd->days_passed,
+                                    cfd->discok,
+                                    cfd->ftf_status,
+                                    cfd->fqf_status);
     return snprintf_status;
 }
 
@@ -306,11 +320,11 @@ void print_cfd(struct client_table_entry *monitor, int update_count)
     char buffer [buf_len];
     int counter = 0;
 
-    if(update_count == 0){
+    if(update_count == 0) {
         update_count = 1;
     }
 
-    while(counter < update_count){
+    while(counter < update_count) {
         get_pfd_string(buffer, buf_len);
         s_write(&(monitor->transmission), buffer, strlen(buffer));
         counter++;
@@ -335,7 +349,7 @@ int dump_cfd(char *path)
         return 0;
     }
 
-    if(!fprintf(cfd_file,"%s", buffer) ){
+    if(!fprintf(cfd_file,"%s", buffer) ) {
         t_print(ERROR_FWRITE);
         return 0;
     }
@@ -357,7 +371,8 @@ void restart_warmup(struct client_table_entry* client)
 }
 
 /* Dumps data location data for client X into a file */
-int datadump(struct client_table_entry* client, char *filename, int dump_human_read)
+int datadump(struct client_table_entry* client, char *filename,
+             int dump_human_read)
 {
     FILE *bin_file;
     char bin_name[strlen(filename) + strlen(DATADUMP_EXTENSION)];
@@ -389,7 +404,8 @@ int datadump(struct client_table_entry* client, char *filename, int dump_human_r
 
         h_dump = fopen(h_name, "wb");
 
-        fprintf(h_dump, "Sensor Server dumpfile created for client %d\n", client->client_id);
+        fprintf(h_dump, "Sensor Server dumpfile created for client %d\n",
+                client->client_id);
 
         /*
         * Dumping all from NMEA container
@@ -498,9 +514,9 @@ int query_csac(char *query, char *buffer)
 
     /* Acquiring lock*/
     sem_wait(&(s_synch->csac_mutex));
-    
+
     /* Running command */
-    if(!run_command(command, buffer)){
+    if(!run_command(command, buffer)) {
         /* Releasing lock */
         sem_post(&(s_synch->csac_mutex));
         return 0;
@@ -517,11 +533,11 @@ int client_query_csac(struct client_table_entry *monitor, char *query)
     char buffer[MAX_PARAMETER_SIZE];
     memset(buffer, '\0', MAX_PARAMETER_SIZE);
 
-    if(!query_csac(query, buffer)){
+    if(!query_csac(query, buffer)) {
         return 0;
     }
 
-    if(!s_write(&(monitor->transmission), buffer, strlen(buffer))){
+    if(!s_write(&(monitor->transmission), buffer, strlen(buffer))) {
         return 0;
     }
     return 1;
@@ -584,7 +600,8 @@ int load_ref_def_data(struct client_table_entry* target)
 
     t_print("Loading filter data from: %s\n", filename);
 
-    int load_config_status = load_config(conf_map, filename, LOAD_REF_DEV_DATA_ENTRIES);
+    int load_config_status = load_config(conf_map, filename,
+                                         LOAD_REF_DEV_DATA_ENTRIES);
 
     /* releasing lock */
     sem_post(&(s_synch->ready_mutex));
