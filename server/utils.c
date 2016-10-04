@@ -277,13 +277,29 @@ int log_to_file(char *path, char *content, int stamp_switch)
         return 0;
     }
 
-    /* Add timestamp */
-    if(stamp_switch) {
+    /* Add MJD timestamp */
+    if(stamp_switch == 1) {
         int timestamp_size = 50;
         char timestamp[timestamp_size];
         memset(timestamp,'\0', timestamp_size);
 
         get_today_mjd(timestamp);
+        if(!fprintf(log_file,"%s,",timestamp)) {
+            t_print(ERROR_FWRITE);
+            return 0;
+        }
+    }
+
+    /* Just stamp with regular time */
+    if(stamp_switch == 2){
+        char timestamp[100];
+        memset(timestamp, '\0', 100);
+        time_t rawtime;
+        struct tm *info;
+        time(&rawtime);
+        info = gmtime(&rawtime);
+        strftime(timestamp,80,"[%x - %X] ", info); 
+
         if(!fprintf(log_file,"%s,",timestamp)) {
             t_print(ERROR_FWRITE);
             return 0;
