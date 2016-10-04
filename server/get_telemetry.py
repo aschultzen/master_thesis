@@ -8,7 +8,7 @@ import serial
 
 def main_routine():
     ser = serial.Serial("/dev/ttyUSB0",57600, timeout=0.1)
-    sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser),encoding='ascii',newline="\r")
+    sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser),encoding='ascii',newline="\r\n")
 
     log_file = open("telemetry.txt", "a+")
 

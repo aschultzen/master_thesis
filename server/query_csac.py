@@ -9,7 +9,7 @@ import serial
 def main_routine():
 	# Opening serial stream, use ASCII
 	ser = serial.Serial("/dev/ttyUSB0",57600, timeout=0.1)
-	sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser),encoding='ascii',newline="\r")
+	sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser),encoding='ascii',newline="\r\n")
 
 	# Open log file, mostly used for debug
 	log_file = open("query_csac.txt", "a+")
