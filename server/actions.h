@@ -46,7 +46,8 @@ void kick_client(struct client_table_entry* client);
  * @param client Pointer to SENSOR whose time was requested.
  * @return Void
  */
-void print_client_time(struct client_table_entry *monitor, struct client_table_entry* client);
+void print_client_time(struct client_table_entry *monitor,
+                       struct client_table_entry* client);
 
 /** @brief Prints a table of clients to the MONITOR
  *
@@ -73,7 +74,8 @@ void print_help(struct client_table_entry *monitor);
  * @param client Pointer to SENSOR whose location is requested.
  * @return Void
  */
-void print_location(struct client_table_entry *monitor, struct client_table_entry* client);
+void print_location(struct client_table_entry *monitor,
+                    struct client_table_entry* client);
 
 /** @brief Prints difference between current position and average.
  *
@@ -106,7 +108,8 @@ void restart_warmup(struct client_table_entry* client);
  * @param human_readable Switch to determine if humanly readable data should be made as well.
  * @return 1 if success, 0 if fail.
  */
-int datadump(struct client_table_entry* client, char *filename, int human_readable);
+int datadump(struct client_table_entry* client, char *filename,
+             int human_readable);
 
 /** @brief Restore NMEA data from file
  *

@@ -5,17 +5,20 @@
 #define CONFIG_CLIENT_ID "client_id:"
 #define CONFIG_LOG_NAME "log_file_name:"
 #define CONFIG_LOG_NMEA "log_nmea:"
-#define CONFIG_ENTRIES 4
 #define CONFIG_FILE_PATH "client_config.ini"
 #define DEFAULT_SERIAL_INTERFACE "/dev/ttyACM0"
+#define CONFIG_CONNECTION_ATTEMPTS_MAX "connection_attempts_max:"
+#define CONFIG_ENTRIES 5
 
 struct config_map_entry conf_map[1];
 
 static int identify(int session_fd, int id);
-static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno);
+static int create_connection(struct sockaddr_in *serv_addr, int *session_fd,
+                             char *ip, int portno);
 static void receive_nmea(int gps_serial, struct raw_nmea_container *nmea_c);
 static int format_nmea(struct raw_nmea_container *nmea_c);
-static void initialize_config(struct config_map_entry *conf_map, struct config *cfg);
+static void initialize_config(struct config_map_entry *conf_map,
+                              struct config *cfg);
 static int start_client(int portno, char* ip);
 static int usage(char *argv[]);
 
@@ -55,7 +58,8 @@ static int identify(int session_fd, int id)
 }
 
 /* Create connection to server */
-static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, char *ip, int portno)
+static int create_connection(struct sockaddr_in *serv_addr, int *session_fd,
+                             char *ip, int portno)
 {
     if((*session_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         t_print("Could not create socket\n");
@@ -72,7 +76,8 @@ static int create_connection(struct sockaddr_in *serv_addr, int *session_fd, cha
         return 1;
     }
 
-    if( connect(*session_fd, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) < 0) {
+    if( connect(*session_fd, (struct sockaddr *)serv_addr,
+                sizeof(*serv_addr)) < 0) {
         return 1;
     }
 
@@ -143,7 +148,8 @@ static int format_nmea(struct raw_nmea_container *nmea_c)
     return total_length;
 }
 
-static int make_log(struct raw_nmea_container *nmea_c, int id, char* log_name){
+static int make_log(struct raw_nmea_container *nmea_c, int id, char* log_name)
+{
     /* Allocating memory for filename buffer */
     int filename_length = strlen(log_name) + 100;
     char filename[filename_length];
@@ -161,20 +167,21 @@ static int make_log(struct raw_nmea_container *nmea_c, int id, char* log_name){
 
     /* Concating filename and ID */
     strcat(filename, id_string);
-    
+
     char log_buffer[SENTENCE_LENGTH * 2];
     memset(log_buffer, '\0', SENTENCE_LENGTH * 2);
     strcat(log_buffer, nmea_c->raw_rmc);
     log_buffer[strlen(log_buffer)-2] = '\0';
     log_buffer[strlen(log_buffer)-1] = ',';
-  
+
     strcat(log_buffer, nmea_c->raw_gga);
-    
+
     return log_to_file(filename, log_buffer, 1);
 }
 
 /* Setting up the config structure specific for the server */
-static void initialize_config(struct config_map_entry *conf_map, struct config *cfg)
+static void initialize_config(struct config_map_entry *conf_map,
+                              struct config *cfg)
 {
     conf_map[0].entry_name = CONFIG_SERIAL_INTERFACE;
     conf_map[0].modifier = FORMAT_STRING;
@@ -191,6 +198,10 @@ static void initialize_config(struct config_map_entry *conf_map, struct config *
     conf_map[3].entry_name = CONFIG_LOG_NMEA;
     conf_map[3].modifier = FORMAT_INT;
     conf_map[3].destination = &cfg->log_nmea;
+
+    conf_map[4].entry_name = CONFIG_CONNECTION_ATTEMPTS_MAX;
+    conf_map[4].modifier = FORMAT_INT;
+    conf_map[4].destination = &cfg->con_attempt_max;
 }
 
 static int start_client(int portno, char* ip)
@@ -209,10 +220,22 @@ static int start_client(int portno, char* ip)
     struct config cfg;
 
     initialize_config(conf_map, &cfg);
-    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, CONFIG_ENTRIES);
+    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH,
+                                         CONFIG_ENTRIES);
     if(!load_config_status) {
         t_print("Failed to load the config, using default values\n");
-        memcpy(cfg.serial_interface, DEFAULT_SERIAL_INTERFACE, strlen(DEFAULT_SERIAL_INTERFACE)*sizeof(char));
+        memcpy(cfg.serial_interface, DEFAULT_SERIAL_INTERFACE,
+               strlen(DEFAULT_SERIAL_INTERFACE)*sizeof(char));
+
+        /* Picking ID number for client at random */
+        cfg.client_id = rand() % ID_MAX;
+        t_print("Picked ID %d at random\n", cfg.client_id);
+
+        /* Disabling logging */
+        cfg.log_nmea = 0;
+
+        /* Setting retry times to 10 */
+        cfg.con_attempt_max = 10;
     } else {
         if(cfg.client_id == 0 || cfg.client_id > ID_MAX) {
             t_print("Client ID can not be less than 1 or more than %d!\n", ID_MAX);
@@ -230,13 +253,14 @@ static int start_client(int portno, char* ip)
     }
 
     /* Establishing connection to server */
-    while(connection_attempts <= CONNECTION_ATTEMPTS_MAX) {
+    while(connection_attempts <= cfg.con_attempt_max) {
         con_status = create_connection(&serv_addr, &session_fd, ip, portno);
         if(con_status == 0) {
             t_print("Connected to server!\n");
             break;
         }
-        t_print("Connection attempt %d failed. Code %d\n", connection_attempts, con_status);
+        t_print("Connection attempt %d failed. Code %d\n", connection_attempts,
+                con_status);
         sleep(1);
         connection_attempts++;
     }
@@ -246,16 +270,16 @@ static int start_client(int portno, char* ip)
         exit(0);
     }
 
-    if(cfg.log_nmea){
+    if(cfg.log_nmea) {
         t_print("NMEA data logging enabled\n");
     }
 
     while (1) {
         receive_nmea(gps_serial, &nmea_c);
         int trans_length = format_nmea(&nmea_c);
-         /* Writing to socket (server) */
+        /* Writing to socket (server) */
         write(session_fd, nmea_c.output, trans_length);
-        if(cfg.log_nmea){
+        if(cfg.log_nmea) {
             make_log(&nmea_c, cfg.client_id, cfg.log_name);
         }
     }

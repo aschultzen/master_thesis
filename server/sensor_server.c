@@ -67,7 +67,8 @@ void remove_client_by_id(int id);
 static struct client_table_entry* create_client(struct client_table_entry* ptr);
 static void handle_sigchld(int signum);
 static void handle_sig(int signum);
-static void initialize_config(struct config_map_entry *conf_map, struct server_config *s_conf);
+static void initialize_config(struct config_map_entry *conf_map,
+                              struct server_config *s_conf);
 static void start_server(int port_number);
 static int usage(char *argv[]);
 
@@ -79,7 +80,8 @@ void print_server_data(struct client_table_entry *monitor)
     struct tm *loctime_started;
     loctime_started = localtime (&s_data->started);
 
-    s_write(&(monitor->transmission), SERVER_TABLE_LABEL, sizeof(SERVER_TABLE_LABEL));
+    s_write(&(monitor->transmission), SERVER_TABLE_LABEL,
+            sizeof(SERVER_TABLE_LABEL));
     s_write(&(monitor->transmission), HORIZONTAL_BAR, sizeof(HORIZONTAL_BAR));
 
     snprintf_status = snprintf( buffer, 1000,
@@ -132,7 +134,8 @@ static void remove_client_by_pid(pid_t pid)
     struct client_table_entry* temp_remove;
 
     sem_wait(&(s_synch->client_list_mutex));
-    list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
+    list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list,
+                             list) {
         if(client_list_iterate->pid == pid) {
             if(client_list_iterate->client_id > 0) {
                 s_data->number_of_sensors--;
@@ -151,7 +154,8 @@ void remove_client_by_id(int id)
     struct client_table_entry* temp_remove;
 
     sem_wait(&(s_synch->client_list_mutex));
-    list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list, list) {
+    list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list,
+                             list) {
         if(client_list_iterate->client_id == id) {
             list_del(&client_list_iterate->list);
         }
@@ -204,7 +208,8 @@ static void handle_sig(int signum)
 }
 
 /* Setting up the config structure specific for the server */
-static void initialize_config(struct config_map_entry *conf_map, struct server_config *s_conf)
+static void initialize_config(struct config_map_entry *conf_map,
+                              struct server_config *s_conf)
 {
     conf_map[0].entry_name = CONFIG_SERVER_MAX_CONNECTIONS;
     conf_map[0].modifier = FORMAT_INT;
@@ -251,16 +256,20 @@ static void start_server(int port_number)
     struct config_map_entry conf_map[SERVER_CONFIG_ENTRIES];
 
     /* Initializing config structure */
-    s_conf = mmap(NULL, sizeof(struct server_config), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    s_conf = mmap(NULL, sizeof(struct server_config), PROT_READ | PROT_WRITE,
+                  MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     initialize_config(conf_map, s_conf);
 
     /* Loading config */
-    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH, SERVER_CONFIG_ENTRIES);
+    int load_config_status = load_config(conf_map, CONFIG_FILE_PATH,
+                                         SERVER_CONFIG_ENTRIES);
 
     /* Falling back to default if load_config fails */
     if(load_config_status) {
         t_print(CONFIG_LOADED);
-        client_list = mmap(NULL, (s_conf->max_clients * sizeof(struct client_table_entry)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        client_list = mmap(NULL,
+                           (s_conf->max_clients * sizeof(struct client_table_entry)),
+                           PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     } else {
         t_print(ERROR_CONFIG_LOAD_FAILED);
         exit(0);
@@ -269,31 +278,35 @@ static void start_server(int port_number)
     INIT_LIST_HEAD(&client_list->list);
 
     /* Create and initialize shared memory for server data */
-    s_data = mmap(NULL, sizeof(struct server_data), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    s_data = mmap(NULL, sizeof(struct server_data), PROT_READ | PROT_WRITE,
+                  MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     bcopy(PROGRAM_VERSION, s_data->version,4);
     s_data->pid = getpid();
     s_data->started = time(NULL);
 
     /* Init shared semaphores and sync elements */
-    s_synch = mmap(NULL, sizeof(struct server_synchro), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    s_synch = mmap(NULL, sizeof(struct server_synchro), PROT_READ | PROT_WRITE,
+                   MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     sem_init(&(s_synch->ready_mutex), 1, 1);
     sem_init(&(s_synch->client_list_mutex), 1, 1);
     sem_init(&(s_synch->csac_mutex), 1, 1);
 
     /* Init pointer to shared CSAC_filter data */
-    cfd = mmap(NULL, sizeof(struct csac_filter_data), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    cfd = mmap(NULL, sizeof(struct csac_filter_data), PROT_READ | PROT_WRITE,
+               MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-    if( &(s_synch->ready_mutex) == SEM_FAILED || &(s_synch->client_list_mutex) == SEM_FAILED) {
+    if( &(s_synch->ready_mutex) == SEM_FAILED
+            || &(s_synch->client_list_mutex) == SEM_FAILED) {
         t_print(ERROR_SEMAPHORE_CREATION_FAILED);
         sem_close(&(s_synch->ready_mutex));
         sem_close(&(s_synch->client_list_mutex));
         exit(1);
     }
 
-    
+
     pid_t f_pid;
     f_pid = fork();
-    if(f_pid == 0){
+    if(f_pid == 0) {
         t_print("Forked out CSAC filter [%d]\n", getpid());
         start_csac_filter(cfd);
         _exit(0);
@@ -319,8 +332,8 @@ static void start_server(int port_number)
     if (sigaction(SIGCHLD, &child_action, 0) == -1) {
         perror(0);
         exit(1);
-    } 
-    
+    }
+
     /* Initialize socket */
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sockfd < 0) {
@@ -353,7 +366,7 @@ static void start_server(int port_number)
 
     int session_fd = 0;
     t_print(SERVER_RUNNING);
-    while (!done) {       
+    while (!done) {
         t_print(WAITING_FOR_CONNECTIONS);
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {

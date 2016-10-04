@@ -86,7 +86,7 @@ This countermeasure assumes two receivers with at least 1 km distance from each 
 \subsubsection{Multi-receiver tracking loops}\label{mrtl}
 Building on the idea from \textit{PIA Tracking loops}(\ref{ptl}) one can benefit from the networked nature of the GPS-timed PMU. In a multi-receiver vector tracking loop, many receivers process information in collaboration. A key conclusion of the research made by A. Soloviev \textit{et alia} as referenced by L. Heng \textit{et alia} (2014) showed that acquisition and tracking performance under low signal-to-noise ratio conditions was improved under multi-receiver signal accumulation. Multi-receiver phased arrays also improved the robustness against both jamming (\ref{jam}) and spoofing attacks (\ref{sls},\ref{dls}) by \textit{"Forming beams to satellites and steering nulls in the direction of attacking transmitters"} (L. Heng \textit{et alia} (2014), p.41). In addition to the increase robustness, it increases the ability to detect malfunction (\ref{mf}). A faulty receiver will usually not be consistent with other correctly functioning receivers. As with the countermeasure based on cross-correlating P(Y) code (\ref{ccpc}), this implementation also requires that the GPS receivers are able to output baseband samples. In this implementation, the samples need to be transmitted continuously among the receivers which requires a capable data network such as a typical LAN. \cite{HengChouGao14}  
 
-\subsubsection{Spoof proof CSAC SMACC}\label{op}
+\section{Our Proposal: Spoof proof CSAC SMACC}\label{op}
 \begin{wrapfigure}{c}{0.45\textwidth}
   \centering
   \includegraphics[width=0.40\textwidth]{csac.jpg}
@@ -94,26 +94,23 @@ Building on the idea from \textit{PIA Tracking loops}(\ref{ptl}) one can benefit
    {Symmetricom SA.45s CSAC. Courtesy Symmetricom.}
 \end{wrapfigure} 
 
-\iffalse  
-We propose to use a smart miniature atomic clock controller(SMACC) with a chip scale atomic clock(CSAC) to complement a commercial GPS controlled clock to harden it against attacks. The Symmetricom SA.45 is CSAC measuring only 16cc with 1 pulse per second (PPS) output and 1 PPS input (for sync) as well as a RS-232 interface. The key element in our proposal is that we have a clock that we can trust and use as a reference. Any correction needed as implied by the GPS signal will be checked with the CSAC.
-If the correction is to big, an alarm will be raised. In the event of a jamming attack (or malfunction in the receiver), the CSAC can be used to correct a GPS controlled clock instead of the 1 PPS output from the GPS receiver. In the event of a spoofing attack (\ref{sls},\ref{dls},\ref{rs}) on a PMU with a GPS controlled clock, the stable nature of the CSAC can be used by a controller to detect the attack and to disable the GPS correction and instead rely on the CSAC for correction. When used with an atomic clock, the controller can simply disable the GPS correction since the atomic clock would keep better time than the CSAC.
+We propose to construct and use what we call a \textit{Spoof proof chip scale atomic clock smart miniature atomic clock controller (CSAC SMACC)}. This is in essence just a piece of software running on a computer controlling a GPS disciplined chip scale atomic clock. The SMACC software will be connected to the CSAC and perform the following trivial tasks:
 
-It is important to note that this approach doesn't really do anything with the fact that you are being attacked, it simply tries to eliminate the effects of it. In a scenario where you are under attack weeks at a time, you will have to address the fact that you are under attack at some point. It is also important to notes that this countermeasure mostly apply to applications using GPS as a source of time. Having a stable clock during a jamming attack will not help you determine your position once you move (given that you are fully jammed).
-\fi
-
-We propose to use a smart miniature atomic clock controller(SMACC) that controls a CSAC (chip scale atomic clock). Playing the role as the SMACC will be a Raspberry Pi running Linux with software that implements the following countermeasures:
 \begin{itemize}
+  \item Checking time solutions a clock model of the CSAC(\ref{ctsarcs})
   \item Checking solved position against known position (\ref{cspakp})
-  \item Checking time solutions against receiver clock statistics (\ref{ctsarcs})
   \item Monitoring Signal Power(\ref{msp})
 \end{itemize}
-In theory, any atomic clock would suffice for our application. This would however be highly unpractical and also very expensive. We therefore propose to use the Symmetricom SA.45. This is a CSAC measuring only 16cc with 1 pulse per second (PPS) output and 1 PPS input (for disciplining) as well as a RS-232 interface. The SA.45's strength is it's low power consumption (less than 120mW) and low price \cite{SADS}. It is important to note that the properties of the SA.45 is what makes our proposal feasible, not the manufacturer or the model. A CSAC with similar properties and specifications would of course also work for our proposal.
+
+In the event of spoofing or jamming attack, actions can me made depending on the situation. For example, during a spoofing attack, the SMACC upon detecting an attack, could simply disable the disciplining of the CSAC thus minimizing the damage done to the CSAC's stability caused by the spoofing attack. The SMACC could also do "one better" by steering the CSAC based on a model of the CSAC's oscillator, thus ensuring stability for a longer period of time than by just disabling the disciplining.  
+
+\subsection{Notes}
+It is important to note that this approach doesn't really do anything with the fact that you are being attacked, it simply tries to eliminate the effects of it. In a scenario where you are under attack weeks at a time, you will have to address the fact that you are under attack at some point. It is also important to notes that this countermeasure mostly apply to applications using GPS as a source of time. Having a stable clock during a jamming attack will not help you determine your position once you move (given that you are fully jammed).
+
 \begin{figure}\label{bd}
   \includegraphics[angle=90, scale=0.5]{master_sketch_arrows.pdf}
    \caption[CSAC SMACC Block diagram]{A block diagram of our proposed solution}
 \end{figure}
-
-It is also important to note that this approach doesn't really do anything with the fact that you are being attacked, it is simply an attempt at eliminating the effects of it. In a scenario where you are under attack weeks at a time, you will have to address the issue that you are under attack at some point. It is also important to notes that this countermeasure mostly apply to applications using GPS as a source of time. Having a stable clock during a jamming attack will not help you determine your position once you move (given that you are fully jammed).
 
 \newpage
 \subsection{Summary}
