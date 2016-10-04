@@ -40,7 +40,7 @@ samepage=false, %with this setting you can force the list to appear on the same 
 showspaces=false,
 showtabs =false,
 texcl=false,
-breaklines = true
+%breaklines = true
 }
 
 \newmintedfile[ccode]{c}{
@@ -62,7 +62,7 @@ samepage=false, %with this setting you can force the list to appear on the same 
 showspaces=false,
 showtabs =false,
 texcl=false,
-breaklines = true
+%breaklines = true
 }
 
 \newmintedfile[makecode]{make}{
@@ -84,7 +84,7 @@ samepage=false, %with this setting you can force the list to appear on the same 
 showspaces=false,
 showtabs =false,
 texcl=false,
-breaklines =true
+%breaklines =true
 }
 
 % Making the whole paragraph biz possible
@@ -139,6 +139,8 @@ breaklines =true
   numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
   rulecolor=\color{black}         % if not set, the frame-color may be changed on line-breaks 
 }
+
+\newenvironment{code}{\captionsetup{type=listing}}{}
 
 \title{GPS Spoofing}
 \subtitle{A detection and mitigation system}
@@ -200,47 +202,70 @@ The SMACC software was originally planned to be written in Java since this was m
 \end{itemize}
 
 \section{The Sensor Server/Client model}
-Numerous approaches where considered when planning the implementation of the SMACC software (\ref{da}). The approach that was chosen is what I have named the "Sensor Server". The Sensor Server is based on the idea that a GNSS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Sensor runs the sensor client software that communicates with the server. With this approach, a great number of GNSS receivers can be connected to the SMACC using existing infrastructure, communicating over IP. The Sensor Server implements the functionality that was planned for the SMACC to implement (\ref{op}) and then some more.
+Numerous approaches where considered when planning the implementation of the SMACC software (See \ref{da} for alternate approaches). The approach that was chosen is what I have named the "Sensor Server". The Sensor Server is based on the idea that a GNSS receiver and a computer can be viewed abstractly as a single device, a Sensor. A sensor runs a trivial program that receives data from a GNSS receiver, formats the data correctly and sends the data to the server (more about the client \ref{sensor_client}). With this approach, a great number of GNSS receivers can be connected to the SMACC using existing infrastructure, communicating over IP. 
 
-% Refer to protocol.h at the point when describing the ID process?
-\section{The Sensor Client}
-The sensor client software is a simple program written in C99 whose only task is to relay information read from the GNSS receivers. Summed up shortly:
+\subsection{Architecture}
+
+\subsection{Processes vs Threads}\label{procvsthread}
+
+\subsection{Shared memory \& Semaphores}
+The sensor server architecture uses several shared memory segments. This is necessary because as mentioned earlier(\ref{procvsthread}), each process uses it's own private address space. The pointers to the shared memory segments are declared as \textit{extern} in \texttt{sensor\_server.h}. The extern keyword means the the variable has an external linkage, making it visible from other files than the one in which it is defined. The following pointers to the shared memory segments are defined in \texttt{sensor\_server.c}:
+
 \begin{itemize}
-  \item The client software takes two parameters to start, the servers IP and port. If parameters are missing, the program exits.
-  \begin{itemize}
-    \item Example: \texttt{./sensor\_client -p 10000 -i 192.168.1.5}
-  \end{itemize}
-  \item Initializes and loads configuration from configuration file. The configuration file includes path to the GNSS receiver, the sensors ID number and a binary value for whether or not logging of NMEA should be done as well as path to 
-  the log file. If the loading of the configuration file fails, default values are used instead:
-  \begin{itemize}
-    \item The ID number is chosen at random but within legal limits.
-    \item Logging is disabled.
-    \item Maximum of server connection attempts are set to 10.
-    \item Path to GNSS receiver is set to \texttt{/dev/ttyACM0}. This should be the path to the receiver unless another similar device is connected to the computer and given it is a Raspberry Pi running Raspbian.
-  \end{itemize}
-  \item Establishes communication with GNSS receiver, exits if it fails.
-  \item Attempts to establish communication with the server, retries for a configurable amount of times at 1 second intervals.
-  \item Identifies the client for the server according to protocol.
-  \item Reads from the GNSS receiver, scans for lines starting with either \texttt{\$GNRMC} or \texttt{\$GNGGA}. When both lines are found, the data is stored in a buffer.
-  \item Sends the GNSS data to the server according to protocol.
-  \item Repeats.
+  \item \texttt{struct server\_data *s\_data}
+  \item \texttt{server\_synchro *s\_synch}
+  \item \texttt{client\_table\_entry *client\_list}
+  \item \texttt{server\_config *s\_conf}
+  \item \texttt{csac\_filter\_data *cfd}
 \end{itemize}
 
-\section{The Sensor Server }
+Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
 
-\subsection{Processes vs Threads}
-
-\subsection{Shared memory}
-Since the server needs to have access to all the data the clients transmit, it uses a shared memory model. Every process that forks out from the server is given access to this memory area. Even the processes themselves have access to each others memory. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
-
-\begin{lstlisting}
+\begin{minted}
+[
+fontsize=\scriptsize,
+fontfamily=tt,
+linenos=true
+]
+{c}
 client_list = mmap(NULL, 
                   (s_conf->max_clients * sizeof(struct client_table_entry)), 
                   PROT_READ | PROT_WRITE,
                   MAP_SHARED | MAP_ANONYMOUS,
                   -1, 0);
-\end{lstlisting}
-The example over shows how shared memory is allocated. The observant reader will notice that there memory is allocated for a finite number of clients. This is unfortunate but necessary: The fork operation creates a completely separate address space for the child process but the child still has a complete copy of parents memory segments. Since the child process is completely separated from the parent, any changes in the shared memory done by the parent will not be "reflected" in the child's memory. In other words, the entire shared memory \textit{has} to be initialized before any fork operations are done. Failing to do so will result in a segmentation fault once a process attempts to access the memory of a younger sibling. In this application however, we always know how many clients are going to connect. Even when in doubt, the maximum number of clients can be grossly overestimated and configured in order to make sure that there is room for more clients.
+\end{minted}
+
+Having shared memory segments comes with a price. Whenever two or more processes are working on the same data set, you are prone to race conditions, deadlocks and data corruption. Therefore, semaphores are used to lock the segments while reading or writing are done. 
+
+\begin{code}
+  \begin{minted}
+  [
+  fontsize=\scriptsize,
+  fontfamily=tt,
+  linenos=true
+  ]
+  {c}
+    void remove_client_by_id(int id)
+    {
+        struct client_table_entry* client_list_iterate;
+        struct client_table_entry* temp_remove;
+
+        sem_wait(&(s_synch->client_list_mutex));
+        list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list,
+                                 list) {
+            if(client_list_iterate->client_id == id) {
+                list_del(&client_list_iterate->list);
+            }
+        }
+        s_data->number_of_clients--;
+        sem_post(&(s_synch->client_list_mutex));
+    }
+  \end{minted}
+  \caption{Function for removing disconnected clients from list of clients}
+  \label{removeclient}
+\end{code}
+
+Figure \ref{removeclient} shows a typical example of a function locking down access to the shared memory segment containing the list of connected clients, by using a semaphore. In the example (\ref{removeclient}) a client has been disconnected from the server and the the list of connected clients are being updated. The semaphore is necessary to make sure that another process is not attempting to read or write to the segment while the data is deleted. If another process had attempted to execute the \texttt{sem\_wait()} on the semaphore, it would have been put in a queue. Depending on the operating system, it would most likely signal the scheduler to do a context switch since the resource was busy anyway and it therefor should relinquish control of the CPU. Once the semaphores is raised, it can be lowered again by another process. It is important to note that the semaphores are not a function of or related to the memory segments by anything other the name. The semaphores are just "flags" used to control access to a resource. There is no automatic raising or lowering of the associated semaphores by reading or writing the shared memory segments. All functions in the sensor server does however use semaphores when dealing with shared memory segments in order to avoid deadlock and race conditions.
 
 \subsection{Structs}
 In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
@@ -257,10 +282,6 @@ The client\_table\_entry is what the name suggests, it's an entry in a list of c
 Of all the pointers tossed about in the sensor server, this type is the most common one. 
 
 \subsubsection{NMEA container}\label{nmea_cont}
-
-
-\subsubsection{Components}
-In the following sections, the different components that comprises the sensor server will be explained. 
 
 \subsubsection{CSAC Communication}
   \includegraphics[width=1\textwidth]{csac_serial.pdf}
@@ -298,6 +319,30 @@ The MIN-MAX filter is one of the least sophisticated filters implemented. Data i
 \subsubsection{Probability filter}
 The "probability filter" is implemented by using collected data to create a model of expected data. The current data is then compared in order to evaluate whether or not it is abnormal. 
 
+% Refer to protocol.h at the point when describing the ID process?
+\section{The Sensor Client}\label{sensor_client}
+The sensor client software is a simple program written in C99 whose only task is to relay information read from the GNSS receivers. Summed up shortly:
+\begin{itemize}
+  \item The client software takes two parameters to start, the servers IP and port. If parameters are missing, the program exits.
+  \begin{itemize}
+    \item Example: \texttt{./sensor\_client -p 10000 -i 192.168.1.5}
+  \end{itemize}
+  \item Initializes and loads configuration from configuration file. The configuration file includes path to the GNSS receiver, the sensors ID number and a binary value for whether or not logging of NMEA should be done as well as path to 
+  the log file. If the loading of the configuration file fails, default values are used instead:
+  \begin{itemize}
+    \item The ID number is chosen at random but within legal limits.
+    \item Logging is disabled.
+    \item Maximum of server connection attempts are set to 10.
+    \item Path to GNSS receiver is set to \texttt{/dev/ttyACM0}. This should be the path to the receiver unless another similar device is connected to the computer and given it is a Raspberry Pi running Raspbian.
+  \end{itemize}
+  \item Establishes communication with GNSS receiver, exits if it fails.
+  \item Attempts to establish communication with the server, retries for a configurable amount of times at 1 second intervals.
+  \item Identifies the client for the server according to protocol.
+  \item Reads from the GNSS receiver, scans for lines starting with either \texttt{\$GNRMC} or \texttt{\$GNGGA}. When both lines are found, the data is stored in a buffer.
+  \item Sends the GNSS data to the server according to protocol.
+  \item Repeats.
+\end{itemize}
+
 \chapter{Testing}
 
 \section{Software performance}
@@ -315,7 +360,7 @@ Write about the test
 
 \chapter{Results and discussion}\label{discussion}
 
-\section{Different approaches}\label{da}
+\section{Alternate approaches}\label{da}
 When planning on how to execute our proposal, these where among the ideas that came up. 
 
 \subsubsection{Single computer, many GNSS receivers}
