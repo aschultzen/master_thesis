@@ -25,7 +25,7 @@ static int log_alarm(int client_id, char *alarm)
     snprintf(log_string, LOG_STRING_LENGTH, " %s", alarm_buffer);
 
     /* Logging */
-    return log_to_file(s_conf->log_path, log_string, 1);
+    return log_to_file(s_conf->log_path, log_string, 2);
 }
 
 
@@ -43,14 +43,14 @@ void raise_alarm(void)
                 if(s_conf->logging) {
                     log_alarm(iterator->client_id, ALARM_MMF);
                 }
-                t_print(ALARM_MMF, iterator->client_id);
+                //t_print(ALARM_MMF, iterator->client_id);
             } else {
                 if(iterator->fs.mmf.was_moved) {
                     iterator->fs.mmf.was_moved = 0;
                     if(s_conf->logging) {
                         log_alarm(iterator->client_id, ALARM_MMF_RETURNED);
                     }
-                    t_print(ALARM_MMF_RETURNED, iterator->client_id);
+                    //t_print(ALARM_MMF_RETURNED, iterator->client_id);
                 }
             }
 
@@ -61,7 +61,7 @@ void raise_alarm(void)
                 if(s_conf->logging) {
                     log_alarm(iterator->client_id, ALARM_RDF);
                 }
-                t_print(ALARM_RDF, iterator->client_id);
+                //t_print(ALARM_RDF, iterator->client_id);
 
             } else {
                 if(iterator->fs.rdf.was_moved) {
@@ -69,7 +69,7 @@ void raise_alarm(void)
                     if(s_conf->logging) {
                         log_alarm(iterator->client_id, ALARM_RDF_RETURNED);
                     }
-                    t_print(ALARM_RDF_RETURNED, iterator->client_id);
+                    //t_print(ALARM_RDF_RETURNED, iterator->client_id);
                 }
             }
         }
@@ -87,13 +87,13 @@ void ref_dev_filter(void)
                 iterator->fs.rdf.rdd.lat_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.lat_disturbed = HIGH;
-            printf("HIGH : %lf / %lf\n", iterator->nmea.lat_current,
+            //printf("HIGH : %lf / %lf\n", iterator->nmea.lat_current,
                    iterator->fs.rdf.rdd.lat_ref + iterator->fs.rdf.rdd.lat_dev);
         } else if(iterator->nmea.lat_current < iterator->fs.rdf.rdd.lat_ref -
                   iterator->fs.rdf.rdd.lat_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.lat_disturbed = LOW;
-            printf("LOW : %lf / %lf\n", iterator->nmea.lat_current,
+            //printf("LOW : %lf / %lf\n", iterator->nmea.lat_current,
                    iterator->fs.rdf.rdd.lat_ref - iterator->fs.rdf.rdd.lat_dev);
         } else {
             iterator->fs.rdf.dv.lat_disturbed = SAFE;
@@ -103,13 +103,13 @@ void ref_dev_filter(void)
                 iterator->fs.rdf.rdd.alt_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.alt_disturbed = HIGH;
-            printf("HIGH : %lf / %lf\n", iterator->nmea.alt_current,
+            //printf("HIGH : %lf / %lf\n", iterator->nmea.alt_current,
                    iterator->fs.rdf.rdd.alt_ref + iterator->fs.rdf.rdd.alt_dev);
         } else if(iterator->nmea.alt_current < iterator->fs.rdf.rdd.alt_ref -
                   iterator->fs.rdf.rdd.alt_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.alt_disturbed = LOW;
-            printf("LOW : %lf / %lf\n", iterator->nmea.alt_current,
+            //printf("LOW : %lf / %lf\n", iterator->nmea.alt_current,
                    iterator->fs.rdf.rdd.alt_ref - iterator->fs.rdf.rdd.alt_dev);
         } else {
             iterator->fs.rdf.dv.alt_disturbed = SAFE;
@@ -119,13 +119,13 @@ void ref_dev_filter(void)
                 iterator->fs.rdf.rdd.lon_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.lon_disturbed = HIGH;
-            printf("HIGH : %lf / %lf\n", iterator->nmea.lon_current,
+            //printf("HIGH : %lf / %lf\n", iterator->nmea.lon_current,
                    iterator->fs.rdf.rdd.lon_ref + iterator->fs.rdf.rdd.lon_dev);
         } else if(iterator->nmea.lon_current < iterator->fs.rdf.rdd.lon_ref -
                   iterator->fs.rdf.rdd.lon_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.lon_disturbed = LOW;
-            printf("LOW : %lf / %lf\n", iterator->nmea.lon_current,
+            //printf("LOW : %lf / %lf\n", iterator->nmea.lon_current,
                    iterator->fs.rdf.rdd.lon_ref - iterator->fs.rdf.rdd.lon_dev);
         } else {
             iterator->fs.rdf.dv.lon_disturbed = SAFE;
@@ -135,13 +135,13 @@ void ref_dev_filter(void)
                 iterator->fs.rdf.rdd.speed_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.speed_disturbed = HIGH;
-            printf("HIGH : %lf / %lf\n", iterator->nmea.speed_current,
+            //printf("HIGH : %lf / %lf\n", iterator->nmea.speed_current,
                    iterator->fs.rdf.rdd.speed_ref + iterator->fs.rdf.rdd.speed_dev);
         } else if(iterator->nmea.speed_current < iterator->fs.rdf.rdd.speed_ref -
                   iterator->fs.rdf.rdd.speed_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.speed_disturbed = LOW;
-            printf("HIGH : %lf / %lf\n", iterator->nmea.speed_current,
+            //printf("HIGH : %lf / %lf\n", iterator->nmea.speed_current,
                    iterator->fs.rdf.rdd.speed_ref - iterator->fs.rdf.rdd.speed_dev);
         } else {
             iterator->fs.rdf.dv.speed_disturbed = SAFE;
