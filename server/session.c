@@ -535,7 +535,7 @@ static int respond(struct client_table_entry *cte)
                 sem_post(&(s_synch->ready_mutex));
             } else {
                 cte->nmea.checksum_passed = 0;
-                t_print("RMC and GGA received, checksum failed!\n");
+                t_print("RMC and GGA received from %d , checksum failed!\n", cte->client_id);
             }
         }
 
