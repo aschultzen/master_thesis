@@ -80,7 +80,7 @@ void t_print(const char* format, ...)
 int load_config(struct config_map_entry *cme, char *path, int entries)
 {
     FILE *config_file;
-    long file_size;
+    int file_len;
     char *input_buffer;
 
     int status = 0;
@@ -92,13 +92,13 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
     }
 
     fseek(config_file , 0L , SEEK_END);
-    file_size = ftell(config_file);
+    file_len = ftell(config_file);
     rewind(config_file);
 
-    char temp_buffer[file_size];
+    char temp_buffer[file_len];
 
     /* Alocating memory for the file buffer */
-    input_buffer = calloc( 1, file_size+1 );
+    input_buffer = calloc( file_len, sizeof(char));
     if(!input_buffer) {
         fclose(config_file);
         t_print("config_loader(): Memory allocation failed, aborting.\n");
@@ -106,7 +106,7 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
     }
 
     /* Get the file into the buffer */
-    if(fread( input_buffer , file_size, 1 , config_file) != 1) {
+    if(fread( input_buffer , file_len, 1 , config_file) != 1) {
         fclose(config_file);
         free(input_buffer);
         t_print("config_loader(): Read failed, aborting\n");
@@ -115,7 +115,7 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
 
     int counter = 0;
     while(counter < entries) {
-        memset(temp_buffer, '\0',file_size);
+        memset(temp_buffer, '\0',file_len);
         char *search_ptr = strstr(input_buffer,cme->entry_name);
         if(search_ptr != NULL) {
             int length = strlen(search_ptr) - strlen(cme->entry_name);

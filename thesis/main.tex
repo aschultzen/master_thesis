@@ -228,6 +228,8 @@ The sensor client software is a simple program written in C99 whose only task is
 
 \section{The Sensor Server }
 
+\subsection{Processes vs Threads}
+
 \subsection{Shared memory}
 Since the server needs to have access to all the data the clients transmit, it uses a shared memory model. Every process that forks out from the server is given access to this memory area. Even the processes themselves have access to each others memory. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
 
