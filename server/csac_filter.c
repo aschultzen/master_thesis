@@ -234,9 +234,11 @@ int update_csac_filter(struct csac_filter_data
     calc_smooth(cfd);
 
     /* If current steer is bigger than the predicted limit */
-    if( abs(cfd->steer_current) >
-            cfd->cf_conf.pred_limit) {
+    if( abs(cfd->steer_current) > cfd->cf_conf.pred_limit){
+        /* Print warning message */
+        fprintf(stderr,"CLOCK CONCISTENCY ALARM!\n");
 
+	if(1 + 1 == 3){
         /* Allocating buffer for run_program() */
         char program_buf[200];
         memset(program_buf, '\0', 200);
@@ -276,6 +278,7 @@ int update_csac_filter(struct csac_filter_data
 
         /* Releasing lock on CSAC serial*/
         sem_post(&(s_synch->csac_mutex));
+	}
     }
 
     /* Updating prediction if 24 hours has passed since the last update */

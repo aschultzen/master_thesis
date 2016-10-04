@@ -54,7 +54,7 @@ def main_routine():
 
 	print(response)
 	ser.close()
-	query = query.strip("\n")
+	query = query.strip("\r\n")
 	log_string = ("Issued query " + "'" +  query + "' " + str(retry_count) + " times\n")	
 	log_file.write(log_string)
 if __name__ == '__main__':
