@@ -3,18 +3,20 @@
 \begin{appendices}
 \chapter{Data acquisition}
 \section{CSAC Logger source code}\label{CL}
-	\lstinputlisting[language=Python]{./source_files/csac_logger.py}
+	\pythoncode{./source_files/csac_logger.py}
 \section{GPS Logger source code}\label{GL}
-	\lstinputlisting[language=Python]{./source_files/gps_logger.py}	
+	\pythoncode{./source_files/gps_logger.py}	
+
 \chapter{Sensor server software}
 \section{Client}
 \subsection{sensor\_client.c}
 	\ccode{../server/sensor_client.c}
 \subsection{sensor\_client.h}
 	\ccode{../server/sensor_client.h}
-
 \subsection{client\_config.ini}
 	\ccode{../server/client_config.ini}
+\subsection{query\_csac.py}
+	\pythoncode{../server/query_csac.py}
 
 \section{Server}
 \subsection{sensor\_server.c}
@@ -53,6 +55,8 @@
 	\ccode{../server/csac_filter.h}
 \subsection{cfilter\_config.ini}
 	\ccode{../server/cfilter_config.ini}
+\subsection{get\_telemetry.py}
+	\pythoncode{../server/get_telemetry.py}
 
 \subsection{filters.c}
 	\ccode{../server/filters.c}

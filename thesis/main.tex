@@ -21,6 +21,28 @@
 \usepackage{fancyvrb}
 \usemintedstyle{friendly}
 
+\newmintedfile[pythoncode]{python}{
+fontsize=\scriptsize,
+fontfamily=tt,
+linenos=true,
+numberblanklines=true,
+numbersep=12pt,
+numbersep=5pt,
+gobble=0,
+frame=leftline,
+framerule=0.4pt,
+framesep=2mm,
+funcnamehighlighting=true,
+tabsize=4,
+obeytabs=false,
+mathescape=false
+samepage=false, %with this setting you can force the list to appear on the same page
+showspaces=false,
+showtabs =false,
+texcl=false,
+breaklines = true
+}
+
 \newmintedfile[ccode]{c}{
 fontsize=\scriptsize,
 fontfamily=tt,
@@ -228,7 +250,7 @@ The client\_table\_entry is what the name suggests, it's an entry in a list of c
   \item IP Address
   \item Client ID
   \item NMEA data (\ref{nmea_cont}).
-  \item Filer data
+  \item Filter data
 \end{itemize}
 Of all the pointers tossed about in the sensor server, this type is the most common one. 
 
