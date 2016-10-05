@@ -213,7 +213,8 @@ Numerous approaches where considered when planning the implementation of the SMA
 By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect(\ref{cspakp}).However, every router and switch between a Sensor and the Server imposes a delay on the stream of packets between the two, especially when compared with a directly cabled approach. This might make the Sensor Server approach less responsive. It is of our understanding that whatever increase in complexity the Client/Server introduces to our approach, the Sensor Server makes up for by eliminating the need for potential miles of signal cables and signal amplifiers. 
 
 \subsection{Architecture}
-As previously mentioned, the Sensor Server architectures is built on a Client/Server model. There are numerous ways to implement
+As previously mentioned, the Sensor Server architectures is built on a Client/Server model. The Sensor Server uses blocking I/O, meaning that it will listen to a socket and wait until some message is sent. This does however mean that the program halts at the \texttt{read()} operation and nothing will get done unless the client sends data. 
+http://www.nightmare.com/pythonwin/async_sockets.html
 
 \subsection{Shared memory \& Semaphores}
 The sensor server architecture uses several shared memory segments. This is necessary because as mentioned earlier(\ref{procvsthread}), each process uses it's own private address space. The pointers to the shared memory segments are declared as \textit{extern} in \texttt{sensor\_server.h}. The extern keyword means the the variable has an external linkage, making it visible from other files than the one in which it is defined. The following pointers to the shared memory segments are defined in \texttt{sensor\_server.c}:
