@@ -202,11 +202,20 @@ The SMACC software was originally planned to be written in Java since this was m
 \end{itemize}
 
 \section{The Sensor Server/Client model}
-Numerous approaches where considered when planning the implementation of the SMACC software (See \ref{da} for alternate approaches). The approach that was chosen is what I have named the "Sensor Server". The Sensor Server is based on the idea that a GNSS receiver and a computer can be viewed abstractly as a single device, a Sensor. A sensor runs a trivial program that receives data from a GNSS receiver, formats the data correctly and sends the data to the server (more about the client \ref{sensor_client}). With this approach, a great number of GNSS receivers can be connected to the SMACC using existing infrastructure, communicating over IP. 
+Numerous approaches where considered when planning the implementation of the SMACC software (See \ref{da} for alternate approaches). The approach that was chosen is a Client/Server model which I have named the "Sensor Server". The Sensor Server model is based on the idea that a GNSS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Server and Sensor communicates over an IP network. The Sensor runs a trivial program that receives data from a GNSS receiver, formats the data correctly and sends the data to a Server (more about the client \ref{sensor_client}). The Server on the other hand, is responsible for the heavy lifting. The data gathered from the Sensors are applied to what we call \textit{filters}. The filters are just algorithms that are able to detect anomalies in the data, thus making it possible to react to a spoofing or jamming attempt. Server tasks include:
+\begin{itemize}
+  \item Handle connections to all Sensors.
+  \item Update structures as Sensor status changes (Disconnects, kick request)
+  \item Communication with the CSAC and CSAC model updating
+  \item Sensor data analysis and filter updates
+  \item Raising alarms based on filter status
+\end{itemize}
+By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect(\ref{cspakp}).However, every router and switch between a Sensor and the Server imposes a delay on the stream of packets between the two, especially when compared with a directly cabled approach. This might make the Sensor Server approach less responsive. It is of our understanding that whatever increase in complexity the Client/Server introduces to our approach, the Sensor Server makes up for by eliminating the need for potential miles of signal cables and signal amplifiers. 
 
 \subsection{Architecture}
 
 \subsection{Processes vs Threads}\label{procvsthread}
+As previously mentioned, the Sensor Server architectures is built on a Client/Server model. There are numerous ways to implement
 
 \subsection{Shared memory \& Semaphores}
 The sensor server architecture uses several shared memory segments. This is necessary because as mentioned earlier(\ref{procvsthread}), each process uses it's own private address space. The pointers to the shared memory segments are declared as \textit{extern} in \texttt{sensor\_server.h}. The extern keyword means the the variable has an external linkage, making it visible from other files than the one in which it is defined. The following pointers to the shared memory segments are defined in \texttt{sensor\_server.c}:
@@ -221,26 +230,30 @@ The sensor server architecture uses several shared memory segments. This is nece
 
 Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
 
-\begin{minted}
-[
-fontsize=\scriptsize,
-fontfamily=tt,
-linenos=true
-]
-{c}
-client_list = mmap(NULL, 
-                  (s_conf->max_clients * sizeof(struct client_table_entry)), 
-                  PROT_READ | PROT_WRITE,
-                  MAP_SHARED | MAP_ANONYMOUS,
-                  -1, 0);
-\end{minted}
-
-Having shared memory segments comes with a price. Whenever two or more processes are working on the same data set, you are prone to race conditions, deadlocks and data corruption. Therefore, semaphores are used to lock the segments while reading or writing are done. 
-
 \begin{code}
+  \caption{Listing shows the use of MMAP to create an anonymous map of memory to be used as a shared memory segment}
   \begin{minted}
   [
-  fontsize=\scriptsize,
+  fontsize=\footnotesize,
+  fontfamily=tt,
+  linenos=true
+  ]
+  {c}
+  client_list = mmap(NULL, 
+                    (s_conf->max_clients * sizeof(struct client_table_entry)), 
+                    PROT_READ | PROT_WRITE,
+                    MAP_SHARED | MAP_ANONYMOUS,
+                    -1, 0);
+  \end{minted}
+\end{code}
+
+Having shared memory segments comes with a price. Whenever two or more processes are working on the same data set, they are prone to create race conditions, deadlocks and data corruption. Therefore, semaphores where used to lock the segments during read and write operations at the shared memory segments.
+
+\begin{code}
+  \caption{Function for removing disconnected clients from list of clients}
+  \begin{minted}
+  [
+  fontsize=\footnotesize,
   fontfamily=tt,
   linenos=true
   ]
@@ -251,7 +264,8 @@ Having shared memory segments comes with a price. Whenever two or more processes
         struct client_table_entry* temp_remove;
 
         sem_wait(&(s_synch->client_list_mutex));
-        list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list,
+        list_for_each_entry_safe(client_list_iterate, 
+                                 temp_remove,&client_list->list,
                                  list) {
             if(client_list_iterate->client_id == id) {
                 list_del(&client_list_iterate->list);
@@ -261,7 +275,6 @@ Having shared memory segments comes with a price. Whenever two or more processes
         sem_post(&(s_synch->client_list_mutex));
     }
   \end{minted}
-  \caption{Function for removing disconnected clients from list of clients}
   \label{removeclient}
 \end{code}
 
@@ -360,11 +373,11 @@ Write about the test
 
 \chapter{Results and discussion}\label{discussion}
 
-\section{Alternate approaches}\label{da}
+\section{Alternative approaches}\label{da}
 When planning on how to execute our proposal, these where among the ideas that came up. 
 
-\subsubsection{Single computer, many GNSS receivers}
-A single computer is used to run the SMACC software. The SMACC does not include a socket server, but the receivers used to collect data are all connected to to the computer through whatever USB ports available or made available by the use of USB hubs. With this approach, you are not dependent on a network, but it limits the number of GNSS receivers you could connect as the USB specification limits the number possible endpoints to an absolute 127(\cite[pp. 3]{USBTC}) because of addressing. This does not mean that 127 devices can be connected, a single device might use more than one endpoint. It's also worth mentioning that a USB hub might "reserve" multiple endpoints. Depending on the GNSS receivers and how they are made, this number might be reduced even further by the power usage of the connected devices. Depending on how far each GNSS receiver is distanced from the SMACC, a signal amplifier might be necessary to compensate for the signal attenuation. In some cases where a network is absent, this might be only option.
+\subsubsection{Single computer, many GNSS receivers}\label{scmgr}
+A single computer is used to run the SMACC software. The SMACC does not include a Server/Cient model, but the receivers used to collect data are all connected to to the computer through whatever USB ports available or made available by the use of USB hubs. With this approach, you are not dependent on a network, but it limits the number of GNSS receivers you could connect as the USB specification limits the number possible endpoints to an absolute 127(\cite[pp. 3]{USBTC}) because of addressing. This does not mean that 127 devices can be connected, a single device might use more than one endpoint. It's also worth mentioning that a USB hub might "reserve" multiple endpoints. Depending on the GNSS receivers and how they are made, this number might be reduced even further by the power usage of the connected devices. Depending on how far each GNSS receiver is distanced from the SMACC, a signal amplifier might be necessary to compensate for the signal attenuation. In some cases where a network is absent, this might be only option.
 
 \subsubsection{Store in database and analyze}
 With this approach, the idea of a GNSS receiver and RASPI as a single "sensor" unit is the same as with Client-server approach. The difference is that it with this approach, each sensor stores the collected data in a database. The SMACC software monitors the clock directly as with the Client-server approach, but the data in the database is routinely queried and analyzed. The strength with this approach is that data is easily stored, shared and maintained by a single entity. The complexity of the client software would be the same as with Client-server approach, but the SMACC software could be implemented with less complexity as no Client-server architecture or shared memory schemes would be necessary. During planning, this approach seemed promising but was rejected because it was thought that it might not be time-sensitive enough. It was also some doubt concerning whether or not the ability to store data to a database actually was important. Once the different filters and algorithms was in place, it turned that the database functionality would have been nice, but not of any real importance for the SMACC to perform it's tasks, and would have been overkill anyway.
