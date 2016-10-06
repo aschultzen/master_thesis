@@ -5,7 +5,7 @@
  *
  * This code was lifted from http://www.mcs.anl.gov/~kazutomo/list/.
  * I stumbled upon when writing when writing a Linux clone autumn 15',
- * and tested it in this project. It is planned to be replaced by something
+ * and tested it in this project. It was planned to be replaced by something
  * smaller.
  * Kazutomo's description:
  *

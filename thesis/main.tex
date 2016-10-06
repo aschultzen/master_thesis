@@ -201,6 +201,7 @@ The SMACC software was originally planned to be written in Java since this was m
   \item snprintf() as standard (\cite{C_RATIONAL}).
 \end{itemize}
 
+\newpage
 \section{The Sensor Server/Client model}
 Numerous approaches where considered when planning the implementation of the SMACC software (See \ref{da} for alternate approaches). The approach that was chosen is a Client/Server model which I have named the "Sensor Server". The Sensor Server model is based on the idea that a GNSS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Server and Sensor communicates over an IP network. The Sensor runs a trivial program that receives data from a GNSS receiver, formats the data correctly and sends the data to a Server (more about the client \ref{sensor_client}). The Server on the other hand, is responsible for the heavy lifting. The data gathered from the Sensors are applied to what we call \textit{filters}. The filters are just algorithms that are able to detect anomalies in the data, thus making it possible to react to a spoofing or jamming attempt. Server tasks include:
 \begin{itemize}
@@ -212,20 +213,109 @@ Numerous approaches where considered when planning the implementation of the SMA
 \end{itemize}
 By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect(\ref{cspakp}).However, every router and switch between a Sensor and the Server imposes a delay on the stream of packets between the two, especially when compared with a directly cabled approach. This might make the Sensor Server approach less responsive. It is of our understanding that whatever increase in complexity the Client/Server introduces to our approach, the Sensor Server makes up for by eliminating the need for potential miles of signal cables and signal amplifiers. 
 
-\subsection{Architecture}
-As previously mentioned, the Sensor Server architectures is built on a Client/Server model. The Sensor Server uses blocking I/O, meaning that it will listen to a socket and wait until some message is sent. This does however mean that the program halts at the \texttt{read()} operation and nothing will get done unless the client sends data. 
-http://www.nightmare.com/pythonwin/async_sockets.html
+\begin{figure}\label{ibd}
+  \includegraphics[angle=90, scale=0.3]{server_flow.pdf}
+   \caption[Socket Server execution flow block diagram]{A block diagram showing the flow of execution in the Sensor Server}
+\end{figure}
+
+\newpage
+\subsection{Roles}
+A client connected to the server can have two roles; It can either be a Sensor or a Monitor. The Sensor role is already explained, but the Monitor role was added in order for a user of the Sensor Server to connect to the server and check status or issue commands. For a client to assume the role of a Monitor, the client has to pick a negative integer as ID number. This way, the Server does not expect you as a client to report any NMEA data the way it would with a Sensor. As a Monitor, you can issue the following commands:
+
+\begin{table}[!htb]
+\centering
+\caption{Sensor Server available commands}
+\label{my-label}
+\resizebox{1\textwidth}{!}{%
+  \begin{tabular}{llll}
+  \multicolumn{1}{l}{Command} & \multicolumn{1}{l}{Short} & \multicolumn{1}{l}{Parameter} & \multicolumn{1}{l}{Description}                                                                \\
+  HELP                        & ?                         & NONE                          & Prints this table                                                                              \\
+  IDENTIFY                    & ID                        & ID                            & Clients ID is set to PARAM                                                                     \\
+  DISCONNECT                  & EXIT                      & NONE                          & Disconnect from the server                                                                     \\
+  PRINTCLIENTS                & PC                        & NONE                          & Prints an overview of connected clients                                                        \\
+  PRINTSERVER                 & PS                        & NONE                          & Prints server state and config                                                                 \\
+  PRINTTIME                   &                           & ID                            & Prints time solved from GNSS data received from Sensor \textless ID\textgreater                 \\
+  PRINTAVGDIFF                & PAD                       & NONE                          & Prints the difference between current solved position and the average reported for all Sensors \\
+  PRINTLOC                    & PL                        & ID                            & Print solved position for Sensor \textless ID\textgreater                                       \\
+  LISTDATA                    & LSD                       & NONE                          & List all dump files stored by the server                                                       \\
+  DUMPDATA                    & DD                        & ID \& FILE                    & Dumps state of Sensor \textless ID\textgreater into a file named \textless FILE\textgreater      \\
+  LOADDATA                    & LD                        & ID \& FILE                    & Load state stored in file called \textless FILE\textgreater into Sensor \textless ID\textgreater \\
+  QUERYCSAC                   & QC                        & COMMAND                       & Queries the CSAC with COMMAND.                                                                 \\
+  LOADRFDATA                  & LRFD                      & ID                            & Load reference location data into Sensor \textless ID\textgreater                               \\
+  PRINTCFD                    & PFD                       & NONE                          & Prints CSAC filter data                                                                        
+  \end{tabular}
+}
+\end{table}
+
+
+
+\subsection{Sockets}
+In order to implement the Server/Client model, the Sensor Server is implemented using the Linux Socket API. The API is based on BSD sockets and are available in in almost all Unix like operating system (\cite{LINUX_KERNEL}, p.610). Listing \ref{server_connect} shows a sample of code taken from one of the Sensor Server's source file. The sample shows the following:
+\begin{itemize}
+  \item Line 4: The server waits for a connection. \texttt{accept()} is a blocking function. The code does not continue past this point before a client has connected.  
+  \item Line 12: The code has been executed way past the blocking \texttt{accept} function. Someone must have connected! The server forks out a new process from this point in the execution with the function \texttt{fork()}.
+  \item Line 13: Upon entering the if statements regarding it's process identification (PID), the parent ends back at the top in the while loop. The child on the other hand, matches the criteria for the if sentence at line 15.
+  \item Line 16: The child process closes it's parent's socket file descriptor and continues to setup the session at the next line.
+\end{itemize}
+
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server.c}(\ref{sensor_server.c}, line 356). The sample has been edited for clarity purposes.}
+  \begin{minted}
+  [
+  fontsize=\footnotesize,
+  fontfamily=tt,
+  linenos=true
+  ]
+  {c}
+    listen(server_sockfd,SOMAXCONN);
+    int session_fd = 0;
+    while (!done) {
+        session_fd = accept(server_sockfd,0,0);
+        if (session_fd==-1) {
+            if (errno==EINTR) continue;
+            t_print(ERROR_CONNECTION_ACCEPT,errno);
+        }
+        if(number_of_clients == max_clients) {
+            close(session_fd);
+        } else {
+            pid_t pid=fork();
+            if (pid==-1) {
+                printf(ERROR_FAILED_FORK, errno);
+            } else if (pid==0) {
+                close(server_sockfd);
+                setup_session(session_fd, new_client);
+                close(session_fd);
+                _exit(0);
+            } else {
+                close(session_fd);
+            }
+        }
+    }
+  \end{minted}
+  \label{server_connect}
+\end{code}
+Even though the \texttt{accept()} function in the sockets API is blocking, CPU cycles are not wasted. If a socket call cannot be completed immediately, the process who issued the call will be put to sleep thus enabling the scheduler to schedule other processes for execution until conditions are right for the sleeping process. (\cite{UNIXN_WBA}, p.435). It is also possible to use non-blocking socket calls, and while this often increases performance, it also increases complexity, and was therefor not chosen for this approach. It's also worth mentioning that one could create \textit{threads} instead of forking out processes for new connections. The creation of threads are typically less expensive in terms of CPU cycles than the creation of processes. Processes on the other hand, always have their own virtual address space as opposed to threads who share their address space with the other threads withing the process. This makes programming with threads more complex and the result of a crash more severe as it affects the other threads as well. 
 
 \subsection{Shared memory \& Semaphores}
-The sensor server architecture uses several shared memory segments. This is necessary because as mentioned earlier(\ref{procvsthread}), each process uses it's own private address space. The pointers to the shared memory segments are declared as \textit{extern} in \texttt{sensor\_server.h}. The extern keyword means the the variable has an external linkage, making it visible from other files than the one in which it is defined. The following pointers to the shared memory segments are defined in \texttt{sensor\_server.c}:
+The sensor server architecture uses several shared memory segments. This is necessary because as mentioned earlier(\ref{procvsthread}), each process has got it's own virtual address space. The pointers to the shared memory segments are declared as \textit{extern} in \texttt{sensor\_server.h}. The extern keyword means the the variable has an external linkage, making it visible from other files than the one in which it is defined. Listing \ref{extern_structs} shows a code sample taken from \texttt{sensor\_server.h} where the shared memory segments are declared.
 
-\begin{itemize}
-  \item \texttt{struct server\_data *s\_data}
-  \item \texttt{server\_synchro *s\_synch}
-  \item \texttt{client\_table\_entry *client\_list}
-  \item \texttt{server\_config *s\_conf}
-  \item \texttt{csac\_filter\_data *cfd}
-\end{itemize}
+\begin{code}
+  \caption{Sample of code from \texttt{sensor\_server.h}(\ref{sensor_server.h}, line 356) where shared memory segments are declared.}
+  \begin{minted}
+  [
+  fontsize=\footnotesize,
+  fontfamily=tt,
+  linenos=true
+  ]
+  {c}
+    extern struct client_table_entry *client_list;
+    extern struct server_data *s_data;
+    extern struct server_synchro *s_synch;
+    extern struct server_config *s_conf;
+    extern struct csac_filter_data *cfd;
+  \end{minted}
+  \label{extern_structs}
+\end{code}
 
 Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
 
@@ -279,21 +369,204 @@ Having shared memory segments comes with a price. Whenever two or more processes
 
 Figure \ref{removeclient} shows a typical example of a function locking down access to the shared memory segment containing the list of connected clients, by using a semaphore. In the example (\ref{removeclient}) a client has been disconnected from the server and the the list of connected clients are being updated. The semaphore is necessary to make sure that another process is not attempting to read or write to the segment while the data is deleted. If another process had attempted to execute the \texttt{sem\_wait()} on the semaphore, it would have been put in a queue. Depending on the operating system, it would most likely signal the scheduler to do a context switch since the resource was busy anyway and it therefor should relinquish control of the CPU. Once the semaphores is raised, it can be lowered again by another process. It is important to note that the semaphores are not a function of or related to the memory segments by anything other the name. The semaphores are just "flags" used to control access to a resource. There is no automatic raising or lowering of the associated semaphores by reading or writing the shared memory segments. All functions in the sensor server does however use semaphores when dealing with shared memory segments in order to avoid deadlock and race conditions.
 
-\subsection{Structs}
+\subsection{Data structures}
 In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
 
-\subsubsection{Client table entry}
-The client\_table\_entry is what the name suggests, it's an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. The entry in the list contains information about the client including but not limited to:
-\begin{itemize}
-  \item Process ID
-  \item IP Address
-  \item Client ID
-  \item NMEA data (\ref{nmea_cont}).
-  \item Filter data
-\end{itemize}
-Of all the pointers tossed about in the sensor server, this type is the most common one. 
+\subsubsection{Linked list}
+Since the C standard does not provide data structures like linked lists, I had to choose between reinventing the wheel or finding some implementation to drop into the project. While studying another subject, I found a guide on how to use the linked list implementation from the linux kernel source code (\cite{KAZU_LIST}) in a user space program. Since the implementation was extremely solid, well tested and had many useful functions, i decided to use it. The modified header file containing all the code, is GPL licensed.  
+
+\begin{code}
+  \caption{Sample of code taken from \texttt{list.h} line 70}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct list_head {
+      struct list_head *next, *prev;
+    };
+    \label{struct_client_table}
+    \end{minted}
+\end{code}
+The fields of the struct is pretty self explanatory. There is a pointer to previous node and one the next. By using these, the list can traversed. 
+
+\subsubsection{client\_table\_entry}
+The client\_table\_entry struct is what the name suggests, it's an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. Listing \ref{struct_client_table} shows the complete struct. 
+
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 99}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct client_table_entry {
+        struct list_head list; 
+        struct transmission_s transmission; 
+        struct timeval heartbeat_timeout; 
+        struct command_code cm;   
+        struct nmea_container nmea;    
+        pid_t pid;  
+        time_t timestamp;  
+        int client_id; 
+        int client_type;    
+        int ready;  
+        int marked_for_kick; 
+        char ip[INET_ADDRSTRLEN];
+        struct filters fs;
+    };
+    \label{struct_client_table}
+    \end{minted}
+\end{code}
+The lient\_table\_entry struct is probably the type of the most commonly passed pointers in the program. 
+
+\subsubsection{server\_config}
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server.h} line 23}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct server_config {
+        int max_clients;
+        int warm_up_seconds;
+        int human_readable_dumpdata;
+        char csac_path[PATH_LENGTH_MAX];
+        int logging;
+        char log_path[PATH_LENGTH_MAX];
+        int csac_logging;
+        char csac_log_path[PATH_LENGTH_MAX];
+    };
+    \label{struct_server_config}
+    \end{minted}
+\end{code}
+
+\subsubsection{server\_data}
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 116}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct server_synchro {
+        sem_t ready_mutex;
+        sem_t csac_mutex;
+        sem_t client_list_mutex;
+        volatile int ready_counter;
+    };
+    \label{server_data}
+    \end{minted}
+\end{code}
+
+\subsubsection{server\_synchro}
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 125}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct server_synchro {
+        sem_t ready_mutex;
+        sem_t csac_mutex;
+        sem_t client_list_mutex;
+        volatile int ready_counter;
+    };
+    \label{server_synchro}
+    \end{minted}
+\end{code}
+
+\subsubsection{command\_code}
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 34}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct command_code {
+        int code;
+        char parameter[MAX_PARAMETER_SIZE];
+        int id_parameter;
+    };
+    \label{command_code}
+    \end{minted}
+\end{code}
 
 \subsubsection{NMEA container}\label{nmea_cont}
+\begin{code}
+  \caption{Sample of code taken from \texttt{nmea.h} line 21}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct nmea_container {
+        /* Raw data */
+        char raw_gga[SENTENCE_LENGTH];
+        char raw_rmc[SENTENCE_LENGTH];
+
+        /* Latitude */
+        double lat_current;
+        double lat_low;
+        double lat_high;
+        double lat_average;
+        double lat_avg_diff;
+        double lat_total;
+        int lat_disturbed;
+
+        /* Longitude */
+        double lon_current;
+        double lon_low;
+        double lon_high;
+        double lon_average;
+        double lon_avg_diff;
+        double lon_total;
+        int lon_disturbed;
+
+        /* Altitude */
+        double alt_current;
+        double alt_low;
+        double alt_high;
+        double alt_average;
+        double alt_avg_diff;
+        double alt_total;
+        int alt_disturbed;
+
+        /* Speed */
+        double speed_current;
+        double speed_low;
+        double speed_high;
+        double speed_average;
+        double speed_avg_diff;
+        double speed_total;
+        int speed_disturbed;
+
+        /* CHECKSUM */
+        int checksum_passed;
+
+        /* COUNTER FOR AVERAGE */
+        int n_samples;
+    };
+    \end{minted}
+    \label{nmea_container}
+\end{code}
 
 \subsubsection{CSAC Communication}
   \includegraphics[width=1\textwidth]{csac_serial.pdf}

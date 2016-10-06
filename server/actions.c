@@ -43,25 +43,25 @@
 "--------------------------------------------------------------------------------\n"\
 " DISCONNECT   | EXIT  | NONE      | Disconnects\n"\
 "--------------------------------------------------------------------------------\n"\
-" PRINTCLIENTS | PC    | NONE      | Prints an overview of connected clients\n"\
+" PRINTCLIENTS | PC    | NONE      | Prints a list of connected clients\n"\
 "--------------------------------------------------------------------------------\n"\
 " PRINTSERVER  | PS    | NONE      | Prints server state and config\n"\
 "--------------------------------------------------------------------------------\n"\
-" PRINTTIME    |       | ID        | Prints time solved from <CLIENT ID>\n"\
+" PRINTTIME    |       | ID        | Prints time solved from Sensor <ID>\n"\
 "--------------------------------------------------------------------------------\n"\
 " PRINTAVGDIFF | PAD   | NONE      | Prints all average diffs for all clients\n"\
 "--------------------------------------------------------------------------------\n"\
-" PRINTLOC     | PL    | ID        | Prints all average diffs for all clients\n"\
+" PRINTLOC     | PL    | ID        | Prints solved location for Sensor <ID>\n"\
 "--------------------------------------------------------------------------------\n"\
 " LISTDATA     | LSD   | NONE      | Lists all dump files in server directory\n"\
 "--------------------------------------------------------------------------------\n"\
-" DUMPDATA     | DD    | ID & FILE | Dumps NMEA data of ID into FILE\n"\
+" DUMPDATA     | DD    | ID & FILE | Dumps state of Sensor <ID> into FILE\n"\
 "--------------------------------------------------------------------------------\n"\
 " LOADDATA     | LD    | ID & FILE | Loads NMEA of FILE into sensor ID\n"\
 "--------------------------------------------------------------------------------\n"\
 " QUERYCSAC    | QC    | COMMAND   | Queries the CSAC with parameter COMMAND\n"\
 "--------------------------------------------------------------------------------\n"\
-" LOADRFDATA   | LRFD  | ID        | Loads REF_DEV_FILTER data into clint<ID>\n"\
+" LOADRFDATA   | LRFD  | ID        | Load reference location data into Sensor<ID>\n"\
 "--------------------------------------------------------------------------------\n"\
 " PRINTCFD     | PFD   |           | Prints CSAC filter data\n"\
 "--------------------------------------------------------------------------------\n"\

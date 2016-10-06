@@ -8,7 +8,7 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-#include "sensor_server_commons.h"
+#include "sensor_server_common.h"
 #include "filters.h"
 #include "actions.h"
 #include "sensor_server.h"

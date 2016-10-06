@@ -14,7 +14,7 @@
 #include <sys/stat.h>
 #include "session.h"
 #include "serial.h"
-#include "sensor_server_commons.h"
+#include "sensor_server_common.h"
 #include "csac_filter.h"
 
 /*!@struct*/
