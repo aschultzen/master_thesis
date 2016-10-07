@@ -84,9 +84,48 @@ This countermeasure assumes two receivers with at least 1 km distance from each 
 \textit{Vector tracking} is a receiver architecture that combine the tasks of signal tracking and position/velocity estimation into one algorithm. This is a contrast to the traditional way where the tracking methods track satellites independently as well as the position/velocity solution independently. Even though this requires more computing power, it increases immunity to interference and jamming. The vector tracking is aided by the fact the we know the PMU GPS receivers true location. The tracking robustness can be further improved by using a Kalman filter. Since a PMU and its GPS receiver remain stationary, the parameters of the tracking loops can be chosen to narrow the loop filter bandwidth which reduces noise and the effective radius of a potential jamming attack (\ref{jam}). Replay spoofing attacks will also fail since the PIA vector tracking depends on the knowledge of the GPS receivers true position. In the event of such an attack, the result would be that the vector tracking will fail to function. \cite{HengChouGao14}  
 
 \subsubsection{Multi-receiver tracking loops}\label{mrtl}
-Building on the idea from \textit{PIA Tracking loops}(\ref{ptl}) one can benefit from the networked nature of the GPS-timed PMU. In a multi-receiver vector tracking loop, many receivers process information in collaboration. A key conclusion of the research made by A. Soloviev \textit{et alia} as referenced by L. Heng \textit{et alia} (2014) showed that acquisition and tracking performance under low signal-to-noise ratio conditions was improved under multi-receiver signal accumulation. Multi-receiver phased arrays also improved the robustness against both jamming (\ref{jam}) and spoofing attacks (\ref{sls},\ref{dls}) by \textit{"Forming beams to satellites and steering nulls in the direction of attacking transmitters"} (L. Heng \textit{et alia} (2014), p.41). In addition to the increase robustness, it increases the ability to detect malfunction (\ref{mf}). A faulty receiver will usually not be consistent with other correctly functioning receivers. As with the countermeasure based on cross-correlating P(Y) code (\ref{ccpc}), this implementation also requires that the GPS receivers are able to output baseband samples. In this implementation, the samples need to be transmitted continuously among the receivers which requires a capable data network such as a typical LAN. \cite{HengChouGao14}  
+Building on the idea from \textit{PIA Tracking loops}(\ref{ptl}) one can benefit from the networked nature of the GPS-timed PMU. In a multi-receiver vector tracking loop, many receivers process information in collaboration. A key conclusion of the research made by A. Soloviev \textit{et alia} as referenced by L. Heng \textit{et alia} (2014) showed that acquisition and tracking performance under low signal-to-noise ratio conditions was improved under multi-receiver signal accumulation. Multi-receiver phased arrays also improved the robustness against both jamming (\ref{jam}) and spoofing attacks (\ref{sls},\ref{dls}) by \textit{"Forming beams to satellites and steering nulls in the direction of attacking transmitters"} (L. Heng \textit{et alia} (2014), p.41). In addition to the increase robustness, it increases the ability to detect malfunction (\ref{mf}). A faulty receiver will usually not be consistent with other correctly functioning receivers. As with the countermeasure based on cross-correlating P(Y) code (\ref{ccpc}), this implementation also requires that the GPS receivers are able to output baseband samples. In this implementation, the samples need to be transmitted continuously among the receivers which requires a capable data network such as a typical LAN. \cite{HengChouGao14} 
 
-\section{Our Proposal: Spoof proof CSAC SMACC}\label{op}
+\newpage
+\subsection{Summary}
+The table (\ref{tab:threatcounttable}) shows the different threat models and the effect of the countermeasures discussed.
+
+\begin{savenotes}
+\begin{table}[h]
+  \caption{The table shows the effectiveness of the covered countermeasures against threat models.}
+  \begin{tabular}{|l|c|c|c|c|c|} \hline
+  \multicolumn{1}{|c|}{\multirow{2}{*}{Counter Measures}} &
+  \multicolumn{5}{c|}{Threat Models} \\ \cline{2-6} 
+    \multicolumn{1}{|c|}{} & 
+    \multicolumn{1}{l|}{\vtop{\hbox{\strut JAM\footnote{Jamming (\ref{jam})}}}} &
+    \multicolumn{1}{l|}{\vtop{\hbox{\strut SLS\footnote{Signal-level Spoofing (\ref{sls}) }}}} & 
+    \multicolumn{1}{r|}{\vtop{\hbox{\strut DLS\footnote{Data-level Spoofing (\ref{dls}) }}}} & 
+    \multicolumn{1}{l|}{\vtop{\hbox{\strut RS\footnote{Replay Spoofing (\ref{rs}) }}}} & 
+    \multicolumn{1}{l|}{\vtop{\hbox{\strut MF\footnote{Malfunctions (\ref{mf}) }}}}\\ 
+    \hline
+    Monitoring Signal Power      (\ref{msp})        & \cellcolor{ineffectivec}N & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{ineffectivec}N \\ \hline
+    Check pos. solution          (\ref{cspakp})     & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y \\ \hline
+    Check time solutions         (\ref{ctsarcs})    & \cellcolor{ineffectivec}N & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X \\ \hline
+    Checking nav. data           (\ref{ccndar})     & \cellcolor{effectivec}X & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y \\ \hline
+    Reverse calculated sat. pos. (\ref{cndrcsp})    & \cellcolor{ineffectivec}N & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y \\ \hline
+    Cross-correlating P(Y)       (\ref{ccpc})       & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N & \cellcolor{ineffectivec}N \\ \hline
+    PIA TL                       (\ref{ptl})        & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N \\ \hline
+    Multi-receiver TL            (\ref{mrtl})       & \cellcolor{auxiliryc}Y & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X \\ \hline
+    %CSAC SMACC                   (\ref{op})         & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y \\ \hline
+  \end{tabular}
+  \label{tab:threatcounttable}
+\end{table}
+\end{savenotes} 
+
+ \begin{table}[h]
+    \caption{Legend for table (\ref{tab:threatcounttable}) }
+    \begin{tabular}{|c|c|c|c|c|c|}
+    \hline
+    \cellcolor{auxiliryc}Y & Effective & \cellcolor{ineffectivec}N & Ineffective & \cellcolor{effectivec}X & Auxiliary \\ \hline
+    \end{tabular}
+  \end{table} 
+
+\chapter{Our Proposal: Spoof proof CSAC SMACC}\label{op}
 \begin{wrapfigure}{c}{0.45\textwidth}
   \centering
   \includegraphics[width=0.40\textwidth]{csac.jpg}
@@ -111,44 +150,3 @@ It is important to note that this approach doesn't really do anything with the f
   \includegraphics[angle=90, scale=0.5]{master_sketch_arrows.pdf}
    \caption[CSAC SMACC Block diagram]{A block diagram of our proposed solution}
 \end{figure}
-
-\newpage
-\subsection{Summary}
-The table (\ref{tab:threatcounttable}) shows the different threat models and the effect of the countermeasures covered in this essay. Our proposed countermeasure is not yet tested, but is still included in the table reflecting the effect we believe it might have.  
-
-\begin{savenotes}
-\begin{table}[h]
-  \caption{The table shows the effectiveness of the covered countermeasures against threat models.}
-  \begin{tabular}{|l|c|c|c|c|c|} \hline
-  \multicolumn{1}{|c|}{\multirow{2}{*}{Counter Measures}} &
-  \multicolumn{5}{c|}{Threat Models} \\ \cline{2-6} 
-    \multicolumn{1}{|c|}{} & 
-    \multicolumn{1}{l|}{\vtop{\hbox{\strut JAM\footnote{Jamming (\ref{jam})}}}} &
-    \multicolumn{1}{l|}{\vtop{\hbox{\strut SLS\footnote{Signal-level Spoofing (\ref{sls}) }}}} & 
-    \multicolumn{1}{r|}{\vtop{\hbox{\strut DLS\footnote{Data-level Spoofing (\ref{dls}) }}}} & 
-    \multicolumn{1}{l|}{\vtop{\hbox{\strut RS\footnote{Replay Spoofing (\ref{rs}) }}}} & 
-    \multicolumn{1}{l|}{\vtop{\hbox{\strut MF\footnote{Malfunctions (\ref{mf}) }}}}\\ 
-    \hline
-    Monitoring Signal Power      (\ref{msp})        & \cellcolor{ineffectivec}N & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{ineffectivec}N \\ \hline
-    Check pos. solution          (\ref{cspakp})     & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y \\ \hline
-    Check time solutions         (\ref{ctsarcs})    & \cellcolor{ineffectivec}N & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X \\ \hline
-    Checking nav. data           (\ref{ccndar})     & \cellcolor{effectivec}X & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y \\ \hline
-    Reverse calculated sat. pos. (\ref{cndrcsp})    & \cellcolor{ineffectivec}N & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y \\ \hline
-    Cross-correlating P(Y)       (\ref{ccpc})       & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N & \cellcolor{ineffectivec}N \\ \hline
-    PIA TL                       (\ref{ptl})        & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N & \cellcolor{ineffectivec}N & \cellcolor{auxiliryc}Y & \cellcolor{ineffectivec}N \\ \hline
-    Multi-receiver TL            (\ref{mrtl})       & \cellcolor{auxiliryc}Y & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X & \cellcolor{effectivec}X \\ \hline
-    CSAC SMACC                   (\ref{op})         & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y & \cellcolor{auxiliryc}Y \\ \hline
-  \end{tabular}
-  \label{tab:threatcounttable}
-\end{table}
-\end{savenotes} 
-
- \begin{table}[h]
-    \caption{Legend for table (\ref{tab:threatcounttable}) }
-    \begin{tabular}{|c|c|c|c|c|c|}
-    \hline
-    \cellcolor{auxiliryc}Y & Effective & \cellcolor{ineffectivec}N & Ineffective & \cellcolor{effectivec}X & Auxiliary \\ \hline
-    \end{tabular}
-  \end{table}
- 
-\newpage

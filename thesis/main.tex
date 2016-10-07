@@ -142,8 +142,8 @@ texcl=false,
 
 \newenvironment{code}{\captionsetup{type=listing}}{}
 
-\title{GPS Spoofing}
-\subtitle{A detection and mitigation system}
+\title{GPS Time Spoofing}
+\subtitle{A detection and mitigation system for GPS timing}
 \author{Aril Schultzen}
 \begin{document}
 \duoforside[dept={Institutt for informatikk},
@@ -175,33 +175,22 @@ Here goes foreword
 
 % Chapter about the csac and it's connectivity?
 
-\chapter{Method}
-
-\section{Choice of hardware}
+\chapter{Hardware}
 \begin{figure}\label{ibd}
   \includegraphics[angle=90, scale=0.5]{server_layout.pdf}
    \caption[CSAC SMACC implementation block diagram]{A block diagram showing the tested implementation}
 \end{figure}
 
-\subsection{Chip Scale Atomic Clock}
+\section{Chip Scale Atomic Clock}
 I propose to use the Symmetricom SA.45 as the CSAC. This is a CSAC measuring only 16cc with 1 pulse per second (PPS) output and 1 PPS input (for disciplining). The SA.45's strength is it's low power consumption (less than 120mW) and low price \cite{SADS}. The SA.45 also uses a built-in controller which can be communicated with over a RS-232 serial interface. The ability to communicate with the CSAC, issue commands and collect data, is paramount for the feasibility of our proposal. It's worth mentioning that any atomic clock such as Cesium standard or even a Rubidium standard could be used given that they have a means to communicate basic telemetry as used by the SMACC software.
 
-\subsection{SMACC platform}
+\section{SMACC platform}
 I propose to use the Raspberry Pi 3 Model B (RASPI3) in the role as the host running the SMACC software. The RASPI3 is an interesting piece of equipment with an impressive list of specifications. It is a single board computer with a 1.2GHz 64-bit quad-core ARMv8 CPU, 1 GB of RAM, built in 802.11n Wireless LAN and four USB ports (\cite{RASPI}) (just to mention some). As with the Symmetricom SA.45, the RASPI3 is very affordable and retailed at about 35 USD when this report was written. We also propose to use Raspbian (\cite{RASPBIAN}), a Debian derived flavor of Linux optimized for the Raspberry Pi as the operating system. 
 
-\subsection{GNSS receiver}
+\section{GNSS receiver}
 I propose to use at least two GNSS receivers. Both of the receivers should simply collect data and feed it to the SMACC but one of the receivers should also double as a 1 PPS disciplining source for the CSAC. Considering that need for a stable 1 PPS source, I propose to use the u-blox M8T. This is a relativity affordable GNSS receiver with a temperature compensated crystal oscillator (TCXO), 3 concurrent GNSS reception and an external antenna (\cite{UBLOXM8T}). Currently, only strings of NMEA data is collected from the GNSS receiver. However in the future it might be beneficial to collect and process raw data from the receivers as well. Since most GNSS receivers today follow the NMEA standard (to some extent) and raw data currently isn't required, common and popular receivers like the u-blox NEO series should be more that sufficient to use in an implementation if this proposal.
 
 \chapter{Software}
-\section{Choice of programming language}
-The SMACC software was originally planned to be written in Java since this was my most fluent programming language. Java is great language, it's object oriented, it has a garbage collector and a lot of useful libraries. As development started, it quickly became apparent that some parts of the code would be performance critical and that portability really wasn't that important anyway. The platform was already decided and there was no reason to believe that it would change in the near future. As we all know, premature optimization is the root of all evil. Being reluctant to commit a deadly programming sin, i decided to look at other languages. Since performance was a concern, Python was also quickly dismissed as an option. C++ would probably have been the best choice, but having never written anything in C before made it sound more exciting and like a nice opportunity to learn something new. During the planning phase of SMACC development, raspbian-2015-05-07 was the latest build. It came with GCC 4.6.3 which only had experimental support for C11(\cite{GCC11}). With C11 no longer considered an option, C99 was the obvious choice given it's attractive features like:
-\begin{itemize}
-  \item Variable-length arrays.
-  \item Single line comments.
-  \item snprintf() as standard (\cite{C_RATIONAL}).
-\end{itemize}
-
-\newpage
 \section{The Sensor Server/Client model}
 Numerous approaches where considered when planning the implementation of the SMACC software (See \ref{da} for alternate approaches). The approach that was chosen is a Client/Server model which I have named the "Sensor Server". The Sensor Server model is based on the idea that a GNSS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Server and Sensor communicates over an IP network. The Sensor runs a trivial program that receives data from a GNSS receiver, formats the data correctly and sends the data to a Server (more about the client \ref{sensor_client}). The Server on the other hand, is responsible for the heavy lifting. The data gathered from the Sensors are applied to what we call \textit{filters}. The filters are just algorithms that are able to detect anomalies in the data, thus making it possible to react to a spoofing or jamming attempt. Server tasks include:
 \begin{itemize}
@@ -524,8 +513,6 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
 
         /* Latitude */
         double lat_current;
-        double lat_low;
-        double lat_high;
         double lat_average;
         double lat_avg_diff;
         double lat_total;
@@ -533,8 +520,6 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
 
         /* Longitude */
         double lon_current;
-        double lon_low;
-        double lon_high;
         double lon_average;
         double lon_avg_diff;
         double lon_total;
@@ -542,8 +527,6 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
 
         /* Altitude */
         double alt_current;
-        double alt_low;
-        double alt_high;
         double alt_average;
         double alt_avg_diff;
         double alt_total;
@@ -551,8 +534,6 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
 
         /* Speed */
         double speed_current;
-        double speed_low;
-        double speed_high;
         double speed_average;
         double speed_avg_diff;
         double speed_total;
@@ -568,7 +549,31 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
     \label{nmea_container}
 \end{code}
 
-\subsubsection{CSAC Communication}
+% Refer to protocol.h at the point when describing the ID process?
+\section{The Sensor Client}\label{sensor_client}
+The sensor client software is a simple program written in C99 whose only task is to relay information read from the GNSS receivers. Summed up shortly:
+\begin{itemize}
+  \item The client software takes two parameters to start, the servers IP and port. If parameters are missing, the program exits.
+  \begin{itemize}
+    \item Example: \texttt{./sensor\_client -p 10000 -i 192.168.1.5}
+  \end{itemize}
+  \item Initializes and loads configuration from configuration file. The configuration file includes path to the GNSS receiver, the sensors ID number and a binary value for whether or not logging of NMEA should be done as well as path to 
+  the log file. If the loading of the configuration file fails, default values are used instead:
+  \begin{itemize}
+    \item The ID number is chosen at random but within legal limits.
+    \item Logging is disabled.
+    \item Maximum of server connection attempts are set to 10.
+    \item Path to GNSS receiver is set to \texttt{/dev/ttyACM0}. This should be the path to the receiver unless another similar device is connected to the computer and given it is a Raspberry Pi running Raspbian.
+  \end{itemize}
+  \item Establishes communication with GNSS receiver, exits if it fails.
+  \item Attempts to establish communication with the server, retries for a configurable amount of times at 1 second intervals.
+  \item Identifies the client for the server according to protocol.
+  \item Reads from the GNSS receiver, scans for lines starting with either \texttt{\$GNRMC} or \texttt{\$GNGGA}. When both lines are found, the data is stored in a buffer.
+  \item Sends the GNSS data to the server according to protocol.
+  \item Repeats.
+\end{itemize}
+
+\section{CSAC Communication}
   \includegraphics[width=1\textwidth]{csac_serial.pdf}
 The SA.45 CSAC includes a serial interface that enables communication with a PC by using a COM port. As mentioned earlier, our approach relies heavily on the ability to communicate with the CSAC.
 Information can be queried by sending commands to the CSAC. These commands are explained in table \ref{CSAC_COMMANDS}. 
@@ -596,37 +601,10 @@ T                 & Set/report time-of-day                             & !T?{[}C
 In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the CSAC will correct it's frequency based on either a 1 PPS (Pulse per second) signal or a 10 MHz signal. A similar approach was used in order to collect GPS data. Data from two u-blox M8T was gathered over the same time period as the data gathered from the CSAC. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the CSAC. It also provided valuable data that could be used to tune the spoofing detection algorithms in the CSAC SMACC. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the receivers and the CSAC (\ref{CLS})
 
 \subsubsection{Clock Model}
-Write about clock model
-
-\subsubsection{Naive MIN-MAX filter}
-The MIN-MAX filter is one of the least sophisticated filters implemented. Data is gathered over a pre-determined "warm-up" period and the server compares the lowest and highest values of this data with current data. If the values are either higher or lower than the collected data, the data is considered abnormal. 
+Write about clock model 
 
 \subsubsection{Probability filter}
 The "probability filter" is implemented by using collected data to create a model of expected data. The current data is then compared in order to evaluate whether or not it is abnormal. 
-
-% Refer to protocol.h at the point when describing the ID process?
-\section{The Sensor Client}\label{sensor_client}
-The sensor client software is a simple program written in C99 whose only task is to relay information read from the GNSS receivers. Summed up shortly:
-\begin{itemize}
-  \item The client software takes two parameters to start, the servers IP and port. If parameters are missing, the program exits.
-  \begin{itemize}
-    \item Example: \texttt{./sensor\_client -p 10000 -i 192.168.1.5}
-  \end{itemize}
-  \item Initializes and loads configuration from configuration file. The configuration file includes path to the GNSS receiver, the sensors ID number and a binary value for whether or not logging of NMEA should be done as well as path to 
-  the log file. If the loading of the configuration file fails, default values are used instead:
-  \begin{itemize}
-    \item The ID number is chosen at random but within legal limits.
-    \item Logging is disabled.
-    \item Maximum of server connection attempts are set to 10.
-    \item Path to GNSS receiver is set to \texttt{/dev/ttyACM0}. This should be the path to the receiver unless another similar device is connected to the computer and given it is a Raspberry Pi running Raspbian.
-  \end{itemize}
-  \item Establishes communication with GNSS receiver, exits if it fails.
-  \item Attempts to establish communication with the server, retries for a configurable amount of times at 1 second intervals.
-  \item Identifies the client for the server according to protocol.
-  \item Reads from the GNSS receiver, scans for lines starting with either \texttt{\$GNRMC} or \texttt{\$GNGGA}. When both lines are found, the data is stored in a buffer.
-  \item Sends the GNSS data to the server according to protocol.
-  \item Repeats.
-\end{itemize}
 
 \chapter{Testing}
 
@@ -644,6 +622,14 @@ What if their clocks sucks?
 Write about the test
 
 \chapter{Results and discussion}\label{discussion}
+\section{Choice of programming language}
+The SMACC software was originally planned to be written in Java since this was my most fluent programming language. Java is great language, it's object oriented, it has a garbage collector and a lot of useful libraries. As development started, it quickly became apparent that some parts of the code would be performance critical and that portability really wasn't that important anyway. The platform was already decided and there was no reason to believe that it would change in the near future. As we all know, premature optimization is the root of all evil. Being reluctant to commit a deadly programming sin, i decided to look at other languages. Since performance was a concern, Python was also quickly dismissed as an option. C++ would probably have been the best choice, but having never written anything in C before made it sound more exciting and like a nice opportunity to learn something new. During the planning phase of SMACC development, raspbian-2015-05-07 was the latest build. It came with GCC 4.6.3 which only had experimental support for C11(\cite{GCC11}). With C11 no longer considered an option, C99 was the obvious choice given it's attractive features like:
+\begin{itemize}
+  \item Variable-length arrays.
+  \item Single line comments.
+  \item snprintf() as standard (\cite{C_RATIONAL}).
+\end{itemize}
+
 
 \section{Alternative approaches}\label{da}
 When planning on how to execute our proposal, these where among the ideas that came up. 
