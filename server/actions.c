@@ -122,12 +122,14 @@ void print_clients(struct client_table_entry *monitor)
                                     "%sID: %d " \
                                     "IP:%s, " \
                                     "PID: %d, " \
-                                    "TYPE: %s%s, ",
+                                    "TYPE: %s, " \
+                                    "NMEA age %d%s",
                                     modifier,
                                     client_list_iterate->client_id,
                                     client_list_iterate->ip,
                                     client_list_iterate->pid,
                                     c_type,
+                                    (int)difftime(time(NULL),client_list_iterate->timestamp),
                                     RESET);
 
         s_write(&(monitor->transmission), buffer, snprintf_status);
