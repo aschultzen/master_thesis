@@ -375,8 +375,6 @@ int start_csac_filter(struct csac_filter_data
     /* Allocating buffer for run_program() */
     char program_buf[200];
     memset(program_buf, '\0', 200);
-
-    int rc_status = 0;
     int filter_initialized = 0;
 
     /* csac_filter config */
@@ -392,7 +390,7 @@ int start_csac_filter(struct csac_filter_data
         sem_wait(&(s_synch->csac_mutex));
 
         /* Querying CSAC */
-        rc_status = run_command("python get_telemetry.py",
+        run_command("python get_telemetry.py",
                                 program_buf);
 
         /* Releasing lock */
@@ -403,7 +401,7 @@ int start_csac_filter(struct csac_filter_data
             filter_initialized = init_csac_filter(cfd,
                                                   program_buf);
 
-            /* If initialized, update filter with new values */
+        /* If initialized, update filter with new values */
         } else {
             update_csac_filter(cfd, program_buf);
         }

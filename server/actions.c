@@ -70,17 +70,6 @@
 #define DUMPDATA_TIME_SIZE 13
 #define MAX_APPEND_LENGTH 20
 
-void set_warmup(struct client_table_entry *client, int new_value)
-{
-    if(new_value > 0) {
-        s_conf->warm_up_seconds = new_value;
-    } else {
-        s_write(&(client->transmission), ERROR_UPDATE_WARMUP_ILLEGAL,
-                sizeof(ERROR_UPDATE_WARMUP_ILLEGAL));
-    }
-
-}
-
 void kick_client(struct client_table_entry* client)
 {
     sem_wait(&(s_synch->client_list_mutex));
@@ -111,7 +100,6 @@ void print_clients(struct client_table_entry *monitor)
     int snprintf_status = 0;
     char *c_type = "SENSOR";
     char *modifier = "";
-    int time_left = 0;
 
     struct client_table_entry* client_list_iterate;
     s_write(&(monitor->transmission), CLIENT_TABLE_LABEL,
@@ -125,33 +113,21 @@ void print_clients(struct client_table_entry *monitor)
             c_type = "SENSOR";
         }
 
-        if(client_list_iterate->client_type == SENSOR) {
-            double elapsed_warmup = difftime(time(NULL),
-                                             client_list_iterate->fs.mmf.warmup_started);
-            time_left = s_conf->warm_up_seconds - elapsed_warmup;
-        } else {
-            time_left = 0;
-        }
-
         if(monitor->client_id == client_list_iterate->client_id) {
             modifier = BOLD_GRN_BLK;
         } else {
             modifier = RESET;
         }
         snprintf_status = snprintf( buffer, 1000,
-                                    "%sPID: %d, " \
+                                    "%sID: %d " \
                                     "IP:%s, " \
-                                    "TOUCH: %d, " \
-                                    "TYPE: %s, " \
-                                    "ID: %d " \
-                                    "WARMUP LEFT: %d%s\n",
+                                    "PID: %d, " \
+                                    "TYPE: %s%s, ",
                                     modifier,
-                                    client_list_iterate->pid,
-                                    client_list_iterate->ip,
-                                    (int)difftime(time(NULL),client_list_iterate->timestamp),
-                                    c_type,
                                     client_list_iterate->client_id,
-                                    time_left,
+                                    client_list_iterate->ip,
+                                    client_list_iterate->pid,
+                                    c_type,
                                     RESET);
 
         s_write(&(monitor->transmission), buffer, snprintf_status);
@@ -183,10 +159,6 @@ void print_location(struct client_table_entry *monitor,
     char *lon_modifier;
     char *alt_modifier;
     char *speed_modifier;
-
-    char *high_modifier = BOLD_BLK_RED;
-    char *low_modifier = BOLD_WHT_CYN;
-
     char *reset = RESET;
 
     struct nmea_container nc;
@@ -229,18 +201,14 @@ void print_location(struct client_table_entry *monitor,
     }
 
     snprintf_status = snprintf( buffer, 1000,
-                                "LAT: %s%f%s  %s%f%s  %s%f%s %f\n" \
-                                "LON: %s%f%s  %s%f%s  %s%f%s %f\n" \
-                                "ALT: %s %f%s  %s %f%s  %s %f%s  %f\n" \
-                                "SPD: %s   %f%s  %s   %f%s  %s   %f%s    %f\n",
-                                lat_modifier,nc.lat_current,reset, low_modifier,nc.lat_low,reset, high_modifier,
-                                nc.lat_high,reset,nc.lat_average,
-                                lon_modifier, nc.lon_current,reset, low_modifier,nc.lon_low,reset,
-                                high_modifier,nc.lon_high,reset,nc.lon_average,
-                                alt_modifier, nc.alt_current,reset, low_modifier,nc.alt_low,reset,
-                                high_modifier,nc.alt_high,reset,nc.alt_average,
-                                speed_modifier, nc.speed_current,reset, low_modifier,nc.speed_low,reset,
-                                high_modifier,nc.speed_high,reset,nc.speed_average);
+                                "LAT: %s%f%s %f\n" \
+                                "LON: %s%f%s %f\n" \
+                                "ALT: %s %f%s  %f\n" \
+                                "SPD: %s   %f%s  %f\n",
+                                lat_modifier, nc.lat_current,reset, nc.lat_average,
+                                lon_modifier, nc.lon_current,reset, nc.lon_average,
+                                alt_modifier, nc.alt_current,reset, nc.alt_average,
+                                speed_modifier, nc.speed_current,reset, nc.speed_average);
     s_write(&(monitor->transmission), buffer, snprintf_status);
 }
 
@@ -358,16 +326,6 @@ int dump_cfd(char *path)
         t_print(ERROR_FCLOSE);
     }
     return 1;
-}
-
-
-/* Restart WARMUP procedure */
-void restart_warmup(struct client_table_entry* client)
-{
-    client->fs.mmf.warmup = 1;
-    client->fs.mmf.warmup_started = time(NULL);
-    client->ready = 0;
-    t_print("Sensor %d warmup restarted\n", client->client_id);
 }
 
 /* Dumps data location data for client X into a file */

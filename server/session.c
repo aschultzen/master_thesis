@@ -19,13 +19,10 @@ static int nmea_ready();
 static void extract_nmea_data(struct client_table_entry *cte);
 static void calculate_nmea_average(struct client_table_entry *cte);
 static void calculate_nmea_diff(struct client_table_entry *cte);
-static void verify_warm_up(struct client_table_entry *cte);
-static void warm_up(struct client_table_entry *cte);
 static int set_timeout(struct client_table_entry *target,
                        struct timeval h_timeout);
 static int parse_input(struct client_table_entry *cte);
 static int respond(struct client_table_entry *cte);
-
 
 /*
 * Used by spawned client processes to "mark" that their NMEA
@@ -105,66 +102,6 @@ static void calculate_nmea_diff(struct client_table_entry *cte)
     cte->nmea.lon_avg_diff = (cte->nmea.lon_current - cte->nmea.lon_average);
     cte->nmea.alt_avg_diff = (cte->nmea.alt_current - cte->nmea.alt_average);
     cte->nmea.speed_avg_diff = (cte->nmea.speed_current - cte->nmea.speed_average);
-}
-
-/* Check if a client is still warming up */
-static void verify_warm_up(struct client_table_entry *cte)
-{
-    if(cte->fs.mmf.warmup_started) {
-        double elapsed = difftime(time(NULL), cte->fs.mmf.warmup_started);
-        /*double percent = (elapsed / s_conf->warm_up_seconds) * 100;
-
-        if((int)percent % 10 == 0) {
-            t_print("Client %d Warming up, %d%%\n", cte->client_id, (int)percent);
-        }*/
-
-        if(elapsed >= s_conf->warm_up_seconds) {
-            t_print("Client %d, warm-up finished!\n", cte->client_id);
-            cte->fs.mmf.warmup = 0;
-        }
-    } else {
-        cte->fs.mmf.warmup_started = time(NULL);
-    }
-}
-
-/* Updating "extreme" values */
-static void warm_up(struct client_table_entry *cte)
-{
-    /* Updating latitude */
-    if(cte->nmea.lat_current > cte->nmea.lat_high) {
-        cte->nmea.lat_high = cte->nmea.lat_current;
-    }
-
-    if(cte->nmea.lat_current < cte->nmea.lat_low) {
-        cte->nmea.lat_low = cte->nmea.lat_current;
-    }
-
-    /* Updating longitude */
-    if(cte->nmea.lon_current > cte->nmea.lon_high) {
-        cte->nmea.lon_high = cte->nmea.lon_current;
-    }
-
-    if(cte->nmea.lon_current < cte->nmea.lon_low) {
-        cte->nmea.lon_low = cte->nmea.lon_current;
-    }
-
-    /* Updating altitude */
-    if(cte->nmea.alt_current > cte->nmea.alt_high) {
-        cte->nmea.alt_high = cte->nmea.alt_current;
-    }
-
-    if(cte->nmea.alt_current < cte->nmea.alt_low) {
-        cte->nmea.alt_low = cte->nmea.alt_current;
-    }
-
-    /* Updating speed */
-    if(cte->nmea.speed_current > cte->nmea.speed_high) {
-        cte->nmea.speed_high = cte->nmea.speed_current;
-    }
-
-    if(cte->nmea.speed_current < cte->nmea.speed_low) {
-        cte->nmea.speed_low = cte->nmea.speed_current;
-    }
 }
 
 static int set_timeout(struct client_table_entry *target,
@@ -267,30 +204,6 @@ static int parse_input(struct client_table_entry *cte)
         memcpy(cte->cm.parameter,
                (incoming)+(strlen(PROTOCOL_PRINTTIME)*(sizeof(char))), length);
         cte->cm.code = CODE_PRINTTIME;
-    }
-
-    /* WARMUP */
-    else if(strstr((char*)incoming, PROTOCOL_WARMUP ) == (incoming)) {
-        int length = (strlen(incoming) - strlen(PROTOCOL_WARMUP) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_WARMUP)*(sizeof(char))),
-               length);
-        cte->cm.code = CODE_WARMUP;
-    }
-
-    /* UPDATE WARMUP */
-    else if(strstr((char*)incoming, PROTOCOL_SET_WARMUP ) == (incoming)) {
-        int length = (strlen(incoming) - strlen(PROTOCOL_SET_WARMUP) );
-        memcpy(cte->cm.parameter,
-               (incoming)+(strlen(PROTOCOL_SET_WARMUP)*(sizeof(char))), length);
-        cte->cm.code = CODE_SET_WARMUP;
-    }
-
-    /* UPDATE WARMUP SHORT */
-    else if(strstr((char*)incoming, PROTOCOL_SET_WARMUP_SHORT ) == (incoming)) {
-        int length = (strlen(incoming) - strlen(PROTOCOL_SET_WARMUP_SHORT) );
-        memcpy(cte->cm.parameter,
-               (incoming)+(strlen(PROTOCOL_SET_WARMUP_SHORT)*(sizeof(char))), length);
-        cte->cm.code = CODE_SET_WARMUP;
     }
 
     /* PRINTCLIENTS */
@@ -536,12 +449,6 @@ static int respond(struct client_table_entry *cte)
                 /* Checksums where OK, client marked ready */
                 cte->ready = 1;
 
-                /* Check if clients are in warm-up period */
-                if(cte->fs.mmf.warmup) {
-                    verify_warm_up(cte);
-                    warm_up(cte);
-                }
-
                 /* Acquiring ready-lock */
                 sem_wait(&(s_synch->ready_mutex));
 
@@ -553,10 +460,6 @@ static int respond(struct client_table_entry *cte)
                     /* Last process ready gets the job of analyzing the data */
                     ref_dev_filter();
 
-                    if(!cte->fs.mmf.warmup) {
-                        /* Perform min_max filter check */
-                        min_max_filter();
-                    }
                     /* Check the results of the filters */
                     raise_alarm();
                 }
@@ -588,20 +491,6 @@ static int respond(struct client_table_entry *cte)
                     s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED,
                             sizeof(ERROR_LRFD_LOAD_FAILED));
                 }
-            }
-        }
-
-        else if(cte->cm.code == CODE_WARMUP) {
-            if(cte->cm.id_parameter > 0) {
-                struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
-                if(candidate != NULL) {
-                    restart_warmup(candidate);
-                } else {
-                    s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
-                }
-            } else {
-                s_write(&(cte->transmission), ERROR_WARMUP_NOT_SENSOR,
-                        sizeof(ERROR_WARMUP_NOT_SENSOR));
             }
         }
 
@@ -716,10 +605,6 @@ static int respond(struct client_table_entry *cte)
             print_avg_diff(cte);
         }
 
-        else if(cte->cm.code == CODE_SET_WARMUP) {
-            set_warmup(cte, cte->cm.id_parameter);
-        }
-
         else if(cte->cm.code == CODE_LISTDUMPS) {
             listdumps(cte);
         }
@@ -758,9 +643,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->transmission.session_fd = session_fd;
 
     /* Zeroing out filters */
-    new_client->fs.mmf.moved = 0;
     new_client->fs.rdf.moved = 0;
-    new_client->fs.mmf.was_moved = 0;
     new_client->fs.rdf.was_moved = 0;
 
     new_client->marked_for_kick = 0;
@@ -771,21 +654,6 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     if(!set_timeout(new_client, timeout)) {
         t_print("Failed to set timeout for client\n");
     }
-
-    /* Marked for warm up */
-    new_client->fs.mmf.warmup = 1;
-    new_client->fs.mmf.warmup_started = 0;
-
-    /* Setting low values */
-    new_client->nmea.lat_low = 9999.999999;
-    new_client->nmea.lon_low = 9999.999999;
-    new_client->nmea.alt_low = 999.999999;
-
-    /* Setting the high values */
-
-    new_client->nmea.lat_high = -9999.999999;
-    new_client->nmea.lon_high = -9999.999999;
-    new_client->nmea.alt_high = -999.999999;
 
     memset(&new_client->transmission.iobuffer, '0', IO_BUFFER_SIZE*sizeof(char));
     memset(&new_client->cm.parameter, '0', MAX_PARAMETER_SIZE*sizeof(char));
