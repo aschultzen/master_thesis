@@ -317,12 +317,20 @@ static void start_server(int port_number)
     memset(&sigint_action, 0, sizeof(struct sigaction));
     sigint_action.sa_handler = handle_sig;
     sigaction(SIGINT, &sigint_action, NULL);
+    if (sigaction(SIGCHLD, &sigint_action, 0) == -1) {
+        perror(0);
+        exit(1);
+    }
 
     /* Registering the SIGTERM handler */
     struct sigaction sigterm_action;
     memset(&sigterm_action, 0, sizeof(struct sigaction));
     sigterm_action.sa_handler = handle_sig;
     sigaction(SIGTERM, &sigterm_action, NULL);
+    if (sigaction(SIGCHLD, &sigterm_action, 0) == -1) {
+        perror(0);
+        exit(1);
+    }
 
     /* Registering the SIGCHLD handler */
     struct sigaction child_action;
