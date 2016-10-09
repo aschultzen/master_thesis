@@ -202,9 +202,28 @@ Numerous approaches where considered when planning the implementation of the SMA
 \end{itemize}
 By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect(\ref{cspakp}).However, every router and switch between a Sensor and the Server imposes a delay on the stream of packets between the two, especially when compared with a directly cabled approach. This might make the Sensor Server approach less responsive. It is of our understanding that whatever increase in complexity the Client/Server introduces to our approach, the Sensor Server makes up for by eliminating the need for potential miles of signal cables and signal amplifiers. 
 
-\begin{figure}\label{ibd}
+\begin{figure}\label{server_core}
+\centering
+  \includegraphics[scale=0.3]{server_core.pdf}
+   \caption[Socket Server execution flow block diagram]{The block diagram shows an abstracted view of the Sensor Server.}
+\end{figure}
+
+\begin{figure}\label{server_flow}
+\centering
   \includegraphics[angle=90, scale=0.3]{server_flow.pdf}
-   \caption[Socket Server execution flow block diagram]{A block diagram showing the flow of execution in the Sensor Server}
+   \caption[Socket Server execution flow block diagram]{The block diagram shows an abstracted view of execution after a client has connected to the server and a \texttt{fork()} has been performed.}
+\end{figure}
+
+\begin{figure}\label{csac_filter}
+\centering
+  \includegraphics[angle=90, scale=0.40]{csac_filter.pdf}
+   \caption[Socket Server execution flow block diagram]{The block diagram shows the execution flow of the CSAC filter.}
+\end{figure}
+
+\begin{figure}\label{actions_core}
+\centering
+  \includegraphics[scale=0.40]{actions_core.pdf}
+   \caption[Socket Server execution flow block diagram]{The block diagrams shows and abstracted view of the execution after data has been received from a client.}
 \end{figure}
 
 \newpage
@@ -297,6 +316,7 @@ The sensor server architecture uses several shared memory segments. This is nece
   linenos=true
   ]
   {c}
+    extern volatile sig_atomic_t done;
     extern struct client_table_entry *client_list;
     extern struct server_data *s_data;
     extern struct server_synchro *s_synch;

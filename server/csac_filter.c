@@ -278,7 +278,7 @@ int update_csac_filter(struct csac_filter_data
 
         /* Releasing lock on CSAC serial*/
         sem_post(&(s_synch->csac_mutex));
-	}
+	   }
     }
 
     /* Updating prediction if 24 hours has passed since the last update */
@@ -381,8 +381,12 @@ int start_csac_filter(struct csac_filter_data
     struct config_map_entry
         conf_map[CSAC_FILTER_CONFIG_ENTRIES];
     initialize_config(conf_map, &cfd->cf_conf);
-    load_config(conf_map, CSAC_FILTER_CONFIG_PATH,
-                CSAC_FILTER_CONFIG_ENTRIES);
+    if(!load_config(conf_map, CSAC_FILTER_CONFIG_PATH,
+                CSAC_FILTER_CONFIG_ENTRIES)){
+        fprintf(stderr,"Failed to load config!\n");
+        done = 1;
+        return -1;
+    }
 
     /* Keep going as long as the server is running */
     while(!done) {
