@@ -176,10 +176,6 @@ Here goes foreword
 % Chapter about the csac and it's connectivity?
 
 \chapter{Hardware}
-\begin{figure}\label{ibd}
-  \includegraphics[angle=90, scale=0.5]{server_layout.pdf}
-   \caption[CSAC SMACC implementation block diagram]{A block diagram showing the tested implementation}
-\end{figure}
 
 \section{Chip Scale Atomic Clock}
 I propose to use the Symmetricom SA.45 as the CSAC. This is a CSAC measuring only 16cc with 1 pulse per second (PPS) output and 1 PPS input (for disciplining). The SA.45's strength is it's low power consumption (less than 120mW) and low price \cite{SADS}. The SA.45 also uses a built-in controller which can be communicated with over a RS-232 serial interface. The ability to communicate with the CSAC, issue commands and collect data, is paramount for the feasibility of our proposal. It's worth mentioning that any atomic clock such as Cesium standard or even a Rubidium standard could be used given that they have a means to communicate basic telemetry as used by the SMACC software.
@@ -623,14 +619,48 @@ In order to create an accurate clock-model of the CSAC, it was necessary to log 
 \subsubsection{Clock Model}
 Write about clock model 
 
-\subsubsection{Probability filter}
-The "probability filter" is implemented by using collected data to create a model of expected data. The current data is then compared in order to evaluate whether or not it is abnormal. 
+\subsubsection{"Known vs Reported location" filter}
+As discussed during the introduction (\ref{cspakp}), an easy way to detect spoofing, is to check the GNSS receivers solved position against the known position of the receiver. The detection techniques efficiency also increases as more receivers are added to the detection setup. This is because it is hard to spoof a GNSS receiver without also spoofing it's neighbor. By accidentally spoofing the neighbor, the two GNSS receivers would solved the same position and position (depending on the spoofing technique), thus giving away the attempt. By configuring the Sensor Server with the location of the different Sensors, the server can act if Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is bigger or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to determine whether or not a GNSS receiver / Sensor, has been spoofed. 
+\begin{code}
+  \caption{Sample of code taken from \texttt{filters.c} line 66. The code has been edited for clarity.}
+    \begin{minted}
+        if(latitude_current > latitude_reference + latitude_deviation) {
+            moved = 1;
+            lat_disturbed = HIGH;
+        } else if(latitude_current < latitude_ref - latitude_dev) {
+            moved = 1;
+            latitude_disturbed = LOW;
+        } else {
+            latitude_disturbed = SAFE;
+        }
+    \end{minted}
+    \label{ref_dev_filter_latitude}
+\end{code}
 
 \chapter{Testing}
 
-\section{Spoof test}
+\section{Spoofing simulation test}
+When a GNSS receiver is spoofed, its solved position or time (or both) might change. The result depends on the technique used to spoof. By moving a GNSS receiver, one can simulate a spoofing attack since the location most certainly will change. It might also affect the time solved. (prat med Harald, dette er en problematisk forklaring). 
 
-\subsection{The test}
+\subsection{Description}
+\begin{figure}\label{ibd}
+  \includegraphics[angle=90, scale=0.5]{server_layout.pdf}
+   \caption[CSAC SMACC implementation block diagram]{A block diagram showing the tested implementation}
+\end{figure}
+Figure \ref{ibd} shows how the Server, Sensors and CSAC where physically setup.  
+
+\begin{itemize}
+  \item 10:58, flytter nord mot sør. Kabelen er ikke så lang. 15 m?
+  \item 11:03, flytter nord tilbake.
+  \item 11:07, flytter sør til nord
+  \item 11:12, flytter sør tilbake
+  \item 11:14, veivet nord rundt, økende tempo
+  \item 11:18, veivet sør rundt, økende tempo
+  \item 11:20, dekker nord med folie
+  \item 11:25, dekker sør med folie
+  \item 11:28, fjerner folie fra nord
+  \item 13:33, fjerner folie fra sør.
+\end{itemize}
 
 \chapter{Results and discussion}\label{discussion}
 \section{Choice of programming language}
