@@ -655,7 +655,7 @@ When a GNSS receiver is spoofed, its solved position or time (or both) might cha
    \caption[CSAC SMACC implementation block diagram]{A block diagram showing the tested implementation.}
    \label{ibd}
 \end{figure}
-Figure \ref{ibd} shows how the Server, Sensors and CSAC where physically set up. In order to assure good GNSS satellite geometry, the antennas where placed at a roof. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Antenna 1 was connected to GNSS receiver 1 which in turn was connected to Sensor 1. It's the same setup with antenna 2 which was connected to GNSS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The Sensors and the Server where connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the CSAC and the Clients where configured to log all NMEA data received from the GNSS receivers. The GNSS receiver connected to antenna South is used to supply the CSAC with a 1 PPS signal.
+Figure \ref{ibd} shows how the Server, Sensors and CSAC where physically set up. In order to assure good GNSS satellite geometry, the antennas where placed at a roof. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Antenna 1 was connected to GNSS receiver 1 which in turn was connected to Sensor 1. It's the same deal with antenna 2 which was connected to GNSS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The Sensors and the Server where connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the CSAC and the Clients where configured to log all NMEA data received from the GNSS receivers. The GNSS receiver connected to antenna South is used to supply the CSAC with a 1 PPS signal. Because the CSAC model needs live data over time to mature, the system was started Friday 7. October and the test was performed Monday 10. October.
 
 \begin{figure}
 \centering
@@ -665,29 +665,40 @@ Figure \ref{ibd} shows how the Server, Sensors and CSAC where physically set up.
 \end{figure}
 ! DESCRIBE THE DETAILS OF THEM MEASUREMENT HERE !
 
-\subsection{Goal}
-The goal with this test was to use the CSAC SMACC to detect a simulated spoofing attack.
+\subsection{Goal of test}
+The goal with this test was to use the CSAC SMACC to detect a simulated spoofing attack. By moving the antennas, the KRL filter(\ref{kvsrlf}) should be triggered as the solved longitude, altitude, latitude and speed should change. The CM might also trigger (men hvorfor?). The result would be observable by analyzing the log files produced by the Server and Clients.
 
-\subsection{Description}
-The following is a step by step description of how the test was conducted.
+\subsection{Description}\label{description}
+The following is a step by step description of how the test was conducted. The time was obtained from a simple wristwatch, neither the resolution or accuracy was of any notable concern. The reason why the time is noted, is to make it easier to find any correlation between the steps taken and patterns found in the log files.
 
-\begin{itemize}
-  \item 10:58, moved antenna 1 towards antenna 2.
-  \item 11:03, moved antenna 1 back to original location.
-  \item 11:07, moved antenna 2 towards antenna 1.
-  \item 11:12, moved antenna 2 back to original location.
-  \item 11:14, waved antenna 1 around at an increasing tempo.
-  \item 11:18, waved antenna 1 around at an increasing tempo.
-  \item 11:20, covered antenna 1 with aluminium foil. 
-  \item 11:25, covered antenna 2 with aluminium foil. 
-  \item 11:28, removed foil from antenna 1.
-  \item 13:33, removed foil from antenna 2.
-\end{itemize}
+\begin{enumerate}
+  \item Moved antenna 1 approximately 15 meters to the south (10:58).
+  \item Moved antenna 1 back to original location (11:03).
+  \item Moved antenna 2 approximately 15 meters to the north (11:07).
+  \item Moved antenna 2 back to original location (11:12).
+  \item Waved antenna 1 around horizontally in a half circle motion at an increasing tempo (11:14).
+  \item Waved antenna 2 around horizontally in a half circle motion at an increasing tempo (11:18).
+  \item Covered antenna 1 with aluminium foil (11:20).
+  \item Covered antenna 2 with aluminium foil (11:25).
+  \item Removed foil from antenna 1 (11:28).
+  \item Removed foil from antenna 2 (13:33).
+\end{enumerate}
+\newpage
 
-\subsection{Observations}
+\begin{wrapfigure}{r}{0.40\textwidth}
+  \centering
+  \includegraphics[width=0.40\textwidth]{antenna_foil_cover.jpg}
+  \caption[Antenna covered in aluminium foil]
+   {Antenna covered in aluminium foil to simulate a jamming attack.}
+\end{wrapfigure} 
+
+Step 1 and 2 was designed to trigger the KRL filter, especially the solved latitude, longitude and altitude but also the speed, against known values. Step 5 and 6 was also designed to trigger the KRL filter, but more specifically the checking of solved speed. Step 7 and 8 was to designed to reveal what would happen with the both the KRL and the CM filter during a jamming attack as it was believed that covering the antennas with aluminium foil would block all signals out.
+
+\subsection{Observations}\label{observations}
 By reviewing the log produced by the Sensor Server, the following was observed:
 
 \begin{itemize}
+  \item No false positives, the filters where not triggered before the test started.
   \item The KRL (\ref{kvsrlf}) filter was triggered by Sensor 1 at 10:59:19 and cleared at 11:04:35.
   \begin{lstlisting}
     [10/10/16 - 10:59:17] [ ALARM ] Sensor 1 triggered KRL filter!
@@ -708,7 +719,7 @@ By reviewing the log produced by the Sensor Server, the following was observed:
   \end{lstlisting} 
   \item At 11:27.05, it was the CM filter (\ref{cmbf}) using the clock model that triggered. It stopped triggering 11:27:33. Sensor 2 also triggered the KRL filter 11:27:31 and cleared at 11:34:16.
     \begin{lstlisting}
-    [10/10/16 - 11:27:05] CSAC Steer current bigger than pred limit!
+    [10/10/16 - 11:27:05] [ ALARM ] CSAC Steer value greater than predicted!
     ...
     [10/10/16 - 11:27:31] [ ALARM ] Sensor 2 triggered KRL filter!
     ...
@@ -716,20 +727,20 @@ By reviewing the log produced by the Sensor Server, the following was observed:
   \end{lstlisting} 
   \item The last 6 seconds, Sensor 2 triggered KRL filter and the CM filter was triggered at multiple occasions.
   \begin{lstlisting}
-    [10/10/16 - 11:34:15] , [ ALARM ] Sensor 2 triggered REF_DEV!
-    [10/10/16 - 11:34:16] , [ ALARM ] Sensor 2 REF_DEV returned!
-    [10/10/16 - 11:34:17] , [ ALARM ] Sensor 2 triggered REF_DEV!
-    [10/10/16 - 11:34:18] , [ ALARM ] Sensor 2 triggered REF_DEV!
-    [10/10/16 - 11:34:19] , [ ALARM ] Sensor 2 triggered REF_DEV!
-    [10/10/16 - 11:34:19] ,Steer current bigger than pred limit!
-    [10/10/16 - 11:34:20] ,Steer current bigger than pred limit!
-    [10/10/16 - 11:34:20] , [ ALARM ] Sensor 2 REF_DEV returned!
-    [10/10/16 - 11:34:21] ,Steer current bigger than pred limit!
+    [10/10/16 - 11:34:15] [ ALARM ] Sensor 2 triggered KRL filter!
+    [10/10/16 - 11:34:16] [ ALARM ] Sensor 2 cleared KRL filter!
+    [10/10/16 - 11:34:17] [ ALARM ] Sensor 2 triggered KRL filter!
+    [10/10/16 - 11:34:18] [ ALARM ] Sensor 2 triggered KRL filter!
+    [10/10/16 - 11:34:19] [ ALARM ] Sensor 2 triggered KRL filter!
+    [10/10/16 - 11:34:19] [ ALARM ] CSAC Steer value greater than predicted!
+    [10/10/16 - 11:34:20] [ ALARM ] CSAC Steer value greater than predicted!
+    [10/10/16 - 11:34:20] [ ALARM ] Sensor 2 cleared KRL filter!
+    [10/10/16 - 11:34:21] [ ALARM ] CSAC Steer value greater than predicted!
   \end{lstlisting} 
 \end{itemize}
 
 \subsection{Conclusion}
-
+The observations (\ref{observations}) reveals what we expected. After all, when moving a GNSS receivers antenna, the solved position has to change. If it did not, the GNSS receiver or antenna would have to be faulty. Step 5 and 6 (\ref) did not produce the expected result. The altitude, latitude and longitude was expected to be within a safe range, the solved speed on the other hand, was expected to have been way too high. SE I GNSS DATAENE, HVA SIER DE? (Hva sier jeg om at steer predicted var lavere en current steer??) 
 
 \chapter{Results and discussion}\label{discussion}
 \section{Choice of programming language}
