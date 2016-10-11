@@ -298,9 +298,9 @@ int log_to_file(char *path, char *content, int stamp_switch)
         struct tm *info;
         time(&rawtime);
         info = gmtime(&rawtime);
-        strftime(timestamp,80,"[%x - %X] ", info); 
+        strftime(timestamp,80,"[%x - %X]", info); 
 
-        if(!fprintf(log_file,"%s,",timestamp)) {
+        if(!fprintf(log_file,"%s",timestamp)) {
             t_print(ERROR_FWRITE);
             return 0;
         }

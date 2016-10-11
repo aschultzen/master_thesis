@@ -17,6 +17,7 @@
 #define CONFIG_PRED_LIMIT "pred_limit: "
 #define CONFIG_TIME_CONSTANT "time_constant: "
 #define CONFIG_WARMUP_DAYS "warmup_days: "
+#define ALARM_STEER_TO_BIG "[ALARM] CSAC Steer value greater than predicted!\n"
 #define CSAC_FILTER_CONFIG_ENTRIES 13
 
 
@@ -236,7 +237,7 @@ int update_csac_filter(struct csac_filter_data
     /* If current steer is bigger than the predicted limit */
     if( abs(cfd->steer_current) > cfd->cf_conf.pred_limit){
         /* Print warning message */
-        fprintf(stderr,"CLOCK CONCISTENCY ALARM!\n");
+        log_to_file(s_conf->log_path, ALARM_STEER_TO_BIG, 2);
 
 	if(1 + 1 == 3){
         /* Allocating buffer for run_program() */

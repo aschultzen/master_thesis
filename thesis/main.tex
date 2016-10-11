@@ -184,7 +184,7 @@ I propose to use the Symmetricom SA.45 as the CSAC. This is a CSAC measuring onl
 I propose to use the Raspberry Pi 3 Model B (RASPI3) in the role as the host running the SMACC software. The RASPI3 is an interesting piece of equipment with an impressive list of specifications. It is a single board computer with a 1.2GHz 64-bit quad-core ARMv8 CPU, 1 GB of RAM, built in 802.11n Wireless LAN and four USB ports (\cite{RASPI}) (just to mention some). As with the Symmetricom SA.45, the RASPI3 is very affordable and retailed at about 35 USD when this report was written. We also propose to use Raspbian (\cite{RASPBIAN}), a Debian derived flavor of Linux optimized for the Raspberry Pi as the operating system. 
 
 \section{GNSS receiver}
-I propose to use at least two GNSS receivers. Both of the receivers should simply collect data and feed it to the SMACC but one of the receivers should also double as a 1 PPS disciplining source for the CSAC. Considering that need for a stable 1 PPS source, I propose to use the u-blox M8T. This is a relativity affordable GNSS receiver with a temperature compensated crystal oscillator (TCXO), 3 concurrent GNSS reception and an external antenna (\cite{UBLOXM8T}). Currently, only strings of NMEA data is collected from the GNSS receiver. However in the future it might be beneficial to collect and process raw data from the receivers as well. Since most GNSS receivers today follow the NMEA standard (to some extent) and raw data currently isn't required, common and popular receivers like the u-blox NEO series should be more that sufficient to use in an implementation if this proposal.
+I propose to use at least two GNSS receivers. Both of the receivers should simply collect data and feed it to the SMACC but one of the receivers should also double as a 1 PPS disciplining source for the CSAC. Considering that need for a stable 1 PPS source, I propose to use the u-blox NEO-M8T. This is a relativity affordable GNSS receiver with a temperature compensated crystal oscillator (TCXO), 3 concurrent GNSS reception and an external antenna (\cite{UBLOXM8T}). Currently, only strings of NMEA data is collected from the GNSS receiver. However in the future it might be beneficial to collect and process raw data from the receivers as well. Since most GNSS receivers today follow the NMEA standard (to some extent) and raw data currently isn't required, common and popular receivers like the u-blox NEO-NEO series should be more that sufficient to use in an implementation if this proposal.
 
 \chapter{Software}
 \section{The Sensor Server/Client model}
@@ -392,8 +392,8 @@ Since the C standard does not provide data structures like linked lists, I had t
     struct list_head {
       struct list_head *next, *prev;
     };
-    \label{struct_client_table}
     \end{minted}
+    \label{struct_client_table}
 \end{code}
 The fields of the struct is pretty self explanatory. There is a pointer to previous node and one the next. By using these, the list can traversed. 
 
@@ -424,8 +424,8 @@ The client\_table\_entry struct is what the name suggests, it's an entry in a li
         char ip[INET_ADDRSTRLEN];
         struct filters fs;
     };
-    \label{struct_client_table}
     \end{minted}
+    \label{struct_client_table}
 \end{code}
 The lient\_table\_entry struct is probably the type of the most commonly passed pointers in the program. 
 
@@ -449,8 +449,8 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
         int csac_logging;
         char csac_log_path[PATH_LENGTH_MAX];
     };
-    \label{struct_server_config}
     \end{minted}
+    \label{struct_server_config} 
 \end{code}
 
 \subsubsection{server\_data}
@@ -469,8 +469,8 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
         sem_t client_list_mutex;
         volatile int ready_counter;
     };
-    \label{server_data}
     \end{minted}
+  \label{server_data}
 \end{code}
 
 \subsubsection{server\_synchro}
@@ -489,8 +489,8 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
         sem_t client_list_mutex;
         volatile int ready_counter;
     };
-    \label{server_synchro}
     \end{minted}
+  \label{server_synchro}
 \end{code}
 
 \subsubsection{command\_code}
@@ -508,8 +508,8 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
         char parameter[MAX_PARAMETER_SIZE];
         int id_parameter;
     };
-    \label{command_code}
     \end{minted}
+  \label{command_code}
 \end{code}
 
 \subsubsection{NMEA container}\label{nmea_cont}
@@ -614,16 +614,22 @@ T                 & Set/report time-of-day                             & !T?{[}C
 
 \section{Detection algorithms: Filters}
 \subsection{Data acquisition}\label{data_aquisition}
-In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the CSAC will correct it's frequency based on either a 1 PPS (Pulse per second) signal or a 10 MHz signal. A similar approach was used in order to collect GPS data. Data from two u-blox M8T was gathered over the same time period as the data gathered from the CSAC. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the CSAC. It also provided valuable data that could be used to tune the spoofing detection algorithms in the CSAC SMACC. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the receivers and the CSAC (\ref{CLS})
+In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the CSAC will correct it's frequency based on either a 1 PPS (Pulse per second) signal or a 10 MHz signal. A similar approach was used in order to collect GPS data. Data from two u-blox NEO-M8T was gathered over the same time period as the data gathered from the CSAC. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the CSAC. It also provided valuable data that could be used to tune the spoofing detection algorithms in the CSAC SMACC. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the receivers and the CSAC (\ref{CLS})
 
-\subsubsection{Clock Model}
-Write about clock model 
+\subsubsection{Clock Model (CM) based filter}\label{cmbf}
+Write about clock model and the filters
 
-\subsubsection{"Known vs Reported location" filter}
-As discussed during the introduction (\ref{cspakp}), an easy way to detect spoofing, is to check the GNSS receivers solved position against the known position of the receiver. The detection techniques efficiency also increases as more receivers are added to the detection setup. This is because it is hard to spoof a GNSS receiver without also spoofing it's neighbor. By accidentally spoofing the neighbor, the two GNSS receivers would solved the same position and position (depending on the spoofing technique), thus giving away the attempt. By configuring the Sensor Server with the location of the different Sensors, the server can act if Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is bigger or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to determine whether or not a GNSS receiver / Sensor, has been spoofed. 
+\subsubsection{Known vs Reported location (KRL) filter}\label{kvsrlf}
+As discussed during the introduction (\ref{cspakp}), an easy way to detect spoofing, is to check the GNSS receivers solved position against the known position of the receiver. The detection techniques efficiency also increases as more receivers are added to the detection setup. This is because it is hard to spoof a GNSS receiver without also spoofing it's neighbor. By accidentally spoofing the neighbor, the two GNSS receivers would solved the same position and position (depending on the spoofing technique), thus giving away the attempt. By configuring the Sensor Server with the location of the different Sensors, the server can act if Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is bigger or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to check whether or not the latitude part of the GNSS receivers solved position is within "safe" (not spoofed) range.
 \begin{code}
   \caption{Sample of code taken from \texttt{filters.c} line 66. The code has been edited for clarity.}
     \begin{minted}
+    [
+      fontsize=\footnotesize,
+      fontfamily=tt,
+      linenos=true
+    ]
+    {c}
         if(latitude_current > latitude_reference + latitude_deviation) {
             moved = 1;
             lat_disturbed = HIGH;
@@ -640,27 +646,90 @@ As discussed during the introduction (\ref{cspakp}), an easy way to detect spoof
 \chapter{Testing}
 
 \section{Spoofing simulation test}
-When a GNSS receiver is spoofed, its solved position or time (or both) might change. The result depends on the technique used to spoof. By moving a GNSS receiver, one can simulate a spoofing attack since the location most certainly will change. It might also affect the time solved. (prat med Harald, dette er en problematisk forklaring). 
+When a GNSS receiver is spoofed, its solved position or time (or both) might change. The result depends on the technique used to spoof. By moving a GNSS receiver, one can simulate a spoofing attack since the location most certainly will change. It might also affect the time solved. (prat med Harald, dette er en problematisk forklaring). We also covered the antennas with aluminium foil to simulate a loss of signal. 
+
+\subsection{Setup}
+\begin{figure}
+\centering
+  \includegraphics[scale=0.31]{server_layout.pdf}
+   \caption[CSAC SMACC implementation block diagram]{A block diagram showing the tested implementation.}
+   \label{ibd}
+\end{figure}
+Figure \ref{ibd} shows how the Server, Sensors and CSAC where physically set up. In order to assure good GNSS satellite geometry, the antennas where placed at a roof. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Antenna 1 was connected to GNSS receiver 1 which in turn was connected to Sensor 1. It's the same setup with antenna 2 which was connected to GNSS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The Sensors and the Server where connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the CSAC and the Clients where configured to log all NMEA data received from the GNSS receivers. The GNSS receiver connected to antenna South is used to supply the CSAC with a 1 PPS signal.
+
+\begin{figure}
+\centering
+  \includegraphics[scale=0.31]{measure_setup.pdf}
+   \caption[Measurement setup]{Block diagram showing the setup of the measurement equipment}
+   \label{msd}
+\end{figure}
+! DESCRIBE THE DETAILS OF THEM MEASUREMENT HERE !
+
+\subsection{Goal}
+The goal with this test was to use the CSAC SMACC to detect a simulated spoofing attack.
 
 \subsection{Description}
-\begin{figure}\label{ibd}
-  \includegraphics[angle=90, scale=0.5]{server_layout.pdf}
-   \caption[CSAC SMACC implementation block diagram]{A block diagram showing the tested implementation}
-\end{figure}
-Figure \ref{ibd} shows how the Server, Sensors and CSAC where physically setup.  
+The following is a step by step description of how the test was conducted.
 
 \begin{itemize}
-  \item 10:58, flytter nord mot sør. Kabelen er ikke så lang. 15 m?
-  \item 11:03, flytter nord tilbake.
-  \item 11:07, flytter sør til nord
-  \item 11:12, flytter sør tilbake
-  \item 11:14, veivet nord rundt, økende tempo
-  \item 11:18, veivet sør rundt, økende tempo
-  \item 11:20, dekker nord med folie
-  \item 11:25, dekker sør med folie
-  \item 11:28, fjerner folie fra nord
-  \item 13:33, fjerner folie fra sør.
+  \item 10:58, moved antenna 1 towards antenna 2.
+  \item 11:03, moved antenna 1 back to original location.
+  \item 11:07, moved antenna 2 towards antenna 1.
+  \item 11:12, moved antenna 2 back to original location.
+  \item 11:14, waved antenna 1 around at an increasing tempo.
+  \item 11:18, waved antenna 1 around at an increasing tempo.
+  \item 11:20, covered antenna 1 with aluminium foil. 
+  \item 11:25, covered antenna 2 with aluminium foil. 
+  \item 11:28, removed foil from antenna 1.
+  \item 13:33, removed foil from antenna 2.
 \end{itemize}
+
+\subsection{Observations}
+By reviewing the log produced by the Sensor Server, the following was observed:
+
+\begin{itemize}
+  \item The KRL (\ref{kvsrlf}) filter was triggered by Sensor 1 at 10:59:19 and cleared at 11:04:35.
+  \begin{lstlisting}
+    [10/10/16 - 10:59:17] [ ALARM ] Sensor 1 triggered KRL filter!
+    ...
+    [10/10/16 - 11:04:35] [ ALARM ] Sensor 1 cleared KRL filter!
+  \end{lstlisting}
+  \item The KRL (\ref{kvsrlf}) filter was triggered again at 11:08:27, but this time by Sensor 2. The alarm was cleared at 11:13:43.
+    \begin{lstlisting}
+    [10/10/16 - 11:08:27] [ ALARM ] Sensor 2 triggered KRL filter!
+    ...
+    [10/10/16 - 11:13:43] [ ALARM ] Sensor 2 cleared KRL filter!
+  \end{lstlisting}
+  \item Once again, 11:22:03 the KRL filter was triggered by Sensor 1 and was not cleared until 11:29:21
+     \begin{lstlisting}
+    [10/10/16 - 11:22:03] [ ALARM ] Sensor 1 triggered KRL filter!
+    ...
+    [10/10/16 - 11:29:21] [ ALARM ] Sensor 1 cleared KRL filter!
+  \end{lstlisting} 
+  \item At 11:27.05, it was the CM filter (\ref{cmbf}) using the clock model that triggered. It stopped triggering 11:27:33. Sensor 2 also triggered the KRL filter 11:27:31 and cleared at 11:34:16.
+    \begin{lstlisting}
+    [10/10/16 - 11:27:05] CSAC Steer current bigger than pred limit!
+    ...
+    [10/10/16 - 11:27:31] [ ALARM ] Sensor 2 triggered KRL filter!
+    ...
+    [10/10/16 - 11:27:33] [ ALARM ] CSAC Steer value greater than predicted!
+  \end{lstlisting} 
+  \item The last 6 seconds, Sensor 2 triggered KRL filter and the CM filter was triggered at multiple occasions.
+  \begin{lstlisting}
+    [10/10/16 - 11:34:15] , [ ALARM ] Sensor 2 triggered REF_DEV!
+    [10/10/16 - 11:34:16] , [ ALARM ] Sensor 2 REF_DEV returned!
+    [10/10/16 - 11:34:17] , [ ALARM ] Sensor 2 triggered REF_DEV!
+    [10/10/16 - 11:34:18] , [ ALARM ] Sensor 2 triggered REF_DEV!
+    [10/10/16 - 11:34:19] , [ ALARM ] Sensor 2 triggered REF_DEV!
+    [10/10/16 - 11:34:19] ,Steer current bigger than pred limit!
+    [10/10/16 - 11:34:20] ,Steer current bigger than pred limit!
+    [10/10/16 - 11:34:20] , [ ALARM ] Sensor 2 REF_DEV returned!
+    [10/10/16 - 11:34:21] ,Steer current bigger than pred limit!
+  \end{lstlisting} 
+\end{itemize}
+
+\subsection{Conclusion}
+
 
 \chapter{Results and discussion}\label{discussion}
 \section{Choice of programming language}

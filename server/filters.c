@@ -1,7 +1,7 @@
 #include "filters.h"
 
-#define ALARM_RDF "[ ALARM ] Client %d triggered REF_DEV!\n"
-#define ALARM_RDF_RETURNED "[ ALARM ] Client %d REF_DEV returned!\n"
+#define ALARM_RDF "[ ALARM ] Sensor %d triggered KRL filter!\n"
+#define ALARM_RDF_RETURNED "[ ALARM ] Sensor %d cleared KRL filter!\n"
 
 #define LOG_FILE "server_log"
 #define LOG_STRING_LENGTH 100
