@@ -34,29 +34,26 @@ void raise_alarm(void)
 
     list_for_each_entry_safe(iterator, safe,&client_list->list, list) {
         if(iterator->client_id > 0) {
-            /* Checking REF-DEV */
+            /* Checking krl_filter */
             if(iterator->fs.rdf.moved == 1) {
                 iterator->fs.rdf.was_moved = 1;
                 iterator->fs.rdf.moved = 0;
                 if(s_conf->logging) {
                     log_alarm(iterator->client_id, ALARM_RDF);
                 }
-                //t_print(ALARM_RDF, iterator->client_id);
-
             } else {
                 if(iterator->fs.rdf.was_moved) {
                     iterator->fs.rdf.was_moved = 0;
                     if(s_conf->logging) {
                         log_alarm(iterator->client_id, ALARM_RDF_RETURNED);
                     }
-                    //t_print(ALARM_RDF_RETURNED, iterator->client_id);
                 }
             }
         }
     }
 }
 
-void ref_dev_filter(void)
+void krl_filter(void)
 {
     struct client_table_entry* iterator;
     struct client_table_entry* safe;

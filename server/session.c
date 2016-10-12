@@ -13,7 +13,7 @@
 #define ERROR_DUMPDATA_FAILED "ERROR:Failed to dump data\n"
 #define ERROR_LOADDATA_FAILED "ERROR:Failed to load data\n"
 #define ERROR_NO_COMMAND  "ERROR:No command specified\n"
-#define ERROR_LRFD_LOAD_FAILED "ERROR:Failed to laod REF_DEV_FILTER data from file\n"
+#define ERROR_KRLD_LOAD_FAILED "ERROR:Failed to load KRL data from file\n"
 
 static int nmea_ready();
 static void extract_nmea_data(struct client_table_entry *cte);
@@ -287,20 +287,20 @@ static int parse_input(struct client_table_entry *cte)
         cte->cm.code = CODE_QUERYCSAC;
     }
 
-    /* PRINT_LOADRFDATA */
-    else if(strstr((char*)incoming, PROTOCOL_LOADRFDATA ) == (incoming)) {
-        int length = (strlen(incoming) - strlen(PROTOCOL_LOADRFDATA) );
+    /* PRINT_LOADKRLDATA */
+    else if(strstr((char*)incoming, PROTOCOL_LOADKRLDATA ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_LOADKRLDATA) );
         memcpy(cte->cm.parameter,
-               (incoming)+(strlen(PROTOCOL_LOADRFDATA)*(sizeof(char))), length);
-        cte->cm.code = CODE_LOADRFDATA;
+               (incoming)+(strlen(PROTOCOL_LOADKRLDATA)*(sizeof(char))), length);
+        cte->cm.code = CODE_LOADKRLDATA;
     }
 
-    /* PRINT_LOADRFDATA_SHORT */
-    else if(strstr((char*)incoming, PROTOCOL_LOADRFDATA_SHORT ) == (incoming)) {
-        int length = (strlen(incoming) - strlen(PROTOCOL_LOADRFDATA_SHORT) );
+    /* PRINT_LOADKRLDATA_SHORT */
+    else if(strstr((char*)incoming, PROTOCOL_LOADKRLDATA_SHORT ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_LOADKRLDATA_SHORT) );
         memcpy(cte->cm.parameter,
-               (incoming)+(strlen(PROTOCOL_LOADRFDATA_SHORT)*(sizeof(char))), length);
-        cte->cm.code = CODE_LOADRFDATA;
+               (incoming)+(strlen(PROTOCOL_LOADKRLDATA_SHORT)*(sizeof(char))), length);
+        cte->cm.code = CODE_LOADKRLDATA;
     }
 
     /* PROTOCOL_PRINTCFD */
@@ -407,12 +407,12 @@ static int respond(struct client_table_entry *cte)
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
 
             if(cte->client_type == SENSOR) {
-                if(load_ref_def_data(cte)) {
+                if(load_krl_data(cte)) {
                     s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
                     t_print("Loaded filter data for client %d\n", cte->client_id);
                 } else {
-                    s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED,
-                            sizeof(ERROR_LRFD_LOAD_FAILED));
+                    s_write(&(cte->transmission),ERROR_KRLD_LOAD_FAILED,
+                            sizeof(ERROR_KRLD_LOAD_FAILED));
                 }
             }
 
@@ -458,7 +458,7 @@ static int respond(struct client_table_entry *cte)
                 /* If everyone is ready, process data */
                 if(ready) {
                     /* Last process ready gets the job of analyzing the data */
-                    ref_dev_filter();
+                    krl_filter();
 
                     /* Check the results of the filters */
                     raise_alarm();
@@ -480,16 +480,16 @@ static int respond(struct client_table_entry *cte)
             }
         }
 
-        else if(cte->cm.code == CODE_LOADRFDATA) {
+        else if(cte->cm.code == CODE_LOADKRLDATA) {
             struct client_table_entry* candidate = get_client_by_id(cte->cm.id_parameter);
             if(candidate == NULL) {
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             } else {
-                if(load_ref_def_data(candidate)) {
+                if(load_krl_data(candidate)) {
                     s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
                 } else {
-                    s_write(&(cte->transmission),ERROR_LRFD_LOAD_FAILED,
-                            sizeof(ERROR_LRFD_LOAD_FAILED));
+                    s_write(&(cte->transmission),ERROR_KRLD_LOAD_FAILED,
+                            sizeof(ERROR_KRLD_LOAD_FAILED));
                 }
             }
         }

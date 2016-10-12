@@ -222,36 +222,15 @@ By using already existing network infrastructure, it becomes a lot easier to dis
    \caption[Socket Server execution flow block diagram]{The block diagrams shows and abstracted view of the execution after data has been received from a client.}
 \end{figure}
 
+\begin{figure}\label{server_call_graph}
+\centering
+  \includegraphics[scale=0.3]{server_call_graph.pdf}
+   \caption[Sensor Server simplified call graph]{Simplified call graph for the Sensor Server.}
+\end{figure}
+
 \newpage
 \subsection{Roles}
-A client connected to the server can have two roles; It can either be a Sensor or a Monitor. The Sensor role is already explained, but the Monitor role was added in order for a user of the Sensor Server to connect to the server and check status or issue commands. For a client to assume the role of a Monitor, the client has to pick a negative integer as ID number. This way, the Server does not expect you as a client to report any NMEA data the way it would with a Sensor. As a Monitor, you can issue the following commands:
-
-\begin{table}[!htb]
-\centering
-\caption{Sensor Server available commands}
-\label{my-label}
-\resizebox{1\textwidth}{!}{%
-  \begin{tabular}{llll}
-  \multicolumn{1}{l}{Command} & \multicolumn{1}{l}{Short} & \multicolumn{1}{l}{Parameter} & \multicolumn{1}{l}{Description}                                                                \\
-  HELP                        & ?                         & NONE                          & Prints this table                                                                              \\
-  IDENTIFY                    & ID                        & ID                            & Clients ID is set to PARAM                                                                     \\
-  DISCONNECT                  & EXIT                      & NONE                          & Disconnect from the server                                                                     \\
-  PRINTCLIENTS                & PC                        & NONE                          & Prints an overview of connected clients                                                        \\
-  PRINTSERVER                 & PS                        & NONE                          & Prints server state and config                                                                 \\
-  PRINTTIME                   &                           & ID                            & Prints time solved from GNSS data received from Sensor \textless ID\textgreater                 \\
-  PRINTAVGDIFF                & PAD                       & NONE                          & Prints the difference between current solved position and the average reported for all Sensors \\
-  PRINTLOC                    & PL                        & ID                            & Print solved position for Sensor \textless ID\textgreater                                       \\
-  LISTDATA                    & LSD                       & NONE                          & List all dump files stored by the server                                                       \\
-  DUMPDATA                    & DD                        & ID \& FILE                    & Dumps state of Sensor \textless ID\textgreater into a file named \textless FILE\textgreater      \\
-  LOADDATA                    & LD                        & ID \& FILE                    & Load state stored in file called \textless FILE\textgreater into Sensor \textless ID\textgreater \\
-  QUERYCSAC                   & QC                        & COMMAND                       & Queries the CSAC with COMMAND.                                                                 \\
-  LOADRFDATA                  & LRFD                      & ID                            & Load reference location data into Sensor \textless ID\textgreater                               \\
-  PRINTCFD                    & PFD                       & NONE                          & Prints CSAC filter data                                                                        
-  \end{tabular}
-}
-\end{table}
-
-
+A client connected to the server can have two roles; It can either be a Sensor or a Monitor. The Sensor role is already explained, but the Monitor role was added in order for a user of the Sensor Server to connect to the server and check status or issue commands. For a client to assume the role of a Monitor, the client has to pick a negative integer as ID number. This way, the Server does not expect you as a client to report any NMEA data the way it would with a Sensor. The Monitor role can also be used to interface with the Server. See (\ref{interface}) for more.
 
 \subsection{Sockets}
 In order to implement the Server/Client model, the Sensor Server is implemented using the Linux Socket API. The API is based on BSD sockets and are available in in almost all Unix like operating system (\cite{LINUX_KERNEL}, p.610). Listing \ref{server_connect} shows a sample of code taken from one of the Sensor Server's source file. The sample shows the following:
@@ -565,6 +544,34 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
     \label{nmea_container}
 \end{code}
 
+\section{Interfacing}
+Write about the possibility to interface with the server via telnet
+
+\begin{table}[angle=90,!htb]
+\centering
+\caption{Sensor Server available commands}
+\label{my-label}
+\resizebox{1\textwidth}{!}{%
+  \begin{tabular}{llll}
+  \multicolumn{1}{l}{Command} & \multicolumn{1}{l}{Short} & \multicolumn{1}{l}{Parameter} & \multicolumn{1}{l}{Description}                                                                \\
+  HELP                        & ?                         & NONE                          & Prints this table                                                                              \\
+  IDENTIFY                    & ID                        & ID                            & Clients ID is set to PARAM                                                                     \\
+  DISCONNECT                  & EXIT                      & NONE                          & Disconnect from the server                                                                     \\
+  PRINTCLIENTS                & PC                        & NONE                          & Prints an overview of connected clients                                                        \\
+  PRINTSERVER                 & PS                        & NONE                          & Prints server state and config                                                                 \\
+  PRINTTIME                   &                           & ID                            & Prints time solved from GNSS data received from Sensor \textless ID\textgreater                 \\
+  PRINTAVGDIFF                & PAD                       & NONE                          & Prints the difference between current solved position and the average reported for all Sensors \\
+  PRINTLOC                    & PL                        & ID                            & Print solved position for Sensor \textless ID\textgreater                                       \\
+  LISTDATA                    & LSD                       & NONE                          & List all dump files stored by the server                                                       \\
+  DUMPDATA                    & DD                        & ID \& FILE                    & Dumps state of Sensor \textless ID\textgreater into a file named \textless FILE\textgreater      \\
+  LOADDATA                    & LD                        & ID \& FILE                    & Load state stored in file called \textless FILE\textgreater into Sensor \textless ID\textgreater \\
+  QUERYCSAC                   & QC                        & COMMAND                       & Queries the CSAC with COMMAND.                                                                 \\
+  LOADRFDATA                  & LRFD                      & ID                            & Load reference location data into Sensor \textless ID\textgreater                               \\
+  PRINTCFD                    & PFD                       & NONE                          & Prints CSAC filter data                                                                        
+  \end{tabular}
+}
+\end{table}
+
 % Refer to protocol.h at the point when describing the ID process?
 \section{The Sensor Client}\label{sensor_client}
 The sensor client software is a simple program written in C99 whose only task is to relay information read from the GNSS receivers. Summed up shortly:
@@ -588,6 +595,13 @@ The sensor client software is a simple program written in C99 whose only task is
   \item Sends the GNSS data to the server according to protocol.
   \item Repeats.
 \end{itemize}
+
+\begin{figure}\label{client_call_graph}
+\centering
+  \includegraphics[scale=0.3]{client_call_graph.pdf}
+   \caption[Sensor Client simplified call graph]{Simplified call graph for the Sensor Client.}
+\end{figure}
+
 
 \section{CSAC Communication}
   \includegraphics[width=1\textwidth]{csac_serial.pdf}
@@ -692,20 +706,20 @@ The following is a step by step description of how the test was conducted. The t
    {Antenna covered in aluminium foil to simulate a jamming attack.}
 \end{wrapfigure} 
 
-Step 1 and 2 was designed to trigger the KRL filter, especially the solved latitude, longitude and altitude but also the speed, against known values. Step 5 and 6 was also designed to trigger the KRL filter, but more specifically the checking of solved speed. Step 7 and 8 was to designed to reveal what would happen with the both the KRL and the CM filter during a jamming attack as it was believed that covering the antennas with aluminium foil would block all signals out.
+Step 1 and 2 was designed to trigger the KRL filter, especially the check of solved latitude, longitude and altitude but also the speed, against known values. Step 5 and 6 was also designed to trigger the KRL filter, but more specifically the checking of solved speed. Step 7 and 8 was to designed to reveal what would happen with the both the KRL and the CM filter during a jamming attack as it was believed that covering the antennas with aluminium foil would block all signals out.
 
 \subsection{Observations}\label{observations}
 By reviewing the log produced by the Sensor Server, the following was observed:
 
 \begin{itemize}
   \item No false positives, the filters where not triggered before the test started.
-  \item The KRL (\ref{kvsrlf}) filter was triggered by Sensor 1 at 10:59:19 and cleared at 11:04:35.
+  \item The KRL filter was triggered by Sensor 1 at 10:59:19 and cleared at 11:04:35.
   \begin{lstlisting}
     [10/10/16 - 10:59:17] [ ALARM ] Sensor 1 triggered KRL filter!
     ...
     [10/10/16 - 11:04:35] [ ALARM ] Sensor 1 cleared KRL filter!
   \end{lstlisting}
-  \item The KRL (\ref{kvsrlf}) filter was triggered again at 11:08:27, but this time by Sensor 2. The alarm was cleared at 11:13:43.
+  \item The KRL filter was triggered again at 11:08:27, but this time by Sensor 2. The alarm was cleared at 11:13:43.
     \begin{lstlisting}
     [10/10/16 - 11:08:27] [ ALARM ] Sensor 2 triggered KRL filter!
     ...
@@ -717,7 +731,7 @@ By reviewing the log produced by the Sensor Server, the following was observed:
     ...
     [10/10/16 - 11:29:21] [ ALARM ] Sensor 1 cleared KRL filter!
   \end{lstlisting} 
-  \item At 11:27.05, it was the CM filter (\ref{cmbf}) using the clock model that triggered. It stopped triggering 11:27:33. Sensor 2 also triggered the KRL filter 11:27:31 and cleared at 11:34:16.
+  \item At 11:27.05, it was the CM filter using the clock model that triggered. It stopped triggering 11:27:33. Sensor 2 also triggered the KRL filter 11:27:31 and cleared at 11:34:16.
     \begin{lstlisting}
     [10/10/16 - 11:27:05] [ ALARM ] CSAC Steer value greater than predicted!
     ...

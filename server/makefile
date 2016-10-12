@@ -4,12 +4,12 @@ CLIENT_OBJS = sensor_client.o net.o utils.o gps_serial.o
 CC = gcc
 DEBUG = -g
 
-CFLAGS = -Wall -Wextra -c -std=gnu99 -pedantic -O3
+CFLAGS = -Wall -Wextra -c -g -std=gnu99 -pedantic
 
 cpu := $(shell uname -m)
 
 ifeq ($(cpu),armv7l)
-	CFLAGS = -Wall -Wextra -c -g -std=gnu99 -pedantic -O3 -march=armv7-a -mtune=arm7 -fsigned-char
+	CFLAGS = -Wall -Wextra -c -std=gnu99 -pedantic -g -march=armv7-a -mtune=arm7 -fsigned-char
 endif
 
 LFLAGS = -Wall $(DEBUG)

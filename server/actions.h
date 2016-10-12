@@ -91,16 +91,6 @@ void print_location(struct client_table_entry *monitor,
  */
 void print_avg_diff(struct client_table_entry *monitor);
 
-/** @brief Restarts the warm-up procedure for the given SENSOR
- *
- * Sets the SENSORs warmup_started to NOW, warmup to 1 and ready to 0.
- * This "triggers" a restart of the warm-up procedure.
- *
- * @param client Pointer to client whose warm-up procedure to restart.
- * @return Void
- */
-void restart_warmup(struct client_table_entry* client);
-
 /** @brief Dumps NMEA data to file for given client
  *
  * @param client Pointer to client whose data should be dumped.
@@ -111,28 +101,12 @@ void restart_warmup(struct client_table_entry* client);
 int datadump(struct client_table_entry* client, char *filename,
              int human_readable);
 
-/** @brief Restore NMEA data from file
- *
- * @param client Pointer to client whose data should be restored from file
- * @param filename Pointer to filename.
- * @return 1 if success, 0 if fail.
- */
-int datarestore(struct client_table_entry* client, char *filename);
-
-/** @brief List files in folder
+/** @brief List dump files in folder
  *
  * @param monitor Pointer to requesting monitor
  * @return 1 if success, 0 if fail.
  */
 int listdumps(struct client_table_entry* monitor);
-
-/** @brief Sets a new warm-up time for a given SENSOR.
- *
- * @param client Pointer to client whose warm-up time to be given new value.
- * @param value New warm-up time in seconds.
- * @return Void
- */
-void set_warmup(struct client_table_entry *client, int value);
 
 /** @brief Loads NMEA data into the NMEA struct of a given client (target).
 *
@@ -162,7 +136,7 @@ int client_query_csac(struct client_table_entry *monitor, char *query);
 *
 * @param target Client to load the data into
 */
-int load_ref_def_data(struct client_table_entry* target);
+int load_krl_data(struct client_table_entry* target);
 
 /** @brief Prints the current state of the CSAC filter.
 *

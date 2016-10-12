@@ -61,7 +61,7 @@
 "--------------------------------------------------------------------------------\n"\
 " QUERYCSAC    | QC    | COMMAND   | Queries the CSAC with parameter COMMAND\n"\
 "--------------------------------------------------------------------------------\n"\
-" LOADRFDATA   | LRFD  | ID        | Load reference location data into Sensor<ID>\n"\
+" LOADKRLDATA  | LKRLD | ID        | Load reference location data into Sensor<ID>\n"\
 "--------------------------------------------------------------------------------\n"\
 " PRINTCFD     | PFD   |           | Prints CSAC filter data\n"\
 "--------------------------------------------------------------------------------\n"\
@@ -508,7 +508,7 @@ int client_query_csac(struct client_table_entry *monitor, char *query)
 * Re-using the config loader.
 * This whole function needs some work! Magic numbers beware.
 */
-int load_ref_def_data(struct client_table_entry* target)
+int load_krl_data(struct client_table_entry* target)
 {
     /* Request lock */
     sem_wait(&(s_synch->client_list_mutex));

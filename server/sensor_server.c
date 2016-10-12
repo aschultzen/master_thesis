@@ -303,14 +303,14 @@ static void start_server(int port_number)
         exit(1);
     }
 
-
+    /*
     pid_t f_pid;
     f_pid = fork();
     if(f_pid == 0) {
         t_print("Forked out CSAC filter [%d]\n", getpid());
         start_csac_filter(cfd);
         _exit(0);
-    }
+    }*/
 
     /* Registering the SIGINT handler */
     struct sigaction sigint_action;
