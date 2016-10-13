@@ -47,7 +47,7 @@ static int nmea_ready()
 }
 
 /* Extract position data from NMEA */
-static void extract_nmea_data(struct client_table_entry *cte)
+static int extract_nmea_data(struct client_table_entry *cte)
 {
     int buffsize = 100;
     char buffer[buffsize];
@@ -58,6 +58,8 @@ static void extract_nmea_data(struct client_table_entry *cte)
                         cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc)))
     {
         cte->nmea.lat_current = atof(buffer);       
+    } else {
+        return 0;
     }
 
 
@@ -66,6 +68,8 @@ static void extract_nmea_data(struct client_table_entry *cte)
                         cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc)))
     {
         cte->nmea.lon_current = atof(buffer);
+    } else {
+        return 0;
     }
 
     /* Extracting altitude */
@@ -73,6 +77,8 @@ static void extract_nmea_data(struct client_table_entry *cte)
                         cte->nmea.raw_gga, strlen(cte->nmea.raw_gga)))
     {    
         cte->nmea.alt_current = atof(buffer);
+    } else {
+        return 0;
     }
 
     /* Extracting speed */
@@ -80,7 +86,11 @@ static void extract_nmea_data(struct client_table_entry *cte)
                         cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc)))
     {
         cte->nmea.speed_current = atof(buffer);
+    } else {
+        return 0;
     }
+
+    return 1;
 }
 
 /* Calculate the average NMEA values */
@@ -438,6 +448,11 @@ static int respond(struct client_table_entry *cte)
             /* Fetching data from buffer */
             char *rmc_start = strstr(cte->transmission.iobuffer, RMC);
             char *gga_start = strstr(cte->transmission.iobuffer, GGA);
+
+            if(rmc_start == NULL || gga_start == NULL){
+                return 1;
+            }
+
             memcpy(cte->nmea.raw_rmc, rmc_start, gga_start - rmc_start);
             memcpy(cte->nmea.raw_gga, gga_start,
                    ( strlen(cte->transmission.iobuffer) - (rmc_start - cte->transmission.iobuffer)
@@ -451,7 +466,11 @@ static int respond(struct client_table_entry *cte)
             if(rmc_checksum && gga_checksum) {
                 cte->timestamp = time(NULL);
                 cte->nmea.checksum_passed = 1;
-                extract_nmea_data(cte);
+
+                if(!extract_nmea_data(cte)){
+                    return 1;
+                }
+                
                 calculate_nmea_average(cte);
                 calculate_nmea_diff(cte);
 
