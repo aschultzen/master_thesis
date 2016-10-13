@@ -14,9 +14,11 @@
 #define ERROR_LOADDATA_FAILED "ERROR:Failed to load data\n"
 #define ERROR_NO_COMMAND  "ERROR:No command specified\n"
 #define ERROR_KRLD_LOAD_FAILED "ERROR:Failed to load KRL data from file\n"
+#define ERROR_CHECKSUM_FAILED "ERROR: Checksum failed!\n"
+#define ERROR_ILLEGAL_NMEA "ERROR: Received illegal/corrupt NMEA data\n"
 
 static int nmea_ready();
-static void extract_nmea_data(struct client_table_entry *cte);
+static int extract_nmea_data(struct client_table_entry *cte);
 static void calculate_nmea_average(struct client_table_entry *cte);
 static void calculate_nmea_diff(struct client_table_entry *cte);
 static int set_timeout(struct client_table_entry *target,
@@ -427,7 +429,6 @@ static int respond(struct client_table_entry *cte)
 
             if(cte->client_type == SENSOR) {
                 if(load_krl_data(cte)) {
-                    s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
                     t_print("Loaded filter data for client %d\n", cte->client_id);
                 } else {
                     s_write(&(cte->transmission),ERROR_KRLD_LOAD_FAILED,
@@ -450,6 +451,7 @@ static int respond(struct client_table_entry *cte)
             char *gga_start = strstr(cte->transmission.iobuffer, GGA);
 
             if(rmc_start == NULL || gga_start == NULL){
+                s_write(&(cte->transmission), ERROR_ILLEGAL_NMEA, strlen(ERROR_ILLEGAL_NMEA));
                 return 1;
             }
 
@@ -464,13 +466,14 @@ static int respond(struct client_table_entry *cte)
 
             /* Continue to filters if ok */
             if(rmc_checksum && gga_checksum) {
+                s_write(&(cte->transmission), PROTOCOL_OK, strlen(PROTOCOL_OK));
                 cte->timestamp = time(NULL);
                 cte->nmea.checksum_passed = 1;
 
                 if(!extract_nmea_data(cte)){
                     return 1;
                 }
-                
+
                 calculate_nmea_average(cte);
                 calculate_nmea_diff(cte);
 
@@ -496,6 +499,7 @@ static int respond(struct client_table_entry *cte)
             } else {
                 cte->nmea.checksum_passed = 0;
                 t_print("RMC and GGA received from %d , checksum failed!\n", cte->client_id);
+                s_write(&(cte->transmission), ERROR_CHECKSUM_FAILED, strlen(ERROR_CHECKSUM_FAILED));
             }
         }
 
