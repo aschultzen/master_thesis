@@ -488,6 +488,7 @@ static int respond(struct client_table_entry *cte)
 
                 /* If everyone is ready, process data */
                 if(ready) {
+                    fprintf(stderr, "Client %d entered the ready loop!\n", cte->client_id);
                     /* Last process ready gets the job of analyzing the data */
                     krl_filter();
 

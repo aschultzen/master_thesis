@@ -454,6 +454,7 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
     \end{minted}
   \label{server_data}
 \end{code}
+The \texttt{server\_data} structs members are 
 
 \subsubsection{server\_synchro}
 \begin{code}
@@ -547,6 +548,7 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
     \label{nmea_container}
 \end{code}
 
+\newpage
 \section{Interfacing}
 As mentioned earlier (\ref{roles}), a client can assume the role of both a Monitor and a Sensor. The Sensor Server does not differentiate between the two roles other than when it routinely checks the status of its filters. This means that one could connect to the server using the Sensor Client software as a Monitor by configuring the Sensor Client software to use a negative integer as ID. At this point, this kind of functionality is not very useful as there is currently no way to change the ID of a client unless the client explicitly issues the command to do so, but it opens for the possibility to interface with the server. One way to interface with the Sensor Server is to connect to it using Telnet:
 
@@ -597,8 +599,7 @@ One can write scripts that interface with Sensor Server by using an implementati
 	  \end{tabularx}
 \end{table}
 
-
-% Refer to protocol.h at the point when describing the ID process?
+\newpage
 \section{The Sensor Client}\label{sensor_client}
 The sensor client software is a simple program written in C99 whose only task is to relay information read from the GNSS receivers. Summed up shortly:
 \begin{itemize}
