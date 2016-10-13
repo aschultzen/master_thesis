@@ -87,7 +87,6 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
 
     config_file=fopen(path, "r");
     if(!config_file) {
-        t_print("config_loader(): Failed to load config file, aborting.\n");
         return 0;
     }
 

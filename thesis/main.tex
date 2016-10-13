@@ -19,6 +19,9 @@
 \usepackage{subfiles}
 \usepackage{minted}
 \usepackage{fancyvrb}
+\usepackage{lscape}
+\usepackage{tabularx}
+
 \usemintedstyle{friendly}
 
 \newmintedfile[pythoncode]{python}{
@@ -229,7 +232,7 @@ By using already existing network infrastructure, it becomes a lot easier to dis
 \end{figure}
 
 \newpage
-\subsection{Roles}
+\subsection{Roles}\label{roles}
 A client connected to the server can have two roles; It can either be a Sensor or a Monitor. The Sensor role is already explained, but the Monitor role was added in order for a user of the Sensor Server to connect to the server and check status or issue commands. For a client to assume the role of a Monitor, the client has to pick a negative integer as ID number. This way, the Server does not expect you as a client to report any NMEA data the way it would with a Sensor. The Monitor role can also be used to interface with the Server. See (\ref{interface}) for more.
 
 \subsection{Sockets}
@@ -545,32 +548,45 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
 \end{code}
 
 \section{Interfacing}
-Write about the possibility to interface with the server via telnet
+As mentioned earlier (\ref{roles}), a client can assume the role of both a Monitor and a Sensor. The Sensor Server does not differentiate between the two roles other than when it routinely checks the status of its filters. This means that one could connect to the server using the Sensor Client software as a Monitor by configuring the Sensor Client software to use a negative integer as ID. At this point, this kind of functionality is not very useful as there is currently no way to change the ID of a client unless the client explicitly issues the command to do so, but it opens for the possibility to interface with the server. One way to interface with the Sensor Server is to connect to it using Telnet:
 
-\begin{table}[angle=90,!htb]
-\centering
-\caption{Sensor Server available commands}
-\label{my-label}
-\resizebox{1\textwidth}{!}{%
-  \begin{tabular}{llll}
-  \multicolumn{1}{l}{Command} & \multicolumn{1}{l}{Short} & \multicolumn{1}{l}{Parameter} & \multicolumn{1}{l}{Description}                                                                \\
-  HELP                        & ?                         & NONE                          & Prints this table                                                                              \\
-  IDENTIFY                    & ID                        & ID                            & Clients ID is set to PARAM                                                                     \\
-  DISCONNECT                  & EXIT                      & NONE                          & Disconnect from the server                                                                     \\
-  PRINTCLIENTS                & PC                        & NONE                          & Prints an overview of connected clients                                                        \\
-  PRINTSERVER                 & PS                        & NONE                          & Prints server state and config                                                                 \\
-  PRINTTIME                   &                           & ID                            & Prints time solved from GNSS data received from Sensor \textless ID\textgreater                 \\
-  PRINTAVGDIFF                & PAD                       & NONE                          & Prints the difference between current solved position and the average reported for all Sensors \\
-  PRINTLOC                    & PL                        & ID                            & Print solved position for Sensor \textless ID\textgreater                                       \\
-  LISTDATA                    & LSD                       & NONE                          & List all dump files stored by the server                                                       \\
-  DUMPDATA                    & DD                        & ID \& FILE                    & Dumps state of Sensor \textless ID\textgreater into a file named \textless FILE\textgreater      \\
-  LOADDATA                    & LD                        & ID \& FILE                    & Load state stored in file called \textless FILE\textgreater into Sensor \textless ID\textgreater \\
-  QUERYCSAC                   & QC                        & COMMAND                       & Queries the CSAC with COMMAND.                                                                 \\
-  LOADRFDATA                  & LRFD                      & ID                            & Load reference location data into Sensor \textless ID\textgreater                               \\
-  PRINTCFD                    & PFD                       & NONE                          & Prints CSAC filter data                                                                        
-  \end{tabular}
-}
+\begin{lstlisting}
+user@machine:/$ telnet 10.1.0.46 10001
+Trying 10.1.0.46...
+Connected to 10.1.0.46.
+Escape character is '^]'.
+ID -3
+OK!
+
+>
+\end{lstlisting}
+It is also possible to assume the role of a Sensor by connecting to the server via telnet. This can be used to debug or troubleshoot the Sensor Server by manually feeding it NMEA data. It should be noted that 
+
+
+Another possibility is to 
+
+\begin{table}
+	\caption{Sensor Server available commands}
+	\label{commands}
+	\begin{tabularx}{\textwidth}{|l|l|l|X|}
+	  \multicolumn{1}{l}{Command} & \multicolumn{1}{l}{Short} & \multicolumn{1}{l}{Parameter} & \multicolumn{1}{l}{Description}                                                                \\ \hline
+	  HELP                        & ?                         & NONE                          & Prints this table                                                                              \\ \hline
+	  IDENTIFY                    & ID                        & ID                            & Clients ID is set to PARAM                                                                     \\ \hline
+	  DISCONNECT                  & EXIT                      & NONE                          & Disconnect from the server                                                                     \\ \hline
+	  PRINTCLIENTS                & PC                        & NONE                          & Prints an overview of connected clients                                                        \\ \hline
+	  PRINTSERVER                 & PS                        & NONE                          & Prints server state and config                                                                 \\ \hline
+	  PRINTTIME                   &                           & ID                            & Prints time solved from GNSS data received from Sensor \textless ID\textgreater                 \\ \hline
+	  PRINTAVGDIFF                & PAD                       & NONE                          & Prints the difference between current solved position and the average reported for all Sensors \\ \hline
+	  PRINTLOC                    & PL                        & ID                            & Print solved position for Sensor \textless ID\textgreater                                       \\ \hline
+	  LISTDATA                    & LSD                       & NONE                          & List all dump files stored by the server                                                       \\ \hline
+	  DUMPDATA                    & DD                        & ID \& FILE                    & Dumps state of Sensor \textless ID\textgreater into a file named \textless FILE\textgreater      \\ \hline
+	  LOADDATA                    & LD                        & ID \& FILE                    & Load state stored in file called \textless FILE\textgreater into Sensor \textless ID\textgreater \\ \hline
+	  QUERYCSAC                   & QC                        & COMMAND                       & Queries the CSAC with COMMAND.                                                                 \\ \hline
+	  LOADRFDATA                  & LRFD                      & ID                            & Load reference location data into Sensor \textless ID\textgreater                               \\ \hline
+	  PRINTCFD                    & PFD                       & NONE                          & Prints CSAC filter data\\ \hline                                                                        
+	  \end{tabularx}
 \end{table}
+
 
 % Refer to protocol.h at the point when describing the ID process?
 \section{The Sensor Client}\label{sensor_client}

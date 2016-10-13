@@ -54,24 +54,33 @@ static void extract_nmea_data(struct client_table_entry *cte)
     memset(&buffer, 0, buffsize);
 
     /* Extracting latitude */
-    substring_extractor(LATITUDE_START,LATITUDE_START + 1,',',buffer, buffsize,
-                        cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
-    cte->nmea.lat_current = atof(buffer);
+    if(substring_extractor(LATITUDE_START,LATITUDE_START + 1,',',buffer, buffsize,
+                        cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc)))
+    {
+        cte->nmea.lat_current = atof(buffer);       
+    }
+
 
     /* Extracting longitude */
-    substring_extractor(LONGITUDE_START,LONGITUDE_START + 1,',',buffer, buffsize,
-                        cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
-    cte->nmea.lon_current = atof(buffer);
+    if(substring_extractor(LONGITUDE_START,LONGITUDE_START + 1,',',buffer, buffsize,
+                        cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc)))
+    {
+        cte->nmea.lon_current = atof(buffer);
+    }
 
     /* Extracting altitude */
-    substring_extractor(ALTITUDE_START,ALTITUDE_START + 1,',',buffer, buffsize,
-                        cte->nmea.raw_gga, strlen(cte->nmea.raw_gga));
-    cte->nmea.alt_current = atof(buffer);
+    if(substring_extractor(ALTITUDE_START,ALTITUDE_START + 1,',',buffer, buffsize,
+                        cte->nmea.raw_gga, strlen(cte->nmea.raw_gga)))
+    {    
+        cte->nmea.alt_current = atof(buffer);
+    }
 
     /* Extracting speed */
-    substring_extractor(SPEED_START,SPEED_START + 1,',',buffer, buffsize,
-                        cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc));
-    cte->nmea.speed_current = atof(buffer);
+    if(substring_extractor(SPEED_START,SPEED_START + 1,',',buffer, buffsize,
+                        cte->nmea.raw_rmc, strlen(cte->nmea.raw_rmc)))
+    {
+        cte->nmea.speed_current = atof(buffer);
+    }
 }
 
 /* Calculate the average NMEA values */
