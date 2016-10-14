@@ -427,9 +427,9 @@ static int respond(struct client_table_entry *cte)
 
             } else {
                 cte->client_type = SENSOR;
-                sem_wait(&(s_synch->client_list_mutex));
+                sem_wait(&(s_synch->client_list_sem));
                 s_data->number_of_sensors++;
-                sem_post(&(s_synch->client_list_mutex));
+                sem_post(&(s_synch->client_list_sem));
             }
             /* Everything is good, setting id and responding*/
             s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
@@ -490,7 +490,7 @@ static int respond(struct client_table_entry *cte)
                 cte->ready = 1;
 
                 /* Acquiring ready-lock */
-                sem_wait(&(s_synch->ready_mutex));
+                sem_wait(&(s_synch->ready_sem));
 
                 /* Checking if the other clients are ready as well*/
                 int ready = nmea_ready();
@@ -505,7 +505,7 @@ static int respond(struct client_table_entry *cte)
                     raise_alarm();
                 }
                 /* Releasing ready-lock */
-                sem_post(&(s_synch->ready_mutex));
+                sem_post(&(s_synch->ready_sem));
             } else {
                 cte->nmea.checksum_passed = 0;
                 t_print("RMC and GGA received from %d , checksum failed!\n", cte->client_id);

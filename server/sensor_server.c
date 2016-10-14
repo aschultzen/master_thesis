@@ -112,14 +112,14 @@ struct client_table_entry* get_client_by_id(int id)
     struct client_table_entry* temp;
     int found = 0;
 
-    sem_wait(&(s_synch->client_list_mutex));
+    sem_wait(&(s_synch->client_list_sem));
     list_for_each_entry_safe(client_list_iterate, temp, &client_list->list, list) {
         if(client_list_iterate->client_id == id) {
             found = 1;
             break;
         }
     }
-    sem_post(&(s_synch->client_list_mutex));
+    sem_post(&(s_synch->client_list_sem));
     if(found) {
         return client_list_iterate;
     } else {
@@ -133,7 +133,7 @@ static void remove_client_by_pid(pid_t pid)
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* temp_remove;
 
-    sem_wait(&(s_synch->client_list_mutex));
+    sem_wait(&(s_synch->client_list_sem));
     list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list,
                              list) {
         if(client_list_iterate->pid == pid) {
@@ -144,7 +144,7 @@ static void remove_client_by_pid(pid_t pid)
         }
     }
     s_data->number_of_clients--;
-    sem_post(&(s_synch->client_list_mutex));
+    sem_post(&(s_synch->client_list_sem));
 }
 
 /* Removes a client with the given ID */
@@ -153,7 +153,7 @@ void remove_client_by_id(int id)
     struct client_table_entry* client_list_iterate;
     struct client_table_entry* temp_remove;
 
-    sem_wait(&(s_synch->client_list_mutex));
+    sem_wait(&(s_synch->client_list_sem));
     list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list,
                              list) {
         if(client_list_iterate->client_id == id) {
@@ -161,18 +161,18 @@ void remove_client_by_id(int id)
         }
     }
     s_data->number_of_clients--;
-    sem_post(&(s_synch->client_list_mutex));
+    sem_post(&(s_synch->client_list_sem));
 }
 
 /* Creates an entry in the client list structure and returns a pointer to it*/
 static struct client_table_entry* create_client(struct client_table_entry* ptr)
 {
-    sem_wait(&(s_synch->client_list_mutex));
+    sem_wait(&(s_synch->client_list_sem));
     s_data->number_of_clients++;
     struct client_table_entry* tmp;
     tmp = (client_list + s_data->number_of_clients);
     list_add_tail( &(tmp->list), &(ptr->list) );
-    sem_post(&(s_synch->client_list_mutex));
+    sem_post(&(s_synch->client_list_sem));
 
     return tmp;
 }
@@ -268,7 +268,7 @@ static void start_server(int port_number)
     if(load_config_status) {
         t_print(CONFIG_LOADED);
         client_list = mmap(NULL,
-                           (s_conf->max_clients * sizeof(struct client_table_entry)),
+                           ( (s_conf->max_clients + 1) * sizeof(struct client_table_entry)),
                            PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     } else {
         t_print(ERROR_CONFIG_LOAD_FAILED);
@@ -287,19 +287,19 @@ static void start_server(int port_number)
     /* Init shared semaphores and sync elements */
     s_synch = mmap(NULL, sizeof(struct server_synchro), PROT_READ | PROT_WRITE,
                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    sem_init(&(s_synch->ready_mutex), 1, 1);
-    sem_init(&(s_synch->client_list_mutex), 1, 1);
-    sem_init(&(s_synch->csac_mutex), 1, 1);
+    sem_init(&(s_synch->ready_sem), 1, 1);
+    sem_init(&(s_synch->client_list_sem), 1, 1);
+    sem_init(&(s_synch->csac_sem), 1, 1);
 
     /* Init pointer to shared CSAC_filter data */
     cfd = mmap(NULL, sizeof(struct csac_filter_data), PROT_READ | PROT_WRITE,
                MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-    if( &(s_synch->ready_mutex) == SEM_FAILED
-            || &(s_synch->client_list_mutex) == SEM_FAILED) {
+    if( &(s_synch->ready_sem) == SEM_FAILED
+            || &(s_synch->client_list_sem) == SEM_FAILED) {
         t_print(ERROR_SEMAPHORE_CREATION_FAILED);
-        sem_close(&(s_synch->ready_mutex));
-        sem_close(&(s_synch->client_list_mutex));
+        sem_close(&(s_synch->ready_sem));
+        sem_close(&(s_synch->client_list_sem));
         exit(1);
     }
 
@@ -407,9 +407,9 @@ static void start_server(int port_number)
     }
 
     /* Destroying semaphores */
-    sem_destroy(&(s_synch->csac_mutex));
-    sem_destroy(&(s_synch->ready_mutex));
-    sem_destroy(&(s_synch->client_list_mutex));
+    sem_destroy(&(s_synch->csac_sem));
+    sem_destroy(&(s_synch->ready_sem));
+    sem_destroy(&(s_synch->client_list_sem));
 
     /* Freeing */
     munmap(client_list, sizeof(struct client_table_entry));

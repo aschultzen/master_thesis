@@ -131,9 +131,12 @@ The table (\ref{tab:threatcounttable}) shows the different threat models and the
 We propose to construct and use what we call a \textit{Spoof proof chip scale atomic clock smart miniature atomic clock controller (CSAC SMACC)}. This is in essence just a piece of software running on a computer controlling a GPS disciplined chip scale atomic clock. The SMACC software will be connected to the CSAC and perform the following trivial tasks:
 
 \begin{itemize}
-  \item Checking time solutions a clock model of the CSAC(\ref{ctsarcs})
-  \item Checking solved position against known position (\ref{cspakp})
-  \item Monitoring Signal Power(\ref{msp})
+  \item Building and maintaining a model of the CSAC.
+  \item Steering the CSAC upon detection of abnormal behavior:
+  \begin{itemize}
+    \item Checking the CSAC current phase and steer values against the clock model(\ref{ctsarcs})
+    \item Checking solved position against known position (\ref{cspakp})
+  \end{itemize}
 \end{itemize}
 
 In the event of spoofing or jamming attack, actions can me made depending on the situation. For example, during a spoofing attack, the SMACC upon detecting an attack, could simply disable the disciplining of the CSAC thus minimizing the damage done to the CSAC's stability caused by the spoofing attack. The SMACC could also do "one better" by steering the CSAC based on a model of the CSAC's oscillator, thus ensuring stability for a longer period of time than by just disabling the disciplining.  

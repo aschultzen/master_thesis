@@ -114,9 +114,9 @@ struct server_data {
 
 /* Synchronization elements shared with processes */
 struct server_synchro {
-    sem_t ready_mutex;
-    sem_t csac_mutex;
-    sem_t client_list_mutex;
+    sem_t ready_sem;
+    sem_t csac_sem;
+    sem_t client_list_sem;
     volatile int ready_counter;
 };
 

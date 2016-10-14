@@ -72,11 +72,11 @@
 
 void kick_client(struct client_table_entry* client)
 {
-    sem_wait(&(s_synch->client_list_mutex));
-    sem_wait(&(s_synch->ready_mutex));
+    sem_wait(&(s_synch->client_list_sem));
+    sem_wait(&(s_synch->ready_sem));
     client->marked_for_kick = 1;
-    sem_post(&(s_synch->ready_mutex));
-    sem_post(&(s_synch->client_list_mutex));
+    sem_post(&(s_synch->ready_sem));
+    sem_post(&(s_synch->client_list_sem));
 }
 
 /* Prints client X's solved time back to monitor */
@@ -123,7 +123,7 @@ void print_clients(struct client_table_entry *monitor)
                                     "IP:%s, " \
                                     "PID: %d, " \
                                     "TYPE: %s, " \
-                                    "NMEA age %d%s",
+                                    "NMEA age %d%s\n",
                                     modifier,
                                     client_list_iterate->client_id,
                                     client_list_iterate->ip,
@@ -473,17 +473,17 @@ int query_csac(char *query, char *buffer)
     strcat(command, query);
 
     /* Acquiring lock*/
-    sem_wait(&(s_synch->csac_mutex));
+    sem_wait(&(s_synch->csac_sem));
 
     /* Running command */
     if(!run_command(command, buffer)) {
         /* Releasing lock */
-        sem_post(&(s_synch->csac_mutex));
+        sem_post(&(s_synch->csac_sem));
         return 0;
     }
 
     /* Releasing lock */
-    sem_post(&(s_synch->csac_mutex));
+    sem_post(&(s_synch->csac_sem));
     return 1;
 }
 
@@ -511,8 +511,8 @@ int client_query_csac(struct client_table_entry *monitor, char *query)
 int load_krl_data(struct client_table_entry* target)
 {
     /* Request lock */
-    sem_wait(&(s_synch->client_list_mutex));
-    sem_wait(&(s_synch->ready_mutex));
+    sem_wait(&(s_synch->client_list_sem));
+    sem_wait(&(s_synch->ready_sem));
     struct config_map_entry conf_map[LOAD_REF_DEV_DATA_ENTRIES];
 
     int filename_length = strlen(REF_DEV_FILENAME) + 10;
@@ -564,7 +564,7 @@ int load_krl_data(struct client_table_entry* target)
                                          LOAD_REF_DEV_DATA_ENTRIES);
 
     /* releasing lock */
-    sem_post(&(s_synch->ready_mutex));
-    sem_post(&(s_synch->client_list_mutex));
+    sem_post(&(s_synch->ready_sem));
+    sem_post(&(s_synch->client_list_sem));
     return load_config_status;
 }

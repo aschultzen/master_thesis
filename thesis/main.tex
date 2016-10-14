@@ -201,42 +201,40 @@ Numerous approaches where considered when planning the implementation of the SMA
 \end{itemize}
 By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect(\ref{cspakp}).However, every router and switch between a Sensor and the Server imposes a delay on the stream of packets between the two, especially when compared with a directly cabled approach. This might make the Sensor Server approach less responsive. It is of our understanding that whatever increase in complexity the Client/Server introduces to our approach, the Sensor Server makes up for by eliminating the need for potential miles of signal cables and signal amplifiers. 
 
-\begin{figure}\label{server_core}
-\centering
-  \includegraphics[scale=0.3]{server_core.pdf}
-   \caption[Socket Server execution flow block diagram]{The block diagram shows an abstracted view of the Sensor Server.}
-\end{figure}
-
-\begin{figure}\label{server_flow}
+\begin{figure}
 \centering
   \includegraphics[angle=90, scale=0.3]{server_flow.pdf}
    \caption[Socket Server execution flow block diagram]{The block diagram shows an abstracted view of execution after a client has connected to the server and a \texttt{fork()} has been performed.}
+   \label{server_flow}
 \end{figure}
 
-\begin{figure}\label{csac_filter}
+\begin{figure}
 \centering
   \includegraphics[angle=90, scale=0.40]{csac_filter.pdf}
    \caption[Socket Server execution flow block diagram]{The block diagram shows the execution flow of the CSAC filter.}
+   \label{csac_filter}
 \end{figure}
 
-\begin{figure}\label{actions_core}
+\begin{figure}
 \centering
   \includegraphics[scale=0.40]{actions_core.pdf}
    \caption[Socket Server execution flow block diagram]{The block diagrams shows and abstracted view of the execution after data has been received from a client.}
+   \label{actions_core}
 \end{figure}
 
-\begin{figure}\label{server_call_graph}
+\begin{figure}
 \centering
   \includegraphics[scale=0.3]{server_call_graph.pdf}
    \caption[Sensor Server simplified call graph]{Simplified call graph for the Sensor Server.}
+   \label{server_call_graph}
 \end{figure}
 
 \newpage
 \subsection{Roles}\label{roles}
 A client connected to the server can have two roles; It can either be a Sensor or a Monitor. The Sensor role is already explained, but the Monitor role was added in order for a user of the Sensor Server to connect to the server and check status or issue commands. For a client to assume the role of a Monitor, the client has to pick a negative integer as ID number. This way, the Server does not expect you as a client to report any NMEA data the way it would with a Sensor. The Monitor role can also be used to interface with the Server. See (\ref{interface}) for more.
 
-\subsection{Sockets}
-In order to implement the Server/Client model, the Sensor Server is implemented using the Linux Socket API. The API is based on BSD sockets and are available in in almost all Unix like operating system (\cite{LINUX_KERNEL}, p.610). Listing \ref{server_connect} shows a sample of code taken from one of the Sensor Server's source file. The sample shows the following:
+\subsection{Sockets}\label{sockets}
+In order to implement the Server/Client model, the Sensor Server and Sensor Client is implemented using the Linux Socket API. The API is based on BSD sockets and are available in in almost all Unix like operating system (\cite{LINUX_KERNEL}, p.610). Listing \ref{server_connect} shows a sample of code taken from one of the Sensor Server's source file. The sample shows the following:
 \begin{itemize}
   \item Line 4: The server waits for a connection. \texttt{accept()} is a blocking function. The code does not continue past this point before a client has connected.  
   \item Line 12: The code has been executed way past the blocking \texttt{accept} function. Someone must have connected! The server forks out a new process from this point in the execution with the function \texttt{fork()}.
@@ -282,7 +280,7 @@ In order to implement the Server/Client model, the Sensor Server is implemented 
 \end{code}
 Even though the \texttt{accept()} function in the sockets API is blocking, CPU cycles are not wasted. If a socket call cannot be completed immediately, the process who issued the call will be put to sleep thus enabling the scheduler to schedule other processes for execution until conditions are right for the sleeping process. (\cite{UNIXN_WBA}, p.435). It is also possible to use non-blocking socket calls, and while this often increases performance, it also increases complexity, and was therefor not chosen for this approach. It's also worth mentioning that one could create \textit{threads} instead of forking out processes for new connections. The creation of threads are typically less expensive in terms of CPU cycles than the creation of processes. Processes on the other hand, always have their own virtual address space as opposed to threads who share their address space with the other threads withing the process. This makes programming with threads more complex and the result of a crash more severe as it affects the other threads as well. 
 
-\subsection{Shared memory \& Semaphores}
+\subsection{Shared memory \& Semaphores}\label{shared_mem_sem}
 The sensor server architecture uses several shared memory segments. This is necessary because as mentioned earlier(\ref{procvsthread}), each process has got it's own virtual address space. The pointers to the shared memory segments are declared as \textit{extern} in \texttt{sensor\_server.h}. The extern keyword means the the variable has an external linkage, making it visible from other files than the one in which it is defined. Listing \ref{extern_structs} shows a code sample taken from \texttt{sensor\_server.h} where the shared memory segments are declared.
 
 \begin{code}
@@ -339,7 +337,7 @@ Having shared memory segments comes with a price. Whenever two or more processes
         struct client_table_entry* client_list_iterate;
         struct client_table_entry* temp_remove;
 
-        sem_wait(&(s_synch->client_list_mutex));
+        sem_wait(&(s_synch->client_list_sem));
         list_for_each_entry_safe(client_list_iterate, 
                                  temp_remove,&client_list->list,
                                  list) {
@@ -348,7 +346,7 @@ Having shared memory segments comes with a price. Whenever two or more processes
             }
         }
         s_data->number_of_clients--;
-        sem_post(&(s_synch->client_list_mutex));
+        sem_post(&(s_synch->client_list_sem));
     }
   \end{minted}
   \label{removeclient}
@@ -356,10 +354,46 @@ Having shared memory segments comes with a price. Whenever two or more processes
 
 Figure \ref{removeclient} shows a typical example of a function locking down access to the shared memory segment containing the list of connected clients, by using a semaphore. In the example (\ref{removeclient}) a client has been disconnected from the server and the the list of connected clients are being updated. The semaphore is necessary to make sure that another process is not attempting to read or write to the segment while the data is deleted. If another process had attempted to execute the \texttt{sem\_wait()} on the semaphore, it would have been put in a queue. Depending on the operating system, it would most likely signal the scheduler to do a context switch since the resource was busy anyway and it therefor should relinquish control of the CPU. Once the semaphores is raised, it can be lowered again by another process. It is important to note that the semaphores are not a function of or related to the memory segments by anything other the name. The semaphores are just "flags" used to control access to a resource. There is no automatic raising or lowering of the associated semaphores by reading or writing the shared memory segments. All functions in the sensor server does however use semaphores when dealing with shared memory segments in order to avoid deadlock and race conditions.
 
+\section{The Sensor Server}
+In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained.
+
+\subsection{Server core}
+\begin{figure}
+\centering
+  \includegraphics[scale=0.3]{server_core.pdf}
+   \caption[Socket Server Core execution flow block diagram]{The block diagram shows an abstracted view of the Sensor Servers Core.}
+   \label{server_core}
+\end{figure}
+The "Server core" is the main process and the parent of every process created during the life of the Sensor Server. It spawns the process maintaining the CSAC model as well as new processes for every client that connects. Figure \ref{server_core} is a block diagram of the Server core.
+
+\begin{itemize} % Sources needed here?
+  \item The Server software takes one parameter to start, the port. If the parameter are missing or the parameter is illegal, a string containing usage information is printed and the program exits. Because the Server is responsible for the communication with the CSAC, it needs to be run as root or with \texttt{sudo} in order to open the serial interface to the CSAC.
+  \item The configuration is initialized on loaded (see (\ref{config_loader}) for more). If the configuration fails to load, the Server prints and error message and exits.
+  \item The \texttt{client\_list}, a linked list(\ref{linked_list}) containing all the clients, is initialized.
+  \item Shared memory segments (\ref{shared_mem_sem}) and semaphores are initialized and allocated. If this fails, the Server prints an error message and exits.
+  \item The process responsible for maintaining the CSAC model, communication with CSAC and filters associated with the CSAC, is forked out. If the fork fails, the server prints an error message and exits.
+  \item Handler for SIGINT (interrupt) SIGTERM (terminate in a controlled manner) and SIGCHLD (child process is interrupted or terminated) are registered.
+  \item Initializes socket(\ref{sockets}) and marks it for listening.
+  \item Enters loop. The loop breaks when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. 
+  \item If a client connects, the client table is updated (\ref{create_client}), a fork is performed, the file descriptor to the new clients socket is closed and the loop continues.
+  \item If the server loop is broken, the semaphores are destroyed and all allocated memory is freed, the servers socket is closed and the Server exits.
+\end{itemize}
+
+\subsection{Notable functions}
+\subsubsection{config\_loader()}\label{config_loader}
+Write about the config loader here
+
+\subsubsection{nmea\_ready()}\label{nmea_ready}
+Write about nmea\_ready() here.
+
+\subsubsection{\texttt{create\_client()}}\label{create_client}
+\texttt{create\_client()} takes a pointer to the client list as parameter, locks the \texttt{client\_list\_m}
+
+
 \subsection{Data structures}
 In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
 
-\subsubsection{Linked list}
+\subsubsection{Linked list}\label{linked_list}
 Since the C standard does not provide data structures like linked lists, I had to choose between reinventing the wheel or finding some implementation to drop into the project. While studying another subject, I found a guide on how to use the linked list implementation from the linux kernel source code (\cite{KAZU_LIST}) in a user space program. Since the implementation was extremely solid, well tested and had many useful functions, i decided to use it. The modified header file containing all the code, is GPL licensed.  
 
 \begin{code}
@@ -377,9 +411,9 @@ Since the C standard does not provide data structures like linked lists, I had t
     \end{minted}
     \label{struct_client_table}
 \end{code}
-The fields of the struct is pretty self explanatory. There is a pointer to previous node and one the next. By using these, the list can traversed. 
+The fields of the struct is pretty self explanatory. There is a pointer to previous node and one the next. By using these, the list can traversed.
 
-\subsubsection{client\_table\_entry}
+\subsubsection{client\_table\_entry}\label{client_table_entry}
 The client\_table\_entry struct is what the name suggests, it's an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. Listing \ref{struct_client_table} shows the complete struct. 
 
 \begin{code}
@@ -409,7 +443,10 @@ The client\_table\_entry struct is what the name suggests, it's an entry in a li
     \end{minted}
     \label{struct_client_table}
 \end{code}
-The lient\_table\_entry struct is probably the type of the most commonly passed pointers in the program. 
+Beginning from the top:
+\begin{itemize}
+  \item 
+\end{itemize}
 
 \subsubsection{server\_config}
 \begin{code}
@@ -445,12 +482,12 @@ The lient\_table\_entry struct is probably the type of the most commonly passed 
     linenos=true
     ]
     {c}
-    struct server_synchro {
-        sem_t ready_mutex;
-        sem_t csac_mutex;
-        sem_t client_list_mutex;
-        volatile int ready_counter;
-    };
+    struct server_data {
+        int number_of_clients; 
+        int number_of_sensors;  
+        time_t started;    
+        pid_t pid;             
+        char version[4]; 
     \end{minted}
   \label{server_data}
 \end{code}
@@ -467,9 +504,9 @@ The \texttt{server\_data} structs members are
     ]
     {c}
     struct server_synchro {
-        sem_t ready_mutex;
-        sem_t csac_mutex;
-        sem_t client_list_mutex;
+        sem_t ready_sem;
+        sem_t csac_sem;
+        sem_t client_list_sem;
         volatile int ready_counter;
     };
     \end{minted}
@@ -575,7 +612,7 @@ OK!
 NMEA<GNRMC part of NMEA><GNGGA part of NMEA>
 OK!
 \end{lstlisting}
-One can write scripts that interface with Sensor Server by using an implementation of Sockets. An example of such a script can be found in the appendix (\ref{script_example}).
+Another possibility is off course to write scripts that communicates with the Sensor Server. An example script can be found in the appendix (\ref{script_example}).
 
 \begin{table}
 	\caption{Sensor Server available commands}
@@ -628,6 +665,8 @@ The sensor client software is a simple program written in C99 whose only task is
   \includegraphics[scale=0.3]{client_call_graph.pdf}
    \caption[Sensor Client simplified call graph]{Simplified call graph for the Sensor Client.}
 \end{figure}
+
+\subsection{Data structures}
 
 
 \section{CSAC Communication}

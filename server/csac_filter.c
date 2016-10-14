@@ -262,7 +262,7 @@ int update_csac_filter(struct csac_filter_data
         fprintf(stderr,"CLOCK CONCISTENCY ALARM!\n");
 
         /* Acquiring lock on CSAC serial*/
-        sem_wait(&(s_synch->csac_mutex));
+        sem_wait(&(s_synch->csac_sem));
 
         /* Disabling disciplining */
         run_command("python query_csac.py Md",
@@ -278,7 +278,7 @@ int update_csac_filter(struct csac_filter_data
                 cfd->steer_prediction,program_buf);
 
         /* Releasing lock on CSAC serial*/
-        sem_post(&(s_synch->csac_mutex));
+        sem_post(&(s_synch->csac_sem));
 	   }
     }
 
@@ -392,14 +392,14 @@ int start_csac_filter(struct csac_filter_data
     /* Keep going as long as the server is running */
     while(!done) {
         /* Acquiring lock*/
-        sem_wait(&(s_synch->csac_mutex));
+        sem_wait(&(s_synch->csac_sem));
 
         /* Querying CSAC */
         run_command("python get_telemetry.py",
                                 program_buf);
 
         /* Releasing lock */
-        sem_post(&(s_synch->csac_mutex));
+        sem_post(&(s_synch->csac_sem));
 
         /* Initialize filter if not already initialized */
         if(!filter_initialized) {
