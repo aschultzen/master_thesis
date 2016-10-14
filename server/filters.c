@@ -7,6 +7,22 @@
 #define LOG_STRING_LENGTH 100
 #define MJD_LENGTH 15
 
+/** @brief Checks for any "moving" SENSORS
+*
+* Checks solved position against known position.
+* Known position loaded from the config file.
+* @return Void
+*/
+static void krl_filter(void);
+
+/** @brief Checks if a sensor has been marked as moved
+ *
+ * Iterates through client_list and checks for clients marked
+ * as moved. Raises alarm.
+ *
+ * @return Void
+ */
+static void raise_alarm(void);
 
 static int log_alarm(int client_id, char *alarm)
 {
@@ -124,4 +140,10 @@ void krl_filter(void)
             iterator->fs.rdf.dv.speed_disturbed = SAFE;
         }
     }
+}
+
+void apply_filters()
+{
+    krl_filter();
+    raise_alarm();
 }

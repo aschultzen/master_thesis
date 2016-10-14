@@ -10,21 +10,6 @@
 
 #include "sensor_server.h"
 
-/** @brief Checks for any "moving" SENSORS
-*
-* Checks solved position against known position.
-* Known position loaded from the config file.
-* @return Void
-*/
-void krl_filter(void);
-
-/** @brief Checks if a sensor has been marked as moved
- *
- * Iterates through client_list and checks for clients marked
- * as moved. Raises alarm.
- *
- * @return Void
- */
-void raise_alarm(void);
+void apply_filters();
 
 #endif /* !ANALYZER_H */

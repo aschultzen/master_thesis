@@ -1,9 +1,5 @@
 #include "session.h"
 
-#define CLIENT_TIMEOUT 5
-#define MONITOR_TIMEOUT 1000
-#define UNIDENTIFIED_TIMEOUT 100
-
 /* ERRORS*/
 #define ERROR_ILLEGAL_COMMAND "ERROR:Illegal command\n"
 #define ERROR_NO_ID "ERROR:Client not identified\n"
@@ -21,10 +17,7 @@ static int nmea_ready();
 static int extract_nmea_data(struct client_table_entry *cte);
 static void calculate_nmea_average(struct client_table_entry *cte);
 static void calculate_nmea_diff(struct client_table_entry *cte);
-static int set_timeout(struct client_table_entry *target,
-                       struct timeval h_timeout);
 static int parse_input(struct client_table_entry *cte);
-static int respond(struct client_table_entry *cte);
 
 /*
 * Used by spawned client processes to "mark" that their NMEA
@@ -132,19 +125,6 @@ static void calculate_nmea_diff(struct client_table_entry *cte)
     cte->nmea.lon_avg_diff = (cte->nmea.lon_current - cte->nmea.lon_average);
     cte->nmea.alt_avg_diff = (cte->nmea.alt_current - cte->nmea.alt_average);
     cte->nmea.speed_avg_diff = (cte->nmea.speed_current - cte->nmea.speed_average);
-}
-
-static int set_timeout(struct client_table_entry *target,
-                       struct timeval h_timeout)
-{
-    /* setsockopt return -1 on error and 0 on success */
-    target->heartbeat_timeout = h_timeout;
-    if (setsockopt (target->transmission.session_fd, SOL_SOCKET,
-                    SO_RCVTIMEO, (char *)&target->heartbeat_timeout, sizeof(struct timeval)) < 0) {
-        t_print("an error: %s\n", strerror(errno));
-        return 0;
-    }
-    return 1;
 }
 
 /*
@@ -361,7 +341,7 @@ static int parse_input(struct client_table_entry *cte)
 }
 
 /* Responds to client action */
-static int respond(struct client_table_entry *cte)
+int respond(struct client_table_entry *cte)
 {
     bzero(cte->cm.parameter, MAX_PARAMETER_SIZE);
     /* Only print ">" if client is monitor */
@@ -497,12 +477,7 @@ static int respond(struct client_table_entry *cte)
 
                 /* If everyone is ready, process data */
                 if(ready) {
-                    fprintf(stderr, "Client %d entered the ready loop!\n", cte->client_id);
-                    /* Last process ready gets the job of analyzing the data */
-                    krl_filter();
-
-                    /* Check the results of the filters */
-                    raise_alarm();
+                    apply_filters();
                 }
                 /* Releasing ready-lock */
                 sem_post(&(s_synch->ready_sem));
@@ -666,49 +641,4 @@ static int respond(struct client_table_entry *cte)
         }
     }
     return 1;
-}
-
-/* Setups the clients structure and initializes data */
-void setup_session(int session_fd, struct client_table_entry *new_client)
-{
-    /* Setting the IP adress */
-    char ip[INET_ADDRSTRLEN];
-    get_ip_str(session_fd, ip);
-
-    /* Setting the PID */
-    new_client->pid = getpid();
-    new_client->timestamp = time(NULL);
-    strncpy(new_client->ip, ip, INET_ADDRSTRLEN);
-
-    /* Initializing structure, zeroing just to be sure */
-    new_client->client_id = 0;
-    new_client->transmission.session_fd = session_fd;
-
-    /* Zeroing out filters */
-    new_client->fs.rdf.moved = 0;
-    new_client->fs.rdf.was_moved = 0;
-
-    new_client->marked_for_kick = 0;
-    new_client->ready = 0;
-
-    /* Setting timeout */
-    struct timeval timeout = {UNIDENTIFIED_TIMEOUT, 0};
-    if(!set_timeout(new_client, timeout)) {
-        t_print("Failed to set timeout for client\n");
-    }
-
-    memset(&new_client->transmission.iobuffer, '0', IO_BUFFER_SIZE*sizeof(char));
-    memset(&new_client->cm.parameter, '0', MAX_PARAMETER_SIZE*sizeof(char));
-
-    /*
-    * Entering child process main loop
-    * (Outer) breaks if server closes.
-    * (Inner) Breaks (disconnects the client) if
-    * respond < 0
-    */
-    while(!done) {
-        if(!respond(new_client)) {
-            break;
-        }
-    }
 }

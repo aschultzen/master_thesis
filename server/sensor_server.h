@@ -9,6 +9,9 @@
 #define SENSOR_SERVER_H
 
 #define PATH_LENGTH_MAX 1000
+#define CLIENT_TIMEOUT 5
+#define MONITOR_TIMEOUT 1000
+#define UNIDENTIFIED_TIMEOUT 100
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -74,5 +77,8 @@ struct client_table_entry* get_client_by_id(int id);
  * @return Void
  */
 void print_server_data(struct client_table_entry *monitor);
+
+int set_timeout(struct client_table_entry *target,
+                       struct timeval h_timeout);
 
 #endif /* !SENSOR_SERVER_H */

@@ -71,6 +71,20 @@ static void initialize_config(struct config_map_entry *conf_map,
                               struct server_config *s_conf);
 static void start_server(int port_number);
 static int usage(char *argv[]);
+static void setup_session(int session_fd, struct client_table_entry *new_client);
+
+int set_timeout(struct client_table_entry *target,
+                       struct timeval h_timeout)
+{
+    /* setsockopt return -1 on error and 0 on success */
+    target->heartbeat_timeout = h_timeout;
+    if (setsockopt (target->transmission.session_fd, SOL_SOCKET,
+                    SO_RCVTIMEO, (char *)&target->heartbeat_timeout, sizeof(struct timeval)) < 0) {
+        t_print("an error: %s\n", strerror(errno));
+        return 0;
+    }
+    return 1;
+}
 
 /* Prints a formatted string containing server info to monitor */
 void print_server_data(struct client_table_entry *monitor)
@@ -244,6 +258,51 @@ static void initialize_config(struct config_map_entry *conf_map,
     conf_map[7].destination = &s_conf->csac_logging;
 }
 
+/* Setups the clients structure and initializes data */
+void setup_session(int session_fd, struct client_table_entry *new_client)
+{
+    /* Setting the IP adress */
+    char ip[INET_ADDRSTRLEN];
+    get_ip_str(session_fd, ip);
+
+    /* Setting the PID */
+    new_client->pid = getpid();
+    new_client->timestamp = time(NULL);
+    strncpy(new_client->ip, ip, INET_ADDRSTRLEN);
+
+    /* Initializing structure, zeroing just to be sure */
+    new_client->client_id = 0;
+    new_client->transmission.session_fd = session_fd;
+
+    /* Zeroing out filters */
+    new_client->fs.rdf.moved = 0;
+    new_client->fs.rdf.was_moved = 0;
+
+    new_client->marked_for_kick = 0;
+    new_client->ready = 0;
+
+    /* Setting timeout */
+    struct timeval timeout = {UNIDENTIFIED_TIMEOUT, 0};
+    if(!set_timeout(new_client, timeout)) {
+        t_print("Failed to set timeout for client\n");
+    }
+
+    memset(&new_client->transmission.iobuffer, '0', IO_BUFFER_SIZE*sizeof(char));
+    memset(&new_client->cm.parameter, '0', MAX_PARAMETER_SIZE*sizeof(char));
+
+    /*
+    * Entering child process main loop
+    * (Outer) breaks if server closes.
+    * (Inner) Breaks (disconnects the client) if
+    * respond < 0
+    */
+    while(!done) {
+        if(!respond(new_client)) {
+            break;
+        }
+    }
+}
+
 /*
 * Main loop for the server.
 * Forks everytime a client connects and calls setup_session()
@@ -300,6 +359,7 @@ static void start_server(int port_number)
         t_print(ERROR_SEMAPHORE_CREATION_FAILED);
         sem_close(&(s_synch->ready_sem));
         sem_close(&(s_synch->client_list_sem));
+        sem_close(&(s_synch->csac_sem));
         exit(1);
     }
 

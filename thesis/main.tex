@@ -203,13 +203,6 @@ By using already existing network infrastructure, it becomes a lot easier to dis
 
 \begin{figure}
 \centering
-  \includegraphics[angle=90, scale=0.3]{server_flow.pdf}
-   \caption[Socket Server execution flow block diagram]{The block diagram shows an abstracted view of execution after a client has connected to the server and a \texttt{fork()} has been performed.}
-   \label{server_flow}
-\end{figure}
-
-\begin{figure}
-\centering
   \includegraphics[angle=90, scale=0.40]{csac_filter.pdf}
    \caption[Socket Server execution flow block diagram]{The block diagram shows the execution flow of the CSAC filter.}
    \label{csac_filter}
@@ -355,16 +348,17 @@ Having shared memory segments comes with a price. Whenever two or more processes
 Figure \ref{removeclient} shows a typical example of a function locking down access to the shared memory segment containing the list of connected clients, by using a semaphore. In the example (\ref{removeclient}) a client has been disconnected from the server and the the list of connected clients are being updated. The semaphore is necessary to make sure that another process is not attempting to read or write to the segment while the data is deleted. If another process had attempted to execute the \texttt{sem\_wait()} on the semaphore, it would have been put in a queue. Depending on the operating system, it would most likely signal the scheduler to do a context switch since the resource was busy anyway and it therefor should relinquish control of the CPU. Once the semaphores is raised, it can be lowered again by another process. It is important to note that the semaphores are not a function of or related to the memory segments by anything other the name. The semaphores are just "flags" used to control access to a resource. There is no automatic raising or lowering of the associated semaphores by reading or writing the shared memory segments. All functions in the sensor server does however use semaphores when dealing with shared memory segments in order to avoid deadlock and race conditions.
 
 \section{The Sensor Server}
-In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained.
+In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained. 
+The Server core(\ref{server_core}) consists of the source code in \texttt{sensor\_server.c}. The Parser and Handler spans over texttt{session.c} and texttt{actions.c}.
 
-\subsection{Server core}
+\subsection{Server core}\label{server_core}
 \begin{figure}
 \centering
   \includegraphics[scale=0.3]{server_core.pdf}
    \caption[Socket Server Core execution flow block diagram]{The block diagram shows an abstracted view of the Sensor Servers Core.}
    \label{server_core}
 \end{figure}
-The "Server core" is the main process and the parent of every process created during the life of the Sensor Server. It spawns the process maintaining the CSAC model as well as new processes for every client that connects. Figure \ref{server_core} is a block diagram of the Server core.
+The "Server core" is the main process and the parent of every process created during the life of the Sensor Server. It spawns the process maintaining the CSAC model as well as new processes for every client that connects. Figure \ref{server_core} is a block diagram of the Server core. 
 
 \begin{itemize} % Sources needed here?
   \item The Server software takes one parameter to start, the port. If the parameter are missing or the parameter is illegal, a string containing usage information is printed and the program exits. Because the Server is responsible for the communication with the CSAC, it needs to be run as root or with \texttt{sudo} in order to open the serial interface to the CSAC.
@@ -378,6 +372,20 @@ The "Server core" is the main process and the parent of every process created du
   \item If a client connects, the client table is updated (\ref{create_client}), a fork is performed, the file descriptor to the new clients socket is closed and the loop continues.
   \item If the server loop is broken, the semaphores are destroyed and all allocated memory is freed, the servers socket is closed and the Server exits.
 \end{itemize}
+
+\subsection{Parser and Handler}
+\begin{figure}
+\centering
+  \includegraphics[angle=90, scale=0.3]{server_flow.pdf}
+   \caption[Socket Server execution flow block diagram]{The block diagram shows an abstracted view of execution after a client has connected to the server and a \texttt{fork()} has been performed.}
+   \label{server_flow}
+\end{figure}
+The parser and handler are responsible for parsing data received from a Client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. 
+
+\begin{itemize}
+  \item
+\end{itemize}
+
 
 \subsection{Notable functions}
 \subsubsection{config\_loader()}\label{config_loader}
@@ -445,7 +453,7 @@ The client\_table\_entry struct is what the name suggests, it's an entry in a li
 \end{code}
 Beginning from the top:
 \begin{itemize}
-  \item 
+  \item \texttt{list\_head list} is a pointer to a 
 \end{itemize}
 
 \subsubsection{server\_config}
