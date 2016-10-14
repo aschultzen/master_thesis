@@ -32,16 +32,25 @@ static int respond(struct client_table_entry *cte);
 */
 static int nmea_ready()
 {
-    struct client_table_entry* client_list_iterate;
+    struct client_table_entry* c_iter;
     struct client_table_entry* temp;
     int ready = 0;
 
-    list_for_each_entry_safe(client_list_iterate, temp, &client_list->list, list) {
-        if(client_list_iterate->ready == 1) {
-            ready++;
+    /* iterating through the list of clients */
+    list_for_each_entry_safe(c_iter, temp, &client_list->list, list) {
+        /* Is it a SENSOR?*/
+        if(c_iter->client_type == SENSOR) {
+            /* Is it ready?*/
+            if(c_iter->ready){
+                ready++;
+            }
         }
     }
+    /* if everyone is ready, clear ready flag and carry on */
     if(ready == s_data->number_of_sensors) {
+        list_for_each_entry_safe(c_iter, temp, &client_list->list, list) {
+            c_iter->ready = 0;
+        }
         return 1;
     } else {
         return 0;
