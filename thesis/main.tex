@@ -359,14 +359,18 @@ The "Server core" is the main process and the parent of every process created du
   \item The \texttt{client\_list}, a linked list(\ref{linked_list}) containing all the clients, is initialized.
   \item Shared memory segments (\ref{shared_mem_sem}) and semaphores are initialized and allocated. If this fails, the Server prints an error message and exits.
   \item The process responsible for maintaining the CSAC model, communication with CSAC and filters associated with the CSAC, is forked out. If the fork fails, the server prints an error message and exits.
-  \item Handler for SIGINT (interrupt) SIGTERM (terminate in a controlled manner) and SIGCHLD (child process is interrupted or terminated) are registered.
-  \item Initializes socket(\ref{sockets}) and marks it for listening.
-  \item Enters loop. The loop breaks when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. If the loop is broken, the semaphores are destroyed and all allocated memory is freed, the servers socket file descriptor is closed and the Server exits.
+  \item Handler for SIGINT (interrupt) SIGTERM (terminate) and SIGCHLD (child process is interrupted or terminated) is registered.
+  \begin{itemize}
+      \item When a process exits, a SIGCHLD signal is sent to the parent. When a client disconnects from the server, the process that handled the client exits. Ideally, the client disconnects from the server by sending a protocol compliant "disconnect request". This wau, the server can handle the disconnect in a controlled manner and update its client list when the client disconnects. However, this is not always the case and if the client disconnects abruptly and without a warning, the server still needs to handle it. Therefore, when a SIGCHLD signal is received, the server iterates through its client list and finds the client who's PID matches the sender of the signal and removes it from the list. In figure \ref{server_core} this routine is the part in the red dotted box. 
+  \end{itemize}
+  \item The socket is initializes (\ref{sockets}) and marked for listening.
+  \item A loop is entered. The loop breaks when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. If the loop is broken, the semaphores are destroyed and all allocated memory is freed, the servers socket file descriptor is closed and the Server exits.
   \item When a client connects, the server checks if the maximum number of clients has been reached. If this number has been reached, an error message is written back to the client and the clients socket file descriptor is closed. If the maximum number of clients has not yet been reached, the client list gets updated and a fork is performed.
   The parent process then resumes the loop. 
   \item The process that just forked out for the new connection closes the server socket file descriptor it inherited from its parent. 
   \item The new process then updates its client table entry (\ref{client_table_entry}) and proceeds to the listening loop (\ref{parser_and_handler}).
 \end{itemize}
+
 
 \subsection{Parser and Handler}\label{parser_and_handler}
 \begin{figure}
@@ -375,17 +379,18 @@ The "Server core" is the main process and the parent of every process created du
    \caption[Socket Server execution flow block diagram]{The block diagram shows an abstracted view of execution after a client has connected to the server and a \texttt{fork()} has been performed.}
    \label{server_flow}
 \end{figure}
-
 \begin{figure}
 \centering
   \includegraphics[scale=0.40]{actions_core.pdf}
    \caption[Socket Server execution flow block diagram]{The block diagrams shows and abstracted view of the execution after data has been received from a client.}
    \label{actions_core}
 \end{figure}
-The parser and handler are responsible for parsing data received from a client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. 
-
+The parser and handler are responsible for parsing data received from a client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. Figure \ref{server_flow} and \ref{actions_core} are block diagrams showing the execution flow for this part of the server.  
 \begin{itemize}
-  \item 
+  \item A loop is entered. The loop is broken when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. This is the same variable that is used in the Server core \ref{server_core} loop and for a good reason: If the server exits, then the its children should too. 
+  \item If reading from the socket fails, the client gets disconnected. If it is successful, the client table entry for the connected client is checked to see if the client has been marked to be kicked. If it is, it gets disconnected. 
+  \item The data received from the client is parsed and checked against the protocol. If the request received from the client doesn't match any of the supported requests or commands, the request is ignored and the loop is entered again. 
+  \item If the request received is valid, the clients ID is checked to determine whether or not it has identified itself. If the client has identified itself, the request gets carried out. If the clients ID is 0, it is considered unidentified and any other requests but to identify itself, is ignored. 
 \end{itemize}
 
 
