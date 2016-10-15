@@ -210,13 +210,6 @@ By using already existing network infrastructure, it becomes a lot easier to dis
 
 \begin{figure}
 \centering
-  \includegraphics[scale=0.40]{actions_core.pdf}
-   \caption[Socket Server execution flow block diagram]{The block diagrams shows and abstracted view of the execution after data has been received from a client.}
-   \label{actions_core}
-\end{figure}
-
-\begin{figure}
-\centering
   \includegraphics[scale=0.3]{server_call_graph.pdf}
    \caption[Sensor Server simplified call graph]{Simplified call graph for the Sensor Server.}
    \label{server_call_graph}
@@ -368,22 +361,31 @@ The "Server core" is the main process and the parent of every process created du
   \item The process responsible for maintaining the CSAC model, communication with CSAC and filters associated with the CSAC, is forked out. If the fork fails, the server prints an error message and exits.
   \item Handler for SIGINT (interrupt) SIGTERM (terminate in a controlled manner) and SIGCHLD (child process is interrupted or terminated) are registered.
   \item Initializes socket(\ref{sockets}) and marks it for listening.
-  \item Enters loop. The loop breaks when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. 
-  \item If a client connects, the client table is updated (\ref{create_client}), a fork is performed, the file descriptor to the new clients socket is closed and the loop continues.
-  \item If the server loop is broken, the semaphores are destroyed and all allocated memory is freed, the servers socket is closed and the Server exits.
+  \item Enters loop. The loop breaks when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. If the loop is broken, the semaphores are destroyed and all allocated memory is freed, the servers socket file descriptor is closed and the Server exits.
+  \item When a client connects, the server checks if the maximum number of clients has been reached. If this number has been reached, an error message is written back to the client and the clients socket file descriptor is closed. If the maximum number of clients has not yet been reached, the client list gets updated and a fork is performed.
+  The parent process then resumes the loop. 
+  \item The process that just forked out for the new connection closes the server socket file descriptor it inherited from its parent. 
+  \item The new process then updates its client table entry (\ref{client_table_entry}) and proceeds to the listening loop (\ref{parser_and_handler}).
 \end{itemize}
 
-\subsection{Parser and Handler}
+\subsection{Parser and Handler}\label{parser_and_handler}
 \begin{figure}
 \centering
-  \includegraphics[angle=90, scale=0.3]{server_flow.pdf}
+  \includegraphics[scale=0.3]{server_flow.pdf}
    \caption[Socket Server execution flow block diagram]{The block diagram shows an abstracted view of execution after a client has connected to the server and a \texttt{fork()} has been performed.}
    \label{server_flow}
 \end{figure}
-The parser and handler are responsible for parsing data received from a Client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. 
+
+\begin{figure}
+\centering
+  \includegraphics[scale=0.40]{actions_core.pdf}
+   \caption[Socket Server execution flow block diagram]{The block diagrams shows and abstracted view of the execution after data has been received from a client.}
+   \label{actions_core}
+\end{figure}
+The parser and handler are responsible for parsing data received from a client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. 
 
 \begin{itemize}
-  \item
+  \item 
 \end{itemize}
 
 
