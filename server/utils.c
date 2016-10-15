@@ -127,6 +127,9 @@ int load_config(struct config_map_entry *cme, char *path, int entries)
                 return -1;
             }
         }
+        else{
+            return 0;
+        }
         counter++;
         cme++;
     }

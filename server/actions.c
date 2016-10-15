@@ -8,7 +8,6 @@
 #define PRINT_AVG_DIFF_HEADER "ID     LAT        LON       ALT       SPEED\n"
 #define DATADUMP_EXTENSION ".bin"
 #define DATADUMP_HUMAN_EXTENSION ".txt"
-#define RDF_HEADER "\nREF_DEV_FILTER DATA\n"
 #define CSAC_SCRIPT_COMMAND "python query_csac.py "
 
 /* ERRORS */
@@ -22,7 +21,7 @@
 #define ERROR_CSAC_FAILED "Communication with CSAC failed!\n"
 
 /* LOAD_REF_DEV_DATA */
-#define REF_DEV_FILENAME "ref_dev_sensor"
+#define KRL_FILENAME "krl_data_sensor"
 #define ALT_REF "alt_ref:"
 #define LON_REF "lon_ref:"
 #define LAT_REF "lat_ref:"
@@ -31,7 +30,7 @@
 #define LON_DEV "lon_dev:"
 #define LAT_DEV "lat_dev:"
 #define SPEED_DEV "speed_dev:"
-#define LOAD_REF_DEV_DATA_ENTRIES 8
+#define KRL_DATA_ENTRIES 8
 
 /* HELP */
 #define HELP "\n"\
@@ -513,12 +512,12 @@ int load_krl_data(struct client_table_entry* target)
     /* Request lock */
     sem_wait(&(s_synch->client_list_sem));
     sem_wait(&(s_synch->ready_sem));
-    struct config_map_entry conf_map[LOAD_REF_DEV_DATA_ENTRIES];
+    struct config_map_entry conf_map[KRL_DATA_ENTRIES];
 
-    int filename_length = strlen(REF_DEV_FILENAME) + 10;
+    int filename_length = strlen(KRL_FILENAME) + 10;
     char filename[filename_length];
     memset(filename,'\0' ,filename_length);
-    strcpy(filename, REF_DEV_FILENAME);
+    strcpy(filename, KRL_FILENAME);
 
     /* Way overkill for int to string, but still. */
     char id[10];
@@ -561,7 +560,7 @@ int load_krl_data(struct client_table_entry* target)
     t_print("Loading filter data from: %s\n", filename);
 
     int load_config_status = load_config(conf_map, filename,
-                                         LOAD_REF_DEV_DATA_ENTRIES);
+                                         KRL_DATA_ENTRIES);
 
     /* releasing lock */
     sem_post(&(s_synch->ready_sem));

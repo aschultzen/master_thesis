@@ -390,7 +390,10 @@ The parser and handler are responsible for parsing data received from a client a
   \item A loop is entered. The loop is broken when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. This is the same variable that is used in the Server core \ref{server_core} loop and for a good reason: If the server exits, then the its children should too. 
   \item If reading from the socket fails, the client gets disconnected. If it is successful, the client table entry for the connected client is checked to see if the client has been marked to be kicked. If it is, it gets disconnected. 
   \item The data received from the client is parsed and checked against the protocol. If the request received from the client doesn't match any of the supported requests or commands, the request is ignored and the loop is entered again. 
-  \item If the request received is valid, the clients ID is checked to determine whether or not it has identified itself. If the client has identified itself, the request gets carried out. If the clients ID is 0, it is considered unidentified and any other requests but to identify itself, is ignored. 
+  \item If the request received is valid, the clients ID is checked to determine whether or not it has identified itself. If the client has identified itself, the request gets carried out. If the clients ID is 0, it is considered unidentified and any other requests but to identify itself, is ignored.
+  \item If the client is attempting to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempted to assume the role of a Sensor, the client will get disconnected. If it attempted to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. 
+  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load KRL (\ref{kvsrlf}) filter data into the clients KRL filter struct. The server will attempt to load the data from a file named \texttt{krl_data_sensor<ID>}. 
+
 \end{itemize}
 
 
@@ -838,6 +841,16 @@ By reviewing the log produced by the Sensor Server, the following was observed:
 The observations (\ref{observations}) reveals what we expected. After all, when moving a GNSS receivers antenna, the solved position has to change. If it did not, the GNSS receiver or antenna would have to be faulty. Step 5 and 6 (\ref) did not produce the expected result. The altitude, latitude and longitude was expected to be within a safe range, the solved speed on the other hand, was expected to have been way too high. SE I GNSS DATAENE, HVA SIER DE? (Hva sier jeg om at steer predicted var lavere en current steer??) 
 
 \chapter{Results and discussion}\label{discussion}
+
+\section{What could have been different}
+\subsection{Server design}
+
+\begin{itemize}
+  \item A clients ID does not really matter but still ended up meaning a lot. 
+  \item A monitor takes up the same space as a Sensor although it does not use any of memory the Sensor does.
+  \item Poor management of the shared memory space. Searching through the space is taking linear time. Why would you care about performance enough to code in C when you are going to waste that performance on inefficient algorithms?
+\end{itemize}
+
 \section{Choice of programming language}
 The SMACC software was originally planned to be written in Java since this was my most fluent programming language. Java is great language, it's object oriented, it has a garbage collector and a lot of useful libraries. As development started, it quickly became apparent that some parts of the code would be performance critical and that portability really wasn't that important anyway. The platform was already decided and there was no reason to believe that it would change in the near future. As we all know, premature optimization is the root of all evil. Being reluctant to commit a deadly programming sin, i decided to look at other languages. Since performance was a concern, Python was also quickly dismissed as an option. C++ would probably have been the best choice, but having never written anything in C before made it sound more exciting and like a nice opportunity to learn something new. During the planning phase of SMACC development, raspbian-2015-05-07 was the latest build. It came with GCC 4.6.3 which only had experimental support for C11(\cite{GCC11}). With C11 no longer considered an option, C99 was the obvious choice given it's attractive features like:
 \begin{itemize}
