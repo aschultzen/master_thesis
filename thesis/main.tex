@@ -340,7 +340,7 @@ Having shared memory segments comes with a price. Whenever two or more processes
 Figure \ref{removeclient} shows a typical example of a function locking down access to the shared memory segment containing the list of connected clients, by using a semaphore. In the example (\ref{removeclient}) a client has been disconnected from the server and the the list of connected clients are being updated. The semaphore is necessary to make sure that another process is not attempting to read or write to the segment while the data is deleted. If another process had attempted to execute the \texttt{sem\_wait()} on the semaphore, it would have been put in a queue. Depending on the operating system, it would most likely signal the scheduler to do a context switch since the resource was busy anyway and it therefor should relinquish control of the CPU. Once the semaphores is raised, it can be lowered again by another process. It is important to note that the semaphores are not a function of or related to the memory segments by anything other the name. The semaphores are just "flags" used to control access to a resource. There is no automatic raising or lowering of the associated semaphores by reading or writing the shared memory segments. All functions in the sensor server does however use semaphores when dealing with shared memory segments in order to avoid deadlock and race conditions.
 
 \section{CSAC Communication}
-\begin{figure}
+\begin{figure}[!htb]
 \centering
   \includegraphics[width=1\textwidth]{csac_serial.pdf}
    \caption[Block diagram showing the CSAC connected to a PC]{Block diagram showing the CSAC connected to a PC}
@@ -366,11 +366,13 @@ T                 & Set/report time-of-day                             & !T?{[}C
 \end{tabular}
 \caption*{Source: \cite{CSAC_USERGUIDE}}
 \end{table}
-In this document, the word \textit{telemetry} gets mentioned quite often. The telemetry received from the SA.45 contains a plethora of information like:
-
+In this document, the word \textit{telemetry} gets mentioned quite often in context with the CSAC. Telemetry can be obtained by querying the CSAC. The telemetry is a string containing a plethora of information, but we are mainly interested in the following values:
 \begin{itemize}
-  \item 
+  \item{Phase, the difference between the CSAC and the external signal signal at 1PPS in.}
+  \item{DiscOK, the discipline status.}
+  \item{Steer, the frequency adjust.}
 \end{itemize}
+The SA.45 uses a high-resolution phase meter to improve synchronization and to calibrate the frequency of the CSAC. The phase meter measures the difference in time between the internal PPS 1 PPS signal and the external reference, in our case, a GNSS receiver. This difference is the \textit{phase} value. The CSAC uses the phase value and steering algorithms to adjust the frequency of CSAC physics package thus simultaneously steering both the phase and frequency to that of the external reference. This is called \textit{disciplining} and is how the \textit{steer} value is computed. The last value, \textit{DiscOK} is simply the status of the 1 PPS disciplining routine. \cite{CSAC_USERGUIDE} (EXPLAIN THIS IN DETAIL). 
 
 \section{Detection algorithms: Filters}
 \subsection{Data acquisition}\label{data_aquisition}
@@ -438,7 +440,7 @@ The "Server core" is the main process and the parent of every process created du
 \subsection{Parser and Handler}\label{parser_and_handler}
 \begin{figure}
 \centering
-  \includegraphics[scale=0.3]{server_flow.pdf}
+  \includegraphics[angle=90,scale=0.3]{server_flow.pdf}
    \caption[Socket Server execution flow block diagram]{The block diagram shows an abstracted view of execution after a client has connected to the server and a \texttt{fork()} has been performed.}
    \label{server_flow}
 \end{figure}
@@ -455,10 +457,10 @@ The parser and handler are responsible for parsing data received from a client a
   \item The data received from the client is parsed and checked against the protocol. If the request received from the client doesn't match any of the supported requests or commands, the request is ignored and the loop is entered again. 
   \item If the request received is valid, the clients ID is checked to determine whether or not it has identified itself. If the client has identified itself, the request gets carried out. 
   \item If the request received is to handle NMEA data, the checksum for that NMEA data is calculated. If the checksum check fails, the data is discarded. If it succeeds, the data is copied into \texttt{nmea\_container} struct (\ref{nmea_cont}) for easier handling.
-  \item The client is marked as ready for processing and a ready check is commenced. The ready check is used to make sure that all the sensors have received NMEA data and are ready to have filters applied. 
+  \item The client is marked as ready for processing and a ready check is commenced. The ready check is used to make sure that all the sensors have received NMEA data and are ready to have filters applied. Once the filters have been applied, the lock is released and normal execution resumes.
   \item If the clients ID is 0, it is considered unidentified and any other requests but to identify itself, is ignored.
   \item If the client is attempting to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempted to assume the role of a Sensor, the client will get disconnected. If it attempted to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. The reason why a Sensor would get disconnected and a monitor would not, is simple: When connecting the Sensor to the server, it should not be any doubt whether or not it has been accepted. If something is wrong, it is better that a user of the system has to deal with it there and then and configure the Sensor correct rather than allowing the user to do mistakes which reduces the efficiency of the system. 
-  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load KRL (\ref{kvsrlf}) filter data into the clients KRL filter struct. The server will attempt to load the data from a file named \texttt{krl_data_sensor<ID>}. If the load fails, the Sensor will be disconnected. It is after all useless without its reference position data.
+  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load KRL (\ref{kvsrlf}) filter data into the clients KRL filter struct. The server will attempt to load the data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data.
 \end{itemize}
 
 
