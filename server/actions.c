@@ -557,8 +557,6 @@ int load_krl_data(struct client_table_entry* target)
     conf_map[7].modifier = FORMAT_DOUBLE;
     conf_map[7].destination = &target->fs.rdf.rdd.speed_dev;
 
-    t_print("Loading filter data from: %s\n", filename);
-
     int load_config_status = load_config(conf_map, filename,
                                          KRL_DATA_ENTRIES);
 

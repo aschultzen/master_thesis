@@ -320,18 +320,17 @@ Having shared memory segments comes with a price. Whenever two or more processes
   {c}
     void remove_client_by_id(int id)
     {
-        struct client_table_entry* client_list_iterate;
+        struct client_table_entry* cli;
         struct client_table_entry* temp_remove;
 
         sem_wait(&(s_synch->client_list_sem));
-        list_for_each_entry_safe(client_list_iterate, 
-                                 temp_remove,&client_list->list,
+        list_for_each_entry_safe(cli, temp_remove,&client_list->list,
                                  list) {
-            if(client_list_iterate->client_id == id) {
-                list_del(&client_list_iterate->list);
+            if(cli->client_id == id) {
+                list_del(&cli->list);
+                s_data->number_of_clients--;
             }
         }
-        s_data->number_of_clients--;
         sem_post(&(s_synch->client_list_sem));
     }
   \end{minted}
@@ -339,6 +338,70 @@ Having shared memory segments comes with a price. Whenever two or more processes
 \end{code}
 
 Figure \ref{removeclient} shows a typical example of a function locking down access to the shared memory segment containing the list of connected clients, by using a semaphore. In the example (\ref{removeclient}) a client has been disconnected from the server and the the list of connected clients are being updated. The semaphore is necessary to make sure that another process is not attempting to read or write to the segment while the data is deleted. If another process had attempted to execute the \texttt{sem\_wait()} on the semaphore, it would have been put in a queue. Depending on the operating system, it would most likely signal the scheduler to do a context switch since the resource was busy anyway and it therefor should relinquish control of the CPU. Once the semaphores is raised, it can be lowered again by another process. It is important to note that the semaphores are not a function of or related to the memory segments by anything other the name. The semaphores are just "flags" used to control access to a resource. There is no automatic raising or lowering of the associated semaphores by reading or writing the shared memory segments. All functions in the sensor server does however use semaphores when dealing with shared memory segments in order to avoid deadlock and race conditions.
+
+\section{CSAC Communication}
+\begin{figure}
+\centering
+  \includegraphics[width=1\textwidth]{csac_serial.pdf}
+   \caption[Block diagram showing the CSAC connected to a PC]{Block diagram showing the CSAC connected to a PC}
+   \label{csac_filter}
+\end{figure}
+The SA.45 CSAC includes a serial interface that enables communication with a PC by using a COM port. As mentioned earlier, our approach relies heavily on the ability to communicate with the CSAC.
+Information can be queried by sending commands to the CSAC. These commands are explained in table \ref{CSAC_COMMANDS}. 
+\begin{table}[]
+\centering
+\caption{Commands for the SA.45 CSAC}
+\label{CSAC_COMMANDS}
+\begin{tabular}{|l|l|l|}
+\hline
+Shortcut          & Description                                        & Command                       \\ \hline
+6                 & Return telemetry headers as comma-delimited string & !6{[}CRLF{]}                  \\ \hline
+\textasciicircum  & Return telemetry as comma-delimited string         & !\textasciicircum  {[}CRLF{]} \\ \hline
+F                 & Adjust frequency                                   & !F?{[}CRLF{]}                 \\ \hline
+M                 & Set operating mode register bits                   & !M?{[}CRLF{]}                 \\ \hline
+S                 & Sync CSAC 1 PPS to external 1 PPS                  & !S{[}CRLF{]}                  \\ \hline
+D                 & Set 1 PPS disciplining time constant               & !D?{[}CRLF{]}                 \\ \hline
+U                 & Set ultra-low power mode parameters                & !U?{[}CRLF{]}                 \\ \hline
+T                 & Set/report time-of-day                             & !T?{[}CRLF{]}                 \\ \hline
+\end{tabular}
+\caption*{Source: \cite{CSAC_USERGUIDE}}
+\end{table}
+In this document, the word \textit{telemetry} gets mentioned quite often. The telemetry received from the SA.45 contains a plethora of information like:
+
+\begin{itemize}
+  \item 
+\end{itemize}
+
+\section{Detection algorithms: Filters}
+\subsection{Data acquisition}\label{data_aquisition}
+In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the CSAC will correct it's frequency based on either a 1 PPS (Pulse per second) signal or a 10 MHz signal. A similar approach was used in order to collect GPS data. Data from two u-blox NEO-M8T was gathered over the same time period as the data gathered from the CSAC. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the CSAC. It also provided valuable data that could be used to tune the spoofing detection algorithms in the CSAC SMACC. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the receivers and the CSAC (\ref{CLS})
+
+\subsubsection{Clock Model (CM) based filter}\label{cmbf}
+Write about clock model and the filters
+
+\subsubsection{Known vs Reported location (KRL) filter}\label{kvsrlf}
+As discussed during the introduction (\ref{cspakp}), an easy way to detect spoofing, is to check the GNSS receivers solved position against the known position of the receiver. The detection techniques efficiency also increases as more receivers are added to the detection setup. This is because it is hard to spoof a GNSS receiver without also spoofing it's neighbor. By accidentally spoofing the neighbor, the two GNSS receivers would solved the same position and position (depending on the spoofing technique), thus giving away the attempt. By configuring the Sensor Server with the location of the different Sensors, the server can act if Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is bigger or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to check whether or not the latitude part of the GNSS receivers solved position is within "safe" (not spoofed) range.
+\begin{code}
+  \caption{Sample of code taken from \texttt{filters.c} line 66. The code has been edited for clarity.}
+    \begin{minted}
+    [
+      fontsize=\footnotesize,
+      fontfamily=tt,
+      linenos=true
+    ]
+    {c}
+        if(latitude_current > latitude_reference + latitude_deviation) {
+            moved = 1;
+            lat_disturbed = HIGH;
+        } else if(latitude_current < latitude_ref - latitude_dev) {
+            moved = 1;
+            latitude_disturbed = LOW;
+        } else {
+            latitude_disturbed = SAFE;
+        }
+    \end{minted}
+    \label{ref_dev_filter_latitude}
+\end{code}
 
 \section{The Sensor Server}
 In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained. 
@@ -390,10 +453,12 @@ The parser and handler are responsible for parsing data received from a client a
   \item A loop is entered. The loop is broken when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. This is the same variable that is used in the Server core \ref{server_core} loop and for a good reason: If the server exits, then the its children should too. 
   \item If reading from the socket fails, the client gets disconnected. If it is successful, the client table entry for the connected client is checked to see if the client has been marked to be kicked. If it is, it gets disconnected. 
   \item The data received from the client is parsed and checked against the protocol. If the request received from the client doesn't match any of the supported requests or commands, the request is ignored and the loop is entered again. 
-  \item If the request received is valid, the clients ID is checked to determine whether or not it has identified itself. If the client has identified itself, the request gets carried out. If the clients ID is 0, it is considered unidentified and any other requests but to identify itself, is ignored.
-  \item If the client is attempting to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempted to assume the role of a Sensor, the client will get disconnected. If it attempted to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. 
-  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load KRL (\ref{kvsrlf}) filter data into the clients KRL filter struct. The server will attempt to load the data from a file named \texttt{krl_data_sensor<ID>}. 
-
+  \item If the request received is valid, the clients ID is checked to determine whether or not it has identified itself. If the client has identified itself, the request gets carried out. 
+  \item If the request received is to handle NMEA data, the checksum for that NMEA data is calculated. If the checksum check fails, the data is discarded. If it succeeds, the data is copied into \texttt{nmea\_container} struct (\ref{nmea_cont}) for easier handling.
+  \item The client is marked as ready for processing and a ready check is commenced. The ready check is used to make sure that all the sensors have received NMEA data and are ready to have filters applied. 
+  \item If the clients ID is 0, it is considered unidentified and any other requests but to identify itself, is ignored.
+  \item If the client is attempting to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempted to assume the role of a Sensor, the client will get disconnected. If it attempted to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. The reason why a Sensor would get disconnected and a monitor would not, is simple: When connecting the Sensor to the server, it should not be any doubt whether or not it has been accepted. If something is wrong, it is better that a user of the system has to deal with it there and then and configure the Sensor correct rather than allowing the user to do mistakes which reduces the efficiency of the system. 
+  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load KRL (\ref{kvsrlf}) filter data into the clients KRL filter struct. The server will attempt to load the data from a file named \texttt{krl_data_sensor<ID>}. If the load fails, the Sensor will be disconnected. It is after all useless without its reference position data.
 \end{itemize}
 
 
@@ -684,62 +749,6 @@ The sensor client software is a simple program written in C99 whose only task is
    \caption[Sensor Client simplified call graph]{Simplified call graph for the Sensor Client.}
 \end{figure}
 
-\subsection{Data structures}
-
-
-\section{CSAC Communication}
-  \includegraphics[width=1\textwidth]{csac_serial.pdf}
-The SA.45 CSAC includes a serial interface that enables communication with a PC by using a COM port. As mentioned earlier, our approach relies heavily on the ability to communicate with the CSAC.
-Information can be queried by sending commands to the CSAC. These commands are explained in table \ref{CSAC_COMMANDS}. 
-\begin{table}[]
-\centering
-\caption{Commands for the SA.45 CSAC}
-\label{CSAC_COMMANDS}
-\begin{tabular}{|l|l|l|}
-\hline
-Shortcut          & Description                                        & Command                       \\ \hline
-6                 & Return telemetry headers as comma-delimited string & !6{[}CRLF{]}                  \\ \hline
-\textasciicircum  & Return telemetry as comma-delimited string         & !\textasciicircum  {[}CRLF{]} \\ \hline
-F                 & Adjust frequency                                   & !F?{[}CRLF{]}                 \\ \hline
-M                 & Set operating mode register bits                   & !M?{[}CRLF{]}                 \\ \hline
-S                 & Sync CSAC 1 PPS to external 1 PPS                  & !S{[}CRLF{]}                  \\ \hline
-D                 & Set 1 PPS disciplining time constant               & !D?{[}CRLF{]}                 \\ \hline
-U                 & Set ultra-low power mode parameters                & !U?{[}CRLF{]}                 \\ \hline
-T                 & Set/report time-of-day                             & !T?{[}CRLF{]}                 \\ \hline
-\end{tabular}
-\caption*{Source: \cite{CSAC_USERGUIDE}}
-\end{table}
-
-\section{Detection algorithms: Filters}
-\subsection{Data acquisition}\label{data_aquisition}
-In order to create an accurate clock-model of the CSAC, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the CSAC will correct it's frequency based on either a 1 PPS (Pulse per second) signal or a 10 MHz signal. A similar approach was used in order to collect GPS data. Data from two u-blox NEO-M8T was gathered over the same time period as the data gathered from the CSAC. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the CSAC. It also provided valuable data that could be used to tune the spoofing detection algorithms in the CSAC SMACC. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the receivers and the CSAC (\ref{CLS})
-
-\subsubsection{Clock Model (CM) based filter}\label{cmbf}
-Write about clock model and the filters
-
-\subsubsection{Known vs Reported location (KRL) filter}\label{kvsrlf}
-As discussed during the introduction (\ref{cspakp}), an easy way to detect spoofing, is to check the GNSS receivers solved position against the known position of the receiver. The detection techniques efficiency also increases as more receivers are added to the detection setup. This is because it is hard to spoof a GNSS receiver without also spoofing it's neighbor. By accidentally spoofing the neighbor, the two GNSS receivers would solved the same position and position (depending on the spoofing technique), thus giving away the attempt. By configuring the Sensor Server with the location of the different Sensors, the server can act if Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is bigger or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to check whether or not the latitude part of the GNSS receivers solved position is within "safe" (not spoofed) range.
-\begin{code}
-  \caption{Sample of code taken from \texttt{filters.c} line 66. The code has been edited for clarity.}
-    \begin{minted}
-    [
-      fontsize=\footnotesize,
-      fontfamily=tt,
-      linenos=true
-    ]
-    {c}
-        if(latitude_current > latitude_reference + latitude_deviation) {
-            moved = 1;
-            lat_disturbed = HIGH;
-        } else if(latitude_current < latitude_ref - latitude_dev) {
-            moved = 1;
-            latitude_disturbed = LOW;
-        } else {
-            latitude_disturbed = SAFE;
-        }
-    \end{minted}
-    \label{ref_dev_filter_latitude}
-\end{code}
 
 \chapter{Testing}
 
@@ -844,11 +853,11 @@ The observations (\ref{observations}) reveals what we expected. After all, when 
 
 \section{What could have been different}
 \subsection{Server design}
-
 \begin{itemize}
   \item A clients ID does not really matter but still ended up meaning a lot. 
   \item A monitor takes up the same space as a Sensor although it does not use any of memory the Sensor does.
   \item Poor management of the shared memory space. Searching through the space is taking linear time. Why would you care about performance enough to code in C when you are going to waste that performance on inefficient algorithms?
+  \item Redundant readiness checking. The readiness check is a feature that was implemented early in the process when more filters where planned to be implemented. These filters would use cross-checking of different parameters between multiple sensors, and it would therefor be desirable to make sure that all sensor had the latest NMEA data. Unfortunately in the current version of the server, there are no filters actually dependent on this feature, but it has been left this way in case someone else would pick up the development. 
 \end{itemize}
 
 \section{Choice of programming language}

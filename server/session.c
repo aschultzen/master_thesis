@@ -421,8 +421,10 @@ int respond(struct client_table_entry *cte)
                 if(load_krl_data(cte)) {
                     t_print("Loaded filter data for client %d\n", cte->client_id);
                 } else {
+                    t_print("Failed to load KRL filter data for Sensor %d\n", cte->client_id);
                     s_write(&(cte->transmission),ERROR_KRLD_LOAD_FAILED,
                             sizeof(ERROR_KRLD_LOAD_FAILED));
+                    return 0;
                 }
             }
 
