@@ -372,7 +372,6 @@ int respond(struct client_table_entry *cte)
     else {
         /* Comparing CODES to determine the correct action */
         if(cte->cm.code == CODE_DISCONNECT) {
-            t_print("Client %d requested DISCONNECT.\n", cte->client_id);
             s_write(&(cte->transmission), PROTOCOL_GOODBYE, sizeof(PROTOCOL_GOODBYE));
             return 0;
         }
@@ -393,8 +392,10 @@ int respond(struct client_table_entry *cte)
             list_for_each_entry(client_list_iterate, &client_list->list, list) {
                 if(client_list_iterate->client_id == cte->cm.id_parameter) {
                     cte->client_id = 0;
-                    t_print("[%s] bounced! ID %d already in use.\n", cte->ip,cte->cm.id_parameter);
                     s_write(&(cte->transmission), "ID in use!\n", 11);
+                    if(cte->cm.id_parameter < 0){
+                        return 1;
+                    }
                     return 0;
                 }
             }

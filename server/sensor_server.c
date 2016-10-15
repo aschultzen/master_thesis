@@ -22,7 +22,7 @@
 #define SERVER_RUNNING "Server is running. Accepting connections.\n"
 #define WAITING_FOR_CONNECTIONS "Waiting for connections...\n"
 #define CON_ACCEPTED "Connection accepted\n"
-#define CLIENT_DISCONNECTED "[%d] Disconnected\n"
+#define CLIENT_DISCONNECTED "Client [%d] at [%s] disconnected\n"
 #define SERVER_STOPPED "Server STOPPED!\n"
 #define SERVER_STARTING "Sensor server starting...\n"
 #define CLIENT_KICKED "Client was kicked\n"
@@ -122,20 +122,20 @@ void print_server_data(struct client_table_entry *monitor)
 
 struct client_table_entry* get_client_by_id(int id)
 {
-    struct client_table_entry* client_list_iterate;
+    struct client_table_entry* cli;
     struct client_table_entry* temp;
     int found = 0;
 
     sem_wait(&(s_synch->client_list_sem));
-    list_for_each_entry_safe(client_list_iterate, temp, &client_list->list, list) {
-        if(client_list_iterate->client_id == id) {
+    list_for_each_entry_safe(cli, temp, &client_list->list, list) {
+        if(cli->client_id == id) {
             found = 1;
             break;
         }
     }
     sem_post(&(s_synch->client_list_sem));
     if(found) {
-        return client_list_iterate;
+        return cli;
     } else {
         return NULL;
     }
@@ -144,19 +144,22 @@ struct client_table_entry* get_client_by_id(int id)
 /* Removes a client with the given PID */
 static void remove_client_by_pid(pid_t pid)
 {
-    struct client_table_entry* client_list_iterate;
+    struct client_table_entry* cli;
     struct client_table_entry* temp_remove;
 
     sem_wait(&(s_synch->client_list_sem));
-    list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list,
+    list_for_each_entry_safe(cli, temp_remove,&client_list->list,
                              list) {
-        if(client_list_iterate->pid == pid) {
-            if(client_list_iterate->client_id > 0) {
+        if(cli->pid == pid) {
+            /* Decrementing sensor count */
+            if(cli->client_id > 0) {
                 s_data->number_of_sensors--;
             }
-            list_del(&client_list_iterate->list);
+            t_print(CLIENT_DISCONNECTED, cli->client_id ,cli->ip);
+            list_del(&cli->list);
         }
     }
+    /* Decrementing total client count */
     s_data->number_of_clients--;
     sem_post(&(s_synch->client_list_sem));
 }
@@ -164,17 +167,17 @@ static void remove_client_by_pid(pid_t pid)
 /* Removes a client with the given ID */
 void remove_client_by_id(int id)
 {
-    struct client_table_entry* client_list_iterate;
+    struct client_table_entry* cli;
     struct client_table_entry* temp_remove;
 
     sem_wait(&(s_synch->client_list_sem));
-    list_for_each_entry_safe(client_list_iterate, temp_remove,&client_list->list,
+    list_for_each_entry_safe(cli, temp_remove,&client_list->list,
                              list) {
-        if(client_list_iterate->client_id == id) {
-            list_del(&client_list_iterate->list);
+        if(cli->client_id == id) {
+            list_del(&cli->list);
+            s_data->number_of_clients--;
         }
     }
-    s_data->number_of_clients--;
     sem_post(&(s_synch->client_list_sem));
 }
 
@@ -203,7 +206,6 @@ static void handle_sigchld(int signum)
 
         if(pid > 0) {
             remove_client_by_pid(pid);
-            t_print(PROCESS_REAPED, pid, status, signum);
         }
     }
 }
@@ -457,7 +459,6 @@ static void start_server(int port_number)
                 if(new_client->marked_for_kick) {
                     t_print(CLIENT_KICKED, getpid());
                 }
-                t_print(CLIENT_DISCONNECTED, getpid());
                 _exit(0);
             } else {
                 t_print(CON_ACCEPTED);
