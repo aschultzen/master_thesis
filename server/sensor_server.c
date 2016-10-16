@@ -56,6 +56,9 @@ volatile sig_atomic_t done;
 /* Pointer to shared memory containing the client list */
 struct client_table_entry *client_list;
 
+/* Pointer to client list map */
+struct client_table_entry **client_list_map;
+
 /* Pointer to shared memory containing config */
 struct server_config *s_conf;
 
@@ -72,6 +75,7 @@ static void initialize_config(struct config_map_entry *conf_map,
 static void start_server(int port_number);
 static int usage(char *argv[]);
 static void setup_session(int session_fd, struct client_table_entry *new_client);
+static int release_mem_block(struct client_table_entry* release_me);
 
 int set_timeout(struct client_table_entry *target,
                        struct timeval h_timeout)
@@ -157,6 +161,7 @@ static void remove_client_by_pid(pid_t pid)
             }
             t_print(CLIENT_DISCONNECTED, cli->client_id ,cli->ip);
             list_del(&cli->list);
+            release_mem_block(cli);
         }
     }
     /* Decrementing total client count */
@@ -175,10 +180,38 @@ void remove_client_by_id(int id)
                              list) {
         if(cli->client_id == id) {
             list_del(&cli->list);
+            release_mem_block(cli);
             s_data->number_of_clients--;
         }
     }
     sem_post(&(s_synch->client_list_sem));
+}
+
+static int release_mem_block(struct client_table_entry* release_me)
+{
+    int i;
+    for(i = 1; i < s_conf->max_clients; i++){
+        if(client_list_map[i] == NULL){
+            client_list_map[i] = release_me;
+            return 1;
+        }
+        i++;
+    }
+    return 0;
+}
+
+static struct client_table_entry* get_mem_block()
+{
+    int i;
+    for(i = 1; i < s_conf->max_clients; i++){
+        if(client_list_map[i] != NULL){
+            struct client_table_entry *tmp = client_list_map[i];
+            client_list_map[i] = NULL;
+            return tmp;
+        }
+        i++;
+    }
+    return NULL;
 }
 
 /* Creates an entry in the client list structure and returns a pointer to it*/
@@ -187,7 +220,7 @@ static struct client_table_entry* create_client(struct client_table_entry* ptr)
     sem_wait(&(s_synch->client_list_sem));
     s_data->number_of_clients++;
     struct client_table_entry* tmp;
-    tmp = (client_list + s_data->number_of_clients);
+    tmp = get_mem_block();
     list_add_tail( &(tmp->list), &(ptr->list) );
     sem_post(&(s_synch->client_list_sem));
 
@@ -334,6 +367,14 @@ static void start_server(int port_number)
     } else {
         t_print(ERROR_CONFIG_LOAD_FAILED);
         exit(0);
+    }
+
+    client_list_map = malloc((s_conf->max_clients + 1) * sizeof(struct client_table_entry*));
+    int i;
+
+    /* Skip the first entry for some reason */
+    for(i = 1; i < s_conf->max_clients; i++){
+        client_list_map[i] = client_list + i;
     }
 
     INIT_LIST_HEAD(&client_list->list);
