@@ -462,7 +462,7 @@ The parser and handler are responsible for parsing data received from a client a
   \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load KRL (\ref{kvsrlf}) filter data into the clients KRL filter struct. The server will attempt to load the data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data.
 \end{itemize}
 
-\subsection{Managing clients}}\label{create_client}
+\subsection{Managing clients}\label{create_client}
 Every time a client connects, it is put into a linked list of connected clients. The linked list structure is stored in a shared memory segment available to all the processes spawned by the server. This structure is static in size and is allocated once during the whole life of the Server. This also means that the maximum number of clients that can be connected to the server is limited to a pre-configured value. The reason behind this
 
 \subsubsection{Linked list}\label{linked_list}
@@ -564,7 +564,7 @@ The \texttt{server\_data} struct contains information about the server. Some of 
     \end{minted}
   \label{server_synchro}
 \end{code}
-The \texttt{server\_synchro} structs member are semaphores (\ref{shared_mem_sem}) that the server and its children processes uses to protect atomic access to shared resources. The \texttt{csac_sem} is used to control serial access to the CSAC, making sure that only one request is sent to CSAC at a time. The \texttt{client_list_sem} is used by functions manipulating and reading the client list structure, and the \texttt{ready_sem} is only used when the server has received NMEA data and a ready check has been initiated (\ref{nmea_ready}).
+The \texttt{server\_synchro} structs member are semaphores (\ref{shared_mem_sem}) that the server and its children processes uses to protect atomic access to shared resources. The \texttt{csac\_sem} is used to control serial access to the CSAC, making sure that only one request is sent to CSAC at a time. The \texttt{client\_list\_sem} is used by functions manipulating and reading the client list structure, and the \texttt{ready\_sem} is only used when the server has received NMEA data and a ready check has been initiated (\ref{nmea_ready}).
 
 \subsubsection{command\_code}
 \begin{code}
