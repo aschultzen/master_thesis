@@ -309,6 +309,7 @@ Every time a client connects, it is given a piece of shared memory where it can 
   \end{minted}
 \end{code}
 
+\subsubsection{Semaphores}
 Having shared memory segments comes with a price. Whenever two or more processes are working on the same data set, they are prone to create race conditions, deadlocks and data corruption. Therefore, semaphores where used to lock the segments during read and write operations at the shared memory segments.
 
 \begin{code}
@@ -465,8 +466,23 @@ The parser and handler are responsible for parsing data received from a client a
   \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load KRL (\ref{kvsrlf}) filter data into the clients KRL filter struct. The server will attempt to load the data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data.
 \end{itemize}
 
-\subsection{Managing clients}\label{create_client}
-When the client connects, a piece of shared memory is found for the new process handling the client by calling \texttt{get\_mem\_block}. 
+\subsection{Managing the client list}\label{create_client}
+As previously explained, the list of clients are stored in a shared memory segment using a linked list structure. In order to keep tabs on what part of the shared memory segment is in use, a simple map of the memory is used:
+\begin{code}
+  \caption{Sample of code showing allocation of the \texttt{client\_list\_map}}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    client_list_map = malloc((s_conf->max_clients + 1) * 
+                              sizeof(struct client_table_entry*)); 
+    \end{minted}
+    \label{client_list_map}
+\end{code}
+The map is an array containing pointers offset by the size of the \texttt{client\_table\_struct}, and maps 1:1 to what can be thought of as the individual \textit{pieces} of memory in the shared memory segment allocated for the client list. A free piece of memory is in the map represented by a pointer that is not NULL. A free piece of memory is returned by the \texttt{get\_mem\_block}. 
 \begin{code}
   \caption{Sample of code showing the \texttt{get\_mem\_piece()} function.}
     \begin{minted}

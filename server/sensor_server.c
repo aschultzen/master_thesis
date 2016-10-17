@@ -75,7 +75,7 @@ static void initialize_config(struct config_map_entry *conf_map,
 static void start_server(int port_number);
 static int usage(char *argv[]);
 static void setup_session(int session_fd, struct client_table_entry *new_client);
-static int release_mem_block(struct client_table_entry* release_me);
+static int release_mem_piece(struct client_table_entry* release_me);
 
 int set_timeout(struct client_table_entry *target,
                        struct timeval h_timeout)
@@ -161,7 +161,7 @@ static void remove_client_by_pid(pid_t pid)
             }
             t_print(CLIENT_DISCONNECTED, cli->client_id ,cli->ip);
             list_del(&cli->list);
-            release_mem_block(cli);
+            release_mem_piece(cli);
         }
     }
     /* Decrementing total client count */
@@ -371,7 +371,8 @@ static void start_server(int port_number)
         exit(0);
     }
 
-    client_list_map = malloc((s_conf->max_clients + 1) * sizeof(struct client_table_entry*));
+    client_list_map = malloc((s_conf->max_clients + 1) 
+        * sizeof(struct client_table_entry*));
     int i;
 
     /* Skip the first entry for some reason */
