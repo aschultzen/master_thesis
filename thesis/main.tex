@@ -289,6 +289,9 @@ As mentioned earlier (\ref{sockets}), every time a client connects, a new proces
 \end{code}
 These shared memory segments have different usage. The \texttt{client\_list} points to a shared segment allocated for storing a list of all connected clients. \texttt{s\_data} contains information about the server, \texttt{s\_synch} contains semaphores used to lock down shared resources, \texttt{s\_conf} is the servers configuration and \texttt{cfd} is the CSAC filters data and state. Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
 
+\subsubsection{Client list memory segment}
+Every time a client connects, it is given a piece of shared memory where it can store its data. This piece of is shared memory is used as a node in a linked list. The linked list structure, stored in the shared memory segment is available to all the processes spawned by the server. This segment is static in size and is allocated once and never changed during the whole life of the Server. The size of the segment is determined by the maximum number of allowed clients, a configurable value read from the configuration file every time the server is started. Ideally, the segment should be resize-able and the size should depend the amount of connected client. M. Kerrisk explains in his "The Linux Programming Interface" (\cite{kerrisk2010linux}), that most UNIX implementations does not support resizing of a memory map like the shared memory segments used in the Sensor Server. However, there is non-portable and Linux specific system call, \texttt{mremap()} that can be used on Linux system for this purpose. Unfortunately, the address returned by \texttt{mremap()} might be different from the old address to the shared memory segment. This would mean that pointer inside the shared segment might no longer be valid after a resize operation has been done. A way to avoid this problem caused by the remapping, would be to use offsets instead of pointers when referring to addresses in the mapped region. This would however increase the complexity of the server. A potential waste of memory would probably never be substantial anyway considering that the size of the \texttt{client\_table\_entry} struct is a mere 4664 bytes. This is why the current implementation with shared memory segment of static size was chosen.  
+
 \begin{code}
   \caption{Listing shows the use of MMAP to create an anonymous map of memory to be used as a shared memory segment}
   \begin{minted}
@@ -463,9 +466,35 @@ The parser and handler are responsible for parsing data received from a client a
 \end{itemize}
 
 \subsection{Managing clients}\label{create_client}
-Every time a client connects, it is put into a linked list of connected clients. The linked list structure is stored in a shared memory segment available to all the processes spawned by the server. This structure is static in size and is allocated once during the whole life of the Server. This also means that the maximum number of clients that can be connected to the server is limited to a pre-configured value. The reason behind this
+When the client connects, a piece of shared memory is found for the new process handling the client by calling \texttt{get\_mem\_block}. 
+\begin{code}
+  \caption{Sample of code showing the \texttt{get\_mem\_piece()} function.}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    static struct client_table_entry* get_mem_piece()
+    {
+        int i;
+        for(i = 1; i < s_conf->max_clients; i++){
+            if(client_list_map[i] != NULL){
+                struct client_table_entry *tmp = client_list_map[i];
+                client_list_map[i] = NULL;
+                return tmp;
+            }
+            i++;
+        }
+        return NULL;
+    }
+    \end{minted}
+    \label{get_mem_piece}
+\end{code}
 
-\subsubsection{Linked list}\label{linked_list}
+
+\subsubsection{Linked list implementation}\label{linked_list}
 Since the C standard does not provide data structures like linked lists, I had to choose between reinventing the wheel or finding some implementation to drop into the project. While studying another subject, I found a guide on how to use the linked list implementation from the linux kernel source code (\cite{KAZU_LIST}) in a user space program. Since the implementation was extremely solid, well tested and had many useful functions, i decided to use it. The modified header file containing all the code, is GPL licensed.  
 
 \begin{code}

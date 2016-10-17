@@ -180,14 +180,14 @@ void remove_client_by_id(int id)
                              list) {
         if(cli->client_id == id) {
             list_del(&cli->list);
-            release_mem_block(cli);
+            release_mem_piece(cli);
             s_data->number_of_clients--;
         }
     }
     sem_post(&(s_synch->client_list_sem));
 }
 
-static int release_mem_block(struct client_table_entry* release_me)
+static int release_mem_piece(struct client_table_entry* release_me)
 {
     int i;
     for(i = 1; i < s_conf->max_clients; i++){
@@ -200,7 +200,7 @@ static int release_mem_block(struct client_table_entry* release_me)
     return 0;
 }
 
-static struct client_table_entry* get_mem_block()
+static struct client_table_entry* get_mem_piece()
 {
     int i;
     for(i = 1; i < s_conf->max_clients; i++){
@@ -220,10 +220,9 @@ static struct client_table_entry* create_client(struct client_table_entry* ptr)
     sem_wait(&(s_synch->client_list_sem));
     s_data->number_of_clients++;
     struct client_table_entry* tmp;
-    tmp = get_mem_block();
+    tmp = get_mem_piece();
     list_add_tail( &(tmp->list), &(ptr->list) );
     sem_post(&(s_synch->client_list_sem));
-
     return tmp;
 }
 
@@ -521,6 +520,7 @@ static void start_server(int port_number)
     munmap(s_data, sizeof(struct server_data));
     munmap(cfd, sizeof(struct csac_filter_data));
     munmap(s_synch, sizeof(struct server_synchro));
+    free(client_list_map);
 
     /* Closing server FD */
     close(server_sockfd);
