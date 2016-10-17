@@ -11,7 +11,7 @@
 #define PATH_LENGTH_MAX 1000
 #define CLIENT_TIMEOUT 5
 #define MONITOR_TIMEOUT 1000
-#define UNIDENTIFIED_TIMEOUT 1
+#define UNIDENTIFIED_TIMEOUT 10
 
 #include <fcntl.h>
 #include <sys/stat.h>

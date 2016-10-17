@@ -363,7 +363,10 @@ static void start_server(int port_number)
         t_print(CONFIG_LOADED);
         client_list = mmap(NULL,
                            ( (s_conf->max_clients + 1) * sizeof(struct client_table_entry)),
-                           PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+                           PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
+        if(client_list == MAP_FAILED){
+            t_print("Failed to allocate memory for the client list!\n");
+        }
     } else {
         t_print(ERROR_CONFIG_LOAD_FAILED);
         exit(0);

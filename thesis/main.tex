@@ -267,7 +267,7 @@ In order to implement the Server/Client model, the Sensor Server and Sensor Clie
 Even though the \texttt{accept()} function in the sockets API is blocking, CPU cycles are not wasted. If a socket call cannot be completed immediately, the process who issued the call will be put to sleep thus enabling the scheduler to schedule other processes for execution until conditions are right for the sleeping process. (\cite{UNIXN_WBA}, p.435). It is also possible to use non-blocking socket calls, and while this often increases performance, it also increases complexity, and was therefor not chosen for this approach. It's also worth mentioning that one could create \textit{threads} instead of forking out processes for new connections. The creation of threads are typically less expensive in terms of CPU cycles than the creation of processes. Processes on the other hand, always have their own virtual address space as opposed to threads who share their address space with the other threads withing the process. This makes programming with threads more complex and the result of a crash more severe as it affects the other threads as well. 
 
 \subsection{Shared memory \& Semaphores}\label{shared_mem_sem}
-The sensor server architecture uses several shared memory segments. This is necessary because as mentioned earlier(\ref{procvsthread}), each process has got it's own virtual address space. The pointers to the shared memory segments are declared as \textit{extern} in \texttt{sensor\_server.h}. The extern keyword means the the variable has an external linkage, making it visible from other files than the one in which it is defined. Listing \ref{extern_structs} shows a code sample taken from \texttt{sensor\_server.h} where the shared memory segments are declared.
+As mentioned earlier (\ref{sockets}), every time a client connects, a new process is born to take care of the communication with the new client. Since every process has got it's own virtual address space, the processes are isolated from each other. This posed a challenge because we wanted the Sensor Server as a whole with all processes to be able to communicate with each other and share data and communicate. IPC (inter process communication) is nothing new, and one way to accomplish it, is to use shared memory segments. The sensor server architecture uses several shared memory segments. The pointers to the shared memory segments are declared as \textit{extern} in \texttt{sensor\_server.h}. The extern keyword means the the variable has an external linkage, making it visible from other files than the one in which it is defined. Listing \ref{extern_structs} shows a code sample taken from \texttt{sensor\_server.h} where the shared memory segments are declared.
 
 \begin{code}
   \caption{Sample of code from \texttt{sensor\_server.h}(\ref{sensor_server.h}, line 356) where shared memory segments are declared.}
@@ -287,8 +287,7 @@ The sensor server architecture uses several shared memory segments. This is nece
   \end{minted}
   \label{extern_structs}
 \end{code}
-
-Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
+These shared memory segments have different usage. The \texttt{client\_list} points to a shared segment allocated for storing a list of all connected clients. \texttt{s\_data} contains information about the server, \texttt{s\_synch} contains semaphores used to lock down shared resources, \texttt{s\_conf} is the servers configuration and \texttt{cfd} is the CSAC filters data and state. Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
 
 \begin{code}
   \caption{Listing shows the use of MMAP to create an anonymous map of memory to be used as a shared memory segment}
@@ -302,7 +301,7 @@ Every process that forks out from the server is given access to these memory seg
   client_list = mmap(NULL, 
                     (s_conf->max_clients * sizeof(struct client_table_entry)), 
                     PROT_READ | PROT_WRITE,
-                    MAP_SHARED | MAP_ANONYMOUS,
+                    MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE,
                     -1, 0);
   \end{minted}
 \end{code}
@@ -463,20 +462,8 @@ The parser and handler are responsible for parsing data received from a client a
   \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load KRL (\ref{kvsrlf}) filter data into the clients KRL filter struct. The server will attempt to load the data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data.
 \end{itemize}
 
-
-\subsection{Notable functions}
-\subsubsection{config\_loader()}\label{config_loader}
-Write about the config loader here
-
-\subsubsection{nmea\_ready()}\label{nmea_ready}
-Write about nmea\_ready() here.
-
-\subsubsection{\texttt{create\_client()}}\label{create_client}
-\texttt{create\_client()} takes a pointer to the client list as parameter, locks the \texttt{client\_list\_m}
-
-
-\subsection{Data structures}
-In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
+\subsection{Managing clients}}\label{create_client}
+Every time a client connects, it is put into a linked list of connected clients. The linked list structure is stored in a shared memory segment available to all the processes spawned by the server. This structure is static in size and is allocated once during the whole life of the Server. This also means that the maximum number of clients that can be connected to the server is limited to a pre-configured value. The reason behind this
 
 \subsubsection{Linked list}\label{linked_list}
 Since the C standard does not provide data structures like linked lists, I had to choose between reinventing the wheel or finding some implementation to drop into the project. While studying another subject, I found a guide on how to use the linked list implementation from the linux kernel source code (\cite{KAZU_LIST}) in a user space program. Since the implementation was extremely solid, well tested and had many useful functions, i decided to use it. The modified header file containing all the code, is GPL licensed.  
@@ -497,6 +484,10 @@ Since the C standard does not provide data structures like linked lists, I had t
     \label{struct_client_table}
 \end{code}
 The fields of the struct is pretty self explanatory. There is a pointer to previous node and one the next. By using these, the list can traversed.
+
+
+\subsection{Data structures}
+In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
 
 \subsubsection{client\_table\_entry}\label{client_table_entry}
 The client\_table\_entry struct is what the name suggests, it's an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. Listing \ref{struct_client_table} shows the complete struct. 
@@ -533,29 +524,6 @@ Beginning from the top:
   \item \texttt{list\_head list} is a pointer to a 
 \end{itemize}
 
-\subsubsection{server\_config}
-\begin{code}
-  \caption{Sample of code taken from \texttt{sensor\_server.h} line 23}
-    \begin{minted}
-    [
-    fontsize=\footnotesize,
-    fontfamily=tt,
-    linenos=true
-    ]
-    {c}
-    struct server_config {
-        int max_clients;
-        int warm_up_seconds;
-        int human_readable_dumpdata;
-        char csac_path[PATH_LENGTH_MAX];
-        int logging;
-        char log_path[PATH_LENGTH_MAX];
-        int csac_logging;
-        char csac_log_path[PATH_LENGTH_MAX];
-    };
-    \end{minted}
-    \label{struct_server_config} 
-\end{code}
 
 \subsubsection{server\_data}
 \begin{code}
@@ -576,7 +544,7 @@ Beginning from the top:
     \end{minted}
   \label{server_data}
 \end{code}
-The \texttt{server\_data} structs members are 
+The \texttt{server\_data} struct contains information about the server. Some of the of information like the PID, version, and when the server was started, is just information about the server itself. The number of clients and sensors on the other hand, is used to make sure that the server does not allow more connections than it can handle.
 
 \subsubsection{server\_synchro}
 \begin{code}
@@ -592,11 +560,11 @@ The \texttt{server\_data} structs members are
         sem_t ready_sem;
         sem_t csac_sem;
         sem_t client_list_sem;
-        volatile int ready_counter;
     };
     \end{minted}
   \label{server_synchro}
 \end{code}
+The \texttt{server\_synchro} structs member are semaphores (\ref{shared_mem_sem}) that the server and its children processes uses to protect atomic access to shared resources. The \texttt{csac_sem} is used to control serial access to the CSAC, making sure that only one request is sent to CSAC at a time. The \texttt{client_list_sem} is used by functions manipulating and reading the client list structure, and the \texttt{ready_sem} is only used when the server has received NMEA data and a ready check has been initiated (\ref{nmea_ready}).
 
 \subsubsection{command\_code}
 \begin{code}
@@ -669,6 +637,7 @@ The \texttt{server\_data} structs members are
     \end{minted}
     \label{nmea_container}
 \end{code}
+The \texttt{nmea\_container} struct is a member
 
 \newpage
 \section{Interfacing}
@@ -860,6 +829,7 @@ The observations (\ref{observations}) reveals what we expected. After all, when 
   \item A monitor takes up the same space as a Sensor although it does not use any of memory the Sensor does.
   \item Poor management of the shared memory space. Searching through the space is taking linear time. Why would you care about performance enough to code in C when you are going to waste that performance on inefficient algorithms?
   \item Redundant readiness checking. The readiness check is a feature that was implemented early in the process when more filters where planned to be implemented. These filters would use cross-checking of different parameters between multiple sensors, and it would therefor be desirable to make sure that all sensor had the latest NMEA data. Unfortunately in the current version of the server, there are no filters actually dependent on this feature, but it has been left this way in case someone else would pick up the development. 
+  \item Shared memory is barely necessary in the current version of the Sensor Server. I still believe that it later development can benefit from the architecture.
 \end{itemize}
 
 \section{Choice of programming language}
