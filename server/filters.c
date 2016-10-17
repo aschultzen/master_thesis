@@ -80,14 +80,10 @@ void krl_filter(void)
                 iterator->fs.rdf.rdd.lat_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.lat_disturbed = HIGH;
-            printf("Client %d reporting HIGH : %lf / %lf\n",iterator->client_id, iterator->nmea.lat_current,
-                   iterator->fs.rdf.rdd.lat_ref + iterator->fs.rdf.rdd.lat_dev);
         } else if(iterator->nmea.lat_current < iterator->fs.rdf.rdd.lat_ref -
                   iterator->fs.rdf.rdd.lat_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.lat_disturbed = LOW;
-            printf("Client %d reporting LOW : %lf / %lf\n", iterator->client_id, iterator->nmea.lat_current,
-                   iterator->fs.rdf.rdd.lat_ref - iterator->fs.rdf.rdd.lat_dev);
         } else {
             iterator->fs.rdf.dv.lat_disturbed = SAFE;
         }
@@ -96,14 +92,10 @@ void krl_filter(void)
                 iterator->fs.rdf.rdd.alt_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.alt_disturbed = HIGH;
-            printf("Client %d reporting HIGH : %lf / %lf\n",iterator->client_id,  iterator->nmea.alt_current,
-                   iterator->fs.rdf.rdd.alt_ref + iterator->fs.rdf.rdd.alt_dev);
         } else if(iterator->nmea.alt_current < iterator->fs.rdf.rdd.alt_ref -
                   iterator->fs.rdf.rdd.alt_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.alt_disturbed = LOW;
-            printf("Client %d reporting LOW : %lf / %lf\n", iterator->client_id, iterator->nmea.alt_current,
-                   iterator->fs.rdf.rdd.alt_ref - iterator->fs.rdf.rdd.alt_dev);
         } else {
             iterator->fs.rdf.dv.alt_disturbed = SAFE;
         }
@@ -112,14 +104,10 @@ void krl_filter(void)
                 iterator->fs.rdf.rdd.lon_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.lon_disturbed = HIGH;
-            printf("Client %d reporting HIGH : %lf / %lf\n",iterator->client_id,  iterator->nmea.lon_current,
-                   iterator->fs.rdf.rdd.lon_ref + iterator->fs.rdf.rdd.lon_dev);
         } else if(iterator->nmea.lon_current < iterator->fs.rdf.rdd.lon_ref -
                   iterator->fs.rdf.rdd.lon_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.lon_disturbed = LOW;
-            printf("Client %d reporting LOW : %lf / %lf\n", iterator->client_id, iterator->nmea.lon_current,
-                   iterator->fs.rdf.rdd.lon_ref - iterator->fs.rdf.rdd.lon_dev);
         } else {
             iterator->fs.rdf.dv.lon_disturbed = SAFE;
         }
@@ -128,14 +116,10 @@ void krl_filter(void)
                 iterator->fs.rdf.rdd.speed_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.speed_disturbed = HIGH;
-            printf("Client %d reporting HIGH : %lf / %lf\n",iterator->client_id,  iterator->nmea.speed_current,
-                   iterator->fs.rdf.rdd.speed_ref + iterator->fs.rdf.rdd.speed_dev);
         } else if(iterator->nmea.speed_current < iterator->fs.rdf.rdd.speed_ref -
                   iterator->fs.rdf.rdd.speed_dev) {
             iterator->fs.rdf.moved = 1;
             iterator->fs.rdf.dv.speed_disturbed = LOW;
-            printf("Client %d reporting HIGH : %lf / %lf\n",iterator->client_id,  iterator->nmea.speed_current,
-                   iterator->fs.rdf.rdd.speed_ref - iterator->fs.rdf.rdd.speed_dev);
         } else {
             iterator->fs.rdf.dv.speed_disturbed = SAFE;
         }

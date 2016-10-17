@@ -480,7 +480,6 @@ int respond(struct client_table_entry *cte)
 
                 /* If everyone is ready, process data */
                 if(ready) {
-                    fprintf(stderr, "Client %d in ready area\n", cte->client_id);
                     apply_filters();
                 }
                 /* Releasing ready-lock */
