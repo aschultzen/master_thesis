@@ -17,7 +17,7 @@
 #define CONFIG_PRED_LIMIT "pred_limit: "
 #define CONFIG_TIME_CONSTANT "time_constant: "
 #define CONFIG_WARMUP_DAYS "warmup_days: "
-#define ALARM_STEER_TO_BIG "[ALARM] CSAC Steer value greater than predicted!\n"
+#define ALARM_STEER_TO_BIG "[ALARM] CSAC Steer > predicted!\n"
 #define CSAC_FILTER_CONFIG_ENTRIES 13
 
 
