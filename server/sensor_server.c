@@ -385,6 +385,10 @@ static void start_server(int port_number)
     /* Create and initialize shared memory for server data */
     s_data = mmap(NULL, sizeof(struct server_data), PROT_READ | PROT_WRITE,
                   MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if(s_data == MAP_FAILED){
+            t_print("Failed to allocate memory for the server data!\n");
+    }
+    
     bcopy(PROGRAM_VERSION, s_data->version,4);
     s_data->pid = getpid();
     s_data->started = time(NULL);
@@ -392,6 +396,11 @@ static void start_server(int port_number)
     /* Init shared semaphores and sync elements */
     s_synch = mmap(NULL, sizeof(struct server_synchro), PROT_READ | PROT_WRITE,
                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+    if(s_synch == MAP_FAILED){
+            t_print("Failed to allocate memory for the semaphores!\n");
+    }
+
     sem_init(&(s_synch->ready_sem), 1, 1);
     sem_init(&(s_synch->client_list_sem), 1, 1);
     sem_init(&(s_synch->csac_sem), 1, 1);
@@ -399,6 +408,10 @@ static void start_server(int port_number)
     /* Init pointer to shared CSAC_filter data */
     cfd = mmap(NULL, sizeof(struct csac_filter_data), PROT_READ | PROT_WRITE,
                MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+    if(cfd == MAP_FAILED){
+            t_print("Failed to allocate memory for the CSAC filter data!\n");
+    }
 
     if( &(s_synch->ready_sem) == SEM_FAILED
             || &(s_synch->client_list_sem) == SEM_FAILED) {
