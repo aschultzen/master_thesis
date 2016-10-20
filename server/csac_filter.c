@@ -25,7 +25,7 @@
 #define ALARM_FREQ_COR_FILTER " [ALARM] Steer > predicted!\n"
 
 
-
+/* Calculate difference between two MJDs */
 static double mjd_diff_day(double mjd_a,
                           double mjd_b)
 {
@@ -33,6 +33,7 @@ static double mjd_diff_day(double mjd_a,
     return diff;
 }
 
+/* Get MJD as double */
 static double get_mjdf()
 {
     double mjd_today = 0;
