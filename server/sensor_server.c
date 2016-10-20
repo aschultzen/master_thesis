@@ -51,7 +51,7 @@ struct server_data *s_data;
 struct server_synchro *s_synch;
 
 /* Used by sig handlers */
-volatile sig_atomic_t done;
+//volatile sig_atomic_t done;
 
 /* Pointer to shared memory containing the client list */
 struct client_table_entry *client_list;
@@ -72,7 +72,7 @@ static void handle_sigchld(int signum);
 static void handle_sig(int signum);
 static void initialize_config(struct config_map_entry *conf_map,
                               struct server_config *s_conf);
-static void start_server(int port_number);
+static int start_server(int port_number);
 static int usage(char *argv[]);
 static void setup_session(int session_fd, struct client_table_entry *new_client);
 static int release_mem_piece(struct client_table_entry* release_me);
@@ -252,7 +252,7 @@ static void handle_sig(int signum)
         t_print(SIGINT_RECEIVED, getpid());
     }
     t_print(STOPPING_SERVER, getpid());
-    done = 1;
+    s_synch->done = 1;
 }
 
 /* Setting up the config structure specific for the server */
@@ -330,7 +330,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     * (Inner) Breaks (disconnects the client) if
     * respond < 0
     */
-    while(!done) {
+    while(!s_synch->done) {
         if(!respond(new_client)) {
             break;
         }
@@ -341,7 +341,7 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
 * Main loop for the server.
 * Forks everytime a client connects and calls setup_session()
 */
-static void start_server(int port_number)
+static int start_server(int port_number)
 {
     /* Initializing variables */
     int server_sockfd;
@@ -422,14 +422,19 @@ static void start_server(int port_number)
         exit(1);
     }
 
-    /*
+    
     pid_t f_pid;
     f_pid = fork();
     if(f_pid == 0) {
         t_print("Forked out CSAC filter [%d]\n", getpid());
         start_csac_filter(cfd);
         _exit(0);
-    }*/
+    }
+
+    /* Waiting for filter to start */
+    sleep(1);
+    if(s_synch->done)
+        return 1;
 
     /* Registering the SIGINT handler */
     struct sigaction sigint_action;
@@ -493,7 +498,8 @@ static void start_server(int port_number)
 
     int session_fd = 0;
     t_print(SERVER_RUNNING);
-    while (!done) {
+    while (!s_synch->done) {
+        fprintf(stderr, "Server done = %d\n", s_synch->done);
         t_print(WAITING_FOR_CONNECTIONS);
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
@@ -539,6 +545,7 @@ static void start_server(int port_number)
     /* Closing server FD */
     close(server_sockfd);
     t_print(SERVER_STOPPED);
+    return 1;
 }
 
 static int usage(char *argv[])

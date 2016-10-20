@@ -384,13 +384,13 @@ int start_csac_filter(struct csac_filter_data
     initialize_config(conf_map, &cfd->cf_conf);
     if(!load_config(conf_map, CSAC_FILTER_CONFIG_PATH,
                 CSAC_FILTER_CONFIG_ENTRIES)){
-        fprintf(stderr,"Failed to load config!\n");
-        done = 1;
+        t_print("CSAC model/filter: Failed to load config\n");
+        s_synch->done = 1;
         return -1;
     }
 
     /* Keep going as long as the server is running */
-    while(!done) {
+    while(!s_synch->done) {
         /* Acquiring lock*/
         sem_wait(&(s_synch->csac_sem));
 

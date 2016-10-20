@@ -38,7 +38,7 @@ struct server_config {
 * Made extern because the sessions should
 * exit if the server is given a SIGINT/TERM
 */
-extern volatile sig_atomic_t done;
+//extern volatile sig_atomic_t done;
 
 /* Also used by session and action */
 extern struct client_table_entry *client_list;

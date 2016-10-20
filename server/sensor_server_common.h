@@ -117,6 +117,7 @@ struct server_synchro {
     sem_t ready_sem;
     sem_t csac_sem;
     sem_t client_list_sem;
+    volatile sig_atomic_t done;
 };
 
 /*
