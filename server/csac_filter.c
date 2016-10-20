@@ -26,11 +26,29 @@
 
 
 
-static float mjd_diff_day(double mjd_a,
+static double mjd_diff_day(double mjd_a,
                           double mjd_b)
 {
-    float diff = mjd_a - mjd_b;
+    double diff = mjd_a - mjd_b;
     return diff;
+}
+
+static double get_mjdf()
+{
+    double mjd_today = 0;
+    const int BUFFER_LEN = 100;
+    char buffer[BUFFER_LEN];
+    memset(buffer, '\0', BUFFER_LEN);
+    if(!get_today_mjd(buffer)) {
+        t_print("get_mjdf(): Failed to calculate current MJD\n");
+        return 0;
+    } else {
+        if(sscanf(buffer, "%lf", &mjd_today) == EOF) {
+           t_print("get_mjdf(): Failed to cast MJD to float\n");
+           return 0;
+        }
+    }
+    return mjd_today;
 }
 
 static int load_telemetry(struct csac_model_data
@@ -76,30 +94,26 @@ static int load_telemetry(struct csac_model_data
         }
     }
 
-    double mjd_today = 0;
-    memset(buffer, '\0', BUFFER_LEN);
-    if(!get_today_mjd(buffer)) {
-        printf("Failed to calculate current MJD\n");
+    double mjd_today = get_mjdf();
+    if(!mjd_today){
         return 0;
-    } else {
-        if(sscanf(buffer, "%lf", &mjd_today) == EOF) {
-            return 0;
-        } else {
-            if(mjd_diff_day(mjd_today, cfd->today_mjd) >= 1
-                    && cfd->t_current != 0) {
-                cfd->new_day = 1;
-                cfd->today_mjd = mjd_today;
-                cfd->days_passed++;
-            }
-            // Initializing today_mjd, only done once at startup
-            if(cfd->today_mjd == 0) {
-                cfd->today_mjd = mjd_today;
-                cfd->days_passed = 0;
-            }
-            // Updating running MJD
-            cfd->t_current = mjd_today;
-        }
     }
+
+    if(mjd_diff_day(mjd_today, cfd->today_mjd) >= 1
+        && cfd->t_current != 0) {
+        cfd->new_day = 1;
+        cfd->today_mjd = mjd_today;
+        cfd->days_passed++;
+    }
+
+    // Initializing today_mjd, only done once at startup
+    if(cfd->today_mjd == 0) {
+        cfd->today_mjd = mjd_today;
+        cfd->days_passed = 0;
+    }
+
+    // Updating running MJD
+    cfd->t_current = mjd_today;
     return 1;
 }
 
@@ -229,6 +243,7 @@ int update_csac_model(struct csac_model_data
 {
     /* Load new telemetry into the filter */
     if(!load_telemetry(cfd, telemetry) ) {
+        fprintf(stderr,"Telemetry failed to load\n");
         return 0;
     }
 
@@ -473,27 +488,28 @@ int start_csac_model(struct csac_model_data
             raised_alarm = check_filters(cfd);
         }
 
+        /* If the alarm is raised */
         if(raised_alarm){
             if(csac_disc){
                 disable_csac_disc();
                 csac_disc = 0;
             }
-            double mjd_today = 0;
-            const int BUFFER_LEN = 100;
-            char buffer[BUFFER_LEN];
-            memset(buffer, '\0', BUFFER_LEN);
-            if(!get_today_mjd(buffer)) {
-                printf("Failed to calculate current MJD\n");
-            } else {
-                if(sscanf(buffer, "%lf", &mjd_today) == EOF) {
-                    printf("Failed to cast MJD to float\n");
-                } else {
-                    cfd->t_current = mjd_today;
-                    update_prediction(cfd);
-                }
+
+            double mjd_today = get_mjdf();
+            if(!mjd_today){
+                /* Calculating MJD */
+                cfd->t_current = mjd_today;
+
+                /* Updating model */
+                update_prediction(cfd);
+
+                /* Steering CSAC */
+                steer_csac(cfd->steer_prediction);
             }
         }
+    
 
+        /* If the alarm is not raised */
         if(!raised_alarm){
             if(!csac_disc){
                 enable_csac_disc();
