@@ -4,10 +4,11 @@
 #define CSAC_FILTER_CONFIG_PATH "cfilter_config.ini"
 
 /* CONFIG CONSTANTS */
-#define CONFIG_PRED_LOGGING "pred_logging: "
-#define CONFIG_PRED_LOG_PATH "pred_log_path: "
 #define CONFIG_CFD_PATH "cfd_state_path: "
 #define CONFIG_INIT_FROM_FILE "init_cfd_from_file: "
+#define CONFIG_TELEMETRY_LOG "telemetry_log: "
+#define CONFIG_LOG_PREDICTION "log_predict: "
+#define CONFIG_LOG_PRED_PATH "pred_log_path: "
 #define CONFIG_INIT_SSC "init_cfd_steer_smooth_current: "
 #define CONFIG_INIT_SST "init_cfd_steer_smooth_today: "
 #define CONFIG_INIT_SSP "init_cfd_steer_smooth_previous: "
@@ -17,7 +18,7 @@
 #define CONFIG_PRED_LIMIT "pred_limit: "
 #define CONFIG_TIME_CONSTANT "time_constant: "
 #define CONFIG_WARMUP_DAYS "warmup_days: "
-#define CSAC_FILTER_CONFIG_ENTRIES 13
+#define CSAC_FILTER_CONFIG_ENTRIES 14
 
 #define ALARM_STEER_TO_BIG "[ALARM] CSAC Steer > predicted!\n"
 
@@ -317,59 +318,62 @@ int update_csac_filter(struct csac_filter_data
 static void initialize_config(struct
                               config_map_entry *conf_map,
                               struct csac_filter_config *cf_conf)
-{
-    conf_map[0].entry_name = CONFIG_PRED_LOG_PATH;
+{   
+    conf_map[0].entry_name = CONFIG_CFD_PATH;
     conf_map[0].modifier = FORMAT_STRING;
-    conf_map[0].destination = &cf_conf->pred_log_path;
+    conf_map[0].destination = &cf_conf->cfd_state_path;
 
-    conf_map[1].entry_name = CONFIG_PRED_LOGGING;
+    conf_map[1].entry_name = CONFIG_INIT_FROM_FILE;
     conf_map[1].modifier = FORMAT_INT;
-    conf_map[1].destination = &cf_conf->pred_logging;
+    conf_map[1].destination = &cf_conf->init_cfd_from_file;
 
-    conf_map[2].entry_name = CONFIG_CFD_PATH;
-    conf_map[2].modifier = FORMAT_STRING;
-    conf_map[2].destination = &cf_conf->cfd_log_path;
+    conf_map[2].entry_name = CONFIG_INIT_SSC;
+    conf_map[2].modifier = FORMAT_DOUBLE;
+    conf_map[2].destination = &cf_conf->init_cfd_ssc;
 
-    conf_map[3].entry_name = CONFIG_INIT_FROM_FILE;
-    conf_map[3].modifier = FORMAT_INT;
-    conf_map[3].destination =
-        &cf_conf->init_cfd_from_file;
+    conf_map[3].entry_name = CONFIG_INIT_SST;
+    conf_map[3].modifier = FORMAT_DOUBLE;
+    conf_map[3].destination = &cf_conf->init_cfd_sst;
 
-    conf_map[4].entry_name = CONFIG_INIT_SSC;
+    conf_map[4].entry_name = CONFIG_INIT_SSP;
     conf_map[4].modifier = FORMAT_DOUBLE;
-    conf_map[4].destination = &cf_conf->init_cfd_ssc;
+    conf_map[4].destination = &cf_conf->init_cfd_ssp;
 
-    conf_map[5].entry_name = CONFIG_INIT_SST;
+    conf_map[5].entry_name = CONFIG_PHASE_LIMIT;
     conf_map[5].modifier = FORMAT_DOUBLE;
-    conf_map[5].destination = &cf_conf->init_cfd_sst;
+    conf_map[5].destination = &cf_conf->phase_limit;
 
-    conf_map[6].entry_name = CONFIG_INIT_SSP;
+    conf_map[6].entry_name = CONFIG_STEER_LIMIT;
     conf_map[6].modifier = FORMAT_DOUBLE;
-    conf_map[6].destination = &cf_conf->init_cfd_ssp;
+    conf_map[6].destination = &cf_conf->steer_limit;
 
-    conf_map[7].entry_name = CONFIG_PHASE_LIMIT;
+    conf_map[7].entry_name = CONFIG_TIME_CONSTANT;
     conf_map[7].modifier = FORMAT_DOUBLE;
-    conf_map[7].destination = &cf_conf->phase_limit;
+    conf_map[7].destination = &cf_conf->time_constant;
 
-    conf_map[8].entry_name = CONFIG_STEER_LIMIT;
-    conf_map[8].modifier = FORMAT_DOUBLE;
-    conf_map[8].destination = &cf_conf->steer_limit;
+    conf_map[8].entry_name = CONFIG_WARMUP_DAYS;
+    conf_map[8].modifier = FORMAT_INT;
+    conf_map[8].destination = &cf_conf->warmup_days;
 
-    conf_map[9].entry_name = CONFIG_TIME_CONSTANT;
+    conf_map[9].entry_name = CONFIG_INIT_SSY;
     conf_map[9].modifier = FORMAT_DOUBLE;
-    conf_map[9].destination = &cf_conf->time_constant;
+    conf_map[9].destination = &cf_conf->init_cfd_ssy;
 
-    conf_map[10].entry_name = CONFIG_WARMUP_DAYS;
-    conf_map[10].modifier = FORMAT_INT;
-    conf_map[10].destination = &cf_conf->warmup_days;
+    conf_map[10].entry_name = CONFIG_PRED_LIMIT;
+    conf_map[10].modifier = FORMAT_DOUBLE;
+    conf_map[10].destination = &cf_conf->pred_limit;
 
-    conf_map[11].entry_name = CONFIG_INIT_SSY;
-    conf_map[11].modifier = FORMAT_DOUBLE;
-    conf_map[11].destination = &cf_conf->init_cfd_ssy;
+    conf_map[11].entry_name = CONFIG_TELEMETRY_LOG;
+    conf_map[11].modifier = FORMAT_STRING;
+    conf_map[11].destination = &cf_conf->telemetry_log_path;
 
-    conf_map[12].entry_name = CONFIG_PRED_LIMIT;
-    conf_map[12].modifier = FORMAT_DOUBLE;
-    conf_map[12].destination = &cf_conf->pred_limit;
+    conf_map[12].entry_name = CONFIG_LOG_PREDICTION;
+    conf_map[12].modifier = FORMAT_INT;
+    conf_map[12].destination = &cf_conf->pred_logging;
+
+    conf_map[13].entry_name = CONFIG_LOG_PRED_PATH;
+    conf_map[13].modifier = FORMAT_STRING;
+    conf_map[13].destination = &cf_conf->pred_log_path;
 }
 
 int start_csac_filter(struct csac_filter_data
@@ -420,7 +424,7 @@ int start_csac_filter(struct csac_filter_data
         }
 
         /* Dump filter data for every iteration */
-        dump_cfd(cfd->cf_conf.cfd_log_path);
+        dump_cfd(cfd->cf_conf.cfd_state_path);
 
         sleep(0.5);
         memset(program_buf, '\0', 200);

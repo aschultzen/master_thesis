@@ -21,8 +21,9 @@
 
 struct csac_filter_config {
     int pred_logging;
+    char cfd_state_path[PATH_LENGTH_MAX];
+    char telemetry_log_path[PATH_LENGTH_MAX];
     char pred_log_path[PATH_LENGTH_MAX];
-    char cfd_log_path[PATH_LENGTH_MAX];
     int init_cfd_from_file;
     double init_cfd_ssc;
     double init_cfd_sst;
