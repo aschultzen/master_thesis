@@ -17,8 +17,10 @@
 #define CONFIG_PRED_LIMIT "pred_limit: "
 #define CONFIG_TIME_CONSTANT "time_constant: "
 #define CONFIG_WARMUP_DAYS "warmup_days: "
-#define ALARM_STEER_TO_BIG "[ALARM] CSAC Steer > predicted!\n"
 #define CSAC_FILTER_CONFIG_ENTRIES 13
+
+#define ALARM_STEER_TO_BIG "[ALARM] CSAC Steer > predicted!\n"
+
 
 
 static float mjd_diff_day(double mjd_a,
