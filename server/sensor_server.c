@@ -50,9 +50,6 @@ struct server_data *s_data;
 /* Shared synchro elements */
 struct server_synchro *s_synch;
 
-/* Used by sig handlers */
-//volatile sig_atomic_t done;
-
 /* Pointer to shared memory containing the client list */
 struct client_table_entry *client_list;
 
@@ -62,8 +59,8 @@ struct client_table_entry **client_list_map;
 /* Pointer to shared memory containing config */
 struct server_config *s_conf;
 
-/* Pointer to shared CSAC_filter data */
-struct csac_filter_data *cfd;
+/* Pointer to shared CSAC model data */
+struct csac_model_data *cfd;
 
 static void remove_client_by_pid(pid_t pid);
 void remove_client_by_id(int id);
@@ -406,7 +403,7 @@ static int start_server(int port_number)
     sem_init(&(s_synch->csac_sem), 1, 1);
 
     /* Init pointer to shared CSAC_filter data */
-    cfd = mmap(NULL, sizeof(struct csac_filter_data), PROT_READ | PROT_WRITE,
+    cfd = mmap(NULL, sizeof(struct csac_model_data), PROT_READ | PROT_WRITE,
                MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
     if(cfd == MAP_FAILED){
@@ -427,7 +424,7 @@ static int start_server(int port_number)
     f_pid = fork();
     if(f_pid == 0) {
         t_print("Forked out CSAC filter [%d]\n", getpid());
-        start_csac_filter(cfd);
+        start_csac_model(cfd);
         _exit(0);
     }
 
@@ -538,7 +535,7 @@ static int start_server(int port_number)
     /* Freeing */
     munmap(client_list, sizeof(struct client_table_entry));
     munmap(s_data, sizeof(struct server_data));
-    munmap(cfd, sizeof(struct csac_filter_data));
+    munmap(cfd, sizeof(struct csac_model_data));
     munmap(s_synch, sizeof(struct server_synchro));
     free(client_list_map);
 

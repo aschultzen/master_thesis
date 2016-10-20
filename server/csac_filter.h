@@ -19,7 +19,7 @@
 
 #include "sensor_server.h"
 
-struct csac_filter_config {
+struct csac_map_config {
     int pred_logging;
     char cfd_state_path[PATH_LENGTH_MAX];
     char telemetry_log_path[PATH_LENGTH_MAX];
@@ -36,7 +36,7 @@ struct csac_filter_config {
     int warmup_days;
 };
 
-struct csac_filter_data {
+struct csac_model_data {
     /* Phase */
     double phase_current;
 
@@ -80,7 +80,7 @@ struct csac_filter_data {
     int fqf_status;
 
     /* Config */
-    struct csac_filter_config cf_conf;
+    struct csac_map_config cf_conf;
 };
 
 /** @brief Updates the state of the filter from data
@@ -90,7 +90,7 @@ struct csac_filter_data {
  *  @param telemetry String of telemetry from the CSAC
  *	@return 0 if error, 1 if success.
  */
-int update_csac_filter(struct csac_filter_data *cfd, char *telemetry);
+int update_csac_model(struct csac_model_data *cfd, char *telemetry);
 
 /** @brief Initializes the state of the filter by using
  *		   telemetry from the CSAC.
@@ -99,7 +99,7 @@ int update_csac_filter(struct csac_filter_data *cfd, char *telemetry);
  *  @param telemetry String of telemetry from the CSAC
  *	@return 0 if error, 1 if success.
  */
-int init_csac_filter(struct csac_filter_data *cfd, char *telemetry);
+int init_csac_model(struct csac_model_data *cfd, char *telemetry);
 
 /** @brief Updates the state of the filter from data
  *		   received from the CSAC
@@ -107,13 +107,13 @@ int init_csac_filter(struct csac_filter_data *cfd, char *telemetry);
  *  @param cfd State of filter
  *	@return The predicted steer value as double.
  */
-double get_steer_predict(struct csac_filter_data *cfd);
+double get_steer_predict(struct csac_model_data *cfd);
 
 /** @brief Starts the csac_filter
  *
  *  @param cfd State of filter
  *  @return 1 if filter started successfully, 0 if not.
  */
-int start_csac_filter(struct csac_filter_data *cfd);
+int start_csac_model(struct csac_model_data *cfd);
 
 #endif /* !CSAC_FILTER_H */
