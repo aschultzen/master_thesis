@@ -20,9 +20,9 @@
 #define CONFIG_WARMUP_DAYS "warmup_days: "
 #define CSAC_FILTER_CONFIG_ENTRIES 14
 
-#define ALARM_FAST_TIMING_FILTER "[ALARM] Phase > Limit\n"
-#define ALARM_STEER_TO_BIG "[ALARM] CSAC Steer > static limit!\n"
-#define ALARM_FREQ_COR_FILTER "[ALARM] Steer > predicted!\n"
+#define ALARM_FAST_TIMING_FILTER " [ALARM] Phase > Limit\n"
+#define ALARM_STEER_TO_BIG " [ALARM] CSAC Steer > static limit!\n"
+#define ALARM_FREQ_COR_FILTER " [ALARM] Steer > predicted!\n"
 
 
 
@@ -379,7 +379,7 @@ void disable_csac_disc()
     run_command("python query_csac.py Md",
                 program_buf);
 
-    fprintf(stderr,"Disabling CSAC disciplining: [%s]\n", program_buf);
+    fprintf(stderr,"Disabling CSAC disciplining: %s\n", program_buf);
 
     /* Releasing lock on CSAC serial*/
     sem_post(&(s_synch->csac_sem));
@@ -398,7 +398,7 @@ void enable_csac_disc()
     run_command("python query_csac.py MD",
                 program_buf);
 
-    fprintf(stderr,"Enabling CSAC disciplining: [%s]\n", program_buf);
+    fprintf(stderr,"Enabling CSAC disciplining: %s\n", program_buf);
 
     /* Releasing lock on CSAC serial*/
     sem_post(&(s_synch->csac_sem));
@@ -469,7 +469,9 @@ int start_csac_model(struct csac_model_data
         }
 
         /* checking alarm */
-        raised_alarm = check_filters(cfd);
+        if(cfd->days_passed >= 2){
+            raised_alarm = check_filters(cfd);
+        }
 
         if(raised_alarm){
             if(csac_disc){

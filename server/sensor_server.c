@@ -496,7 +496,6 @@ static int start_server(int port_number)
     int session_fd = 0;
     t_print(SERVER_RUNNING);
     while (!s_synch->done) {
-        fprintf(stderr, "Server done = %d\n", s_synch->done);
         t_print(WAITING_FOR_CONNECTIONS);
         session_fd = accept(server_sockfd,0,0);
         if (session_fd==-1) {
