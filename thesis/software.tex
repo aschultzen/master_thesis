@@ -1,0 +1,596 @@
+\documentclass[../main.tex]{subfiles}
+
+\chapter{SMACC Implementation}
+\section{A Sensor Server/Client model}
+Numerous approaches where considered when planning the implementation of the SMACC software (See \ref{da} for alternate approaches). The approach that was chosen is a Client/Server model which we have named the "Sensor Server". The Sensor Server architecture is based on the idea that a GNSS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Server and Sensor communicates over a network using IP. The Sensor runs a trivial program that receives data from a GNSS receiver, formats the data according to Sensor Server protocol and sends the data to a Server (more about the client \ref{sensor_client}). The Server on the other hand, is responsible for the heavy lifting. The data gathered from the Sensors are applied to what we call \textit{filters}(\ref{filters}. The filters are just algorithms that are able to detect abnormalities in the data, thus making it possible to react to a spoofing or jamming attempt. Server tasks include:
+\begin{itemize}
+  \item Handle connections to Sensors.
+  \item Update structures as Sensor status changes (disconnects or gets kicked out).
+  \item Communication with the CSAC and updating the CSAC model.
+  \item Sensor data analysis and filter updates.
+  \item Raising alarms based on filter status.
+  \item Controlling the CSAC.
+\end{itemize}
+By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect(\ref{cspakp}).However, every router and switch between a Sensor and the Server imposes a delay on the stream of packets between the two, especially when compared with an approach where the GNSS receiver where cabled directly to a SMACC. This might make the Sensor Server implementation less responsive. It is of our understanding that whatever increase in complexity the Client/Server introduces to our approach, the Sensor Server makes up for by eliminating the need for potential miles of signal cables and signal amplifiers. 
+
+\begin{figure}\label{bd}
+  \includegraphics[scale=0.4]{master_sketch_arrows.pdf}
+   \caption[CSAC SMACC Block diagram]{A block diagram of our proposed solution}
+\end{figure}
+
+\section{The Sensor Server}
+In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained. The Server core(\ref{server_core}) consists of the source code in \texttt{sensor\_server.c}. The Parser and Handler spans over texttt{session.c} and texttt{actions.c}. The CSAC model and its filters source code is in \texttt{csac\_filter.c}. Lastly, the filter using GNSS data is in \texttt{filters.c}.  
+
+\subsection{Server core}\label{server_core}
+\begin{figure}
+\centering
+  \includegraphics[scale=0.3]{server_core.pdf}
+   \caption[Socket Server Core execution flow block diagram]{The block diagram shows an abstracted view of the Sensor Servers Core.}
+   \label{server_core}
+\end{figure}
+The "Server core" is the main process and the parent of every process created during the life of the Sensor Server. It spawns the process maintaining the CSAC model as well as new processes for every client that connects. Figure \ref{server_core} is a block diagram of the Server core. 
+
+\begin{itemize} % Sources needed here?
+  \item The Server software takes one parameter to start, the port. If the parameter are missing or the parameter is illegal, a string containing usage information is printed and the program exits. Because the Server also is responsible for communication with the CSAC, it needs the rights to access the serial port connected to the CSAC \footnote{The easiest way to achieve this is to run the program as \texttt{sudo} or login as root. The best solution would probably be to add the user to a group with the right permissions. This is often the \texttt{dialout} group}.
+  \item The configuration is initialized and loaded. If the configuration fails to load, the Server prints and error message and exits.
+  \item The \texttt{client\_list}, a shared memory segment containing a linked list containing all the clients, is initialized. See section \ref{clms} and \ref{linked_list} for more about the client list shared memory segment and linked list implementation.  
+  \item Shared memory segments and semaphores are initialized and allocated. See section \ref{shared_mem_sem} for more. If the allocation fails, the Server prints an error message and exits.
+  \item The process responsible for maintaining the CSAC model and filter s forked out. If the fork fails, the server prints an error message and exits. See section \ref{csac_model} for more about the CSAC model.
+  \item Handler for SIGINT (interrupt) SIGTERM (terminate) and SIGCHLD (child process is interrupted or terminated) is registered.
+  \begin{itemize}
+      \item When a process exits, a SIGCHLD signal is sent to the parent. When a client disconnects from the server, the process that handled the client exits. Ideally, the client disconnects from the server by sending a protocol compliant "disconnect request". This way, the server can handle the disconnect in a controlled manner and update its client list when the client disconnects. However, this is not always the case and if the client disconnects abruptly and without a warning, the server still needs to handle it. Therefore, when a SIGCHLD signal is received, the server iterates through its client list and finds the client who's PID matches the sender of the signal and removes it from the list. In figure \ref{server_core} this routine is the part in the red dotted box. 
+  \end{itemize}
+  \item The socket is initialized and marked for listening. See section \ref{sockets} for more. 
+  \item A loop is entered. The loop breaks when \texttt{volatile sig\_atomic\_t done} equals 0. If the loop is broken, the semaphores are destroyed and all allocated memory is freed, the servers socket file descriptor is closed and the Server exits. See section \ref{server_synchro} for more about variables used in synchronization mechanisms.
+  \item When a client connects, the server checks if the maximum number of clients has been reached. If this number has been reached, an error message is written back to the client and the clients socket file descriptor is closed. If the maximum number of clients has not yet been reached, the client list gets updated and a fork is performed.
+  The parent process then resumes the loop. 
+  \item The process that just forked out for the new connection, closes the server socket file descriptor it inherited from its parent. See section \ref{sockets} for more about sockets and forking.
+  \item The new process then updates its client table entry and proceeds to the listening loop. This is covered in section \ref{parser_and_handler}. See section \ref{client_table_entry} for more about the client table entry struct.
+\end{itemize}
+
+\subsection{CSAC model}\label{csac_model}
+\begin{figure}
+\centering
+  \includegraphics[scale=0.30]{csac_model.pdf}
+   \caption[CSAC model execution flow block diagram]{Block diagram showing the flow of execution in the CSAC model}
+   \label{figure_csac_model}
+\end{figure}
+Conceptually, the CSAC model and the filter that uses the model is two separate tasks. In practice however, they are intertwined as figure \ref{figure_csac_model} suggests.
+
+\begin{itemize}
+  \item The configuration for the model is loaded. The configuration includes values defining the accepted limits for steering and phase difference. It also includes values that can be used to restore the state of the model thus reducing the time it takes for the model to become suitable for the use as a reference. If the loading of the configuration fails, and error message is printed, the \texttt{volatile sig\_atomic\_t done} is set to 1 and the process exits. This also breaks the server core (\ref{server_core}) loop. 
+  \item A loop is entered. The loop breaks when \texttt{volatile sig\_atomic\_t done} equals 0. 
+  \item The CSAC lock(\ref{shared_mem_sem}) is acquired and once the telemetry is queried from the CSAC, it is released again.
+  \item If the model is not initialized, telemetry data is used to initialize it. If "state-restoring" values are present in the earlier loaded configuration, these will now also be used to initialize the model even further.
+  \item A check is done to see if the model has been running for at least 48 hours. If it has, it is ready to be used a reference for the filters. See section \ref{csac_filters} for more about the CSAC filters.
+  \item The telemetry received from the CSAC is used to update the model. 
+  \item A check is done to see how if it is time to calculate the daily prediction values. Every 24 hours, the predictions are calculated. The models keeps track of the prediction for yesterday and for today. By using these two points of data, an estimation of the predicted steer can be calculated. 
+\end{itemize}
+
+\subsection{Parser and Handler}\label{parser_and_handler}
+\begin{sidewaysfigure}
+\centering
+  \includegraphics[scale=0.3]{server_flow.pdf}
+   \caption[Socket Server execution flow block diagram]{The block diagram shows an abstracted view of execution after a client has connected to the server and a \texttt{fork()} has been performed.}
+   \label{server_flow}
+\end{sidewaysfigure}
+\begin{figure}
+\centering
+  \includegraphics[scale=0.40]{actions_core.pdf}
+   \caption[Socket Server execution flow block diagram]{The block diagrams shows and abstracted view of the execution after data has been received from a client.}
+   \label{actions_core}
+\end{figure}
+
+The parser and handler are responsible for parsing data received from a client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. Figure \ref{server_flow} and \ref{actions_core} are block diagrams showing the execution flow for this part of the server.  
+\begin{itemize}
+  \item A loop is entered. The loop is broken when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. This is the same variable that is used in the Server core \ref{server_core} loop and for a good reason: If the server exits, then its children should too. 
+  \item If reading from the socket fails, the client gets disconnected. If it is successful, the client table entry for the connected client is checked to see if the client has been marked to be kicked. If it is, it gets disconnected. 
+  \item The data received from the client is parsed and checked against the protocol. If the request received from the client doesn't match any of the supported requests or commands, the request is ignored and the loop is entered again. 
+  \item If the request received is valid, the clients ID is checked to determine whether or not it has identified itself. If the client has identified itself, the request gets carried out. 
+  \item If the request received is to handle NMEA data, the checksum for that NMEA data is calculated. If the checksum check fails, the data is discarded. If it succeeds, the data is copied into \texttt{nmea\_container} struct (\ref{nmea_cont}) for easier handling.
+  \item The client is marked as ready for processing and a ready check is commenced. The ready check is used to make sure that all the sensors have received NMEA data and are ready to have filters applied. Once the filters have been applied, the lock is released and normal execution resumes.
+  \item If the clients ID is 0, it is considered unidentified and any other requests but to identify itself, is ignored.
+  \item If the client is attempting to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempted to assume the role of a Sensor, the client will get disconnected. If it attempted to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. The reason why a Sensor would get disconnected and a monitor would not, is simple: When connecting the Sensor to the server, it should not be any doubt whether or not it has been accepted. If something is wrong, it is better that a user of the system has to deal with it there and then and configure the Sensor correct rather than allowing the user to do mistakes which reduces the efficiency of the system. 
+  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load KRL (\ref{kvsrlf}) filter data into the clients KRL filter struct. The server will attempt to load the data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data.
+\end{itemize}
+
+\subsection{GNSS filters}
+\begin{figure}
+\centering
+  \includegraphics[scale=0.3]{filters.pdf}
+   \caption[Order of execution in the filter]{Block diagram show the order of execution in the filter(s)}
+   \label{filter}
+\end{figure}
+By configuring the Sensor Server with the location of the different Sensors, the server can trigger an action if a Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is higher or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to check whether or not the latitude part of the GNSS receivers solved position is within "safe" (not spoofed) range.
+\begin{code}
+  \caption{Listing shows sample of code taken from \texttt{filters.c} line 66. The code is part of the algorithm that compares the known position of a Sensor with the Sensor resolved position. The code has been edited for clarity.}
+    \begin{minted}
+    [
+      fontsize=\footnotesize,
+      fontfamily=tt,
+      linenos=true
+    ]
+    {c}
+        if(latitude_current > latitude_reference + latitude_deviation) {
+            moved = 1;
+            lat_disturbed = HIGH;
+        } else if(latitude_current < latitude_ref - latitude_dev) {
+            moved = 1;
+            latitude_disturbed = LOW;
+        } else {
+            latitude_disturbed = SAFE;
+        }
+    \end{minted}
+    \label{ref_dev_filter_latitude}
+\end{code}
+
+When a Sensor connects to the Server and identifies itself, the Server will attempt to load a file containing the location of the Sensor as well as the accepted deviation values for the solved position. Listing \ref{krl_config} shows an example of such a file.
+
+\begin{code}
+  \caption{Known vs Reported location filter configuration file}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    alt_ref: 123.8
+    lon_ref: 1102.1948
+    lat_ref: 5958.5448
+    speed_ref: 0
+    alt_dev: 10
+    lon_dev: 0.005
+    lat_dev: 0.005
+    speed_dev: 10
+    \end{minted}
+    \label{krl_config}
+\end{code}
+
+\begin{figure}
+\centering
+  \includegraphics[scale=0.3]{server_call_graph.pdf}
+   \caption[Sensor Server simplified call graph]{Simplified call graph for the Sensor Server.}
+   \label{server_call_graph}
+\end{figure}
+
+\subsection{CSAC filters}\label{csac_filters}
+Figure \ref{figure_csac_model} shows both the CSAC model and filter in one figure. As explained in section \ref{csac_model}, the model of the CSAC and the filters based upon, are closely related. 
+\begin{itemize}
+  \item Once the model has been running for 48 hours, it is ready to be used as a reference, filtering out abnormal data.
+  \item The filters are checked. There are currently only 2 filters implemented using the CSAC model as reference:
+  \begin{itemize}
+    \item \textit{Fast timing filter}. This is a simple filter that compares the current phase reported by the CSAC with a pre-configured limit. If the current phase is higher, the filter is triggered.
+    \item \textit{Frequency correction filter}. This is a more sophisticated filter. It uses the CSAC model to calculate a predicted steer value and compares it to the current steer value. If the current steer is too big, the filter is triggered. 
+  \end{itemize}
+  \item If any of the filters are triggered, the alarm is raised. The state of the alarm is expressed by an \texttt{int} that is either 0 or 1. If the alarm was not raised, the disciplining of the CSAC is enabled if it was disabled, and the telemetry data is used to update the model.
+  \item If the alarm is raised, the disciplining of the CSAC is deactivating, thus protecting the CSAC from being affected by the spoofing. The model is now used to calculate steer values that are applied to the CSAC instead.
+\end{itemize}
+
+\subsection{Roles}\label{roles}
+A client connected to the server can have two roles. It can either be a Sensor or a Monitor. The Sensor role is already explained. The Monitor role was added in order for a user of the Sensor Server to connect to the server and check status or issue commands. For a client to assume the role of a Monitor, the client has to pick a negative integer as ID number. This way, the Server does not expect you as a client to report any NMEA data the way it would with a Sensor. The Monitor role can also be used to interface with the Server. See (\ref{interface}) for more.
+
+\subsection{Sockets and Forks}\label{sockets}
+In order to implement the Server/Client model, the Sensor Server and Sensor Client is implemented using the Linux Socket API. The API is based on BSD sockets and are available in in almost all Unix-like operating system (\cite{LINUX_KERNEL}, p.610). Listing \ref{server_connect} shows a sample of code taken from one of the Sensor Server's source file. The sample shows the following:
+\begin{itemize}
+  \item Line 4: The server waits for a connection. \texttt{accept()} is a blocking function. The code does not continue past this point before a client has connected.  
+  \item Line 12: A client has connected. The server creates a new process to handle the new connection. The new process is created using \texttt{fork()}.
+  \item Line 13: Both the new process and its parent enters the if statements regarding its process identification (PID). The parent does not match the criteria of the ifs and returns to the top of the loop. The child on the other hand, matches the criteria for the if sentence at line 15.
+  \item Line 16: The child process closes it's parent's socket file descriptor and continues to setup the session at the next line.
+\end{itemize}
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server.c}(\ref{sensor_server.c}, line 356). The sample has been edited for clarity purposes.}
+  \begin{minted}
+  [
+  fontsize=\footnotesize,
+  fontfamily=tt,
+  linenos=true
+  ]
+  {c}
+    listen(server_sockfd,SOMAXCONN);
+    int session_fd = 0;
+    while (!done) {
+        session_fd = accept(server_sockfd,0,0);
+        if (session_fd==-1) {
+            if (errno==EINTR) continue;
+            t_print(ERROR_CONNECTION_ACCEPT,errno);
+        }
+        if(number_of_clients == max_clients) {
+            close(session_fd);
+        } else {
+            pid_t pid=fork();
+            if (pid==-1) {
+                printf(ERROR_FAILED_FORK, errno);
+            } else if (pid==0) {
+                close(server_sockfd);
+                setup_session(session_fd, new_client);
+                close(session_fd);
+                _exit(0);
+            } else {
+                close(session_fd);
+            }
+        }
+    }
+  \end{minted}
+  \label{server_connect}
+\end{code}
+Even though the \texttt{accept()} function in the sockets API is blocking, CPU cycles are not wasted. If a Socket call cannot be completed immediately, the process who issued the call will be put to sleep thus enabling the scheduler to schedule other processes for execution until conditions are right for the sleeping process (\cite{UNIXN_WBA}, p.435). It is also possible to use non-blocking socket calls, and while this often increases performance, it also increases complexity, and was therefor not chosen for this approach. It's also worth mentioning that one could create \textit{threads} instead of forking out processes for new connections. The creation of threads are typically less expensive in terms of CPU cycles than the creation of processes. Processes on the other hand, always have their own virtual address space as opposed to threads who share their address space with the other threads withing the process. This makes programming with threads more complex and the result of a crash more severe as it affects the other threads withing the same process as well. 
+
+\subsection{Shared memory \& Semaphores}\label{shared_mem_sem}
+As mentioned earlier (\ref{sockets}), every time a client connects, a new process is born to take care of the communication with the new client. Since every process has got its own virtual address space, the processes are isolated from each other. This posed a challenge because we wanted the Sensor Server as a whole with all processes to be able to communicate with each other and share data and communicate. IPC (inter process communication) is nothing new, and one way to accomplish it, is to use shared memory segments. The sensor server architecture uses several shared memory segments. The pointers to the shared memory segments are declared as \textit{extern} in \texttt{sensor\_server.h}. The extern keyword means the the variable has an external linkage, making it visible from other files than the one in which it is defined. Listing \ref{extern_structs} shows a code sample taken from \texttt{sensor\_server.h} where the shared memory segments are declared.
+
+\begin{code}
+  \caption{Sample of code from \texttt{sensor\_server.h}(\ref{sensor_server.h}, line 356) where shared memory segments are declared.}
+  \begin{minted}
+  [
+  fontsize=\footnotesize,
+  fontfamily=tt,
+  linenos=true
+  ]
+  {c}
+    extern volatile sig_atomic_t done;
+    extern struct client_table_entry *client_list;
+    extern struct server_data *s_data;
+    extern struct server_synchro *s_synch;
+    extern struct server_config *s_conf;
+    extern struct csac_filter_data *cfd;
+  \end{minted}
+  \label{extern_structs}
+\end{code}
+
+These shared memory segments have different usage. The \texttt{client\_list} points to a shared segment allocated for storing a list of all connected clients. \texttt{s\_data} contains information about the server, \texttt{s\_synch} contains semaphores used to lock down shared resources, \texttt{s\_conf} is the servers configuration and \texttt{cfd} is the CSAC filters data and state. Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
+
+\subsubsection{Client list memory segment}\label{clms}
+Every time a client connects, it is given a piece of shared memory where it can store its data. This piece of shared memory is used as a node in a linked list. The linked list structure, stored in the shared memory segment is available to all the processes spawned by the server. This segment is static in size and is allocated once and is never changed during the whole life of the Server. The size of the segment is determined by the maximum number of allowed clients, a configurable value read from the configuration file every time the server is started. Ideally, the segment should be resize-able and the size should depend the amount of connected client. M. Kerrisk explains in his "The Linux Programming Interface" \cite{kerrisk2010linux}, that most UNIX implementations does not support resizing of a memory map like the shared memory segments used in the Sensor Server. However, there is non-portable and Linux specific system call, \texttt{mremap()} that can be used on Linux system for this purpose. Unfortunately, the address returned by \texttt{mremap()} might be different from the old address to the shared memory segment. This would mean that pointer inside the shared segment might no longer be valid after a resize operation has been done. A way to avoid this problem caused by the remapping, would be to use offsets instead of pointers when referring to addresses in the mapped region. This would however increase the complexity of the server. The potential waste of memory would never be substantial when considering that the size of the \texttt{client\_table\_entry} struct is a mere 4664 bytes. This is why the current implementation with shared memory segment of static size was chosen.
+
+\subsubsection{Using the client list memory segment}\label{create_client}
+As previously explained, the list of clients are stored in a shared memory segment using a linked list structure. In order to keep tabs on what part of the shared memory segment is in use, a simple map of the memory is used (\ref{memory_map_figure}):
+\begin{figure}
+\centering
+  \includegraphics[scale=0.3]{mem_layout}
+   \caption[Memory map layout example]{Figure is showing the relation between the shared memory segment containing the client list and the memory map}
+   \label{memory_map_figure}
+\end{figure} 
+
+The map is an array containing pointers to the client list segment. These pointers are offset by the size of the \texttt{client\_table\_struct} and maps 1:1 to what can be thought of as individual \textit{pieces} of memory in the client list shared memory segment. A free piece of memory is in the map represented by a pointer that is not NULL. Listing \ref{get_mem_piece} shows the function that iterates through the map to find a free piece. 
+
+\begin{code}
+  \caption{Sample of code showing the \texttt{get\_mem\_piece()} function.}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    static struct client_table_entry* get_mem_piece()
+    {
+        int i;
+        for(i = 1; i < s_conf->max_clients; i++){
+            if(client_list_map[i] != NULL){
+                struct client_table_entry *tmp = client_list_map[i];
+                client_list_map[i] = NULL;
+                return tmp;
+            }
+            i++;
+        }
+        return NULL;
+    }
+    \end{minted}
+    \label{get_mem_piece}
+\end{code}
+
+\subsubsection{Client linked list}\label{linked_list}
+Since the C standard does not provide data structures like linked lists, I had to choose between reinventing the wheel or finding some implementation to drop into the project. While studying another subject, I found a guide on how to use the linked list implementation from the linux kernel source code (\cite{KAZU_LIST}) in a user space program. Since the implementation was solid, well tested and had many useful functions, i decided to use it. The modified header file containing all the code, is GPL licensed.  
+
+\begin{code}
+  \caption{Sample of code taken from \texttt{list.h} line 70}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct list_head {
+      struct list_head *next, *prev;
+    };
+    \end{minted}
+    \label{struct_client_table}
+\end{code}
+
+The fields of the struct is pretty self explanatory. There is a pointer to the previous node and one to the next. One of the members of the \texttt{client\_table\_list} is a struct of type \texttt{list\_head}. This is what makes it possible to traverse the list. Figure (\ref{linked_list_figure}) shows pieces of the shared memory segment linked together in a linked list structure.
+
+\begin{figure}
+\centering
+  \includegraphics[scale=0.3]{linked_list.pdf}
+   \caption[Linked list example]{Block diagram show an example of linked list state}
+   \label{linked_list_figure}
+\end{figure}  
+
+\begin{code}
+  \caption{Listing shows the use of MMAP to create an anonymous map of memory to be used as a shared memory segment}
+  \begin{minted}
+  [
+  fontsize=\footnotesize,
+  fontfamily=tt,
+  linenos=true
+  ]
+  {c}
+  client_list = mmap(NULL, 
+                    (s_conf->max_clients * sizeof(struct client_table_entry)), 
+                    PROT_READ | PROT_WRITE,
+                    MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE,
+                    -1, 0);
+  \end{minted}
+\end{code}
+
+\subsubsection{Semaphores}
+Having shared memory segments comes with a price. Whenever two or more processes are working on the same data set, they are prone to create race conditions, deadlocks and data corruption. Therefore, semaphores are used to lock the segments during read and write operations.
+
+\begin{code}
+  \caption{Function for removing disconnected clients from list of clients}
+  \begin{minted}
+  [
+  fontsize=\footnotesize,
+  fontfamily=tt,
+  linenos=true
+  ]
+  {c}
+    void remove_client_by_id(int id)
+    {
+        struct client_table_entry* cli;
+        struct client_table_entry* temp_remove;
+
+        sem_wait(&(s_synch->client_list_sem));
+        list_for_each_entry_safe(cli, temp_remove,&client_list->list,
+                                 list) {
+            if(cli->client_id == id) {
+                list_del(&cli->list);
+                s_data->number_of_clients--;
+            }
+        }
+        sem_post(&(s_synch->client_list_sem));
+    }
+  \end{minted}
+  \label{removeclient}
+\end{code}
+
+Listing \ref{removeclient} shows a typical example of a function locking down access to the shared memory segment containing the list of connected clients, by using a semaphore. In the example (\ref{removeclient}) a client has been disconnected from the server and the the list of connected clients are being updated. The semaphore is necessary to make sure that another process is not attempting to read or write to the segment while the data is deleted. If another process had attempted to execute the \texttt{sem\_wait()} on the semaphore, it would have been put in a queue. Depending on the operating system, it would most likely signal the scheduler to do a context switch since the resource was busy anyway and it therefor should relinquish control of the CPU. Once the semaphores is raised, it can be lowered again by another process. It is important to note that the semaphores are not a function of, or related to the memory segments by anything other than the name. The semaphores are just "flags" used to control access to a resource. There is no automatic raising or lowering of the associated semaphores by reading or writing to a specific shared memory segment. All functions in the sensor server does however use semaphores when dealing with shared memory segments in order to avoid deadlock and race conditions.
+
+\section{CSAC Communication}\label{csac_com}
+\begin{figure}[!htb]
+\centering
+  \includegraphics[scale=0.4]{csac_serial.pdf}
+   \caption[Block diagram showing the CSAC connected to a PC]{Block diagram showing the CSAC connected to a PC}
+   \label{csac_filter}
+\end{figure}
+
+The SA.45 CSAC includes a serial interface that enables communication with a PC by using a COM port. As mentioned earlier, our approach relies heavily on the ability to communicate with the CSAC.
+Information can be queried by sending commands to the CSAC. These commands are explained in table \ref{CSAC_COMMANDS}. 
+
+\begin{table}[]
+  \centering
+  \caption{Commands for the SA.45 CSAC}
+  \label{CSAC_COMMANDS}
+    \begin{tabular}{|l|l|l|}
+    \hline
+    Shortcut          & Description                                        & Command                       \\ \hline
+    6                 & Return telemetry headers as comma-delimited string & !6{[}CRLF{]}                  \\ \hline
+    \textasciicircum  & Return telemetry as comma-delimited string         & !\textasciicircum  {[}CRLF{]} \\ \hline
+    F                 & Adjust frequency                                   & !F?{[}CRLF{]}                 \\ \hline
+    M                 & Set operating mode register bits                   & !M?{[}CRLF{]}                 \\ \hline
+    S                 & Sync CSAC 1 PPS to external 1 PPS                  & !S{[}CRLF{]}                  \\ \hline
+    D                 & Set 1 PPS disciplining time constant               & !D?{[}CRLF{]}                 \\ \hline
+    U                 & Set ultra-low power mode parameters                & !U?{[}CRLF{]}                 \\ \hline
+    T                 & Set/report time-of-day                             & !T?{[}CRLF{]}                 \\ \hline
+    \end{tabular}
+  \caption*{Source: \cite{CSAC_USERGUIDE}}
+\end{table}
+
+In this document, the word \textit{telemetry} gets mentioned quite often in context with the CSAC. Telemetry can be obtained by querying the CSAC. The telemetry is a string containing a plethora of information, but we are mainly interested in the following values:
+
+\begin{itemize}
+  \item{Phase, the difference between the CSAC and the external signal signal at 1PPS in.}
+  \item{DiscOK, the discipline status.}
+  \item{Steer, the frequency adjustment.}
+\end{itemize}
+
+Listing \ref{telemetry_string} show an example of telemetry received from the CSAC. The fourth value from the right, is the \texttt{DisOK}, the fifth is the \texttt{phase} and the \texttt{steer} is the seventh. 
+
+\begin{code}
+  \caption{Example of a telemetry string received from the CSAC}
+    \begin{minted}
+    [
+      fontsize=\footnotesize,
+      fontfamily=tt,
+      linenos=true
+    ]
+    {c}
+    0,0x0000,1209CS00909,0x0010,4381,0.86,1.573,17.62,0.996,28.26,-24,---,-1,1,1268126502,586969,1.0
+    \end{minted}
+    \label{telemetry_string}
+\end{code}
+
+The SA.45 uses a high-resolution phase meter to improve synchronization and to calibrate the frequency of the CSAC. The phase meter measures the difference in time between the internal 1 PPS signal and the external reference, in our case a GNSS receiver. This difference is the \textit{phase} value. The CSAC uses the phase value and steering algorithms to adjust the frequency of CSAC physics package thus simultaneously steering both the phase and frequency to that of the external reference. This is called \textit{disciplining} and is how the \textit{steer} value is computed. The last value, \textit{DiscOK} is simply the status of the 1 PPS disciplining routine \cite{CSAC_USERGUIDE}.
+
+\section{Data structures}
+In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
+
+\subsection{client\_table\_entry}\label{client_table_entry}
+The client\_table\_entry struct is what the name suggests, it's an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. Listing \ref{struct_client_table} shows the complete struct. 
+
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 99}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct client_table_entry {
+        struct list_head list; 
+        struct transmission_s transmission; 
+        struct timeval heartbeat_timeout; 
+        struct command_code cm;   
+        struct nmea_container nmea;    
+        pid_t pid;  
+        time_t timestamp;  
+        int client_id; 
+        int client_type;    
+        int ready;  
+        int marked_for_kick; 
+        char ip[INET_ADDRSTRLEN];
+        struct filters fs;
+    };
+    \end{minted}
+    \label{struct_client_table}
+\end{code}
+Beginning from the top:
+\begin{itemize}
+  \item \texttt{list\_head list} is a pointer to a 
+\end{itemize}
+
+\subsection{server\_data}
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 116}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct server_data {
+        int number_of_clients; 
+        int number_of_sensors;  
+        time_t started;    
+        pid_t pid;             
+        char version[4]; 
+    \end{minted}
+  \label{server_data}
+\end{code}
+The \texttt{server\_data} struct contains information about the server. Some of the of information like the PID, version, and when the server was started, is just information about the server itself. The number of clients and sensors on the other hand, is used to make sure that the server does not allow more connections than it can handle.
+
+\subsection{server\_synchro}\label{server_synchro}
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 125}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct server_synchro {
+        sem_t ready_sem;
+        sem_t csac_sem;
+        sem_t client_list_sem;
+        volatile sig_atomic_t done;
+    };
+    \end{minted}
+  \label{server_synchro}
+\end{code}
+The \texttt{server\_synchro} structs member are semaphores (\ref{shared_mem_sem}) that the server and its children processes uses to protect atomic access to shared resources. The \texttt{csac\_sem} is used to control serial access to the CSAC, making sure that only one request is sent to CSAC at a time. The \texttt{client\_list\_sem} is used by functions manipulating and reading the client list structure, and the \texttt{ready\_sem} is only used when the server has received NMEA data and a ready check has been initiated (\ref{nmea_ready}).
+
+\subsection{command\_code}
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 34}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct command_code {
+        int code;
+        char parameter[MAX_PARAMETER_SIZE];
+        int id_parameter;
+    };
+    \end{minted}
+  \label{command_code}
+\end{code}
+
+\subsection{NMEA container}\label{nmea_cont}
+\begin{code}
+  \caption{Sample of code taken from \texttt{nmea.h} line 21}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct nmea_container {
+        /* Raw data */
+        char raw_gga[SENTENCE_LENGTH];
+        char raw_rmc[SENTENCE_LENGTH];
+
+        /* Latitude */
+        double lat_current;
+        double lat_average;
+        double lat_avg_diff;
+        double lat_total;
+        int lat_disturbed;
+
+        /* Longitude */
+        double lon_current;
+        double lon_average;
+        double lon_avg_diff;
+        double lon_total;
+        int lon_disturbed;
+
+        /* Altitude */
+        double alt_current;
+        double alt_average;
+        double alt_avg_diff;
+        double alt_total;
+        int alt_disturbed;
+
+        /* Speed */
+        double speed_current;
+        double speed_average;
+        double speed_avg_diff;
+        double speed_total;
+        int speed_disturbed;
+
+        /* CHECKSUM */
+        int checksum_passed;
+
+        /* COUNTER FOR AVERAGE */
+        int n_samples;
+    };
+    \end{minted}
+    \label{nmea_container}
+\end{code}
+
+\section{The Sensor Client}\label{sensor_client}
+The sensor client software is a simple program written in C99 whose only task is to relay information read from the GNSS receivers. Summed up shortly:
+\begin{itemize}
+  \item The client software takes two parameters to start, the servers IP and port. If parameters are missing, the program exits.
+  \begin{itemize}
+    \item Example: \texttt{./sensor\_client -p 10000 -i 192.168.1.5}
+  \end{itemize}
+  \item Initializes and loads configuration from configuration file. The configuration file includes path to the GNSS receiver, the sensors ID number and a binary value for whether or not logging of NMEA should be done as well as path to 
+  the log file. If the loading of the configuration file fails, default values are used instead:
+  \begin{itemize}
+    \item The ID number is chosen at random but within legal limits.
+    \item Logging is disabled.
+    \item Maximum of server connection attempts are set to 10.
+    \item Path to GNSS receiver is set to \texttt{/dev/ttyACM0}. This should be the path to the receiver unless another similar device is connected to the computer and given it is a Raspberry Pi running Raspbian.
+  \end{itemize}
+  \item Establishes communication with GNSS receiver, exits if it fails.
+  \item Attempts to establish communication with the server, retries for a configurable amount of times at 1 second intervals.
+  \item Identifies the client for the server according to protocol.
+  \item Reads from the GNSS receiver, scans for lines starting with either \texttt{\$GNRMC} or \texttt{\$GNGGA}. When both lines are found, the data is stored in a buffer.
+  \item Sends the GNSS data to the server according to protocol.
+  \item Repeats.
+\end{itemize}
+
+\begin{figure}\label{client_call_graph}
+\centering
+  \includegraphics[scale=0.3]{client_call_graph.pdf}
+   \caption[Sensor Client simplified call graph]{Simplified call graph for the Sensor Client.}
+\end{figure}
