@@ -428,6 +428,7 @@ int check_filters(struct csac_model_data *cmd)
     }
 
     /* If current steer is bigger than the predicted limit */
+    /* Is this supposed to be here? */
     if( abs(cfd->steer_current) > cfd->cf_conf.pred_limit ){
         log_to_file(s_conf->log_path, ALARM_STEER_TO_BIG, 2);
         return 1;
@@ -482,41 +483,40 @@ int start_csac_model(struct csac_model_data
         /* Initialize model if not already initialized */
         if(!model_init) {
             model_init = init_csac_model(cfd, program_buf);
-        }
-
-        /* checking alarm */
-        if(cfd->days_passed >= 2){
-            raised_alarm = check_filters(cfd);
-        }
-
-        /* If the alarm is raised */
-        if(raised_alarm){
-            if(csac_disc){
-                disable_csac_disc();
-                csac_disc = 0;
+        } else {
+            /* checking alarm */
+            if(cfd->days_passed >= 2){
+                raised_alarm = check_filters(cfd);
             }
 
-            double mjd_today = get_mjdf();
-            if(!mjd_today){
-                /* Calculating MJD */
-                cfd->t_current = mjd_today;
+            /* If the alarm is raised */
+            if(raised_alarm){
+                if(csac_disc){
+                    disable_csac_disc();
+                    csac_disc = 0;
+                }
 
-                /* Updating model */
-                update_prediction(cfd);
+                double mjd_today = get_mjdf();
+                if(!mjd_today){
+                    /* Calculating MJD */
+                    cfd->t_current = mjd_today;
 
-                /* Steering CSAC */
-                steer_csac(cfd->steer_prediction);
+                    /* Updating model */
+                    update_prediction(cfd);
+
+                    /* Steering CSAC */
+                    steer_csac(cfd->steer_prediction);
+                }
             }
-        }
-    
 
-        /* If the alarm is not raised */
-        if(!raised_alarm){
-            if(!csac_disc){
-                enable_csac_disc();
-                csac_disc = 1;
+            /* If the alarm is not raised */
+            if(!raised_alarm){
+                if(!csac_disc){
+                    enable_csac_disc();
+                    csac_disc = 1;
+                }
+                update_csac_model(cfd, program_buf); 
             }
-            update_csac_model(cfd, program_buf); 
         }
 
         /* If logging enabled, log all data from the CSAC */
