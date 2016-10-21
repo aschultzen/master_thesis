@@ -34,7 +34,7 @@ The "Server core" is the main process and the parent of every process created du
   \item The Server software takes one parameter to start, the port. If the parameter are missing or the parameter is illegal, a string containing usage information is printed and the program exits. Because the Server also is responsible for communication with the CSAC, it needs the rights to access the serial port connected to the CSAC \footnote{The easiest way to achieve this is to run the program as \texttt{sudo} or login as root. The best solution would probably be to add the user to a group with the right permissions. This is often the \texttt{dialout} group}.
   \item The configuration is initialized and loaded. If the configuration fails to load, the Server prints and error message and exits.
   \item The \texttt{client\_list}, a shared memory segment containing a linked list containing all the clients, is initialized. See section \ref{clms} and \ref{linked_list} for more about the client list shared memory segment and linked list implementation.  
-  \item Shared memory segments and semaphores are initialized and allocated. See section \ref{shared_mem_sem} for more. If the allocation fails, the Server prints an error message and exits.
+  \item Shared memory segments and semaphores are initialized and allocated.  If the allocation fails, the Server prints an error message and exits. See section \ref{shared_mem_sem} for more about semaphores and shared memory.
   \item The process responsible for maintaining the CSAC model and filter s forked out. If the fork fails, the server prints an error message and exits. See section \ref{csac_model} for more about the CSAC model.
   \item Handler for SIGINT (interrupt) SIGTERM (terminate) and SIGCHLD (child process is interrupted or terminated) is registered.
   \begin{itemize}
@@ -55,16 +55,16 @@ The "Server core" is the main process and the parent of every process created du
    \caption[CSAC model execution flow block diagram]{Block diagram showing the flow of execution in the CSAC model}
    \label{figure_csac_model}
 \end{figure}
-Conceptually, the CSAC model and the filter that uses the model is two separate tasks. In practice however, they are intertwined as figure \ref{figure_csac_model} suggests.
+Conceptually, the CSAC model and the filter that uses the model is two separate tasks. In practice however, they are intertwined as figure \ref{figure_csac_model} suggests. See section \ref{hw_csac} for more about the CSAC and section \ref{csac_model_harald} for the model itself.
 
 \begin{itemize}
-  \item The configuration for the model is loaded. The configuration includes values defining the accepted limits for steering and phase difference. It also includes values that can be used to restore the state of the model thus reducing the time it takes for the model to become suitable for the use as a reference. If the loading of the configuration fails, and error message is printed, the \texttt{volatile sig\_atomic\_t done} is set to 1 and the process exits. This also breaks the server core (\ref{server_core}) loop. 
+  \item The configuration for the model is loaded. The configuration includes values defining the accepted limits for steering and phase difference. Optionally, it can also include state values from an "earlier" model \footnote{The functionality to restore an earlier model is not without restrictions. It is typically meant for a situation where the Server needs to be taken down for a couple hours and a new warm-up period is considered undesirable. This is better explained in section \ref{csac_model_harald}} that can be used to initialize the model further, thus reducing the warm-up time. If the loading of the configuration fails, an error message is printed, the \texttt{volatile sig\_atomic\_t done} is set to 1 and the process exits. This also breaks the server core (\ref{server_core}) loop. After all, the system needs the CSAC to do the job it is intended for.
   \item A loop is entered. The loop breaks when \texttt{volatile sig\_atomic\_t done} equals 0. 
-  \item The CSAC lock(\ref{shared_mem_sem}) is acquired and once the telemetry is queried from the CSAC, it is released again.
-  \item If the model is not initialized, telemetry data is used to initialize it. If "state-restoring" values are present in the earlier loaded configuration, these will now also be used to initialize the model even further.
-  \item A check is done to see if the model has been running for at least 48 hours. If it has, it is ready to be used a reference for the filters. See section \ref{csac_filters} for more about the CSAC filters.
+  \item The CSAC lock (\ref{shared_mem_sem}) is acquired and once the telemetry is queried from the CSAC, it is released again.
+  \item If the model is not initialized, telemetry data is used to initialize it. State values from earlier models will also be used if available in the earlier loaded configuration. See section \ref{csac_com} for more about communication with the CSAC.
+  \item A check is done to see if the model has been running for at least 48 hours. If it has, it is ready to be used a reference for the filters. See section \ref{csac_filters} for more about the CSAC filters in particular.
   \item The telemetry received from the CSAC is used to update the model. 
-  \item A check is done to see how if it is time to calculate the daily prediction values. Every 24 hours, the predictions are calculated. The models keeps track of the prediction for yesterday and for today. By using these two points of data, an estimation of the predicted steer can be calculated. 
+  \item A check is done to see how if 24 hours have passed since the prediction values where last calculated. The model keeps track of steer predictions for yesterday and today. By using these two points of data, an estimation of the predicted steer can be calculated. 
 \end{itemize}
 
 \subsection{Parser and Handler}\label{parser_and_handler}
@@ -81,17 +81,18 @@ Conceptually, the CSAC model and the filter that uses the model is two separate 
    \label{actions_core}
 \end{figure}
 
-The parser and handler are responsible for parsing data received from a client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. Figure \ref{server_flow} and \ref{actions_core} are block diagrams showing the execution flow for this part of the server.  
+The parser and handler are responsible for parsing data received from a client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. Figure \ref{server_flow} and \ref{actions_core} are block diagrams showing the execution flow for this part of the server. The protocol is explained in greater detail under section \ref{protocol}.
+
 \begin{itemize}
   \item A loop is entered. The loop is broken when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. This is the same variable that is used in the Server core \ref{server_core} loop and for a good reason: If the server exits, then its children should too. 
   \item If reading from the socket fails, the client gets disconnected. If it is successful, the client table entry for the connected client is checked to see if the client has been marked to be kicked. If it is, it gets disconnected. 
-  \item The data received from the client is parsed and checked against the protocol. If the request received from the client doesn't match any of the supported requests or commands, the request is ignored and the loop is entered again. 
+  \item The data received from the client is parsed and checked against the protocol. If the request received from the client doesn't match any of the supported requests or commands, the request is ignored and the loop is entered again. See section \ref{protocol} for more information about the protocol and subsection \ref{parser} for more information about the parser.
   \item If the request received is valid, the clients ID is checked to determine whether or not it has identified itself. If the client has identified itself, the request gets carried out. 
   \item If the request received is to handle NMEA data, the checksum for that NMEA data is calculated. If the checksum check fails, the data is discarded. If it succeeds, the data is copied into \texttt{nmea\_container} struct (\ref{nmea_cont}) for easier handling.
-  \item The client is marked as ready for processing and a ready check is commenced. The ready check is used to make sure that all the sensors have received NMEA data and are ready to have filters applied. Once the filters have been applied, the lock is released and normal execution resumes.
+  \item The client is marked as ready for processing and a ready check is commenced. The ready check is used to make sure that all the sensors have received NMEA data and are ready to have filters applied. Once the filters have been applied, the lock is released and normal execution resumes. The ready check is explained further under subsection \ref{ready_check_alg}.
   \item If the clients ID is 0, it is considered unidentified and any other requests but to identify itself, is ignored.
-  \item If the client is attempting to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempted to assume the role of a Sensor, the client will get disconnected. If it attempted to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. The reason why a Sensor would get disconnected and a monitor would not, is simple: When connecting the Sensor to the server, it should not be any doubt whether or not it has been accepted. If something is wrong, it is better that a user of the system has to deal with it there and then and configure the Sensor correct rather than allowing the user to do mistakes which reduces the efficiency of the system. 
-  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load KRL (\ref{kvsrlf}) filter data into the clients KRL filter struct. The server will attempt to load the data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data.
+  \item If the client is attempting to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempted to assume the role of a Sensor, the client will get disconnected. If it attempted to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. The reason why a Sensor would get disconnected and a monitor would not, is simple: When connecting the Sensor to the server, it should not be any doubt whether or not it has been accepted. If something is wrong, it is better that a user of the system has to deal with it there and then and configure the Sensor correct rather than allowing the user to do mistakes that severely impacts the efficiency of the system. See section \ref{roles} for more information about the Sensor and Monitor roles.
+  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load data for the Known Vs. Reported position filter (KRL) data into the clients KRL filter struct. The server will attempt to load this data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data. For more information about the KRL filter, see section \ref{kvsrlf}.
 \end{itemize}
 
 \subsection{GNSS filters}
@@ -358,6 +359,36 @@ Having shared memory segments comes with a price. Whenever two or more processes
 
 Listing \ref{removeclient} shows a typical example of a function locking down access to the shared memory segment containing the list of connected clients, by using a semaphore. In the example (\ref{removeclient}) a client has been disconnected from the server and the the list of connected clients are being updated. The semaphore is necessary to make sure that another process is not attempting to read or write to the segment while the data is deleted. If another process had attempted to execute the \texttt{sem\_wait()} on the semaphore, it would have been put in a queue. Depending on the operating system, it would most likely signal the scheduler to do a context switch since the resource was busy anyway and it therefor should relinquish control of the CPU. Once the semaphores is raised, it can be lowered again by another process. It is important to note that the semaphores are not a function of, or related to the memory segments by anything other than the name. The semaphores are just "flags" used to control access to a resource. There is no automatic raising or lowering of the associated semaphores by reading or writing to a specific shared memory segment. All functions in the sensor server does however use semaphores when dealing with shared memory segments in order to avoid deadlock and race conditions.
 
+\subsection{Parser}\label{parser}
+The parser used in the Sensor Server is nothing special. Every time a client sends data to the Server, the data is sent though the parser in order to detect the purpose of the request. The parser uses the protocol and compares it with the input and looks for a match. Listing \ref{parse_id} shows a sample of code taken from the parser. 
+
+\begin{code}
+  \caption{Part of the parser comparing the input data to the IDENTIFY command specified by the protocol}
+  \begin{minted}
+  [
+  fontsize=\footnotesize,
+  fontfamily=tt,
+  linenos=true
+  ]
+  {c}
+  static int parse_input(struct client_table_entry *cte){
+    char *incoming = cte->transmission.iobuffer;
+  ...
+    else if(strstr((char*)incoming, PROTOCOL_IDENTIFY ) == (incoming)) {
+        int length = (strlen(incoming) - strlen(PROTOCOL_IDENTIFY) );
+        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))),
+               length);
+        cte->cm.code = CODE_IDENTIFY;
+    }
+  \end{minted}
+  \label{parse_id}
+\end{code}
+
+The listing (\ref{parse_id}) shows how the parser attempts to find a match between the input buffer and the protocol defined IDENTIFY command. On line 6 it attempts to copy any potential parameter. The parser does not care if the parameter is missing, but it will attempt to extract it from the input buffer. If no matches are found, the function returns 0, letting the function listening to the client know that the input from the client was invalid or illegal. Comparing strings is hard work and a relatively CPU intensive task. This is why the parser sets a \textit{command code} as seen on the last line. The command code is an integer defined in the protocol, and every command has got one. The code is used by the 
+
+\section{Protocol}\label{protocol}
+The Sensor Server protocol is quite simply a header file containing every keyword or command that the Sensor Server recognizes. The though behind it was that a client application (or script) could import the protocol header file and easily use and recognize commands used between the Server and a Client. Some constraints are also defined in the protocol header file, like maximum parameter size, maximum and minimum command size. The \textit{command codes} used by the parser, is also defined in the protocol header file. See subsection \ref{parser} for more about the use of protocol.
+
 \section{CSAC Communication}\label{csac_com}
 \begin{figure}[!htb]
 \centering
@@ -398,21 +429,14 @@ In this document, the word \textit{telemetry} gets mentioned quite often in cont
 
 Listing \ref{telemetry_string} show an example of telemetry received from the CSAC. The fourth value from the right, is the \texttt{DisOK}, the fifth is the \texttt{phase} and the \texttt{steer} is the seventh. 
 
-\begin{code}
-  \caption{Example of a telemetry string received from the CSAC}
-    \begin{minted}
-    [
-      fontsize=\footnotesize,
-      fontfamily=tt,
-      linenos=true
-    ]
-    {c}
+\begin{lstlisting}[caption=Example of a telemetry string received from the CSAC, label=telemetry_string]
     0,0x0000,1209CS00909,0x0010,4381,0.86,1.573,17.62,0.996,28.26,-24,---,-1,1,1268126502,586969,1.0
-    \end{minted}
-    \label{telemetry_string}
-\end{code}
+\end{lstlisting}
 
 The SA.45 uses a high-resolution phase meter to improve synchronization and to calibrate the frequency of the CSAC. The phase meter measures the difference in time between the internal 1 PPS signal and the external reference, in our case a GNSS receiver. This difference is the \textit{phase} value. The CSAC uses the phase value and steering algorithms to adjust the frequency of CSAC physics package thus simultaneously steering both the phase and frequency to that of the external reference. This is called \textit{disciplining} and is how the \textit{steer} value is computed. The last value, \textit{DiscOK} is simply the status of the 1 PPS disciplining routine \cite{CSAC_USERGUIDE}.
+
+\subsection{Ready check algorithm}\label{ready_check_alg}
+Write about the ready check algorithm.
 
 \section{Data structures}
 In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.

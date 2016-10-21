@@ -1,7 +1,7 @@
 \documentclass[../main.tex]{subfiles}
 
 \chapter{Hardware}
-\section{Chip Scale Atomic Clock}
+\section{Chip Scale Atomic Clock}\label{hw_csac}
 We propose to use the Symmetricom SA.45 as the CSAC. This is a CSAC measuring only 16cc with 1 pulse per second (PPS) output and 1 PPS input for disciplining. The SA.45's strength is its low power consumption (less than 120mW) and low price \cite{SADS}. The SA.45 also uses a built-in controller which can be communicated with over a RS-232 serial interface. The ability to communicate with the CSAC, issue commands and collect data is paramount for the feasibility of our proposal. It's worth mentioning that any atomic clock such as Cesium standard or even a Rubidium standard, could be used given that they have a means to communicate basic telemetry like phase difference and steer values and can configured by wire to change modes of disciplining. Our proposal is however SA.45 specific as it uses the protocol defined by Symmetricom(\ref{csac_com}) to communicate with the CSAC. 
 
 \section{SMACC platform}
@@ -11,4 +11,4 @@ We propose to cast the Raspberry Pi 3 Model B (RASPI3) in the role as the host r
 We propose to use at least two GNSS receivers. Both of the receivers should collect data and feed it to the SMACC, but one of the receivers should also double as a 1 PPS disciplining source for the CSAC. Considering the need for a stable 1 PPS source, we propose to use the u-blox NEO-M8T. This is a relativity affordable GNSS receiver with a temperature compensated crystal oscillator (TCXO), 3 concurrent GNSS reception and an external antenna \cite{UBLOXM8T}. In the current implementation of the SMACC, only NMEA data is collected from the GNSS receivers. However in the future it might be beneficial to collect and process raw data from the receivers as well. Since most GNSS receivers today follow the NMEA standard (to some extent) and raw data currently isn't required, common and popular receivers like the u-blox NEO series should be more than sufficient for use in our implementation.
 
 \subsection{GNSS configuration}
-According to the u-blox NEO-M8Ts manual \cite{UBLOXM8TMANUAL}, the device includes a feature called \textit{Fixed Position}. This is a feature that must be enabled in order to put device in \textit{Time Mode}. This feature makes the device solve time with a higher accuracy. The \textit{Time mode} was not used, relied on or accounted for, in our solution. 
+According to the u-blox NEO-M8Ts manual \cite{UBLOXM8TMANUAL}, the device includes a feature called \textit{Fixed Position}. This is a feature that must be enabled in order to put device in \textit{Time Mode}. This feature makes the device solve time with higher certainty even with fewer available satellites. The \textit{Time mode} was not used, relied on or accounted for, in our solution. 
