@@ -107,7 +107,7 @@ The parser and handler are responsible for parsing data received from a client a
 \begin{figure}
 \centering
   \includegraphics[scale=0.3]{filters.pdf}
-   \caption[Order of execution in the filter]{Block diagram show the order of execution in the filter(s)}
+   \caption[Order of execution in the filter]{Block diagram show the order of execution in the GPS filter(s)}
    \label{filter}
 \end{figure}
 By configuring the Sensor Server with the location of the different Sensors, the server can trigger an action if a Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is higher or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to check whether or not the latitude part of the GPS receivers solved position is within "safe" (not spoofed) range.
