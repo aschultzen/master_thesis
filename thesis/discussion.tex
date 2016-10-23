@@ -13,7 +13,6 @@ In the current implementation of the Sensor Server, two scripts are used as part
 \section{What could have been different}
 \subsection{Server design}
 \begin{itemize}
-  \item Poor management of the shared memory space. Searching through the space is taking linear time. Why would you care about performance enough to code in C when you are going to waste that performance on inefficient algorithms?
   \item Redundant readiness checking. The readiness check is a feature that was implemented early in the process when more filters where planned to be implemented. These filters would use cross-checking of different parameters between multiple sensors, and it would therefor be desirable to make sure that all sensor had the latest NMEA data. Unfortunately in the current version of the server, there are no filters actually dependent on this feature, but it has been left this way in case someone else would pick up the development. 
   \item Shared memory is barely necessary in the current version of the Sensor Server. I still believe that later development can benefit from the architecture.
 \end{itemize}
@@ -27,7 +26,7 @@ The SMACC software was originally planned to be written in Java since this was m
 \end{itemize}
 
 \section{Alternative approaches}\label{da}
-When planning on how to execute our proposal, these where among the ideas that came up. 
+When planning on how to execute our proposal, these were among the ideas that came up. 
 
 \subsection{Single computer, many GNSS receivers}\label{scmgr}
 A single computer is used to run the SMACC software. The SMACC does not include a Server/Cient model, but the receivers used to collect data are all connected to to the computer through whatever USB ports available or made available by the use of USB hubs. With this approach, you are not dependent on a network, but it limits the number of GNSS receivers you could connect as the USB specification limits the number possible endpoints to an absolute 127(\cite[pp. 3]{USBTC}) because of addressing. This does not mean that 127 devices can be connected, a single device might use more than one endpoint. It's also worth mentioning that a USB hub might "reserve" multiple endpoints. Depending on the GNSS receivers and how they are made, this number might be reduced even further by the power usage of the connected devices. Depending on how far each GNSS receiver is distanced from the SMACC, a signal amplifier might be necessary to compensate for the signal attenuation. In some cases where a network is absent, this might be only option.
