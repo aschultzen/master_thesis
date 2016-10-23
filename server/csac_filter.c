@@ -21,7 +21,7 @@
 #define CSAC_FILTER_CONFIG_ENTRIES 14
 
 #define ALARM_FAST_TIMING_FILTER " [ALARM] Phase > Limit\n"
-#define ALARM_STEER_TO_BIG " [ALARM] CSAC Steer > static limit!\n"
+#define ALARM_STEER_TO_BIG " [ALARM] Steer > Limit!\n"
 #define ALARM_FREQ_COR_FILTER " [ALARM] Steer > predicted!\n"
 
 

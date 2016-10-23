@@ -1,25 +1,25 @@
 \documentclass[../main.tex]{subfiles}
 
-\chapter{SMACC Implementation}
+\chapter{Atomic clock controller implementation}
 \section{A Sensor Server/Client model}
-Numerous approaches where considered when planning the implementation of the SMACC software (See \ref{da} for alternate approaches). The approach that was chosen is a Client/Server model which we have named the "Sensor Server". The Sensor Server architecture is based on the idea that a GNSS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Server and Sensor communicates over a network using IP. The Sensor runs a trivial program that receives data from a GNSS receiver, formats the data according to Sensor Server protocol and sends the data to a Server (more about the client \ref{sensor_client}). The Server on the other hand, is responsible for the heavy lifting. The data gathered from the Sensors are applied to what we call \textit{filters}(\ref{filters}. The filters are just algorithms that are able to detect abnormalities in the data, thus making it possible to react to a spoofing or jamming attempt. Server tasks include:
+Numerous approaches where considered when planning the implementation of the atomic clock controller software (See \ref{da} for alternate approaches). The approach that was chosen is a Client/Server model which we have named the "Sensor Server". The Sensor Server architecture is based on the idea that a GPS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Server and Sensor communicates over a network using Internet protocol. The Sensor runs a trivial program that receives data from a GPS receiver, formats the data according to Sensor Server protocol and sends the data to a Server (more about the client \ref{sensor_client}). The Server on the other hand, is responsible for the heavy lifting. Server tasks include:
 \begin{itemize}
   \item Handle connections to Sensors.
   \item Update structures as Sensor status changes (disconnects or gets kicked out).
-  \item Communication with the CSAC and updating the CSAC model.
+  \item Communication with the atomic clock and updating the atomic clock model.
   \item Sensor data analysis and filter updates.
   \item Raising alarms based on filter status.
-  \item Controlling the CSAC.
+  \item Controlling the atomic clock.
 \end{itemize}
-By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect(\ref{cspakp}).However, every router and switch between a Sensor and the Server imposes a delay on the stream of packets between the two, especially when compared with an approach where the GNSS receiver where cabled directly to a SMACC. This might make the Sensor Server implementation less responsive. It is of our understanding that whatever increase in complexity the Client/Server introduces to our approach, the Sensor Server makes up for by eliminating the need for potential miles of signal cables and signal amplifiers. 
+By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect(\ref{cspakp}).However, every router and switch between a Sensor and the Server imposes a delay on the stream of packets between the two, especially when compared with an approach where the GPS receiver where cabled directly to a atomic clock controller. This might make the Sensor Server implementation less responsive. It is of our understanding that whatever increase in complexity the Client/Server introduces to our approach, the Sensor Server makes up for by eliminating the need for potential miles of signal cables and signal amplifiers. 
 
 \begin{figure}\label{bd}
   \includegraphics[scale=0.4]{master_sketch_arrows.pdf}
-   \caption[CSAC SMACC Block diagram]{A block diagram of our proposed solution}
+   \caption[atomic clock atomic clock controller Block diagram]{A block diagram of our proposed solution}
 \end{figure}
 
 \section{The Sensor Server}
-In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained. The Server core(\ref{server_core}) consists of the source code in \texttt{sensor\_server.c}. The Parser and Handler spans over texttt{session.c} and texttt{actions.c}. The CSAC model and its filters source code is in \texttt{csac\_filter.c}. Lastly, the filter using GNSS data is in \texttt{filters.c}.  
+In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained. The Server core(\ref{server_core}) consists of the source code in \texttt{sensor\_server.c}. The Parser and Handler spans over texttt{session.c} and texttt{actions.c}. The atomic clock model and its filters source code is in \texttt{csac\_filter.c}. Lastly, the filter using GPS data is in \texttt{filters.c}.  
 
 \subsection{Server core}\label{server_core}
 \begin{figure}
@@ -28,14 +28,14 @@ In the following section, the architecture and inner workings, data structures a
    \caption[Socket Server Core execution flow block diagram]{The block diagram shows an abstracted view of the Sensor Servers Core.}
    \label{server_core}
 \end{figure}
-The "Server core" is the main process and the parent of every process created during the life of the Sensor Server. It spawns the process maintaining the CSAC model as well as new processes for every client that connects. Figure \ref{server_core} is a block diagram of the Server core. 
+The "Server core" is the main process and the parent of every process created during the life of the Sensor Server. It spawns the process maintaining the atomic clock model as well as new processes for every client that connects. Figure \ref{server_core} is a block diagram of the Server core. 
 
 \begin{itemize} % Sources needed here?
-  \item The Server software takes one parameter to start, the port. If the parameter are missing or the parameter is illegal, a string containing usage information is printed and the program exits. Because the Server also is responsible for communication with the CSAC, it needs the rights to access the serial port connected to the CSAC \footnote{The easiest way to achieve this is to run the program as \texttt{sudo} or login as root. The best solution would probably be to add the user to a group with the right permissions. This is often the \texttt{dialout} group}.
+  \item The Server software takes one parameter to start, the port. If the parameter are missing or the parameter is illegal, a string containing usage information is printed and the program exits. Because the Server also is responsible for communication with the atomic clock, it needs the rights to access the serial port connected to the atomic clock \footnote{The easiest way to achieve this is to run the program as \texttt{sudo} or login as root. The best solution would probably be to add the user to a group with the right permissions. This is often the \texttt{dialout} group.}.
   \item The configuration is initialized and loaded. If the configuration fails to load, the Server prints and error message and exits.
   \item The \texttt{client\_list}, a shared memory segment containing a linked list containing all the clients, is initialized. See section \ref{clms} and \ref{linked_list} for more about the client list shared memory segment and linked list implementation.  
   \item Shared memory segments and semaphores are initialized and allocated.  If the allocation fails, the Server prints an error message and exits. See section \ref{shared_mem_sem} for more about semaphores and shared memory.
-  \item The process responsible for maintaining the CSAC model and filter s forked out. If the fork fails, the server prints an error message and exits. See section \ref{csac_model} for more about the CSAC model.
+  \item The process responsible for maintaining the atomic clock model and filter s forked out. If the fork fails, the server prints an error message and exits. See section \ref{csac_model} for more about the atomic clock model.
   \item Handler for SIGINT (interrupt) SIGTERM (terminate) and SIGCHLD (child process is interrupted or terminated) is registered.
   \begin{itemize}
       \item When a process exits, a SIGCHLD signal is sent to the parent. When a client disconnects from the server, the process that handled the client exits. Ideally, the client disconnects from the server by sending a protocol compliant "disconnect request". This way, the server can handle the disconnect in a controlled manner and update its client list when the client disconnects. However, this is not always the case and if the client disconnects abruptly and without a warning, the server still needs to handle it. Therefore, when a SIGCHLD signal is received, the server iterates through its client list and finds the client who's PID matches the sender of the signal and removes it from the list. In figure \ref{server_core} this routine is the part in the red dotted box. 
@@ -48,22 +48,22 @@ The "Server core" is the main process and the parent of every process created du
   \item The new process then updates its client table entry and proceeds to the listening loop. This is covered in section \ref{parser_and_handler}. See section \ref{client_table_entry} for more about the client table entry struct.
 \end{itemize}
 
-\subsection{CSAC model}\label{csac_model}
+\subsection{Clock model}\label{csac_model}
 \begin{figure}
 \centering
   \includegraphics[scale=0.30]{csac_model.pdf}
-   \caption[CSAC model execution flow block diagram]{Block diagram showing the flow of execution in the CSAC model}
+   \caption[Execution flow the clock model]{Block diagram showing the flow of execution in the atomic clock model}
    \label{figure_csac_model}
 \end{figure}
-Conceptually, the CSAC model and the filter that uses the model is two separate tasks. In practice however, they are intertwined as figure \ref{figure_csac_model} suggests. See section \ref{hw_csac} for more about the CSAC and section \ref{csac_model_harald} for the model itself.
+Conceptually, the atomic clock model and the filter that uses the model is two separate tasks. In practice however, they are intertwined as figure \ref{figure_csac_model} suggests. See section \ref{hw_csac} for more about the atomic clock and section \ref{csac_model_harald} for the model itself.
 
 \begin{itemize}
-  \item The configuration for the model is loaded. The configuration includes values defining the accepted limits for steering and phase difference. Optionally, it can also include state values from an "earlier" model \footnote{The functionality to restore an earlier model is not without restrictions. It is typically meant for a situation where the Server needs to be taken down for a couple hours and a new warm-up period is considered undesirable. This is better explained in section \ref{csac_model_harald}} that can be used to initialize the model further, thus reducing the warm-up time. If the loading of the configuration fails, an error message is printed, the \texttt{volatile sig\_atomic\_t done} is set to 1 and the process exits. This also breaks the server core (\ref{server_core}) loop. After all, the system needs the CSAC to do the job it is intended for.
+  \item The configuration for the model is loaded. The configuration includes values defining the accepted limits for steering and phase difference. Optionally, it can also include state values from an "earlier" model \footnote{The functionality to restore an earlier model is not without restrictions. It is typically meant for a situation where the Server needs to be taken down for a couple hours and a new warm-up period is considered undesirable. This is better explained in section \ref{csac_model_harald}} that can be used to initialize the model further, thus reducing the warm-up time. If the loading of the configuration fails, an error message is printed, the \texttt{volatile sig\_atomic\_t done} is set to 1 and the process exits. This also breaks the server core (\ref{server_core}) loop. After all, the system needs the atomic clock to do the job it is intended for.
   \item A loop is entered. The loop breaks when \texttt{volatile sig\_atomic\_t done} equals 0. 
-  \item The CSAC lock (\ref{shared_mem_sem}) is acquired and once the telemetry is queried from the CSAC, it is released again.
-  \item If the model is not initialized, telemetry data is used to initialize it. State values from earlier models will also be used if available in the earlier loaded configuration. See section \ref{csac_com} for more about communication with the CSAC.
-  \item A check is done to see if the model has been running for at least 48 hours. If it has, it is ready to be used a reference for the filters. See section \ref{csac_filters} for more about the CSAC filters in particular.
-  \item The telemetry received from the CSAC is used to update the model. 
+  \item The atomic clock lock (\ref{shared_mem_sem}) is acquired and once the telemetry is queried from the atomic clock, it is released again.
+  \item If the model is not initialized, telemetry data is used to initialize it. State values from earlier models will also be used if available in the earlier loaded configuration. See section \ref{csac_com} for more about communication with the atomic clock.
+  \item A check is done to see if the model has been running for at least 48 hours. If it has, it is ready to be used a reference for the filters. See section \ref{csac_filters} for more about the atomic clock filters in particular.
+  \item The telemetry received from the atomic clock is used to update the model. 
   \item A check is done to see how if 24 hours have passed since the prediction values where last calculated. The model keeps track of steer predictions for yesterday and today. By using these two points of data, an estimation of the predicted steer can be calculated. 
 \end{itemize}
 
@@ -95,14 +95,14 @@ The parser and handler are responsible for parsing data received from a client a
   \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load data for the Known Vs. Reported position filter (KRL) data into the clients KRL filter struct. The server will attempt to load this data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data. For more information about the KRL filter, see section \ref{kvsrlf}.
 \end{itemize}
 
-\subsection{GNSS filters}
+\subsection{GPS filters}
 \begin{figure}
 \centering
   \includegraphics[scale=0.3]{filters.pdf}
    \caption[Order of execution in the filter]{Block diagram show the order of execution in the filter(s)}
    \label{filter}
 \end{figure}
-By configuring the Sensor Server with the location of the different Sensors, the server can trigger an action if a Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is higher or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to check whether or not the latitude part of the GNSS receivers solved position is within "safe" (not spoofed) range.
+By configuring the Sensor Server with the location of the different Sensors, the server can trigger an action if a Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is higher or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to check whether or not the latitude part of the GPS receivers solved position is within "safe" (not spoofed) range.
 \begin{code}
   \caption{Listing shows sample of code taken from \texttt{filters.c} line 66. The code is part of the algorithm that compares the known position of a Sensor with the Sensor resolved position. The code has been edited for clarity.}
     \begin{minted}
@@ -155,17 +155,17 @@ When a Sensor connects to the Server and identifies itself, the Server will atte
    \label{server_call_graph}
 \end{figure}
 
-\subsection{CSAC filters}\label{csac_filters}
-Figure \ref{figure_csac_model} shows both the CSAC model and filter in one figure. As explained in section \ref{csac_model}, the model of the CSAC and the filters based upon, are closely related. 
+\subsection{atomic clock filters}\label{csac_filters}
+Figure \ref{figure_csac_model} shows both the atomic clock model and filter in one figure. As explained in section \ref{csac_model}, the model of the atomic clock and the filters based upon, are closely related. 
 \begin{itemize}
   \item Once the model has been running for 48 hours, it is ready to be used as a reference, filtering out abnormal data.
-  \item The filters are checked. There are currently only 2 filters implemented using the CSAC model as reference:
+  \item The filters are checked. There are currently only 2 filters implemented using the atomic clock model as reference:
   \begin{itemize}
-    \item \textit{Fast timing filter}. This is a simple filter that compares the current phase reported by the CSAC with a pre-configured limit. If the current phase is higher, the filter is triggered.
-    \item \textit{Frequency correction filter}. This is a more sophisticated filter. It uses the CSAC model to calculate a predicted steer value and compares it to the current steer value. If the current steer is too big, the filter is triggered. 
+    \item \textit{Fast timing filter}. This is a simple filter that compares the current phase reported by the atomic clock with a pre-configured limit. If the current phase is higher, the filter is triggered.
+    \item \textit{Frequency correction filter}. This is a more sophisticated filter. It uses the atomic clock model to calculate a predicted steer value and compares it to the current steer value. If the current steer is too big, the filter is triggered. 
   \end{itemize}
-  \item If any of the filters are triggered, the alarm is raised. The state of the alarm is expressed by an \texttt{int} that is either 0 or 1. If the alarm was not raised, the disciplining of the CSAC is enabled if it was disabled, and the telemetry data is used to update the model.
-  \item If the alarm is raised, the disciplining of the CSAC is deactivating, thus protecting the CSAC from being affected by the spoofing. The model is now used to calculate steer values that are applied to the CSAC instead.
+  \item If any of the filters are triggered, the alarm is raised. The state of the alarm is expressed by an \texttt{int} that is either 0 or 1. If the alarm was not raised, the disciplining of the atomic clock is enabled if it was disabled, and the telemetry data is used to update the model.
+  \item If the alarm is raised, the disciplining of the atomic clock is deactivating, thus protecting the atomic clock from being affected by the spoofing. The model is now used to calculate steer values that are applied to the atomic clock instead.
 \end{itemize}
 
 \subsection{Roles}\label{roles}
@@ -238,7 +238,7 @@ As mentioned earlier (\ref{sockets}), every time a client connects, a new proces
   \label{extern_structs}
 \end{code}
 
-These shared memory segments have different usage. The \texttt{client\_list} points to a shared segment allocated for storing a list of all connected clients. \texttt{s\_data} contains information about the server, \texttt{s\_synch} contains semaphores used to lock down shared resources, \texttt{s\_conf} is the servers configuration and \texttt{cfd} is the CSAC filters data and state. Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
+These shared memory segments have different usage. The \texttt{client\_list} points to a shared segment allocated for storing a list of all connected clients. \texttt{s\_data} contains information about the server, \texttt{s\_synch} contains semaphores used to lock down shared resources, \texttt{s\_conf} is the servers configuration and \texttt{cfd} is the atomic clock filters data and state. Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
 
 \subsubsection{Client list memory segment}\label{clms}
 Every time a client connects, it is given a piece of shared memory where it can store its data. This piece of shared memory is used as a node in a linked list. The linked list structure, stored in the shared memory segment is available to all the processes spawned by the server. This segment is static in size and is allocated once and is never changed during the whole life of the Server. The size of the segment is determined by the maximum number of allowed clients, a configurable value read from the configuration file every time the server is started. Ideally, the segment should be resize-able and the size should depend the amount of connected client. M. Kerrisk explains in his "The Linux Programming Interface" \cite{kerrisk2010linux}, that most UNIX implementations does not support resizing of a memory map like the shared memory segments used in the Sensor Server. However, there is non-portable and Linux specific system call, \texttt{mremap()} that can be used on Linux system for this purpose. Unfortunately, the address returned by \texttt{mremap()} might be different from the old address to the shared memory segment. This would mean that pointer inside the shared segment might no longer be valid after a resize operation has been done. A way to avoid this problem caused by the remapping, would be to use offsets instead of pointers when referring to addresses in the mapped region. This would however increase the complexity of the server. The potential waste of memory would never be substantial when considering that the size of the \texttt{client\_table\_entry} struct is a mere 4664 bytes. This is why the current implementation with shared memory segment of static size was chosen.
@@ -382,8 +382,8 @@ The parser used by the Sensor Server is a simple function. As explained in secti
   ...
     else if(strstr((char*)incoming, PROTOCOL_IDENTIFY ) == (incoming)) {
         int length = (strlen(incoming) - strlen(PROTOCOL_IDENTIFY) );
-        memcpy(cte->cm.parameter, (incoming)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))),
-               length);
+        memcpy(cte->cm.parameter, 
+          (incoming)+(strlen(PROTOCOL_IDENTIFY)*(sizeof(char))),length);
         cte->cm.code = CODE_IDENTIFY;
     }
   \end{minted}
@@ -393,26 +393,26 @@ The parser used by the Sensor Server is a simple function. As explained in secti
 The listing (\ref{parse_id}) shows how the parser attempts to find a match between the input buffer and the protocol defined IDENTIFY command. On line 6 it attempts to copy any potential parameter. The parser does not care if the parameter is missing, but it will attempt to extract it from the input buffer. If no matches are found, the function returns 0, letting the calling function (\texttt{respond()})  know that the input from the client was invalid or illegal. Comparing strings is hard work and a relatively CPU intensive task. This is why the parser sets a \textit{command code} (\ref{command_code}) as seen on the last line. The command code is an integer defined in the protocol, and every command has got one. The code is used in the listening loop by \texttt{respond} to determine what action to perform in case a valid request. Comparing integers are "cheaper" than comparing strings.
 
 \subsection{Ready check algorithm}\label{ready_check_alg}
-Every time NMEA data is received and validated, the process that received the data will initiate a ready check. This is done by setting a flag in the client list entry called ready to 1, and calling the \texttt{nmea\_ready()} function. The \texttt{nmea\_ready()} function locks down the client linked list and iterates through it checking if the other processes are ready too. If all the other processes has received valid NMEA data from their respective client, the GNSS filters(s) are applied. If they are not ready, the lock is release and the process carries on. This means that the last process to receive NMEA data gets the job of applying the filters \footnote{Since NMEA data is generated every second by the GNSS receivers, it might be more appropriate to say that it is the scheduler that decides which process is coming in last. This of course depends on the distance between the Sensor and the Client}.
+Every time NMEA data is received and validated, the process that received the data will initiate a ready check. This is done by setting a flag in the client list entry called ready to 1, and calling the \texttt{nmea\_ready()} function. The \texttt{nmea\_ready()} function locks down the client linked list and iterates through it checking if the other processes are ready too. If all the other processes has received valid NMEA data from their respective client, the GPS filters(s) are applied. If they are not ready, the lock is release and the process carries on. This means that the last process to receive NMEA data gets the job of applying the filters \footnote{Since NMEA data is generated every second by the GPS receivers, it might be more appropriate to say that it is the scheduler that decides which process is coming in last. This of course depends on the distance between the Sensor and the Client}.
 
 \section{Protocol}\label{protocol}
 The Sensor Server protocol is quite simply a header file containing every keyword or command that the Sensor Server recognizes. The though behind it was that a client application (or script) could import the protocol header file and easily use and recognize commands used between the Server and a Client. Some constraints are also defined in the protocol header file, like maximum parameter size, maximum and minimum command size. The \textit{command codes} used by the parser, is also defined in the protocol header file. See subsection \ref{parser} for more about the use of protocol.
 
-\section{CSAC Communication}\label{csac_com}
+\section{Atomic clock Communication}\label{csac_com}
 \begin{figure}[!htb]
 \centering
   \includegraphics[scale=0.4]{csac_serial.pdf}
-   \caption[Block diagram showing the CSAC connected to a PC]{Block diagram showing the CSAC connected to a PC}
+   \caption[Block diagram showing the atomic clock connected to a PC]{Block diagram showing the atomic clock connected to a PC}
    \label{csac_filter}
 \end{figure}
 
-The SA.45 CSAC includes a serial interface that enables communication with a PC by using a COM port. As mentioned earlier, our approach relies heavily on the ability to communicate with the CSAC.
-Information can be queried by sending commands to the CSAC. These commands are explained in table \ref{CSAC_COMMANDS}. 
+The SA.45 atomic clock includes a serial interface that enables communication with a PC by using a COM port. As mentioned earlier, our approach relies heavily on the ability to communicate with the atomic clock.
+Information can be queried by sending commands to the atomic clock. These commands are explained in table \ref{atomic clock_COMMANDS}. 
 
 \begin{table}[]
   \centering
-  \caption{Commands for the SA.45 CSAC}
-  \label{CSAC_COMMANDS}
+  \caption{Commands for the SA.45 atomic clock}
+  \label{atomic clock_COMMANDS}
     \begin{tabular}{|l|l|l|}
     \hline
     Shortcut          & Description                                        & Command                       \\ \hline
@@ -420,29 +420,29 @@ Information can be queried by sending commands to the CSAC. These commands are e
     \textasciicircum  & Return telemetry as comma-delimited string         & !\textasciicircum  {[}CRLF{]} \\ \hline
     F                 & Adjust frequency                                   & !F?{[}CRLF{]}                 \\ \hline
     M                 & Set operating mode register bits                   & !M?{[}CRLF{]}                 \\ \hline
-    S                 & Sync CSAC 1 PPS to external 1 PPS                  & !S{[}CRLF{]}                  \\ \hline
+    S                 & Sync atomic clock 1 PPS to external 1 PPS                  & !S{[}CRLF{]}                  \\ \hline
     D                 & Set 1 PPS disciplining time constant               & !D?{[}CRLF{]}                 \\ \hline
     U                 & Set ultra-low power mode parameters                & !U?{[}CRLF{]}                 \\ \hline
     T                 & Set/report time-of-day                             & !T?{[}CRLF{]}                 \\ \hline
     \end{tabular}
-  \caption*{Source: \cite{CSAC_USERGUIDE}}
+  \caption*{Source: \cite{atomic clock_USERGUIDE}}
 \end{table}
 
-In this document, the word \textit{telemetry} gets mentioned quite often in context with the CSAC. Telemetry can be obtained by querying the CSAC. The telemetry is a string containing a plethora of information, but we are mainly interested in the following values:
+In this document, the word \textit{telemetry} gets mentioned quite often in context with the atomic clock. Telemetry can be obtained by querying the atomic clock. The telemetry is a string containing a plethora of information, but we are mainly interested in the following values:
 
 \begin{itemize}
-  \item{Phase, the difference between the CSAC and the external signal signal at 1PPS in.}
+  \item{Phase, the difference between the atomic clock and the external signal signal at 1PPS in.}
   \item{DiscOK, the discipline status.}
   \item{Steer, the frequency adjustment.}
 \end{itemize}
 
-Listing \ref{telemetry_string} show an example of telemetry received from the CSAC. The fourth value from the right, is the \texttt{DisOK}, the fifth is the \texttt{phase} and the \texttt{steer} is the seventh. 
+Listing \ref{telemetry_string} show an example of telemetry received from the atomic clock. The fourth value from the right, is the \texttt{DisOK}, the fifth is the \texttt{phase} and the \texttt{steer} is the seventh. 
 
-\begin{lstlisting}[caption=Example of a telemetry string received from the CSAC, label=telemetry_string]
+\begin{lstlisting}[caption=Example of a telemetry string received from the atomic clock, label=telemetry_string]
     0,0x0000,1209CS00909,0x0010,4381,0.86,1.573,17.62,0.996,28.26,-24,---,-1,1,1268126502,586969,1.0
 \end{lstlisting}
 
-The SA.45 uses a high-resolution phase meter to improve synchronization and to calibrate the frequency of the CSAC. The phase meter measures the difference in time between the internal 1 PPS signal and the external reference, in our case a GNSS receiver. This difference is the \textit{phase} value. The CSAC uses the phase value and steering algorithms to adjust the frequency of CSAC physics package thus simultaneously steering both the phase and frequency to that of the external reference. This is called \textit{disciplining} and is how the \textit{steer} value is computed. The last value, \textit{DiscOK} is simply the status of the 1 PPS disciplining routine \cite{CSAC_USERGUIDE}.
+The SA.45 uses a high-resolution phase meter to improve synchronization and to calibrate the frequency of the atomic clock. The phase meter measures the difference in time between the internal 1 PPS signal and the external reference, in our case a GPS receiver. This difference is the \textit{phase} value. The atomic clock uses the phase value and steering algorithms to adjust the frequency of atomic clock physics package thus simultaneously steering both the phase and frequency to that of the external reference. This is called \textit{disciplining} and is how the \textit{steer} value is computed. The last value, \textit{DiscOK} is simply the status of the 1 PPS disciplining routine \cite{atomic clock_USERGUIDE}.
 
 \section{Data structures}
 In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
@@ -522,7 +522,7 @@ The \texttt{server\_data} struct contains information about the server. Some of 
     \end{minted}
   \label{server_synchro}
 \end{code}
-The \texttt{server\_synchro} structs member are semaphores (\ref{shared_mem_sem}) that the server and its children processes uses to protect atomic access to shared resources. The \texttt{csac\_sem} is used to control serial access to the CSAC, making sure that only one request is sent to CSAC at a time. The \texttt{client\_list\_sem} is used by functions manipulating and reading the client list structure, and the \texttt{ready\_sem} is only used when the server has received NMEA data and a ready check has been initiated (\ref{nmea_ready}).
+The \texttt{server\_synchro} structs member are semaphores (\ref{shared_mem_sem}) that the server and its children processes uses to protect atomic access to shared resources. The \texttt{csac\_sem} is used to control serial access to the atomic clock, making sure that only one request is sent to atomic clock at a time. The \texttt{client\_list\_sem} is used by functions manipulating and reading the client list structure, and the \texttt{ready\_sem} is used by ready check algorithm. See subsection \ref{ready_check_alg} for more about this.
 
 \subsection{command\_code}\label{command_code}
 \begin{code}
@@ -599,25 +599,25 @@ The \texttt{command\_code} struct is used by the parser \ref{parser} to more eff
 The \texttt{nmea\_container} is used by the handler \ref{parser_and_handler} which dissects the NMEA strings and validates them before it fills the respective members of the structs. The purpose of it is just to make it easier for the other parts of the Server to use the NMEA data. 
 
 \section{The Sensor Client}\label{sensor_client}
-The sensor client software is a simple program written in C99 whose only task is to relay information read from the GNSS receivers. Summed up shortly:
+The sensor client software is a simple program written in C99 whose only task is to relay information read from the GPS receivers. Summed up shortly:
 \begin{itemize}
   \item The client software takes two parameters to start, the servers IP and port. If parameters are missing, the program exits.
   \begin{itemize}
     \item Example: \texttt{./sensor\_client -p 10000 -i 192.168.1.5}
   \end{itemize}
-  \item Initializes and loads configuration from configuration file. The configuration file includes path to the GNSS receiver, the sensors ID number and a binary value for whether or not logging of NMEA should be done as well as path to 
+  \item Initializes and loads configuration from configuration file. The configuration file includes path to the GPS receiver, the sensors ID number and a binary value for whether or not logging of NMEA should be done as well as path to 
   the log file. If the loading of the configuration file fails, default values are used instead:
   \begin{itemize}
     \item The ID number is chosen at random but within legal limits.
     \item Logging is disabled.
     \item Maximum of server connection attempts are set to 10.
-    \item Path to GNSS receiver is set to \texttt{/dev/ttyACM0}. This should be the path to the receiver unless another similar device is connected to the computer and given it is a Raspberry Pi running Raspbian.
+    \item Path to GPS receiver is set to \texttt{/dev/ttyACM0}. This should be the path to the receiver unless another similar device is connected to the computer and given it is a Raspberry Pi running Raspbian.
   \end{itemize}
-  \item Establishes communication with GNSS receiver, exits if it fails.
+  \item Establishes communication with GPS receiver, exits if it fails.
   \item Attempts to establish communication with the server, retries for a configurable amount of times at 1 second intervals.
   \item Identifies the client for the server according to protocol.
-  \item Reads from the GNSS receiver, scans for lines starting with either \texttt{\$GNRMC} or \texttt{\$GNGGA}. When both lines are found, the data is stored in a buffer.
-  \item Sends the GNSS data to the server according to protocol.
+  \item Reads from the GPS receiver, scans for lines starting with either \texttt{\$GNRMC} or \texttt{\$GNGGA}. When both lines are found, the data is stored in a buffer.
+  \item Sends the GPS data to the server according to protocol.
   \item Repeats.
 \end{itemize}
 
