@@ -11,9 +11,9 @@
 	
 \chapter{Sensor server software}
 \section{Client}
-\subsection*{sensor\_client.c}\label{sensor_server.c}
+\subsection*{sensor\_client.c}\label{sensor_client.c}
 	\ccode{../server/sensor_client.c}
-\subsection*{sensor\_client.h}\label{sensor_server.h}
+\subsection*{sensor\_client.h}\label{sensor_client.h}
 	\ccode{../server/sensor_client.h}
 \subsection*{client\_config.ini}
 	\ccode{../server/client_config.ini}
@@ -22,17 +22,17 @@
 
 \section{Server}
 \subsection*{sensor\_server.c}
-	\ccode{../server/sensor_server.c}
+	\ccode{../server/sensor_server.c}\label{sensor_server.c}
 \subsection*{sensor\_server.h}
-	\ccode{../server/sensor_server.h}
+	\ccode{../server/sensor_server.h}\label{sensor_server.h}
 \subsection*{config.ini}
 	\ccode{../server/config.ini}
 
 \subsection*{sensor\_server\_common.h}
-	\ccode{../server/sensor_server_common.h}
+	\ccode{../server/sensor_server_common.h}\label{sensor_server_common.h}
 
 \subsection*{session.c}
-	\ccode{../server/session.c}
+	\ccode{../server/session.c}\label{session.c}
 \subsection*{session.h}
 	\ccode{../server/session.h}
 
@@ -81,14 +81,23 @@
 \subsection*{config.h}
 	\ccode{../server/config.h}
 
-\subsection*{nmea.h}
+\subsection*{nmea.h}\label{nmea.h}
 	\ccode{../server/nmea.h}
+
+\subsection*{list.h}\label{list}
+	\ccode{../server/list.h}
 
 \subsection*{protocol.h}
 	\ccode{../server/protocol.h}
 
 \subsection*{makefile}
 	\makecode{../server/makefile}
+
+\chapter{Scripts}
+	\section*{CSAC query source code}\label{query_csac}
+		\pythoncode{../server/query_csac.py}
+	\section*{MJD calculator}\label{get_mjd}
+		\pythoncode{../server/get_mjd.py}	
 
 \section{Logger setup schematic}\label{CLS}
 	 \includegraphics[scale=0.5]{csac_logger.pdf}

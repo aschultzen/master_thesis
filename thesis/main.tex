@@ -143,7 +143,7 @@ texcl=false,
   numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
   rulecolor=\color{black}         % if not set, the frame-color may be changed on line-breaks 
 }
-
+\setcounter{secnumdepth}{5}
 \newenvironment{code}{\captionsetup{type=listing}}{}
 
 \title{GPS Time Spoofing}
@@ -161,6 +161,9 @@ Abstract goes here.
 \chapter*{Foreword}
 Here goes foreword
 
+% Where = hvor
+% were = var
+
 % Hackish code to keep counters and white pages at bay
 \thispagestyle{empty}
 \setcounter{page}{0}
@@ -174,6 +177,14 @@ Here goes foreword
 
 % Here goes all the chapters
 % ==================================================
+
+% Ikke gjort:
+% - Alle figurer må være på samme side som de prates om. De må også referes til i teksten.
+% - Bruk referenselista. Ikke referer i teksten.s
+% - Skille mellom chapters, sections and subsections når du referer
+% - All the figures have CSAC written in them
+% - Jekk ned bruken av refs. Blir litt mye noen ganger.
+% Linjenummer kodeeksempler
 
 \subfile{intro}
 \subfile{proposal}

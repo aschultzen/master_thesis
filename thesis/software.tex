@@ -2,7 +2,7 @@
 
 \chapter{Atomic clock controller implementation}
 \section{A Sensor Server/Client model}
-Numerous approaches where considered when planning the implementation of the atomic clock controller software (See \ref{da} for alternate approaches). The approach that was chosen is a Client/Server model which we have named the "Sensor Server". The Sensor Server architecture is based on the idea that a GPS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Server and Sensor communicates over a network using Internet protocol. The Sensor runs a trivial program that receives data from a GPS receiver, formats the data according to Sensor Server protocol and sends the data to a Server (more about the client \ref{sensor_client}). The Server on the other hand, is responsible for the heavy lifting. Server tasks include:
+Numerous approaches were considered when planning the implementation of the atomic clock controller software (See \ref{da} for alternate approaches). The approach that was chosen is a Client/Server model which we have named the "Sensor Server". The Sensor Server architecture is based on the idea that a GPS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Server and Sensor communicates over a network using Internet protocol. The Sensor runs a trivial program that receives data from a GPS receiver, formats the data according to Sensor Server protocol and sends the data to a Server (more about the Client, see \ref{sensor_client}). The Server on the other hand, is responsible for the heavy lifting. Server tasks include:
 \begin{itemize}
   \item Handle connections to Sensors.
   \item Update structures as Sensor status changes (disconnects or gets kicked out).
@@ -11,7 +11,7 @@ Numerous approaches where considered when planning the implementation of the ato
   \item Raising alarms based on filter status.
   \item Controlling the atomic clock.
 \end{itemize}
-By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect(\ref{cspakp}).However, every router and switch between a Sensor and the Server imposes a delay on the stream of packets between the two, especially when compared with an approach where the GPS receiver where cabled directly to a atomic clock controller. This might make the Sensor Server implementation less responsive. It is of our understanding that whatever increase in complexity the Client/Server introduces to our approach, the Sensor Server makes up for by eliminating the need for potential miles of signal cables and signal amplifiers. 
+By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect (see \ref{cspakp} for more). However, every router and switch between a Sensor and the Server imposes a delay on the stream of packets between the two, especially when compared with an approach where the GPS receivers were cabled directly to an atomic clock controller. This might make the Sensor Server implementation less responsive. It is of our understanding that whatever increase in complexity the Client/Server introduces to our approach, the Sensor Server makes up for by eliminating the need for potential miles of signal cables and signal amplifiers. 
 
 \begin{figure}\label{bd}
   \includegraphics[scale=0.4]{master_sketch_arrows.pdf}
@@ -19,16 +19,24 @@ By using already existing network infrastructure, it becomes a lot easier to dis
 \end{figure}
 
 \section{The Sensor Server}
-In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained. The Server core(\ref{server_core}) consists of the source code in \texttt{sensor\_server.c}. The Parser and Handler spans over texttt{session.c} and texttt{actions.c}. The atomic clock model and the associated filters source code is in \texttt{csac\_filter.c}. The filter using GPS data is in \texttt{filters.c}.  
+In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained. The Server core (\ref{server_core}) consists of the source code in \texttt{sensor\_server.c}. The Parser and Handler spans over texttt{session.c} and texttt{actions.c}. The atomic clock model and the associated filters source code is in \texttt{csac\_filter.c}. The filter using GPS data is in \texttt{filters.c}. Figure \ref{server_call_graph} shows a simplified call graph for the Sensor Server.
 
 \subsection{Server core}\label{server_core}
 \begin{figure}
 \centering
   \includegraphics[scale=0.3]{server_core.pdf}
    \caption[Socket Server Core execution flow block diagram]{The block diagram shows an abstracted view of the Sensor Servers Core.}
-   \label{server_core}
+   \label{figure_server_core}
 \end{figure}
-The "Server core" is the main process and the parent of every process created during the life of the Sensor Server. It spawns the process maintaining the atomic clock model as well as new processes for every client that connects. Figure \ref{server_core} is a block diagram of the Server core. 
+
+\begin{figure}
+\centering
+  \includegraphics[scale=0.3]{server_call_graph.pdf}
+   \caption[Sensor Server simplified call graph]{Simplified call graph for the Sensor Server.}
+   \label{server_call_graph}
+\end{figure}
+
+The "Server core" is the main process and the parent of every process created during the life of the Sensor Server. It spawns the process maintaining the atomic clock model as well as new processes for every client that connects. Figure \ref{figure_server_core} is a block diagram of the Server core. 
 
 \begin{itemize} % Sources needed here?
   \item The Server software takes one parameter to start, the port. If the parameter are missing or the parameter is illegal, a string containing usage information is printed and the program exits. Because the Server also is responsible for communication with the atomic clock, it needs the rights to access the serial port connected to the atomic clock \footnote{The easiest way to achieve this is to run the program as \texttt{sudo} or login as root. The best solution would probably be to add the user to a group with the right permissions. This is often the \texttt{dialout} group.}.
@@ -40,11 +48,11 @@ The "Server core" is the main process and the parent of every process created du
   \begin{itemize}
       \item When a process exits, a SIGCHLD signal is sent to the parent. When a client disconnects from the server, the process that handled the client exits. Ideally, the client disconnects from the server by sending a protocol compliant "disconnect request". This way, the server can handle the disconnect in a controlled manner and update its client list when the client disconnects. However, this is not always the case and if the client disconnects abruptly and without a warning, the server still needs to handle it. Therefore, when a SIGCHLD signal is received, the server iterates through its client list and finds the client who's PID matches the sender of the signal and removes it from the list. In figure \ref{server_core} this routine is the part in the red dotted box. 
   \end{itemize}
-  \item The socket is initialized and marked for listening. See section \ref{sockets} for more. 
+  \item The socket is initialized and marked for listening. See section \ref{sockets} for more about sockets. 
   \item A loop is entered. The loop breaks when \texttt{volatile sig\_atomic\_t done} equals 0. If the loop is broken, the semaphores are destroyed and all allocated memory is freed, the servers socket file descriptor is closed and the Server exits. See section \ref{server_synchro} for more about variables used in synchronization mechanisms.
   \item When a client connects, the server checks if the maximum number of clients has been reached. If this number has been reached, an error message is written back to the client and the clients socket file descriptor is closed. If the maximum number of clients has not yet been reached, the client list gets updated and a fork is performed.
   The parent process then resumes the loop. 
-  \item The process that just forked out for the new connection, closes the server socket file descriptor it inherited from its parent. See section \ref{sockets} for more about sockets and forking.
+  \item The process that just forked out for the new connection, closes the server socket file descriptor it inherited from its parent.
   \item The new process then updates its client table entry and proceeds to the listening loop. This is covered in section \ref{parser_and_handler}. See section \ref{client_table_entry} for more about the client table entry struct.
 \end{itemize}
 
@@ -60,11 +68,11 @@ Conceptually, the atomic clock model and the filter that uses the model is two s
 \begin{itemize}
   \item The configuration for the model is loaded. The configuration includes values defining the accepted limits for steering and phase difference. Optionally, it can also include state values from an "earlier" model \footnote{The functionality to restore an earlier model is not without restrictions. It is typically meant for a situation where the Server needs to be taken down for a couple hours and a new warm-up period is considered undesirable. This is better explained in section \ref{csac_model_harald}} that can be used to initialize the model further, thus reducing the warm-up time. If the loading of the configuration fails, an error message is printed, the \texttt{volatile sig\_atomic\_t done} is set to 1 and the process exits. This also breaks the server core (\ref{server_core}) loop. After all, the system needs the atomic clock to do the job it is intended for.
   \item A loop is entered. The loop breaks when \texttt{volatile sig\_atomic\_t done} equals 0. 
-  \item The atomic clock lock (\ref{shared_mem_sem}) is acquired and once the telemetry is queried from the atomic clock, it is released again.
+  \item The atomic clock lock is acquired and once the telemetry is queried from the atomic clock, it is released again.
   \item If the model is not initialized, telemetry data is used to initialize it. State values from earlier models will also be used if available in the earlier loaded configuration. See section \ref{csac_com} for more about communication with the atomic clock.
   \item A check is done to see if the model has been running for at least 48 hours. If it has, it is ready to be used a reference for the filters. See section \ref{csac_filters} for more about the atomic clock filters in particular.
   \item The telemetry received from the atomic clock is used to update the model. 
-  \item A check is done to see how if 24 hours have passed since the prediction values where last calculated. The model keeps track of steer predictions for yesterday and today. By using these two points of data, an estimation of the predicted steer can be calculated. 
+  \item A check is done to see how if 24 hours have passed since the prediction values were last calculated. The model keeps track of steer predictions for yesterday and today. By using these two points of data, an estimation of the predicted steer can be calculated. 
 \end{itemize}
 
 \subsection{Parser and Handler}\label{parser_and_handler}
@@ -104,7 +112,7 @@ The parser and handler are responsible for parsing data received from a client a
 \end{figure}
 By configuring the Sensor Server with the location of the different Sensors, the server can trigger an action if a Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is higher or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to check whether or not the latitude part of the GPS receivers solved position is within "safe" (not spoofed) range.
 \begin{code}
-  \caption{Listing shows sample of code taken from \texttt{filters.c} line 66. The code is part of the algorithm that compares the known position of a Sensor with the Sensor resolved position. The code has been edited for clarity.}
+  \caption{Listing shows sample of code taken from \texttt{filters.c} line 79. The code is part of the algorithm that compares the known position of a Sensor with the Sensor resolved position. The code has been edited for clarity.}
     \begin{minted}
     [
       fontsize=\footnotesize,
@@ -148,13 +156,6 @@ When a Sensor connects to the Server and identifies itself, the Server will atte
     \label{krl_config}
 \end{code}
 
-\begin{figure}
-\centering
-  \includegraphics[scale=0.3]{server_call_graph.pdf}
-   \caption[Sensor Server simplified call graph]{Simplified call graph for the Sensor Server.}
-   \label{server_call_graph}
-\end{figure}
-
 \subsection{Atomic clock filters}\label{csac_filters}
 Figure \ref{figure_csac_model} shows both the atomic clock model and filter in one figure. As explained in section \ref{csac_model}, the model of the atomic clock and the filters based upon, are closely related. 
 \begin{itemize}
@@ -183,7 +184,7 @@ In order to implement the Server/Client model, the Sensor Server and Sensor Clie
   \item Line 16: The child process closes it's parent's socket file descriptor and continues to setup the session at the next line.
 \end{itemize}
 \begin{code}
-  \caption{Sample of code taken from \texttt{sensor\_server.c}(\ref{sensor_server.c}, line 356). The sample has been edited for clarity purposes.}
+  \caption{Sample of code taken from \texttt{sensor\_server.c}(\ref{sensor_server.c}, line 494). The sample has been edited for clarity purposes.}
   \begin{minted}
   [
   fontsize=\footnotesize,
@@ -224,7 +225,7 @@ Even though the \texttt{accept()} function in the sockets API is blocking, CPU c
 As mentioned earlier (\ref{sockets}), every time a client connects, a new process is born to take care of the communication with the new client. Since every process has got its own virtual address space, the processes are isolated from each other. This posed a challenge because we wanted the Sensor Server as a whole with all processes to be able to communicate with each other and share data and communicate. IPC (inter process communication) is nothing new, and one way to accomplish it, is to use shared memory segments. The sensor server architecture uses several shared memory segments. The pointers to the shared memory segments are declared as \textit{extern} in \texttt{sensor\_server.h}. The extern keyword means the the variable has an external linkage, making it visible from other files than the one in which it is defined. Listing \ref{extern_structs} shows a code sample taken from \texttt{sensor\_server.h} where the shared memory segments are declared.
 
 \begin{code}
-  \caption{Sample of code from \texttt{sensor\_server.h}(\ref{sensor_server.h}, line 356) where shared memory segments are declared.}
+  \caption{Sample of code from \texttt{sensor\_server.h}(\ref{sensor_server.h}, line 44) where shared memory segments are declared.}
   \begin{minted}
   [
   fontsize=\footnotesize,
@@ -241,7 +242,7 @@ As mentioned earlier (\ref{sockets}), every time a client connects, a new proces
   \label{extern_structs}
 \end{code}
 
-These shared memory segments have different usage. The \texttt{client\_list} points to a shared segment allocated for storing a list of all connected clients. \texttt{s\_data} contains information about the server, \texttt{s\_synch} contains semaphores used to lock down shared resources, \texttt{s\_conf} is the servers configuration and \texttt{cfd} is the atomic clock filters data and state. Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
+These shared memory segments have different usage. The \texttt{client\_list} points to a shared segment allocated for storing a list of all connected clients. \texttt{s\_data} contains information about the server, \texttt{s\_synch} contains semaphores used to lock down shared resources, \texttt{s\_conf} is the servers configuration and \texttt{cfd} is the data and state for the filters based on the clock model. Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
 
 \subsubsection{Client list memory segment}\label{clms}
 Every time a client connects, it is given a piece of shared memory where it can store its data. This piece of shared memory is used as a node in a linked list. The linked list structure, stored in the shared memory segment is available to all the processes spawned by the server. This segment is static in size and is allocated once and is never changed during the whole life of the Server. The size of the segment is determined by the maximum number of allowed clients, a configurable value read from the configuration file every time the server is started. Read more about why the client list shared segment is static in size, under subsection \ref{resizing_shared}.
@@ -265,7 +266,7 @@ The map is an array containing pointers to the client list segment. These pointe
 \end{figure}
 
 \begin{code}
-  \caption{Sample of code showing the \texttt{get\_mem\_piece()} function.}
+  \caption{Sample of code showing the \texttt{get\_mem\_piece()} function. This function is used to find a free piece of memory in the client list shared memory segment. The code is taken from line 200 in \texttt{sensor\_server.c} (appendix \ref{sensor_server.c}}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -294,7 +295,7 @@ The map is an array containing pointers to the client list segment. These pointe
 Since the C standard does not provide data structures like linked lists, I had to choose between reinventing the wheel or finding some implementation to drop into the project. While studying another subject, I found a guide on how to use the linked list implementation from the linux kernel source code (\cite{KAZU_LIST}) in a user space program. Since the implementation was solid, well tested and had many useful functions, i decided to use it. The modified header file containing all the code, is GPL licensed.  
 
 \begin{code}
-  \caption{Sample of code taken from \texttt{list.h} line 70}
+  \caption{Sample of code taken from \texttt{list.h} (appendix \ref{list}) line 70, showing the \texttt{list\_head struct}.}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -319,7 +320,7 @@ The fields of the struct is pretty self explanatory. There is a pointer to the p
 \end{figure}  
 
 \begin{code}
-  \caption{Listing shows the use of MMAP to create an anonymous map of memory to be used as a shared memory segment}
+  \caption{Listing shows the use of MMAP to create an anonymous map of memory to be used as a shared memory segment. Sample of code taken from \texttt{sensor\_server.c}(appendix \ref{sensor_server.c}, line 360)}
   \begin{minted}
   [
   fontsize=\footnotesize,
@@ -372,7 +373,7 @@ Listing \ref{removeclient} shows a typical example of a function locking down ac
 The parser used by the Sensor Server is a simple function. As explained in section \ref{parser_and_handler}, every time a client sends data to the Server, the data is sent though the parser in order to detect the purpose of the request. The parser uses the protocol and compares it with the input and looks for a match. Listing \ref{parse_id} shows a sample of code taken from the parser. 
 
 \begin{code}
-  \caption{Part of the parser comparing the input data to the IDENTIFY command specified by the protocol}
+  \caption{Part of the parser comparing the input data to the IDENTIFY command specified by the protocol. Sample code is taken from \texttt{session.c}(appendix \ref{session.c} line 164}
   \begin{minted}
   [
   fontsize=\footnotesize,
@@ -431,7 +432,7 @@ Information can be queried by sending commands to the atomic clock. These comman
   \caption*{Source: \cite{atomic clock_USERGUIDE}}
 \end{table}
 
-In this document, the word \textit{telemetry} gets mentioned quite often in context with the atomic clock. Telemetry can be obtained by querying the atomic clock. The telemetry is a string containing a plethora of information, but we are mainly interested in the following values:
+The Sensor Server communicates with the atomic clock by invoking a script called \texttt{query\_csac.py}. This script can be found in the appendix (\ref{query_csac}). The script takes an argument which it sends to the atomic clock over serial, and prints the respond to the shell which the Sensor Server grabs. In this document, the word \textit{telemetry} gets mentioned quite often in context with the atomic clock. Telemetry can be obtained by querying the atomic clock. The telemetry is a string containing a plethora of information, but we are mainly interested in the following values:
 
 \begin{itemize}
   \item{Phase, the difference between the atomic clock and the external signal signal at 1PPS in.}
@@ -445,7 +446,7 @@ Listing \ref{telemetry_string} show an example of telemetry received from the at
     0,0x0000,1209CS00909,0x0010,4381,0.86,1.573,17.62,0.996,28.26,-24,---,-1,1,1268126502,586969,1.0
 \end{lstlisting}
 
-The SA.45 uses a high-resolution phase meter to improve synchronization and to calibrate the frequency of the atomic clock. The phase meter measures the difference in time between the internal 1 PPS signal and the external reference, in our case a GPS receiver. This difference is the \textit{phase} value. The atomic clock uses the phase value and steering algorithms to adjust the frequency of atomic clock physics package thus simultaneously steering both the phase and frequency to that of the external reference. This is called \textit{disciplining} and is how the \textit{steer} value is computed. The last value, \textit{DiscOK} is simply the status of the 1 PPS disciplining routine \cite{atomic clock_USERGUIDE}.
+The SA.45 uses a high-resolution phase meter to improve synchronization and to calibrate the frequency of the atomic clock. The phase meter measures the difference in time between the internal 1 PPS signal and the external reference, in our case a GPS receiver. This difference is the \textit{phase} value. The atomic clock uses the phase value and steering algorithms to adjust the frequency of atomic clock's physics package thus simultaneously steering both the phase and frequency to that of the external reference. This is called \textit{disciplining} and is how the \textit{steer} value is computed. The last value, \textit{DiscOK} is simply the status of the 1 PPS disciplining routine \cite{atomic clock_USERGUIDE}.
 
 \section{Data structures}
 In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
@@ -454,7 +455,7 @@ In the C programming language, a "struct" is a complex data type that defines a 
 The client\_table\_entry struct is what the name suggests, it's an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. Listing \ref{struct_client_table} shows the complete struct. 
 
 \begin{code}
-  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 99}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h}(appendix \ref{sensor_server_common.h}) line 90}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -487,7 +488,7 @@ Beginning from the top:
 
 \subsection{server\_data}
 \begin{code}
-  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 116}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} (appendix \ref{sensor_server_common.h})line 107}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -508,7 +509,7 @@ The \texttt{server\_data} struct contains information about the server. Some of 
 
 \subsection{server\_synchro}\label{server_synchro}
 \begin{code}
-  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 125}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} (appendix \ref{sensor_server_common.h})line 116}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -529,7 +530,7 @@ The \texttt{server\_synchro} structs member are semaphores (\ref{shared_mem_sem}
 
 \subsection{command\_code}\label{command_code}
 \begin{code}
-  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} line 34}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} (appendix \ref{sensor_server_common.h}) line 34}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -545,11 +546,11 @@ The \texttt{server\_synchro} structs member are semaphores (\ref{shared_mem_sem}
     \end{minted}
   \label{command_code}
 \end{code}
-The \texttt{command\_code} struct is used by the parser \ref{parser} to more efficiently convey protocol compliant requests and related parameters.
+The \texttt{command\_code} struct is used by the parser to more efficiently convey protocol compliant requests and related parameters. See section \ref{parser} for more about the parser.
 
 \subsection{NMEA container}\label{nmea_cont}
 \begin{code}
-  \caption{Sample of code taken from \texttt{nmea.h} line 21}
+  \caption{Sample of code taken from \texttt{nmea.h} (appendix \ref{nmea.h}) line 20}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -599,7 +600,7 @@ The \texttt{command\_code} struct is used by the parser \ref{parser} to more eff
     \end{minted}
     \label{nmea_container}
 \end{code}
-The \texttt{nmea\_container} is used by the handler \ref{parser_and_handler} which dissects the NMEA strings and validates them before it fills the respective members of the structs. The purpose of it is just to make it easier for the other parts of the Server to use the NMEA data. 
+The \texttt{nmea\_container} is used by the handler (see section \ref{parser_and_handler}) which dissects the NMEA strings and validates them before it fills the respective members of the structs. The purpose of it is just to make it easier for the other parts of the Server to use the NMEA data.
 
 \section{The Sensor Client}\label{sensor_client}
 The sensor client software is a simple program written in C99 whose only task is to relay information read from the GPS receivers. Summed up shortly:
@@ -623,6 +624,7 @@ The sensor client software is a simple program written in C99 whose only task is
   \item Sends the GPS data to the server according to protocol.
   \item Repeats.
 \end{itemize}
+Figure \ref{client_call_graph} shows a simplified call graph for the Client.
 
 \begin{figure}\label{client_call_graph}
 \centering

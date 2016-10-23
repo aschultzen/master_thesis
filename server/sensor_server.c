@@ -492,7 +492,6 @@ static int start_server(int port_number)
 
     /* Marking the connection for listening*/
     listen(server_sockfd,SOMAXCONN);
-
     int session_fd = 0;
     t_print(SERVER_RUNNING);
     while (!s_synch->done) {

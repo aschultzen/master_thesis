@@ -4,7 +4,7 @@
 When a GPS receiver is spoofed, its solved position or time (or both) might change. The result depends on the technique used to spoof. By moving a GPS receiver, one can simulate a spoofing attack since the location most certainly will change. It might also affect the time solved (but why? Figure this out). We also covered the antennas with aluminium foil to simulate a loss of signal.
 
 \section{Data acquisition}\label{data_aquisition}
-In order to create an accurate clock-model of the atomic clock, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the atomic clock will correct it's frequency based on either a 1 PPS (Pulse per second) signal or a 10 MHz signal as discussed earlier (\ref{csac_com}) A similar approach was used in order to collect GPS data. Data from two u-blox NEO-M8T was gathered over the same time period as the data gathered from the atomic clock. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the atomic clock. It also provided valuable data that could be used to tune the filters in the atomic clock controller. The data gathering was done by simple Python scripts (\ref{CL} and \ref{GL}) running on a computer connected to the GPS receivers and the atomic clock (\ref{CLS}).
+In order to create an accurate clock-model of the atomic clock, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the atomic clock will correct it's frequency based on either a 1 PPS (Pulse per second) signal or a 10 MHz signal as discussed earlier under section (\ref{csac_com}) A similar approach was used in order to collect GPS data. Data from two u-blox NEO-M8T was gathered over the same time period as the data gathered from the atomic clock. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the atomic clock. It also provided valuable data that could be used to tune the filters in the atomic clock controller. The data gathering was done by simple Python scripts (appendix \ref{CL} and \ref{GL}) running on a computer connected to the GPS receivers and the atomic clock. Figure (\ref{CLS}) shows a block diagram of the setup.
 
 \subsection{Setup}
 \begin{figure}
@@ -13,7 +13,7 @@ In order to create an accurate clock-model of the atomic clock, it was necessary
    \caption[atomic clock controller implementation block diagram]{A block diagram showing the tested implementation.}
    \label{ibd}
 \end{figure}
-Figure \ref{ibd} shows how the Server, Sensors and atomic clock where physically set up. In order to assure good GPS satellite geometry, the antennas where placed at the roof of Justervesenets main office at Kjeller. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Antenna 1 was connected to GPS receiver 1 which in turn was connected to Sensor 1. It's the same deal with antenna 2 which was connected to GPS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The Sensors and the Server where connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the atomic clock and the Clients where configured to log all NMEA data received from the GPS receivers. The GPS receiver connected to antenna South is used to supply the atomic clock with a 1 PPS signal. Because the atomic clock model needs live data over time to mature, the system was started Friday 7. October 2016 and the test was performed Monday 10. October 2016.
+Figure \ref{ibd} shows how the Server, Sensors and atomic clock were physically set up. In order to assure good GPS satellite geometry, the antennas were placed at the roof of Justervesenets main office at Kjeller. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Antenna 1 was connected to GPS receiver 1 which in turn was connected to Sensor 1. It's the same deal with antenna 2 which was connected to GPS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The Sensors and the Server were connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the atomic clock and the Clients were configured to log all NMEA data received from the GPS receivers. The GPS receiver connected to antenna South is used to supply the atomic clock with a 1 PPS signal. Because the atomic clock model needs live data over time to mature, the system was started Friday 7. October 2016 and the test was performed Monday 10. October 2016.
 
 \begin{figure}
 \centering
@@ -23,7 +23,7 @@ Figure \ref{ibd} shows how the Server, Sensors and atomic clock where physically
 \end{figure}
 
 \subsection{Goal of test}
-The goal with this test was to use the Sensor Server system to detect a simulated spoofing attack. By moving the antennas, the KRL filter(\ref{kvsrlf}) should be triggered as the solved longitude, altitude, latitude and speed should change. The filters using the clock model might also trigger. The result would be observable by analyzing the log files produced by the Server and Clients and the data collected by the measuring setup.
+The goal with this test was to use the Sensor Server system to detect a simulated spoofing attack. By moving the antennas, the KRL filter (\ref{kvsrlf}) should be triggered as the solved longitude, altitude, latitude and speed should change. The filters using the clock model might also trigger. The result would be observable by analyzing the log files produced by the Server and Clients and the data collected by the measuring setup.
 
 \subsection{Description}\label{description}
 The following is a step by step description of how the test was conducted. The time in the brackets was obtained from a wristwatch. It is written in the normal format as well as number of seconds after 10:48. This is because the data used to draw the graphs, started at 10:48 but uses seconds in the X axis. Comparison is therefore easier. It is important to note that nor the resolution or accuracy was of any notable concern when writing down the time. The time was mainly noted to make it easier to find any correlation between the steps taken and patterns found in the log files. 
@@ -56,7 +56,7 @@ Step 1 and 2 were designed to trigger the KRL filter, especially the check of so
 By reviewing the log produced by the Sensor Server, the following was observed:
 
 \begin{itemize}
-  \item No false positives, the filters where not triggered before the test started.
+  \item No false positives, the filters were not triggered before the test started.
   \item The KRL filter was triggered by Sensor 1 at 10:59:19 and cleared at 11:04:35.
   \begin{lstlisting}
     [10/10/16 - 10:59:17] [ ALARM ] Sensor 1 triggered KRL filter!
