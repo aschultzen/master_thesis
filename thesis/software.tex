@@ -19,7 +19,7 @@ By using already existing network infrastructure, it becomes a lot easier to dis
 \end{figure}
 
 \section{The Sensor Server}
-In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained. The Server core(\ref{server_core}) consists of the source code in \texttt{sensor\_server.c}. The Parser and Handler spans over texttt{session.c} and texttt{actions.c}. The atomic clock model and its filters source code is in \texttt{csac\_filter.c}. Lastly, the filter using GPS data is in \texttt{filters.c}.  
+In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained. The Server core(\ref{server_core}) consists of the source code in \texttt{sensor\_server.c}. The Parser and Handler spans over texttt{session.c} and texttt{actions.c}. The atomic clock model and the associated filters source code is in \texttt{csac\_filter.c}. The filter using GPS data is in \texttt{filters.c}.  
 
 \subsection{Server core}\label{server_core}
 \begin{figure}
@@ -81,7 +81,7 @@ Conceptually, the atomic clock model and the filter that uses the model is two s
    \label{actions_core}
 \end{figure}
 
-The parser and handler are responsible for parsing data received from a client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. A function named \texttt{respond()} is called in the listening loop. Every time data is received from a client, the data is sent to the parser (\texttt{parse\_input()}) to determines the validity of the request received. Figure \ref{server_flow} and \ref{actions_core} are block diagrams showing the execution flow for this part of the server. The protocol is explained in greater detail under section \ref{protocol} and the parser is better explained under subsection \ref{parser}.
+The parser and handler are responsible for parsing data received from a client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. A function named \texttt{respond()} is called in the listening loop. Every time data is received from a client, the data is sent to the parser (\texttt{parse\_input()}) to determines the validity of the request received. See subsection \ref{nmea_data} for more information about the GPS data received from the Sensors. Figure \ref{server_flow} and \ref{actions_core} are block diagrams showing the execution flow for this part of the server. The protocol is explained in greater detail under section \ref{protocol} and the parser is better explained under subsection \ref{parser}.
 
 \begin{itemize}
   \item A loop is entered. The loop is broken when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. This is the same variable that is used in the Server core \ref{server_core} loop and for a good reason: If the server exits, then its children should too. 
@@ -155,7 +155,7 @@ When a Sensor connects to the Server and identifies itself, the Server will atte
    \label{server_call_graph}
 \end{figure}
 
-\subsection{atomic clock filters}\label{csac_filters}
+\subsection{Atomic clock filters}\label{csac_filters}
 Figure \ref{figure_csac_model} shows both the atomic clock model and filter in one figure. As explained in section \ref{csac_model}, the model of the atomic clock and the filters based upon, are closely related. 
 \begin{itemize}
   \item Once the model has been running for 48 hours, it is ready to be used as a reference, filtering out abnormal data.
@@ -167,6 +167,9 @@ Figure \ref{figure_csac_model} shows both the atomic clock model and filter in o
   \item If any of the filters are triggered, the alarm is raised. The state of the alarm is expressed by an \texttt{int} that is either 0 or 1. If the alarm was not raised, the disciplining of the atomic clock is enabled if it was disabled, and the telemetry data is used to update the model.
   \item If the alarm is raised, the disciplining of the atomic clock is deactivating, thus protecting the atomic clock from being affected by the spoofing. The model is now used to calculate steer values that are applied to the atomic clock instead.
 \end{itemize}
+
+\subsection{GPS data}\label{nmea_data}
+The GPS receivers that we have chosen for our system and possibly all GPS receivers, follow the National Marine Electronics Association's 0183 standard \cite{NMEA_MAIN}. NMEA data consists of sentences where the first word of the sentence, the type, defines how the sentence should be interpreted. The sentences used by the Sensor Server and Client, is the \texttt{GNRMC} for latitude, longitude and speed and \texttt{GNGGA} for altitude.  
 
 \subsection{Roles}\label{roles}
 A client connected to the server can have two roles. It can either be a Sensor or a Monitor. The Sensor role is already explained. The Monitor role was added in order for a user of the Sensor Server to connect to the server and check status or issue commands. For a client to assume the role of a Monitor, the client has to pick a negative integer as ID number. This way, the Server does not expect you as a client to report any NMEA data the way it would with a Sensor. The Monitor role can also be used to interface with the Server. See (\ref{interface}) for more.
@@ -241,7 +244,7 @@ As mentioned earlier (\ref{sockets}), every time a client connects, a new proces
 These shared memory segments have different usage. The \texttt{client\_list} points to a shared segment allocated for storing a list of all connected clients. \texttt{s\_data} contains information about the server, \texttt{s\_synch} contains semaphores used to lock down shared resources, \texttt{s\_conf} is the servers configuration and \texttt{cfd} is the atomic clock filters data and state. Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
 
 \subsubsection{Client list memory segment}\label{clms}
-Every time a client connects, it is given a piece of shared memory where it can store its data. This piece of shared memory is used as a node in a linked list. The linked list structure, stored in the shared memory segment is available to all the processes spawned by the server. This segment is static in size and is allocated once and is never changed during the whole life of the Server. The size of the segment is determined by the maximum number of allowed clients, a configurable value read from the configuration file every time the server is started. Ideally, the segment should be resize-able and the size should depend the amount of connected client. M. Kerrisk explains in his "The Linux Programming Interface" \cite{kerrisk2010linux}, that most UNIX implementations does not support resizing of a memory map like the shared memory segments used in the Sensor Server. However, there is non-portable and Linux specific system call, \texttt{mremap()} that can be used on Linux system for this purpose. Unfortunately, the address returned by \texttt{mremap()} might be different from the old address to the shared memory segment. This would mean that pointer inside the shared segment might no longer be valid after a resize operation has been done. A way to avoid this problem caused by the remapping, would be to use offsets instead of pointers when referring to addresses in the mapped region. This would however increase the complexity of the server. The potential waste of memory would never be substantial when considering that the size of the \texttt{client\_table\_entry} struct is a mere 4664 bytes. This is why the current implementation with shared memory segment of static size was chosen.
+Every time a client connects, it is given a piece of shared memory where it can store its data. This piece of shared memory is used as a node in a linked list. The linked list structure, stored in the shared memory segment is available to all the processes spawned by the server. This segment is static in size and is allocated once and is never changed during the whole life of the Server. The size of the segment is determined by the maximum number of allowed clients, a configurable value read from the configuration file every time the server is started. Read more about why the client list shared segment is static in size, under subsection \ref{resizing_shared}.
 
 \subsubsection{Using the client list memory segment}\label{create_client}
 As previously explained, the list of clients are stored in a shared memory segment using a linked list structure. In order to keep tabs on what part of the shared memory segment is in use, a simple map of the memory is used (\ref{memory_map_figure}):
