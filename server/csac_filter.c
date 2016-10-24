@@ -24,8 +24,6 @@
 #define ALARM_STEER_TO_BIG " [ALARM] CSAC Steer > static limit!\n"
 #define ALARM_FREQ_COR_FILTER " [ALARM] Steer > predicted!\n"
 
-
-
 static double mjd_diff_day(double mjd_a,
                           double mjd_b)
 {
@@ -360,16 +358,9 @@ void steer_csac(int prediction)
     strcat(steer_com_string,"python query_csac.py FA");
     strcat(steer_com_string, pred_string);
 
-    fprintf(stderr, "Setting steer value %d: %s\n", prediction,program_buf);
-    fprintf(stderr, "Steer string: %s\n", steer_com_string);
 
     /* Acquiring lock on CSAC serial*/
     sem_wait(&(s_synch->csac_sem));
-
-    /* Disabling disciplining */
-    /*run_command("python query_csac.py Md",
-                program_buf);
-    fprintf(stderr,"Disabling CSAC disciplining: %s\n", program_buf);*/
 
     /* Adjusting frequency according to the models prediction */
     run_command(steer_com_string, program_buf);
@@ -377,8 +368,15 @@ void steer_csac(int prediction)
     /* Releasing lock on CSAC serial*/
     sem_post(&(s_synch->csac_sem));
 
+    char log_buf[200];
+    memset(log_buf, '\0', 200);
+    strcat(log_buf, " Steer: ");
+    strcat(log_buf, pred_string);
+    strcat(log_buf, ", response: ");
+    strcat(log_buf, program_buf);
+
     /* Logging steer value */
-    log_to_file(s_conf->log_path, steer_com_string, 2);
+    log_to_file(s_conf->log_path, log_buf, 2);
 }
 
 void disable_csac_disc()
@@ -488,7 +486,6 @@ int start_csac_model(struct csac_model_data
             raised_alarm = check_filters(cfd);
         }
 	
-	get_steer_predict(cfd);
         /* If the alarm is raised */
         if(raised_alarm){
             if(csac_disc){
@@ -507,7 +504,6 @@ int start_csac_model(struct csac_model_data
             steer_pred = steer_pred * 1000;
 
             /* Steering CSAC */
-            log_to_file(s_conf->log_path, "Attempting to steer from model\n", 2);
             steer_csac(steer_pred);
         }
 
@@ -522,8 +518,7 @@ int start_csac_model(struct csac_model_data
 
         /* If logging enabled, log all data from the CSAC */
         if(s_conf->csac_logging) {
-            log_to_file(s_conf->csac_log_path, program_buf,
-                        1);
+            log_to_file(s_conf->csac_log_path, program_buf,1);
         }
 
         /* Dump filter data for every iteration */
