@@ -341,7 +341,7 @@ static void initialize_config(struct
     conf_map[13].destination = &cf_conf->pred_log_path;
 }
 
-int steer_csac(float prediction)
+void steer_csac(int prediction)
 {
     /* Allocating buffer for run_program() */
     char program_buf[200];
@@ -350,7 +350,7 @@ int steer_csac(float prediction)
     /* Buffer for the prediction */
     char pred_string[200];
     memset(pred_string, '\0', 200);
-    sprintf(pred_string, "%lf",prediction);
+    sprintf(pred_string, "%d",prediction);
 
     /* Buffer for the steer adjust command string */
     char steer_com_string[200];
@@ -360,8 +360,6 @@ int steer_csac(float prediction)
     strcat(steer_com_string,"python query_csac.py FA");
     strcat(steer_com_string, pred_string);
     fprintf(stderr, "Steer string: %s\n", steer_com_string);
-    return 1;
-
 
     /* Acquiring lock on CSAC serial*/
     sem_wait(&(s_synch->csac_sem));
@@ -374,8 +372,8 @@ int steer_csac(float prediction)
     /* Adjusting frequency according to the models prediction */
     run_command(steer_com_string, program_buf);
 
-    fprintf(stderr, "Setting steer value %lf: %s\n",
-            cfd->steer_prediction,program_buf);
+    fprintf(stderr, "Setting steer value %d: %s\n",
+            prediction,program_buf);
 
     /* Releasing lock on CSAC serial*/
     sem_post(&(s_synch->csac_sem));
@@ -479,9 +477,9 @@ int start_csac_model(struct csac_model_data
         sem_post(&(s_synch->csac_sem));
 
         /* debug */
-        double steer_pred = get_steer_predict(cfd);
-        steer_pred = steer_pred * 1000;
-        steer_csac(steer_pred);
+        //int steer_pred = get_steer_predict(cfd);
+        //steer_pred = steer_pred * 1000;
+        //steer_csac(steer_pred);
 
         /* Initialize model if not already initialized */
         if(!model_init) {
@@ -507,7 +505,7 @@ int start_csac_model(struct csac_model_data
             cfd->t_current = mjd_today;
 
             /* Calc steer predict */
-            double steer_pred = get_steer_predict(cfd);
+            int steer_pred = (int)get_steer_predict(cfd);
             steer_pred = steer_pred * 1000;
 
             /* Steering CSAC */
