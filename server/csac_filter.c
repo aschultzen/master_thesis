@@ -359,6 +359,8 @@ void steer_csac(int prediction)
     /* Building the string */
     strcat(steer_com_string,"python query_csac.py FA");
     strcat(steer_com_string, pred_string);
+
+    fprintf(stderr, "Setting steer value %d: %s\n", prediction,program_buf);
     fprintf(stderr, "Steer string: %s\n", steer_com_string);
 
     /* Acquiring lock on CSAC serial*/
@@ -372,11 +374,11 @@ void steer_csac(int prediction)
     /* Adjusting frequency according to the models prediction */
     run_command(steer_com_string, program_buf);
 
-    fprintf(stderr, "Setting steer value %d: %s\n",
-            prediction,program_buf);
-
     /* Releasing lock on CSAC serial*/
     sem_post(&(s_synch->csac_sem));
+
+    /* Logging steer value */
+    log_to_file(s_conf->log_path, steer_com_string, 2);
 }
 
 void disable_csac_disc()
@@ -509,6 +511,7 @@ int start_csac_model(struct csac_model_data
             steer_pred = steer_pred * 1000;
 
             /* Steering CSAC */
+            log_to_file(s_conf->log_path, "Attempting to steer from model\n", 2);
             steer_csac(steer_pred);
         }
 
