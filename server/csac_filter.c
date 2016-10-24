@@ -478,21 +478,17 @@ int start_csac_model(struct csac_model_data
         /* Releasing lock */
         sem_post(&(s_synch->csac_sem));
 
-        /* debug */
-        //int steer_pred = get_steer_predict(cfd);
-        //steer_pred = steer_pred * 1000;
-        //steer_csac(steer_pred);
-
         /* Initialize model if not already initialized */
         if(!model_init) {
             model_init = init_csac_model(cfd, program_buf);
         }
 
         /* checking alarm */
-        if(cfd->days_passed >= 2){
+        if(cfd->days_passed >= cfd->cf_conf.warmup_days){
             raised_alarm = check_filters(cfd);
         }
-
+	
+	get_steer_predict(cfd);
         /* If the alarm is raised */
         if(raised_alarm){
             if(csac_disc){
