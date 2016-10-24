@@ -21,11 +21,11 @@
 #define CSAC_FILTER_CONFIG_ENTRIES 14
 
 #define ALARM_FAST_TIMING_FILTER " [ALARM] Phase > Limit\n"
-#define ALARM_STEER_TO_BIG " [ALARM] Steer > Limit!\n"
+#define ALARM_STEER_TO_BIG " [ALARM] CSAC Steer > static limit!\n"
 #define ALARM_FREQ_COR_FILTER " [ALARM] Steer > predicted!\n"
 
 
-/* Calculate difference between two MJDs */
+
 static double mjd_diff_day(double mjd_a,
                           double mjd_b)
 {
@@ -33,7 +33,6 @@ static double mjd_diff_day(double mjd_a,
     return diff;
 }
 
-/* Get MJD as double */
 static double get_mjdf()
 {
     double mjd_today = 0;
@@ -163,7 +162,7 @@ int freq_cor_filter(struct csac_model_data *cfd)
     return 0;
 }
 
-static void update_prediction(struct csac_model_data *cfd)
+static void update_model(struct csac_model_data *cfd)
 {
     /* Updating t_smooth */
     cfd->t_smooth_yesterday = cfd->t_smooth_today;
@@ -255,7 +254,7 @@ int update_csac_model(struct csac_model_data
     if(cfd->new_day == 1) {
 
         /* Update prediction */
-        update_prediction(cfd);
+        update_model(cfd);
 
         /* Updating fast timing filter status */
         cfd->ftf_status = fast_timing_filter(
@@ -342,7 +341,7 @@ static void initialize_config(struct
     conf_map[13].destination = &cf_conf->pred_log_path;
 }
 
-void steer_csac(float prediction)
+int steer_csac(float prediction)
 {
     /* Allocating buffer for run_program() */
     char program_buf[200];
@@ -358,24 +357,24 @@ void steer_csac(float prediction)
     memset(steer_com_string, '\0', 200);
 
     /* Building the string */
-    strcat(steer_com_string,
-           "python query_csac.py FA");
+    strcat(steer_com_string,"python query_csac.py FA");
     strcat(steer_com_string, pred_string);
+    fprintf(stderr, "Steer string: %s\n", steer_com_string);
+    return 1;
+
 
     /* Acquiring lock on CSAC serial*/
     sem_wait(&(s_synch->csac_sem));
 
     /* Disabling disciplining */
-    run_command("python query_csac.py Md",
+    /*run_command("python query_csac.py Md",
                 program_buf);
-    fprintf(stderr,"Disabling CSAC disciplining: [%s]\n", program_buf);
-
-    memset(program_buf, '\0', 200);
+    fprintf(stderr,"Disabling CSAC disciplining: %s\n", program_buf);*/
 
     /* Adjusting frequency according to the models prediction */
     run_command(steer_com_string, program_buf);
 
-    fprintf(stderr, "Setting steer value %lf: [%s]\n",
+    fprintf(stderr, "Setting steer value %lf: %s\n",
             cfd->steer_prediction,program_buf);
 
     /* Releasing lock on CSAC serial*/
@@ -428,7 +427,6 @@ int check_filters(struct csac_model_data *cmd)
     }
 
     /* If current steer is bigger than the predicted limit */
-    /* Is this supposed to be here? */
     if( abs(cfd->steer_current) > cfd->cf_conf.pred_limit ){
         log_to_file(s_conf->log_path, ALARM_STEER_TO_BIG, 2);
         return 1;
@@ -480,43 +478,49 @@ int start_csac_model(struct csac_model_data
         /* Releasing lock */
         sem_post(&(s_synch->csac_sem));
 
+        /* debug */
+        double steer_pred = get_steer_predict(cfd);
+        steer_pred = steer_pred * 1000;
+        steer_csac(steer_pred);
+
         /* Initialize model if not already initialized */
         if(!model_init) {
             model_init = init_csac_model(cfd, program_buf);
-        } else {
-            /* checking alarm */
-            if(cfd->days_passed >= 2){
-                raised_alarm = check_filters(cfd);
+        }
+
+        /* checking alarm */
+        if(cfd->days_passed >= 2){
+            raised_alarm = check_filters(cfd);
+        }
+
+        /* If the alarm is raised */
+        if(raised_alarm){
+            if(csac_disc){
+                disable_csac_disc();
+                csac_disc = 0;
             }
 
-            /* If the alarm is raised */
-            if(raised_alarm){
-                if(csac_disc){
-                    disable_csac_disc();
-                    csac_disc = 0;
-                }
+            /* Get mjd to update filter */
+            double mjd_today = get_mjdf();
+            
+            /* Calculating MJD */
+            cfd->t_current = mjd_today;
 
-                double mjd_today = get_mjdf();
-                if(!mjd_today){
-                    /* Calculating MJD */
-                    cfd->t_current = mjd_today;
+            /* Calc steer predict */
+            double steer_pred = get_steer_predict(cfd);
+            steer_pred = steer_pred * 1000;
 
-                    /* Updating model */
-                    update_prediction(cfd);
+            /* Steering CSAC */
+            steer_csac(steer_pred);
+        }
 
-                    /* Steering CSAC */
-                    steer_csac(cfd->steer_prediction);
-                }
+        /* If the alarm is not raised */
+        if(!raised_alarm){
+            if(!csac_disc){
+                enable_csac_disc();
+                csac_disc = 1;
             }
-
-            /* If the alarm is not raised */
-            if(!raised_alarm){
-                if(!csac_disc){
-                    enable_csac_disc();
-                    csac_disc = 1;
-                }
-                update_csac_model(cfd, program_buf); 
-            }
+            update_csac_model(cfd, program_buf); 
         }
 
         /* If logging enabled, log all data from the CSAC */
