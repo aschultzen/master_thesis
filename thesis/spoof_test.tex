@@ -100,67 +100,83 @@ By reviewing the log produced by the Sensor Server, the following was observed:
 \end{itemize}
 
 \subsubsection{GPS data}
-The following figures are plots of the GPS data (NMEA) that was logged by the Sensors during test 1. Figure \ref{sensor1_alt} shows the altitude in meters for Sensor 1. The only thing that stands out in the plot, is when the antenna is covered in aluminium foil as show at around the 2000 second mark. At this point, the receiver is no longer able to solve a position thus generating valid but empty fields in the data. This creates a deep chasm in the plot. Because both receivers' antennas were covered in foil, all the plots share this trait. Figure \ref{sensor2_alt} shows the altitude in meters for Sensor 2. When compared with the altitude plot for Sensor 1 \ref{sensor1_alt}, it seems to correlate better with when the antenna was moved. It is however a puzzle why the antenna reported to have been moved 7 meters down, which it clearly was not. When examining figure \ref{sensor1_lat} and \ref{sensor2_lat}, showing the latitude for Sensor 1 and 2 (in that order), one can clearly see that Sensor 1 was moved to the south and Sensor 2 was moved to the north. One might also notice that Sensor 2 traveled further. The difference in travel is because Sensor 1's antenna did not utilize the full length of cable because of issues with placing the receiver safely \footnote{The antennas have a base with a magnet. Finding a suitable surface for the magnet was challenging.}. Figure \ref{sensor1_long} and \ref{sensor2_long} shows a plot for the solved longitude for Sensor 1 and Sensor 2. 
+The following figures are plots of the GPS data (NMEA) that was logged by the Sensors during test 1. Figure \ref{sensor1_alt} shows the altitude in meters for Sensor 1. The only thing that stands out in the plot, is when the antenna is covered in aluminium foil as show at around the 2000 second mark. At this point, the receiver is no longer able to solve a position thus generating valid but empty fields in the data. This creates a deep chasm in the plot. Because both receivers' antennas were covered in foil, all the plots share this trait. Figure \ref{sensor2_alt} shows the altitude in meters for Sensor 2. When compared with the altitude plot for Sensor 1 \ref{sensor1_alt}, it seems to correlate better with when the antenna was moved. It is however a puzzle why the antenna reported to have been moved 7 meters down, which it clearly was not. When examining figure \ref{sensor1_lat} and \ref{sensor2_lat}, showing the latitude for Sensor 1 and 2 (in that order), one can clearly see that Sensor 1 was moved to the south and Sensor 2 was moved to the north. One might also notice that Sensor 2 traveled further. The difference in travel is because Sensor 1's antenna did not utilize the full length of cable because of issues with placing the receiver safely \footnote{The antennas have a base with a magnet. Finding a suitable surface for the magnet was challenging.}. Figure \ref{sensor1_long} and \ref{sensor2_long} shows a plot for the solved longitude for Sensor 1 and Sensor 2. When examining figure \ref{sensor1_long}, it seems as if the antenna was never moved. This is because the building the antenna was placed on, is position in a north to south line and the receiver was moved along with the roof. The antenna connected to Sensor 2 was not moved in straight line because the cable got caught in vegetation. The last two figures, figure \ref{sensor1_speed} and figure \ref{sensor2_speed} shows the speed solved by Sensor 1 and Sensor 2. They both correlate well with when the antennas were moved, however, the antenna connected to sensor 2 seems to be a little bit more sensitive than the on connected to Sensor
 
-\begin{wrapfigure}{c}{1\textwidth}
+\begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{gnssAlt1.pdf}
   \caption{The figure shows the solved altitude of the GPS receiver connected to Sensor 1, during test 1}
   \label{sensor1_alt}
-\end{wrapfigure} 
+\end{figure} 
 
-\begin{wrapfigure}{c}{1\textwidth}
+\begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{gnssAlt2.pdf}
   \caption{The figure shows the solved altitude of the GPS receiver connected to Sensor 2, during test 1}
   \label{sensor2_alt}
-\end{wrapfigure}
+\end{figure}
 
-\begin{wrapfigure}{c}{1\textwidth}
+\begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{gnssLat1.pdf}
   \caption{The figure shows the solved latitude of the GPS receiver connected to Sensor 1, during test 1}
   \label{sensor1_lat}
-\end{wrapfigure} 
+\end{figure} 
 
-\begin{wrapfigure}{c}{1\textwidth}
+\begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{gnssLat2.pdf}
   \caption{The figure shows the solved latitude of the GPS receiver connected to Sensor 2, during test 1}
   \label{sensor2_lat}
-\end{wrapfigure} 
+\end{figure} 
 
-\begin{wrapfigure}{c}{1\textwidth}
+\begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{gnssLong1.pdf}
   \caption{The figure shows the solved longitude of the GPS receiver connected to Sensor 1, during test 1}
   \label{sensor1_long}
-\end{wrapfigure} 
+\end{figure} 
 
-\begin{wrapfigure}{c}{1\textwidth}
+\begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{gnssLong2.pdf}
   \caption{The figure shows the solved longitude of the GPS receiver connected to Sensor 2, during test 1}
   \label{sensor2_long}
-\end{wrapfigure} 
+\end{figure} 
 
-\begin{wrapfigure}{c}{1\textwidth}
+\begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{gnssSpeed1.pdf}
   \caption{The figure shows the solved speed of the GPS receiver connected to Sensor 1, during test 1}
   \label{sensor1_speed}
-\end{wrapfigure} 
+\end{figure} 
 
-\begin{wrapfigure}{c}{1\textwidth}
+\begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{gnssSpeed2.pdf}
   \caption{The figure shows the solved speed of the GPS receiver connected to Sensor 2, during test 1}
   \label{sensor2_speed}
-\end{wrapfigure} 
+\end{figure} 
 
+\newpage
 \subsection{Measurements}
+Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for the atomic clock. The thick dark plot in the middle is from telemetry data gathered from the atomic clock. The lighter plot in the background is data from the CNT-91 frequency counter. Figure \ref{cns91_tel_phase} shows the phase offset in nano seconds for the atomic clock. The thick dark plot is from telemetry data gathered from the atomic clock. The lighter thin plot is data from the CNT-91 frequency counter. The interesting thing to observe in both of these figures, is the jump in frequency and phase offset once the antenna was covered in foil. There is also a clear correlation between movement of the antenna and the relative frequency offset as seen in figure \ref{cns91_tel_freq}. 
 
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=1\textwidth]{cns91-and-csac-telemetry-frequency.pdf}
+  \caption{The figure shows the relative frequency offset for the atomic clock. The thick dark plot in the middle is from telemetry data gathered from the atomic clock. The lighter plot in the background is data from the CNT-91 frequency counter.}
+  \label{cns91_tel_freq}
+\end{figure} 
 
+\begin{figure}
+  \centering
+  \includegraphics[width=1\textwidth]{cns91-and-csac-telemetry-phase.pdf}
+  \caption{The figure shows the phase offset in nano seconds for the atomic clock. The thick dark plot is from telemetry data gathered from the atomic clock. The lighter thin plot is data from the CNT-91 frequency counter.}
+  \label{cns91_tel_phase}
+\end{figure} 
+
+\newpage
 \section{Test 2}
 
 \subsection{Conclusion}
