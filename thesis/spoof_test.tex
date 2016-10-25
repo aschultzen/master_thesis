@@ -1,27 +1,29 @@
 \documentclass[../main.tex]{subfiles}
 
-\chapter{Spoof simulation test}
+\chapter{Spoof simulation tests}
 When a GPS receiver is spoofed, its solved position or time (or both) might change. The result depends on the technique used to spoof. By moving a GPS receiver, one can simulate a spoofing attack since the location most certainly will change. It might also affect the time solved (but why? Figure this out). We also covered the antennas with aluminium foil to simulate a loss of signal.
 
 \section{Data acquisition}\label{data_aquisition}
 In order to create an accurate clock-model of the atomic clock, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the atomic clock will correct it's frequency based on either a 1 PPS (Pulse per second) signal or a 10 MHz signal as discussed earlier under section (\ref{csac_com}) A similar approach was used in order to collect GPS data. Data from two u-blox NEO-M8T was gathered over the same time period as the data gathered from the atomic clock. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the atomic clock. It also provided valuable data that could be used to tune the filters in the atomic clock controller. The data gathering was done by simple Python scripts (appendix \ref{CL} and \ref{GL}) running on a computer connected to the GPS receivers and the atomic clock. Figure (\ref{CLS}) shows a block diagram of the setup.
 
-\subsection{Setup}
+\section{Setup}
 \begin{figure}
 \centering
   \includegraphics[scale=0.31]{server_layout.pdf}
    \caption[atomic clock controller implementation block diagram]{A block diagram showing the tested implementation.}
    \label{ibd}
 \end{figure}
-Figure \ref{ibd} shows how the Server, Sensors and atomic clock were physically set up. In order to assure good GPS satellite geometry, the antennas were placed at the roof of Justervesenets main office at Kjeller. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Antenna 1 was connected to GPS receiver 1 which in turn was connected to Sensor 1. It's the same deal with antenna 2 which was connected to GPS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The Sensors and the Server were connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the atomic clock and the Clients were configured to log all NMEA data received from the GPS receivers. The GPS receiver connected to antenna South is used to supply the atomic clock with a 1 PPS signal. Because the atomic clock model needs live data over time to mature, the system was started Friday 7. October 2016 and the test was performed Monday 10. October 2016.
 
-\begin{figure}
+Figure \ref{ibd} shows how the Server, Sensors and atomic clock were physically set up. In order to assure good GPS satellite geometry, the antennas were placed at the roof of Justervesenets main office at Kjeller. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Antenna 1 was connected to GPS receiver 1 which in turn was connected to Sensor 1. It's the same deal with antenna 2 which was connected to GPS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The Sensors and the Server were connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the atomic clock and the Clients were configured to log all NMEA data received from the GPS receivers. The GPS receiver connected to antenna South is used to supply the atomic clock with a 1 PPS signal. Because the atomic clock model needs live data over time to mature, the system was started Friday 7. October 2016 and the test was performed Monday 10. October 2016. Figure \ref{msd} is a block diagram showing how the measuring setup was physically configured. Figure \ref{lab_setup_photo} is a photograph of the measuring setup. Not shown in the photo, is the source of the 10 MHz signal used a reference. This signal was carried by cable from the time laboratory at the 2. floor.
+
+\begin{figure}[!htb]
 \centering
   \includegraphics[scale=0.31]{measure_setup.pdf}
    \caption[Measurement setup]{Block diagram showing the setup of the measurement equipment}
    \label{msd}
 \end{figure}
 
+\section{Test 1}
 \subsection{Goal of test}
 The goal with this test was to use the Sensor Server system to detect a simulated spoofing attack. By moving the antennas, the KRL filter (\ref{kvsrlf}) should be triggered as the solved longitude, altitude, latitude and speed should change. The filters using the clock model might also trigger. The result would be observable by analyzing the log files produced by the Server and Clients and the data collected by the measuring setup.
 
@@ -97,8 +99,69 @@ By reviewing the log produced by the Sensor Server, the following was observed:
   \end{lstlisting} 
 \end{itemize}
 
-\subsubsection{Measurements}
+\subsubsection{GPS data}
+The following figures are plots of the GPS data (NMEA) that was logged by the Sensors during test 1. Figure \ref{sensor1_alt} shows the altitude in meters for Sensor 1. The only thing that stands out in the plot, is when the antenna is covered in aluminium foil as show at around the 2000 second mark. At this point, the receiver is no longer able to solve a position thus generating valid but empty fields in the data. This creates a deep chasm in the plot. Because both receivers' antennas were covered in foil, all the plots share this trait. Figure \ref{sensor2_alt} shows the altitude in meters for Sensor 2. When compared with the altitude plot for Sensor 1 \ref{sensor1_alt}, it seems to correlate better with when the antenna was moved. It is however a puzzle why the antenna reported to have been moved 7 meters down, which it clearly was not. When examining figure \ref{sensor1_lat} and \ref{sensor2_lat}, showing the latitude for Sensor 1 and 2 (in that order), one can clearly see that Sensor 1 was moved to the south and Sensor 2 was moved to the north. One might also notice that Sensor 2 traveled further. The difference in travel is because Sensor 1's antenna did not utilize the full length of cable because of issues with placing the receiver safely \footnote{The antennas have a base with a magnet. Finding a suitable surface for the magnet was challenging.}. Figure \ref{sensor1_long} and \ref{sensor2_long} shows a plot for the solved longitude for Sensor 1 and Sensor 2. 
 
+\begin{wrapfigure}{c}{1\textwidth}
+  \centering
+  \includegraphics[width=1\textwidth]{gnssAlt1.pdf}
+  \caption{The figure shows the solved altitude of the GPS receiver connected to Sensor 1, during test 1}
+  \label{sensor1_alt}
+\end{wrapfigure} 
+
+\begin{wrapfigure}{c}{1\textwidth}
+  \centering
+  \includegraphics[width=1\textwidth]{gnssAlt2.pdf}
+  \caption{The figure shows the solved altitude of the GPS receiver connected to Sensor 2, during test 1}
+  \label{sensor2_alt}
+\end{wrapfigure}
+
+\begin{wrapfigure}{c}{1\textwidth}
+  \centering
+  \includegraphics[width=1\textwidth]{gnssLat1.pdf}
+  \caption{The figure shows the solved latitude of the GPS receiver connected to Sensor 1, during test 1}
+  \label{sensor1_lat}
+\end{wrapfigure} 
+
+\begin{wrapfigure}{c}{1\textwidth}
+  \centering
+  \includegraphics[width=1\textwidth]{gnssLat2.pdf}
+  \caption{The figure shows the solved latitude of the GPS receiver connected to Sensor 2, during test 1}
+  \label{sensor2_lat}
+\end{wrapfigure} 
+
+\begin{wrapfigure}{c}{1\textwidth}
+  \centering
+  \includegraphics[width=1\textwidth]{gnssLong1.pdf}
+  \caption{The figure shows the solved longitude of the GPS receiver connected to Sensor 1, during test 1}
+  \label{sensor1_long}
+\end{wrapfigure} 
+
+\begin{wrapfigure}{c}{1\textwidth}
+  \centering
+  \includegraphics[width=1\textwidth]{gnssLong2.pdf}
+  \caption{The figure shows the solved longitude of the GPS receiver connected to Sensor 2, during test 1}
+  \label{sensor2_long}
+\end{wrapfigure} 
+
+\begin{wrapfigure}{c}{1\textwidth}
+  \centering
+  \includegraphics[width=1\textwidth]{gnssSpeed1.pdf}
+  \caption{The figure shows the solved speed of the GPS receiver connected to Sensor 1, during test 1}
+  \label{sensor1_speed}
+\end{wrapfigure} 
+
+\begin{wrapfigure}{c}{1\textwidth}
+  \centering
+  \includegraphics[width=1\textwidth]{gnssSpeed2.pdf}
+  \caption{The figure shows the solved speed of the GPS receiver connected to Sensor 2, during test 1}
+  \label{sensor2_speed}
+\end{wrapfigure} 
+
+\subsection{Measurements}
+
+
+\section{Test 2}
 
 \subsection{Conclusion}
-The observations reveal what we expected. After all, when moving a GPS receivers antenna, the solved position has to change. If it did not, the GPS receiver or antenna would have to be faulty. Step 5 and 6 (\ref) did not produce the expected result. 
+The observations reveal what we expected. After all, when moving a GPS receivers antenna, the solved position has to change. If it did not, the GPS receiver or antenna would have to be faulty. Step 5 and 6 did not produce the expected result. The reason was discovered to be an error in the KRL filter configuration. 
