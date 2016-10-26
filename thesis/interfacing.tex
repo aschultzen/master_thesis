@@ -49,3 +49,15 @@ Another possibility is of course to write scripts that communicates with the Sen
 	  PRINTCFD                    & PFD                       & NONE                          & Prints CSAC filter data\\ \hline                                                                        
 	  \end{tabularx}
 \end{table}
+
+\chapter{Design decisions}
+\section{Server architecture}
+Numerous approaches were considered when planning the implementation of the atomic clock controller software (See \ref{da} for alternate approaches). Everything pointed to a Client/Server model. When compared to a directly cabled approach where all GPS receivers are connected to a hypothetical device doing what the Sensor Server is doing today, you get the following advantages with the Sensor Server approach:
+
+\begin{itemize}
+  \item Scalability. If you were to connect GPS receivers directly to a computer, you would quickly run out of USB ports, even with a hub (as discussed here \ref{scmgr}). By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect (see \ref{cspakp} for more). The Sensor Server is limited by the computer CPU and network card.
+  \item It's efficient. The shared memory layout means that the data always is available for reading or writing without having to read from a file or query a database. 
+  \item It's stable. Each connection is handled by a separate process and the shared memory is protected by semaphores assuring atomic write and read operations.
+  \item It's cheaper. Signal cables and amplifiers are costly. A network topology is usually already there.
+  \item It's manageable. Interfacing was a concern when the Sensor Server was planned. The protocol is therefor easily readable and data is accessible.
+ \end{itemize}

@@ -1,6 +1,6 @@
 \documentclass[../main.tex]{subfiles}
 
-\chapter{Spoof simulation tests}
+\chapter{Testing}
 When a GPS receiver is spoofed, its solved position or time (or both) might change. The result depends on the technique used to spoof. By moving a GPS receiver, one can simulate a spoofing attack since the location most certainly will change. It might also affect the time solved (but why? Figure this out). We also covered the antennas with aluminium foil to simulate a loss of signal.
 
 \section{Data acquisition}\label{data_aquisition}
@@ -222,7 +222,7 @@ The following By reviewing the log produced by the Sensor Server, the following 
     ...
     [10/24/16 - 13:23:43] [ ALARM ] Sensor 2 cleared KRL filter!
   \end{lstlisting}
-  \item More interestingly was the fact the \textit{Frequency correction filter} was triggered. This is what we wanted. 
+  \item More interestingly was the fact the \textit{Frequency correction filter} was triggered.
     \begin{lstlisting}
       [10/24/16 - 13:12:42] [ ALARM ] Steer > predicted!
     \end{lstlisting}
@@ -240,14 +240,16 @@ Figure \ref{sensor2_everything} shows the plotted GPS data collected during test
 
 \newpage
 \subsection{Measurements}
+Figure \ref{sensor2_measure} shows the measurements done during test 2. 
 
 \begin{figure}
   \centering
-  \includegraphics[width=1\textwidth]{20161024-test2-telemetry-and-cnt91-combined.pdf.pdf}
-  \caption{The figure shows (from the top) the latitude, longitude, altitude, speed and number of satellites as plotted from the GPS data collected during test 2.}
-  \label{sensor2_everything}
+  \includegraphics[width=1\textwidth]{20161024-test2-telemetry-and-cnt91-combined.pdf}
+  \caption{The top figure shows a set of plots. The first plot is phase offset in nano seconds. The long, sloped light line is a plot of the measurements done by the CNT-91 frequency counter. The dotted dark plot, is also the phase offset but as reported by the atomic clock. The bottom figure also shows two plots. Once again, the more lighter plot in the background is relative frequency offset as measured by the CNT-91 frequency counter. The dark plot is frequency offset as reported by the atomic clock.}
+  \label{sensor2_measure}
 \end{figure} 
 
+\newpage
 \subsection{Conclusion}
-Disabling of disciplining worked fine. The steering did not.
+
 

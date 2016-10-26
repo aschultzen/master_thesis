@@ -1,8 +1,8 @@
 \documentclass[../main.tex]{subfiles}
 
 \chapter{Atomic clock controller implementation}
-\section{A Sensor Server/Client model}
-Numerous approaches were considered when planning the implementation of the atomic clock controller software (See \ref{da} for alternate approaches). The approach that was chosen is a Client/Server model which we have named the "Sensor Server". The Sensor Server architecture is based on the idea that a GPS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Server and Sensor communicates over a network using Internet protocol. The Sensor runs a trivial program that receives data from a GPS receiver, formats the data according to Sensor Server protocol and sends the data to a Server (more about the Client, see \ref{sensor_client}). The Server on the other hand, is responsible for the heavy lifting. Server tasks include:
+\section{A Sensor Server/Client model} 
+The Sensor Server architecture is based on the idea that a GPS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Server and Sensor communicates over a network using Internet protocol. The Sensor runs a trivial program that receives data from a GPS receiver, formats the data according to Sensor Server protocol and sends the data to a Server (more about the Client, see \ref{sensor_client}). The Server on the other hand, is responsible for the heavy lifting. Server tasks include:
 \begin{itemize}
   \item Handle connections to Sensors.
   \item Update structures as Sensor status changes (disconnects or gets kicked out).
@@ -11,14 +11,13 @@ Numerous approaches were considered when planning the implementation of the atom
   \item Raising alarms based on filter status.
   \item Controlling the atomic clock.
 \end{itemize}
-By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect (see \ref{cspakp} for more). However, every router and switch between a Sensor and the Server imposes a delay on the stream of packets between the two, especially when compared with an approach where the GPS receivers were cabled directly to an atomic clock controller. This might make the Sensor Server implementation less responsive. It is of our understanding that whatever increase in complexity the Client/Server introduces to our approach, the Sensor Server makes up for by eliminating the need for potential miles of signal cables and signal amplifiers. 
 
 \begin{figure}\label{bd}
   \includegraphics[scale=0.4]{master_sketch_arrows.pdf}
    \caption[atomic clock atomic clock controller Block diagram]{A block diagram of our proposed solution}
 \end{figure}
 
-\section{The Sensor Server}
+\section{Implementation description}
 In the following section, the architecture and inner workings, data structures and key components of the Sensor Server will be explained. The Server core (\ref{server_core}) consists of the source code in \texttt{sensor\_server.c}. The Parser and Handler spans over texttt{session.c} and texttt{actions.c}. The atomic clock model and the associated filters source code is in \texttt{csac\_filter.c}. The filter using GPS data is in \texttt{filters.c}. Figure \ref{server_call_graph} shows a simplified call graph for the Sensor Server.
 
 \subsection{Server core}\label{server_core}
@@ -89,7 +88,7 @@ Conceptually, the atomic clock model and the filter that uses the model is two s
    \label{actions_core}
 \end{figure}
 
-The parser and handler are responsible for parsing data received from a client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. A function named \texttt{respond()} is called in the listening loop. Every time data is received from a client, the data is sent to the parser (\texttt{parse\_input()}) to determines the validity of the request received. See subsection \ref{nmea_data} for more information about the GPS data received from the Sensors. Figure \ref{server_flow} and \ref{actions_core} are block diagrams showing the execution flow for this part of the server. The protocol is explained in greater detail under section \ref{protocol} and the parser is better explained under subsection \ref{parser}.
+The parser and handler are responsible for parsing data received from a client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. A function named \texttt{respond()} is called in the listening loop. Every time data is received from a client, the data is sent to the parser (\texttt{parse\_input()}) to determine the validity of the request received. See subsection \ref{nmea_data} for more information about the GPS data received from the Sensors. Figure \ref{server_flow} and \ref{actions_core} are block diagrams showing the execution flow for this part of the server. The protocol is explained in greater detail under section \ref{protocol} and the parser is better explained under subsection \ref{parser}.
 
 \begin{itemize}
   \item A loop is entered. The loop is broken when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. This is the same variable that is used in the Server core \ref{server_core} loop and for a good reason: If the server exits, then its children should too. 
