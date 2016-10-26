@@ -103,12 +103,15 @@ The parser and handler are responsible for parsing data received from a client a
   \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load data for the Known Vs. Reported position filter (KRL) data into the clients KRL filter struct. The server will attempt to load this data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data. For more information about the KRL filter, see section \ref{kvsrlf}.
 \end{itemize}
 
-\subsection{GPS filters}\label{gps_filters}
+\subsection{GPS filter}\label{gps_filters}
+There is currently only one filter using GPS data in the Sensor Server implementation to this data. This is the \textit{Known Vs. Reported location filter}. Figure \ref{gps_filters} is a block diagram showing the filter as a part of the Sensor Server.
+
+\subsubsection{Known Vs. Reported location filter}
 \begin{figure}
 \centering
   \includegraphics[scale=0.3]{filters.pdf}
    \caption[Order of execution in the filter]{Block diagram show the order of execution in the GPS filter(s)}
-   \label{filter}
+   \label{gps_filters}
 \end{figure}
 By configuring the Sensor Server with the location of the different Sensors, the server can trigger an action if a Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is higher or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to check whether or not the latitude part of the GPS receivers solved position is within "safe" (not spoofed) range.
 \begin{code}
@@ -156,7 +159,7 @@ When a Sensor connects to the Server and identifies itself, the Server will atte
     \label{krl_config}
 \end{code}
 
-\subsection{Atomic clock filters}\label{csac_filters}
+\subsection{Clock model filters}\label{csac_filters}
 Figure \ref{figure_csac_model} shows both the atomic clock model and filter in one figure. As explained in section \ref{csac_model}, the model of the atomic clock and the filters based upon, are closely related. 
 \begin{itemize}
   \item Once the model has been running for 48 hours, it is ready to be used as a reference, filtering out abnormal data.
@@ -437,7 +440,7 @@ In the C programming language, a "struct" is a complex data type that defines a 
 
 \subsection{server\_data}
 \begin{code}
-  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} (appendix \ref{sensor_server_common.h})line 107}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} (appendix \ref{sensor_server_common.h}, line 107) showing the \texttt{server\_data} struct.}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -454,11 +457,11 @@ In the C programming language, a "struct" is a complex data type that defines a 
     \end{minted}
   \label{server_data}
 \end{code}
-The \texttt{server\_data} struct contains information about the server. Some of the of information like the PID, version, and when the server was started, is just information about the server itself. The number of clients and sensors on the other hand, is used to make sure that the server does not allow more connections than it can handle.
+The \texttt{server\_data} struct as shown in listing \ref{server_data}, contains information about the server. Some of the of information like the PID, version, and when the server was started, is just information about the server itself. The number of clients and sensors on the other hand, is used to make sure that the server does not allow more connections than it can handle.
 
 \subsection{server\_synchro}\label{server_synchro}
 \begin{code}
-  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} (appendix \ref{sensor_server_common.h})line 116}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} (appendix \ref{sensor_server_common.h}, line 116) showing the \texttt{server\_synchro} struct}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -475,11 +478,11 @@ The \texttt{server\_data} struct contains information about the server. Some of 
     \end{minted}
   \label{server_synchro}
 \end{code}
-The \texttt{server\_synchro} structs member are semaphores (\ref{shared_mem_sem}) that the server and its children processes uses to protect atomic access to shared resources. The \texttt{csac\_sem} is used to control serial access to the atomic clock, making sure that only one request is sent to atomic clock at a time. The \texttt{client\_list\_sem} is used by functions manipulating and reading the client list structure, and the \texttt{ready\_sem} is used by ready check algorithm. See subsection \ref{ready_check_alg} for more about this.
+The \texttt{server\_synchro} as shown in listing \ref{server_synchro}, contains "flags" used by synchronization mechanisms (\ref{shared_mem_sem}) that the server and its children processes uses to protect access to shared resources. The \texttt{csac\_sem} is used to control serial access to the atomic clock, making sure that only one request is sent to atomic clock at a time. The \texttt{client\_list\_sem} is used by functions manipulating and reading the client list structure, and the \texttt{ready\_sem} is used by ready check algorithm. See subsection \ref{ready_check_alg} for more about this.
 
 \subsection{command\_code}\label{command_code}
 \begin{code}
-  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} (appendix \ref{sensor_server_common.h}) line 34}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h} (appendix \ref{sensor_server_common.h}, line 34) showing the \texttt{command\_code} struct}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -493,13 +496,13 @@ The \texttt{server\_synchro} structs member are semaphores (\ref{shared_mem_sem}
         int id_parameter;
     };
     \end{minted}
-  \label{command_code}
+  \label{command_code_listing}
 \end{code}
-The \texttt{command\_code} struct is used by the parser to more efficiently convey protocol compliant requests and related parameters. See section \ref{parser} for more about the parser.
+The \texttt{command\_code} struct as shown in listing \ref{command_code_listing}, is used by the parser to more efficiently convey protocol compliant requests and related parameters. See section \ref{parser} for more about the parser.
 
 \subsection{nmea\_container}\label{nmea_cont}
 \begin{code}
-  \caption{Sample of code taken from \texttt{nmea.h} (appendix \ref{nmea.h}) line 20}
+  \caption{Sample of code taken from \texttt{nmea.h} (appendix \ref{nmea.h}, line 20) showing the \texttt{nmea\_container} struct}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -549,11 +552,12 @@ The \texttt{command\_code} struct is used by the parser to more efficiently conv
     \end{minted}
     \label{nmea_container}
 \end{code}
-The \texttt{nmea\_container} is used by the handler (see section \ref{parser_and_handler}) which dissects the NMEA strings and validates them before it fills the respective members of the structs. The purpose of it is just to make it easier for the other parts of the Server to use the NMEA data.
+
+The \texttt{nmea\_container} struct as shown in listing \ref{nmea_container}, is used by the handler (see section \ref{parser_and_handler}) which dissects the NMEA strings and validates them before it fills the respective members of the structs. The purpose of it is just to make it easier for the other parts of the Server to use the NMEA data.
 
 \subsection{list\_head}\label{list_head}
 \begin{code}
-  \caption{Sample of code taken from \texttt{list.h} (appendix \ref{list}) line 70, showing the \texttt{list\_head struct}.}
+  \caption{Sample of code taken from \texttt{list.h} (appendix \ref{list}, line 70) showing the \texttt{list\_head} struct}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -565,16 +569,37 @@ The \texttt{nmea\_container} is used by the handler (see section \ref{parser_and
       struct list_head *next, *prev;
     };
     \end{minted}
-    \label{struct_client_table}
+    \label{list_head_listing}
 \end{code}
 
-The fields of the struct is pretty self explanatory. There is a pointer to the previous node and one to the next. One of the members of the \texttt{client\_table\_list} is a struct of type \texttt{list\_head}. This is what makes it possible to traverse the list. 
+The \texttt{list\_head} struct is shown in listing \ref{list_head_listing}. The fields of the struct is pretty self explanatory. There is a pointer to the previous node and one to the next. One of the members of the \texttt{client\_table\_list} is a struct of type \texttt{list\_head}. This is what makes it possible to traverse the list.
+
+\subsection{transmission\_s}
+The \texttt{transmission\_s} struct as show in listing \ref{transmission_struct} is used by the child process forked out by the Server in the server core, communicates with the client. The struct has two members, a file descriptor for the socket and a buffer to store incoming data.
+
+\begin{code}
+  \caption{Sample of code taken from \texttt{net.h}(appendix \ref{net.h}) line 31}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct transmission_s {
+        int session_fd;
+        char iobuffer[IO_BUFFER_SIZE];
+    };
+    \end{minted}
+    \label{transmission_struct}
+\end{code}
+
 
 \subsection{client\_table\_entry}\label{client_table_entry}
 The client\_table\_entry struct is what the name suggests, it's an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. Listing \ref{struct_client_table} shows the complete struct. 
 
 \begin{code}
-  \caption{Sample of code taken from \texttt{sensor\_server\_common.h}(appendix \ref{sensor_server_common.h}) line 90}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h}(appendix \ref{sensor_server_common.h}, line 90) shows the \texttt{client\_table\_entry} struct}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -603,7 +628,7 @@ The client\_table\_entry struct is what the name suggests, it's an entry in a li
 Beginning from the top:
 \begin{itemize}
   \item \texttt{list\_head list} is used to traverse the linked client list. See \ref{linked_list} for more about the linked list implementation and \ref{list_head} for more about the struct.
-  \item \texttt{transmission_s transmission} is used by the process to network I/O with the connected client.
+  \item \texttt{transmission\_s transmission} is used by the process to network I/O with the connected client.
   \item \texttt{timeval timeout} is defined by the \texttt{sys/time.h} and is used in the Sensor Server implementation to hold a value defining how long a connected client can stay connected without sending any commands to the Server. When the timeout value is exceeded, the client is disconnected. The values are:
   \begin{itemize}
     \item 5 seconds for a Sensor.
@@ -611,14 +636,14 @@ Beginning from the top:
     \item 10 seconds for an unidentified client.
   \end{itemize}
   These values are defined in the \texttt{sensor\_server.h} file.
-  \item \texttt{command_code cm} is used by the parser to convey protocol compliant requests. See \ref{command_code} for more.
-  \item \texttt{nmea_container} is used to contain NMEA data in a more convenient way for the filters. See \ref{nmea_cont} for more about the struct, and \ref{nmea_data} for more about NMEA.
+  \item \texttt{command\_code cm} is used by the parser to convey protocol compliant requests. See \ref{command_code} for more.
+  \item \texttt{nmea\_container} is used to contain NMEA data in a more convenient way for the filters. See \ref{nmea_cont} for more about the struct, and \ref{nmea_data} for more about NMEA.
   \item \texttt{filters fs} is a struct containing data for the GPS based filters. There is currently only one GPS based filter, the Known vs Reported location filter and it is explained in subsection \ref{gps_filters}.
-  \item \texttt{pid_t pid} is the process ID for the process forked out for the connected client.
-  \item \texttt{time_t timestamp} is time stamp that is stamped every time the Sensor's filter data is processed.
+  \item \texttt{pid\_t pid} is the process ID for the process forked out for the connected client.
+  \item \texttt{time\_t timestamp} is time stamp that is stamped every time the Sensor's filter data is processed.
   \item \texttt{client\_id} and \texttt{client\_type} is the client's ID and the client's type, either "SENSOR" or "MONITOR". 
   \item \texttt{ready} is used to indicate that a Sensor has received NMEA data and is ready for filter processing.
-  \item \texttt{marked_for_kick} is a flag. If it is 1, the client has been marked by a monitor indicating that it should be kicked. The next the client sends data to the Server, the client will be disconnected.
+  \item \texttt{marked\_for\_kick} is a flag. If it is 1, the client has been marked by a monitor indicating that it should be kicked. The next the client sends data to the Server, the client will be disconnected.
   \item \texttt{char ip} is the connected client's IP address.
 \end{itemize}
 
