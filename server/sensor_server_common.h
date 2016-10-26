@@ -41,7 +41,7 @@ struct command_code {
 /*!@brief Data used by the red_dev_filter.
 * Read from file.
 */
-struct ref_dev_data {
+struct krlf_data {
     double alt_ref;
     double lon_ref;
     double lat_ref;
@@ -59,15 +59,15 @@ struct disturbed_values {
     int speed_disturbed;
 };
 
-struct ref_dev {
-    struct ref_dev_data rdd;
+struct krlf {
+    struct krlf_data krlf_d;
     int moved;
     int was_moved;
     struct disturbed_values dv;
 };
 
 struct filters {
-    struct ref_dev rdf;
+    struct krlf krl_f;
 };
 
 /*
@@ -90,7 +90,7 @@ struct filters {
 struct client_table_entry {
     struct list_head list;              /* The head of the client list */
     struct transmission_s transmission; /* Everything needed for socket com. */
-    struct timeval heartbeat_timeout;   /* Timeout in seconds if not activity */
+    struct timeval timeout;             /* Timeout in seconds if not active */
     struct command_code cm;             /* See command code */
     struct nmea_container nmea;         /* All NMEA data associated with the client */
     pid_t pid;                          /* The process ID */

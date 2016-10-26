@@ -103,7 +103,7 @@ The parser and handler are responsible for parsing data received from a client a
   \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load data for the Known Vs. Reported position filter (KRL) data into the clients KRL filter struct. The server will attempt to load this data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data. For more information about the KRL filter, see section \ref{kvsrlf}.
 \end{itemize}
 
-\subsection{GPS filters}
+\subsection{GPS filters}\label{gps_filters}
 \begin{figure}
 \centering
   \includegraphics[scale=0.3]{filters.pdf}
@@ -242,7 +242,25 @@ As mentioned earlier (\ref{sockets}), every time a client connects, a new proces
   \label{extern_structs}
 \end{code}
 
-These shared memory segments have different usage. The \texttt{client\_list} points to a shared segment allocated for storing a list of all connected clients. \texttt{s\_data} contains information about the server, \texttt{s\_synch} contains semaphores used to lock down shared resources, \texttt{s\_conf} is the servers configuration and \texttt{cfd} is the data and state for the filters based on the clock model. Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files.
+These shared memory segments have different usage. The \texttt{client\_list} points to a shared segment allocated for storing a list of all connected clients. \texttt{s\_data} contains information about the server, \texttt{s\_synch} contains semaphores used to lock down shared resources, \texttt{s\_conf} is the servers configuration and \texttt{cfd} is the data and state for the filters based on the clock model. Every process that forks out from the server is given access to these memory segment. One might make the point that this voids the idea of processes, and one might be correct (see \ref{discussion}). The shared memory is created using the GNU library's Memory Mapped I/O (MMAP). Although typically used to map files to a region of memory, MMAP can also be used to create an anonymous map which is not connected to file but rather for sharing data between tasks without using files. Listing \ref{mmap_use} shows an example of MMAP being used to map an anonymous, shared map for the client list.
+
+\begin{code}
+  \caption{Listing shows the use of MMAP to create an anonymous map of memory to be used as a shared memory segment. Sample of code taken from \texttt{sensor\_server.c}(appendix \ref{sensor_server.c}, line 360)}
+  \begin{minted}
+  [
+  fontsize=\footnotesize,
+  fontfamily=tt,
+  linenos=true
+  ]
+  {c}
+  client_list = mmap(NULL, 
+                    (s_conf->max_clients * sizeof(struct client_table_entry)), 
+                    PROT_READ | PROT_WRITE,
+                    MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE,
+                    -1, 0);
+  \end{minted}
+  \label{mmap_use}
+\end{code}
 
 \subsubsection{Client list memory segment}\label{clms}
 Every time a client connects, it is given a piece of shared memory where it can store its data. This piece of shared memory is used as a node in a linked list. The linked list structure, stored in the shared memory segment is available to all the processes spawned by the server. This segment is static in size and is allocated once and is never changed during the whole life of the Server. The size of the segment is determined by the maximum number of allowed clients, a configurable value read from the configuration file every time the server is started. Read more about why the client list shared segment is static in size, under subsection \ref{resizing_shared}.
@@ -293,24 +311,7 @@ The map is an array containing pointers to the client list segment. These pointe
 
 \subsubsection{Client linked list}\label{linked_list}
 Since the C standard does not provide data structures like linked lists, I had to choose between reinventing the wheel or finding some implementation to drop into the project. While studying another subject, I found a guide on how to use the linked list implementation from the linux kernel source code (\cite{KAZU_LIST}) in a user space program. Since the implementation was solid, well tested and had many useful functions, i decided to use it. The modified header file containing all the code, is GPL licensed.  
-
-\begin{code}
-  \caption{Sample of code taken from \texttt{list.h} (appendix \ref{list}) line 70, showing the \texttt{list\_head struct}.}
-    \begin{minted}
-    [
-    fontsize=\footnotesize,
-    fontfamily=tt,
-    linenos=true
-    ]
-    {c}
-    struct list_head {
-      struct list_head *next, *prev;
-    };
-    \end{minted}
-    \label{struct_client_table}
-\end{code}
-
-The fields of the struct is pretty self explanatory. There is a pointer to the previous node and one to the next. One of the members of the \texttt{client\_table\_list} is a struct of type \texttt{list\_head}. This is what makes it possible to traverse the list. Figure (\ref{linked_list_figure}) shows pieces of the shared memory segment linked together in a linked list structure.
+Figure (\ref{linked_list_figure}) shows pieces of the shared memory segment linked together in a linked list structure.
 
 \begin{figure}
 \centering
@@ -318,23 +319,6 @@ The fields of the struct is pretty self explanatory. There is a pointer to the p
    \caption[Linked list example]{Block diagram show an example of linked list state}
    \label{linked_list_figure}
 \end{figure}  
-
-\begin{code}
-  \caption{Listing shows the use of MMAP to create an anonymous map of memory to be used as a shared memory segment. Sample of code taken from \texttt{sensor\_server.c}(appendix \ref{sensor_server.c}, line 360)}
-  \begin{minted}
-  [
-  fontsize=\footnotesize,
-  fontfamily=tt,
-  linenos=true
-  ]
-  {c}
-  client_list = mmap(NULL, 
-                    (s_conf->max_clients * sizeof(struct client_table_entry)), 
-                    PROT_READ | PROT_WRITE,
-                    MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE,
-                    -1, 0);
-  \end{minted}
-\end{code}
 
 \subsubsection{Semaphores}
 Having shared memory segments comes with a price. Whenever two or more processes are working on the same data set, they are prone to create race conditions, deadlocks and data corruption. Therefore, semaphores are used to lock the segments during read and write operations.
@@ -451,41 +435,6 @@ The SA.45 uses a high-resolution phase meter to improve synchronization and to c
 \section{Data structures}
 In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
 
-\subsection{client\_table\_entry}\label{client_table_entry}
-The client\_table\_entry struct is what the name suggests, it's an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. Listing \ref{struct_client_table} shows the complete struct. 
-
-\begin{code}
-  \caption{Sample of code taken from \texttt{sensor\_server\_common.h}(appendix \ref{sensor_server_common.h}) line 90}
-    \begin{minted}
-    [
-    fontsize=\footnotesize,
-    fontfamily=tt,
-    linenos=true
-    ]
-    {c}
-    struct client_table_entry {
-        struct list_head list; 
-        struct transmission_s transmission; 
-        struct timeval heartbeat_timeout; 
-        struct command_code cm;   
-        struct nmea_container nmea;    
-        pid_t pid;  
-        time_t timestamp;  
-        int client_id; 
-        int client_type;    
-        int ready;  
-        int marked_for_kick; 
-        char ip[INET_ADDRSTRLEN];
-        struct filters fs;
-    };
-    \end{minted}
-    \label{struct_client_table}
-\end{code}
-Beginning from the top:
-\begin{itemize}
-  \item \texttt{list\_head list} is a pointer to a 
-\end{itemize}
-
 \subsection{server\_data}
 \begin{code}
   \caption{Sample of code taken from \texttt{sensor\_server\_common.h} (appendix \ref{sensor_server_common.h})line 107}
@@ -548,7 +497,7 @@ The \texttt{server\_synchro} structs member are semaphores (\ref{shared_mem_sem}
 \end{code}
 The \texttt{command\_code} struct is used by the parser to more efficiently convey protocol compliant requests and related parameters. See section \ref{parser} for more about the parser.
 
-\subsection{NMEA container}\label{nmea_cont}
+\subsection{nmea\_container}\label{nmea_cont}
 \begin{code}
   \caption{Sample of code taken from \texttt{nmea.h} (appendix \ref{nmea.h}) line 20}
     \begin{minted}
@@ -601,6 +550,77 @@ The \texttt{command\_code} struct is used by the parser to more efficiently conv
     \label{nmea_container}
 \end{code}
 The \texttt{nmea\_container} is used by the handler (see section \ref{parser_and_handler}) which dissects the NMEA strings and validates them before it fills the respective members of the structs. The purpose of it is just to make it easier for the other parts of the Server to use the NMEA data.
+
+\subsection{list\_head}\label{list_head}
+\begin{code}
+  \caption{Sample of code taken from \texttt{list.h} (appendix \ref{list}) line 70, showing the \texttt{list\_head struct}.}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct list_head {
+      struct list_head *next, *prev;
+    };
+    \end{minted}
+    \label{struct_client_table}
+\end{code}
+
+The fields of the struct is pretty self explanatory. There is a pointer to the previous node and one to the next. One of the members of the \texttt{client\_table\_list} is a struct of type \texttt{list\_head}. This is what makes it possible to traverse the list. 
+
+\subsection{client\_table\_entry}\label{client_table_entry}
+The client\_table\_entry struct is what the name suggests, it's an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. Listing \ref{struct_client_table} shows the complete struct. 
+
+\begin{code}
+  \caption{Sample of code taken from \texttt{sensor\_server\_common.h}(appendix \ref{sensor_server_common.h}) line 90}
+    \begin{minted}
+    [
+    fontsize=\footnotesize,
+    fontfamily=tt,
+    linenos=true
+    ]
+    {c}
+    struct client_table_entry {
+        struct list_head list; 
+        struct transmission_s transmission; 
+        struct timeval timeout; 
+        struct command_code cm;   
+        struct nmea_container nmea;
+        struct filters fs;    
+        pid_t pid;  
+        time_t timestamp;  
+        int client_id; 
+        int client_type;    
+        int ready;  
+        int marked_for_kick; 
+        char ip[INET_ADDRSTRLEN];
+    };
+    \end{minted}
+    \label{struct_client_table}
+\end{code}
+Beginning from the top:
+\begin{itemize}
+  \item \texttt{list\_head list} is used to traverse the linked client list. See \ref{linked_list} for more about the linked list implementation and \ref{list_head} for more about the struct.
+  \item \texttt{transmission_s transmission} is used by the process to network I/O with the connected client.
+  \item \texttt{timeval timeout} is defined by the \texttt{sys/time.h} and is used in the Sensor Server implementation to hold a value defining how long a connected client can stay connected without sending any commands to the Server. When the timeout value is exceeded, the client is disconnected. The values are:
+  \begin{itemize}
+    \item 5 seconds for a Sensor.
+    \item 1000 seconds for a Monitor.
+    \item 10 seconds for an unidentified client.
+  \end{itemize}
+  These values are defined in the \texttt{sensor\_server.h} file.
+  \item \texttt{command_code cm} is used by the parser to convey protocol compliant requests. See \ref{command_code} for more.
+  \item \texttt{nmea_container} is used to contain NMEA data in a more convenient way for the filters. See \ref{nmea_cont} for more about the struct, and \ref{nmea_data} for more about NMEA.
+  \item \texttt{filters fs} is a struct containing data for the GPS based filters. There is currently only one GPS based filter, the Known vs Reported location filter and it is explained in subsection \ref{gps_filters}.
+  \item \texttt{pid_t pid} is the process ID for the process forked out for the connected client.
+  \item \texttt{time_t timestamp} is time stamp that is stamped every time the Sensor's filter data is processed.
+  \item \texttt{client\_id} and \texttt{client\_type} is the client's ID and the client's type, either "SENSOR" or "MONITOR". 
+  \item \texttt{ready} is used to indicate that a Sensor has received NMEA data and is ready for filter processing.
+  \item \texttt{marked_for_kick} is a flag. If it is 1, the client has been marked by a monitor indicating that it should be kicked. The next the client sends data to the Server, the client will be disconnected.
+  \item \texttt{char ip} is the connected client's IP address.
+\end{itemize}
 
 \section{The Sensor Client}\label{sensor_client}
 The sensor client software is a simple program written in C99 whose only task is to relay information read from the GPS receivers. Summed up shortly:

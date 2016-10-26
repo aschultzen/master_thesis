@@ -391,7 +391,7 @@ int datadump(struct client_table_entry* client, char *filename,
         */
         fprintf(h_dump,DUMPDATA_HEADER);
         inner_counter = 0;
-        double *rdf = &client->fs.rdf.rdd.alt_ref;
+        double *rdf = &client->fs.krl_f.krlf_d.alt_ref;
         while(inner_counter < 8) {
             fprintf(h_dump, "%lf \n",*rdf);
             rdf++;
@@ -527,35 +527,35 @@ int load_krl_data(struct client_table_entry* target)
 
     conf_map[0].entry_name = ALT_REF;
     conf_map[0].modifier = FORMAT_DOUBLE;
-    conf_map[0].destination = &target->fs.rdf.rdd.alt_ref;
+    conf_map[0].destination = &target->fs.krl_f.krlf_d.alt_ref;
 
     conf_map[1].entry_name = LON_REF;
     conf_map[1].modifier = FORMAT_DOUBLE;
-    conf_map[1].destination = &target->fs.rdf.rdd.lon_ref;
+    conf_map[1].destination = &target->fs.krl_f.krlf_d.lon_ref;
 
     conf_map[2].entry_name = LAT_REF;
     conf_map[2].modifier = FORMAT_DOUBLE;
-    conf_map[2].destination = &target->fs.rdf.rdd.lat_ref;
+    conf_map[2].destination = &target->fs.krl_f.krlf_d.lat_ref;
 
     conf_map[3].entry_name = SPEED_REF;
     conf_map[3].modifier = FORMAT_DOUBLE;
-    conf_map[3].destination = &target->fs.rdf.rdd.speed_ref;
+    conf_map[3].destination = &target->fs.krl_f.krlf_d.speed_ref;
 
     conf_map[4].entry_name = ALT_DEV;
     conf_map[4].modifier = FORMAT_DOUBLE;
-    conf_map[4].destination = &target->fs.rdf.rdd.alt_dev;
+    conf_map[4].destination = &target->fs.krl_f.krlf_d.alt_dev;
 
     conf_map[5].entry_name = LON_DEV;
     conf_map[5].modifier = FORMAT_DOUBLE;
-    conf_map[5].destination = &target->fs.rdf.rdd.lon_dev;
+    conf_map[5].destination = &target->fs.krl_f.krlf_d.lon_dev;
 
     conf_map[6].entry_name = LAT_DEV;
     conf_map[6].modifier = FORMAT_DOUBLE;
-    conf_map[6].destination = &target->fs.rdf.rdd.lat_dev;
+    conf_map[6].destination = &target->fs.krl_f.krlf_d.lat_dev;
 
     conf_map[7].entry_name = SPEED_DEV;
     conf_map[7].modifier = FORMAT_DOUBLE;
-    conf_map[7].destination = &target->fs.rdf.rdd.speed_dev;
+    conf_map[7].destination = &target->fs.krl_f.krlf_d.speed_dev;
 
     int load_config_status = load_config(conf_map, filename,
                                          KRL_DATA_ENTRIES);

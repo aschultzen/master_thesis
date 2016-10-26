@@ -51,15 +51,15 @@ void raise_alarm(void)
     list_for_each_entry_safe(iterator, safe,&client_list->list, list) {
         if(iterator->client_id > 0) {
             /* Checking krl_filter */
-            if(iterator->fs.rdf.moved == 1) {
-                iterator->fs.rdf.was_moved = 1;
-                iterator->fs.rdf.moved = 0;
+            if(iterator->fs.krl_f.moved == 1) {
+                iterator->fs.krl_f.was_moved = 1;
+                iterator->fs.krl_f.moved = 0;
                 if(s_conf->logging) {
                     log_alarm(iterator->client_id, ALARM_RDF);
                 }
             } else {
-                if(iterator->fs.rdf.was_moved) {
-                    iterator->fs.rdf.was_moved = 0;
+                if(iterator->fs.krl_f.was_moved) {
+                    iterator->fs.krl_f.was_moved = 0;
                     if(s_conf->logging) {
                         log_alarm(iterator->client_id, ALARM_RDF_RETURNED);
                     }
@@ -76,52 +76,52 @@ void krl_filter(void)
 
     list_for_each_entry_safe(iterator, safe,&client_list->list, list) {
 
-        if(iterator->nmea.lat_current > iterator->fs.rdf.rdd.lat_ref +
-                iterator->fs.rdf.rdd.lat_dev) {
-            iterator->fs.rdf.moved = 1;
-            iterator->fs.rdf.dv.lat_disturbed = HIGH;
-        } else if(iterator->nmea.lat_current < iterator->fs.rdf.rdd.lat_ref -
-                  iterator->fs.rdf.rdd.lat_dev) {
-            iterator->fs.rdf.moved = 1;
-            iterator->fs.rdf.dv.lat_disturbed = LOW;
+        if(iterator->nmea.lat_current > iterator->fs.krl_f.krlf_d.lat_ref +
+                iterator->fs.krl_f.krlf_d.lat_dev) {
+            iterator->fs.krl_f.moved = 1;
+            iterator->fs.krl_f.dv.lat_disturbed = HIGH;
+        } else if(iterator->nmea.lat_current < iterator->fs.krl_f.krlf_d.lat_ref -
+                  iterator->fs.krl_f.krlf_d.lat_dev) {
+            iterator->fs.krl_f.moved = 1;
+            iterator->fs.krl_f.dv.lat_disturbed = LOW;
         } else {
-            iterator->fs.rdf.dv.lat_disturbed = SAFE;
+            iterator->fs.krl_f.dv.lat_disturbed = SAFE;
         }
 
-        if(iterator->nmea.alt_current > iterator->fs.rdf.rdd.alt_ref +
-                iterator->fs.rdf.rdd.alt_dev) {
-            iterator->fs.rdf.moved = 1;
-            iterator->fs.rdf.dv.alt_disturbed = HIGH;
-        } else if(iterator->nmea.alt_current < iterator->fs.rdf.rdd.alt_ref -
-                  iterator->fs.rdf.rdd.alt_dev) {
-            iterator->fs.rdf.moved = 1;
-            iterator->fs.rdf.dv.alt_disturbed = LOW;
+        if(iterator->nmea.alt_current > iterator->fs.krl_f.krlf_d.alt_ref +
+                iterator->fs.krl_f.krlf_d.alt_dev) {
+            iterator->fs.krl_f.moved = 1;
+            iterator->fs.krl_f.dv.alt_disturbed = HIGH;
+        } else if(iterator->nmea.alt_current < iterator->fs.krl_f.krlf_d.alt_ref -
+                  iterator->fs.krl_f.krlf_d.alt_dev) {
+            iterator->fs.krl_f.moved = 1;
+            iterator->fs.krl_f.dv.alt_disturbed = LOW;
         } else {
-            iterator->fs.rdf.dv.alt_disturbed = SAFE;
+            iterator->fs.krl_f.dv.alt_disturbed = SAFE;
         }
 
-        if(iterator->nmea.lon_current > iterator->fs.rdf.rdd.lon_ref +
-                iterator->fs.rdf.rdd.lon_dev) {
-            iterator->fs.rdf.moved = 1;
-            iterator->fs.rdf.dv.lon_disturbed = HIGH;
-        } else if(iterator->nmea.lon_current < iterator->fs.rdf.rdd.lon_ref -
-                  iterator->fs.rdf.rdd.lon_dev) {
-            iterator->fs.rdf.moved = 1;
-            iterator->fs.rdf.dv.lon_disturbed = LOW;
+        if(iterator->nmea.lon_current > iterator->fs.krl_f.krlf_d.lon_ref +
+                iterator->fs.krl_f.krlf_d.lon_dev) {
+            iterator->fs.krl_f.moved = 1;
+            iterator->fs.krl_f.dv.lon_disturbed = HIGH;
+        } else if(iterator->nmea.lon_current < iterator->fs.krl_f.krlf_d.lon_ref -
+                  iterator->fs.krl_f.krlf_d.lon_dev) {
+            iterator->fs.krl_f.moved = 1;
+            iterator->fs.krl_f.dv.lon_disturbed = LOW;
         } else {
-            iterator->fs.rdf.dv.lon_disturbed = SAFE;
+            iterator->fs.krl_f.dv.lon_disturbed = SAFE;
         }
 
-        if(iterator->nmea.speed_current > iterator->fs.rdf.rdd.speed_ref +
-                iterator->fs.rdf.rdd.speed_dev) {
-            iterator->fs.rdf.moved = 1;
-            iterator->fs.rdf.dv.speed_disturbed = HIGH;
-        } else if(iterator->nmea.speed_current < iterator->fs.rdf.rdd.speed_ref -
-                  iterator->fs.rdf.rdd.speed_dev) {
-            iterator->fs.rdf.moved = 1;
-            iterator->fs.rdf.dv.speed_disturbed = LOW;
+        if(iterator->nmea.speed_current > iterator->fs.krl_f.krlf_d.speed_ref +
+                iterator->fs.krl_f.krlf_d.speed_dev) {
+            iterator->fs.krl_f.moved = 1;
+            iterator->fs.krl_f.dv.speed_disturbed = HIGH;
+        } else if(iterator->nmea.speed_current < iterator->fs.krl_f.krlf_d.speed_ref -
+                  iterator->fs.krl_f.krlf_d.speed_dev) {
+            iterator->fs.krl_f.moved = 1;
+            iterator->fs.krl_f.dv.speed_disturbed = LOW;
         } else {
-            iterator->fs.rdf.dv.speed_disturbed = SAFE;
+            iterator->fs.krl_f.dv.speed_disturbed = SAFE;
         }
     }
 }

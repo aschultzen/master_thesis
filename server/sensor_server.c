@@ -78,9 +78,9 @@ int set_timeout(struct client_table_entry *target,
                        struct timeval h_timeout)
 {
     /* setsockopt return -1 on error and 0 on success */
-    target->heartbeat_timeout = h_timeout;
+    target->timeout = h_timeout;
     if (setsockopt (target->transmission.session_fd, SOL_SOCKET,
-                    SO_RCVTIMEO, (char *)&target->heartbeat_timeout, sizeof(struct timeval)) < 0) {
+                    SO_RCVTIMEO, (char *)&target->timeout, sizeof(struct timeval)) < 0) {
         t_print("an error: %s\n", strerror(errno));
         return 0;
     }
@@ -306,8 +306,8 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->transmission.session_fd = session_fd;
 
     /* Zeroing out filters */
-    new_client->fs.rdf.moved = 0;
-    new_client->fs.rdf.was_moved = 0;
+    new_client->fs.krl_f.moved = 0;
+    new_client->fs.krl_f.was_moved = 0;
 
     new_client->marked_for_kick = 0;
     new_client->ready = 0;
