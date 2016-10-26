@@ -53,7 +53,7 @@ The following is a step by step description of how the test was conducted. The t
 
 Step 1 and 2 were designed to trigger the KRL filter, especially the check of solved latitude, longitude and altitude but also the speed, against known values. Step 5 and 6 was also designed to trigger the KRL filter, but more specifically the checking of solved speed. Step 7 and 8 was to designed to reveal what would happen with the both the KRL and the CM filter during a jamming attack as it was believed that covering the antennas with aluminium foil would block all signals out.
 
-\subsection{Observations}\label{observations}
+\subsection{Observations}\label{test1_observations}
 \subsubsection{Sensor Server logs}
 By reviewing the log produced by the Sensor Server, the following was observed:
 
@@ -79,28 +79,28 @@ By reviewing the log produced by the Sensor Server, the following was observed:
   \end{lstlisting} 
   \item At 11:27.05, it was the CM filter using the clock model that triggered. It stopped triggering 11:27:33. Sensor 2 also triggered the KRL filter 11:27:31 and cleared at 11:34:16.
     \begin{lstlisting}
-    [10/10/16 - 11:27:05] [ ALARM ] Steer value > predicted!
+    [10/10/16 - 11:27:05] [ ALARM ] Steer > limit!
     ...
     [10/10/16 - 11:27:31] [ ALARM ] Sensor 2 triggered KRL filter!
     ...
-    [10/10/16 - 11:27:33] [ ALARM ] Steer value > predicted!
+    [10/10/16 - 11:27:33] [ ALARM ] Steer > limit!
   \end{lstlisting} 
-  \item The last 6 seconds, Sensor 2 triggered KRL filter and the CM filter was triggered at multiple occasions.
+  \item The last 6 seconds, Sensor 2 triggered KRL filter and the clock model based filter was triggered at multiple occasions.
   \begin{lstlisting}
     [10/10/16 - 11:34:15] [ ALARM ] Sensor 2 triggered KRL filter!
     [10/10/16 - 11:34:16] [ ALARM ] Sensor 2 cleared KRL filter!
     [10/10/16 - 11:34:17] [ ALARM ] Sensor 2 triggered KRL filter!
     [10/10/16 - 11:34:18] [ ALARM ] Sensor 2 triggered KRL filter!
     [10/10/16 - 11:34:19] [ ALARM ] Sensor 2 triggered KRL filter!
-    [10/10/16 - 11:34:19] [ ALARM ] Steer value > predicted!
-    [10/10/16 - 11:34:20] [ ALARM ] Steer value > predicted!
+    [10/10/16 - 11:34:19] [ ALARM ] Steer > limit!
+    [10/10/16 - 11:34:20] [ ALARM ] Steer > limit!
     [10/10/16 - 11:34:20] [ ALARM ] Sensor 2 cleared KRL filter!
-    [10/10/16 - 11:34:21] [ ALARM ] Steer value > predicted!
+    [10/10/16 - 11:34:21] [ ALARM ] Steer > limit!
   \end{lstlisting} 
 \end{itemize}
 
-\subsubsection{GPS data}
-The following figures are plots of the GPS data (NMEA) that was logged by the Sensors during test 1. Figure \ref{sensor1_alt} shows the altitude in meters for Sensor 1. The only thing that stands out in the plot, is when the antenna is covered in aluminium foil as show at around the 2000 second mark. At this point, the receiver is no longer able to solve a position thus generating valid but empty fields in the data. This creates a deep chasm in the plot. Because both receivers' antennas were covered in foil, all the plots share this trait. Figure \ref{sensor2_alt} shows the altitude in meters for Sensor 2. When compared with the altitude plot for Sensor 1 \ref{sensor1_alt}, it seems to correlate better with when the antenna was moved. It is however a puzzle why the antenna reported to have been moved 7 meters down, which it clearly was not. When examining figure \ref{sensor1_lat} and \ref{sensor2_lat}, showing the latitude for Sensor 1 and 2 (in that order), one can clearly see that Sensor 1 was moved to the south and Sensor 2 was moved to the north. One might also notice that Sensor 2 traveled further. The difference in travel is because Sensor 1's antenna did not utilize the full length of cable. Figure \ref{sensor1_long} and \ref{sensor2_long} shows a plot for the solved longitude for Sensor 1 and Sensor 2. When examining figure \ref{sensor1_long}, it seems as if the antenna was never moved. This is because the building the antenna was placed on, is position in a north to south line and the receiver was moved along with the roof. The antenna connected to Sensor 2 was not moved in straight line because the cable got caught in vegetation. The last two figures, figure \ref{sensor1_speed} and figure \ref{sensor2_speed} shows the speed solved by Sensor 1 and Sensor 2. They both correlate well with when the antennas were moved, however, the antenna connected to sensor 2 seems to be a little bit more sensitive than the on connected to Sensor
+\subsubsection{GPS data}\label{gpsdata_test1}
+The following figures are plots of the GPS data (NMEA) that was logged by the Sensors during test 1. Figure \ref{sensor1_alt} shows the altitude in meters for Sensor 1. The only thing that stands out in the plot, is when the antenna is covered in aluminium foil as show at around the 2000 second mark. At this point, the receiver is no longer able to solve a position thus generating valid but empty fields in the data. This creates a deep chasm in the plot. Because both receivers' antennas were covered in foil, all the plots share this trait. Figure \ref{sensor2_alt} shows the altitude in meters for Sensor 2. When compared with the altitude plot for Sensor 1 \ref{sensor1_alt}, Sensor 1 seems to correlate better. It is a puzzle why the Sensor 2 reported to have been moved 7 meters down, which it clearly was not. When examining figure \ref{sensor1_lat} and \ref{sensor2_lat}, showing the latitude for Sensor 1 and 2 (in that order), one can clearly see that Sensor 1 was moved to the south and Sensor 2 was moved to the north. One might also notice that Sensor 2 traveled further. The difference in travel is because Sensor 1's antenna did not utilize the full length of cable. Figure \ref{sensor1_long} and \ref{sensor2_long} shows a plot for the solved longitude for Sensor 1 and Sensor 2. When examining figure \ref{sensor1_long}, it seems as if the antenna was never moved. This is because the building the antenna was placed on, is position in a north to south line and the receiver was moved along with the roof. The antenna connected to Sensor 2 was not moved in straight line because the cable got caught in vegetation. The last two figures, figure \ref{sensor1_speed} and figure \ref{sensor2_speed} shows the speed solved by Sensor 1 and Sensor 2. They both correlate well with when the antennas were moved, however, the antenna connected to sensor 2 seems to be a little bit more sensitive than the on connected to Sensor
 
 \begin{figure}
   \centering
@@ -176,13 +176,16 @@ Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for t
   \label{cns91_tel_phase}
 \end{figure} 
 
+\subsection{Conclusion}
+The observations reveal what we expected. After all, when moving a GPS receivers antenna, the solved position has to change. If it did not, the GPS receiver or antenna would have to be faulty. Step 5 and 6 did not produce the expected result. The reason was discovered to be an error in the KRL filter configuration. One of the clock model based filters where also triggered, which we did not expect. The filter that was triggered was the \textit{Simple prediction filter}. See \ref{csac_filters} for more about the clock model based filters. 
+
 \newpage
 \section{Test 2}
 \subsection{Goal of test}
-The goal of the second test was to attempt to trigger the clock model based filters. This should have made the Sensor Server disable the atomic clock's disciplining mode and steer the atomic clock after the clock model's predictions. 
+The goal of the second test was to reproduce the result from test 1, where one of the clock model based filters were triggered. This should make the Sensor Server disable the atomic clock's disciplining mode and steer the atomic clock after the clock model's predictions. We also wanted to test the KRL filter again to make sure we had fixed the error in the filter's configuration, from last test.
 
 \subsection{Change in setup}
-The setup in test 1 is quite similar to test 2. There is however some changes. The GPS receiver that was connected to Sensor 1 is now connected to Sensor 2. This is the same receiver that is used to supply the 1 PPS signal disciplining to the atomic clock. Sensor 1 is no longer connected to the Sensor Server because the KRL filter was already tested in test 1. Sensor 2 did however still log data during the test as it did during test 1.
+The setup in test 1 is quite similar to test 2. There is however some changes. Sensor 1 is no longer connected to the Sensor Server since the KRL filter no longer was main priority. Sensor 2 did however still log data during the test as it did during test 1.
 
 \subsection{Description}\label{test2_description}
 The description of test 2 is similar to test 1(\ref{test1_description}). The only difference is that greater care was taken in obtaining an accurate time for the steps.
@@ -197,5 +200,54 @@ The description of test 2 is similar to test 1(\ref{test1_description}). The onl
   \item\relax 13:27:00 - 1070: Manually enabled the disciplining of the atomic clock.
 \end{itemize}
 
-\section{Conclusion}
-The observations reveal what we expected. After all, when moving a GPS receivers antenna, the solved position has to change. If it did not, the GPS receiver or antenna would have to be faulty. Step 5 and 6 did not produce the expected result. The reason was discovered to be an error in the KRL filter configuration. 
+\subsection{Observations}\label{test2_observations}
+\subsubsection{Sensor Server logs}
+The following By reviewing the log produced by the Sensor Server, the following was observed:
+
+\begin{itemize}
+  \item No false positives, the filters were not triggered before the test started.
+  \item The KRL filter was triggered by at 13:12:10 and cleared at 13:19:54
+  \begin{lstlisting}
+    [10/24/16 - 13:12:10] [ ALARM ] Sensor 2 triggered KRL filter!
+    ...
+    [10/24/16 - 13:19:54] [ ALARM ] Sensor 2 cleared KRL filter!
+  \end{lstlisting}
+  \item The KRL filter was triggered again at 13:23:12 for only a second. It was then triggered again two seconds later and was not cleared 13:23:43.
+    \begin{lstlisting}
+    [10/24/16 - 13:23:12] [ ALARM ] Sensor 2 triggered KRL filter!
+    ...
+    [10/24/16 - 13:23:13] [ ALARM ] Sensor 2 cleared KRL filter!
+    ...
+    [10/24/16 - 13:23:15] [ ALARM ] Sensor 2 triggered KRL filter!
+    ...
+    [10/24/16 - 13:23:43] [ ALARM ] Sensor 2 cleared KRL filter!
+  \end{lstlisting}
+  \item More interestingly was the fact the \textit{Frequency correction filter} was triggered. This is what we wanted. 
+    \begin{lstlisting}
+      [10/24/16 - 13:12:42] [ ALARM ] Steer > predicted!
+    \end{lstlisting}
+\end{itemize}
+
+\subsubsection{GPS data}
+Figure \ref{sensor2_everything} shows the plotted GPS data collected during test 2. As with GPS observed during test 1, there is a clear correlation between the plotted data and when the antenna was moved. The strange phenomena as described in test 1 (\ref{gpsdata_test1}) where the altitude was reported to be way too low, occurred in test 2 as well. 
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1\textwidth]{20161024-test2-sensor2-multipanel.pdf}
+  \caption{The figure shows (from the top) the latitude, longitude, altitude, speed and number of satellites as plotted from the GPS data collected during test 2.}
+  \label{sensor2_everything}
+\end{figure} 
+
+\newpage
+\subsection{Measurements}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1\textwidth]{20161024-test2-telemetry-and-cnt91-combined.pdf.pdf}
+  \caption{The figure shows (from the top) the latitude, longitude, altitude, speed and number of satellites as plotted from the GPS data collected during test 2.}
+  \label{sensor2_everything}
+\end{figure} 
+
+\subsection{Conclusion}
+Disabling of disciplining worked fine. The steering did not.
+

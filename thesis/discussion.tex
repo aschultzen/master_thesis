@@ -10,6 +10,16 @@ Ideally, the shared memory segments containing the client list should be resize-
 \subsection{Usage of scripts}
 In the current implementation of the Sensor Server, two scripts are used as part of the main routine. The first one is the \texttt{query\_csac.py}. This is a python script that was originally written to log data from atomic clock during data acquisition \ref{data_aquisition}. For some reason, it proved to be a significant challenge to implement a solution in C to configure, read and write from the atomic clock. The best solution did not even provide a reliable means of communicating with the atomic clock, even though communication with the GPS receivers, which in theory should have been exactly the same, was no problem. Once time got tight, I made the decision to drop the development of the atomic clock serial communication module written in C, and decided to use \texttt{query\_csac.py} by invoking with \texttt{popen()}. The story is much the same with the second script, \texttt{get\_mjd.py}. This is a script that calculates the Modified Julian date, a time format that is heavily used in calculations done by the clock model. The script relies on a library named jdutil.py, written by Matt Davis \cite{MATT_DAVIS}. Permission to use the jdutil.py was granted by Mr. Davis. The correspondence with Mr. Davis is included in the appendix under \ref{davis_email}.
 
+\subsection{Serial issues}
+Write about how it was challenging dealing with both GPS and CSAC. 
+
+\subsection{Clock model problems}
+
+\subsection{Sigchild handler}
+Write about how that went down
+
+
+
 \section{Currently missing}
 This section is used to discuss some of the shortcomings in the current version of the Sensor Server. Some functions were never implemented and others were not finished.
 

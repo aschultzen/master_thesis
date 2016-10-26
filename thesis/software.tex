@@ -166,6 +166,7 @@ Figure \ref{figure_csac_model} shows both the atomic clock model and filter in o
   \item The filters are checked. There are currently only 2 filters implemented using the atomic clock model as reference:
   \begin{itemize}
     \item \textit{Fast timing filter}. This is a simple filter that compares the current phase reported by the atomic clock with a pre-configured limit. If the current phase is higher, the filter is triggered.
+    \item \textit{Simple prediction filter}. This is also a simple filter, but instead of checking the phase, the currently applied steer value is compared with a value specified in the configuration file.
     \item \textit{Frequency correction filter}. This is a more sophisticated filter. It uses the atomic clock model to calculate a predicted steer value and compares it to the current steer value. If the current steer is too big, the filter is triggered. 
   \end{itemize}
   \item If any of the filters are triggered, the alarm is raised. The state of the alarm is expressed by an \texttt{int} that is either 0 or 1. If the alarm was not raised, the disciplining of the atomic clock is enabled if it was disabled, and the telemetry data is used to update the model.

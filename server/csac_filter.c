@@ -20,9 +20,9 @@
 #define CONFIG_WARMUP_DAYS "warmup_days: "
 #define CSAC_FILTER_CONFIG_ENTRIES 14
 
-#define ALARM_FAST_TIMING_FILTER " [ALARM] Phase > Limit\n"
-#define ALARM_STEER_TO_BIG " [ALARM] CSAC Steer > static limit!\n"
-#define ALARM_FREQ_COR_FILTER " [ALARM] Steer > predicted!\n"
+#define ALARM_FAST_TIMING_FILTER " [ ALARM ] Phase > Limit\n"
+#define ALARM_STEER_TO_BIG " [ ALARM ] Steer > limit!\n"
+#define ALARM_FREQ_COR_FILTER " [ ALARM ] Steer > predicted!\n"
 
 static double mjd_diff_day(double mjd_a,
                           double mjd_b)
