@@ -2,7 +2,19 @@
 
 \chapter{Discussion}\label{discussion}
 
-\section{Problems and Challenges}
+\section{Result of tests}
+
+\section{Sensor Server performance}
+\begin{itemize}
+  \item Scalability. If you were to connect GPS receivers directly to a computer, you would quickly run out of USB ports, even with a hub (as discussed here \ref{scmgr}). By using already existing network infrastructure, it becomes a lot easier to distribute Sensors and cover more area. This makes spoofing attacks harder to implement and easier to detect (see \ref{cspakp} for more). The Sensor Server is limited by the computer CPU and network card.
+  \item It's efficient. The shared memory layout means that the data always is available for reading or writing without having to read from a file or query a database. 
+  \item It's stable. Each connection is handled by a separate process and the shared memory is protected by semaphores assuring atomic write and read operations.
+  \item It's cheaper. Signal cables and amplifiers are costly. A network topology is usually already there.
+  \item It's manageable. Interfacing was a concern when the Sensor Server was planned. The protocol is therefor easily readable and data is accessible.
+ \end{itemize}
+Fast.
+
+\section{Implementation challenges}
 In this section, I wish to discuss and explain some of the problems or suboptimal solution used in the implementation of the Sensor Server. Some of the solutions should probably be fixed before an eventual deployment. These solution were scheduled to be improved but was not prioritized due to lack of time. 
 
 \subsection{Resizing shared memory segments}\label{resizing_shared}
@@ -14,15 +26,11 @@ In the current implementation of the Sensor Server, two scripts are used as part
 \subsection{Atomic clock communication}
 Write about how it was challenging dealing with both GPS and CSAC. 
 
-\subsection{Issues during testing}
-blabla
 	
-\subsection{Generating MJD}
+\subsection{Issues with MJD calculation}
 Modified Julian Day (MJD) is a way to express both date and time as a single number. It's convenient because the difference between the MJD for one day and the next, is exactly 1\footnote{For example, the MJD for 24/10-2016 00:00 is 57685.0 and the MJD for 25/10-2016 00:00
 is 57685.0. 12'o clock at the 25/10 would be 57658.5}. 
 
-\subsection{Sigchild handler}
-Write about how that went down
 
 \section{Currently missing}
 This section is used to discuss some of the shortcomings in the current version of the Sensor Server. Some functions were never implemented and others were not finished.
