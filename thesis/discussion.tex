@@ -11,15 +11,18 @@ Ideally, the shared memory segments containing the client list should be resize-
 \subsection{Usage of scripts}
 In the current implementation of the Sensor Server, two scripts are used as part of the main routine. The first one is the \texttt{query\_csac.py}. This is a python script that was originally written to log data from atomic clock during data acquisition \ref{data_aquisition}. For some reason, it proved to be a significant challenge to implement a solution in C to configure, read and write from the atomic clock. The best solution did not even provide a reliable means of communicating with the atomic clock, even though communication with the GPS receivers, which in theory should have been exactly the same, was no problem. Once time got tight, I made the decision to drop the development of the atomic clock serial communication module written in C, and decided to use \texttt{query\_csac.py} by invoking with \texttt{popen()}. The story is much the same with the second script, \texttt{get\_mjd.py}. This is a script that calculates the Modified Julian date, a time format that is heavily used in calculations done by the clock model. The script relies on a library named jdutil.py, written by Matt Davis \cite{MATT_DAVIS}. Permission to use the jdutil.py was granted by Mr. Davis. The correspondence with Mr. Davis is included in the appendix under \ref{davis_email}.
 
-\subsection{Serial issues}
+\subsection{Atomic clock communication}
 Write about how it was challenging dealing with both GPS and CSAC. 
 
-\subsection{Clock model problems}
+\subsection{Issues during testing}
+blabla
+	
+\subsection{Generating MJD}
+Modified Julian Day (MJD) is a way to express both date and time as a single number. It's convenient because the difference between the MJD for one day and the next, is exactly 1\footnote{For example, the MJD for 24/10-2016 00:00 is 57685.0 and the MJD for 25/10-2016 00:00
+is 57685.0. 12'o clock at the 25/10 would be 57658.5}. 
 
 \subsection{Sigchild handler}
 Write about how that went down
-
-
 
 \section{Currently missing}
 This section is used to discuss some of the shortcomings in the current version of the Sensor Server. Some functions were never implemented and others were not finished.

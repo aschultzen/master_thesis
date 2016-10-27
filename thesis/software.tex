@@ -162,7 +162,7 @@ When a Sensor connects to the Server and identifies itself, the Server will atte
 Figure \ref{figure_csac_model} shows both the atomic clock model and filter in one figure. As explained in section \ref{csac_model}, the model of the atomic clock and the filters based upon, are closely related. 
 \begin{itemize}
   \item Once the model has been running for 48 hours, it is ready to be used as a reference, filtering out abnormal data.
-  \item The filters are checked. There are currently only 2 filters implemented using the atomic clock model as reference:
+  \item The filters are checked. There are currently three filters implemented using the atomic clock model as reference:
   \begin{itemize}
     \item \textit{Fast timing filter}. This is a simple filter that compares the current phase reported by the atomic clock with a pre-configured limit. If the current phase is higher, the filter is triggered.
     \item \textit{Simple prediction filter}. This is also a simple filter, but instead of checking the phase, the currently applied steer value is compared with a value specified in the configuration file.
@@ -265,8 +265,11 @@ These shared memory segments have different usage. The \texttt{client\_list} poi
   \label{mmap_use}
 \end{code}
 
-\subsubsection{Client list memory segment}\label{clms}
-Every time a client connects, it is given a piece of shared memory where it can store its data. This piece of shared memory is used as a node in a linked list. The linked list structure, stored in the shared memory segment is available to all the processes spawned by the server. This segment is static in size and is allocated once and is never changed during the whole life of the Server. The size of the segment is determined by the maximum number of allowed clients, a configurable value read from the configuration file every time the server is started. Read more about why the client list shared segment is static in size, under subsection \ref{resizing_shared}.
+\subsubsection{Alternative to shared memory}
+Using shared memory is by no means the only way to implement interprocess communication. Another approach to inter process communication that was considered, was using a \texttt{pipe}. The pipe can be seen as a unidirectional channel where data written to end of the pipe is buffered by the operating system until the data is read from the other end of the pipe. This would however imply that each process would not only have to listen to the client connected, but also to the pipes connecting them to the other processes. This would be the case with message passing and sockets as well. The shared memory approach allowed for the Socket Server to act as single unit even though many processes where at work. 
+
+\subsection{Client list memory segment}\label{clms}
+Every time a client connects, it is given a piece of shared memory where it can store its data. This piece of shared memory is used as a node in a linked list. The linked list structure, stored in the shared memory segment is available to all the processes spawned by the server. This segment is static in size and is allocated once and is never changed during the whole life of the Server. The size of the segment is determined by the maximum number of allowed clients, a configurable value read from the configuration file every time the server is started. Read more about why the client list shared segment is static in size, under subsection \ref{resizing_shared}. 
 
 \subsubsection{Using the client list memory segment}\label{create_client}
 As previously explained, the list of clients are stored in a shared memory segment using a linked list structure. In order to keep tabs on what part of the shared memory segment is in use, a simple map of the memory is used (\ref{memory_map_figure}):
@@ -312,7 +315,7 @@ The map is an array containing pointers to the client list segment. These pointe
     \label{get_mem_piece}
 \end{code}
 
-\subsubsection{Client linked list}\label{linked_list}
+\subsection{Client linked list}\label{linked_list}
 Since the C standard does not provide data structures like linked lists, I had to choose between reinventing the wheel or finding some implementation to drop into the project. While studying another subject, I found a guide on how to use the linked list implementation from the linux kernel source code (\cite{KAZU_LIST}) in a user space program. Since the implementation was solid, well tested and had many useful functions, i decided to use it. The modified header file containing all the code, is GPL licensed.  
 Figure (\ref{linked_list_figure}) shows pieces of the shared memory segment linked together in a linked list structure.
 
@@ -322,6 +325,9 @@ Figure (\ref{linked_list_figure}) shows pieces of the shared memory segment link
    \caption[Linked list example]{Block diagram show an example of linked list state}
    \label{linked_list_figure}
 \end{figure}  
+
+\subsubsection{Alternative to linked list}
+The initial reason for using a linked list to organize the connected clients, was to reduce the time spent iterating over a space of memory. With a linked list, it would not matter where the different pieces of memory were located, a pointer to next piece would always be readily available anyway.
 
 \subsubsection{Semaphores}
 Having shared memory segments comes with a price. Whenever two or more processes are working on the same data set, they are prone to create race conditions, deadlocks and data corruption. Therefore, semaphores are used to lock the segments during read and write operations.
@@ -381,7 +387,7 @@ The parser used by the Sensor Server is a simple function. As explained in secti
   \label{parse_id}
 \end{code}
 
-The listing (\ref{parse_id}) shows how the parser attempts to find a match between the input buffer and the protocol defined IDENTIFY command. On line 6 it attempts to copy any potential parameter. The parser does not care if the parameter is missing, but it will attempt to extract it from the input buffer. If no matches are found, the function returns 0, letting the calling function (\texttt{respond()})  know that the input from the client was invalid or illegal. Comparing strings is hard work and a relatively CPU intensive task. This is why the parser sets a \textit{command code} (\ref{command_code}) as seen on the last line. The command code is an integer defined in the protocol, and every command has got one. The code is used in the listening loop by \texttt{respond} to determine what action to perform in case a valid request. Comparing integers are "cheaper" than comparing strings.
+The listing (\ref{parse_id}) shows how the parser attempts to find a match between the input buffer and the protocol defined IDENTIFY command. On line 6 it attempts to copy any potential parameter. The parser does not care if the parameter is missing, but it will attempt to extract it from the input buffer. If no matches are found, the function returns 0, letting the calling function (\texttt{respond()})  know that the input from the client was invalid or illegal. Comparing strings is hard work and a relatively CPU intensive task. This is why the parser sets a \textit{command code} (\ref{command_code}) as seen on the last line. The command code is an integer defined in the protocol, and every command has got one. The code is used in the listening loop by \texttt{respond} to determine what action to perform in case a valid request. Comparing integers are "cheaper" than comparing strings, and since the string comparison job is already done once, there is no need to do it again.
 
 \subsection{Ready check algorithm}\label{ready_check_alg}
 Every time NMEA data is received and validated, the process that received the data will initiate a ready check. This is done by setting a flag in the client list entry called ready to 1, and calling the \texttt{nmea\_ready()} function. The \texttt{nmea\_ready()} function locks down the client linked list and iterates through it checking if the other processes are ready too. If all the other processes has received valid NMEA data from their respective client, the GPS filters(s) are applied. If they are not ready, the lock is release and the process carries on. This means that the last process to receive NMEA data gets the job of applying the filters \footnote{Since NMEA data is generated every second by the GPS receivers, it might be more appropriate to say that it is the scheduler that decides which process is coming in last. This of course depends on the distance between the Sensor and the Client}.
