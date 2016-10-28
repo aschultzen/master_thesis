@@ -37,11 +37,14 @@ Modified Julian Day (MJD) is a way to express both date and time as a single num
 is 57685.0. 12'o clock at the 25/10 would be 57658.5}. 
 
 
-\section{Currently missing}
+\section{Architecture flaws}
 This section is used to discuss some of the shortcomings in the current version of the Sensor Server. Some functions were never implemented and others were not finished.
 
 \subsection{Atomic clock management}
 The Sensor Server should have had a separate process that handled the filters and communication with the atomic clock. This would free the processes handling the connections, from dealing with the filters and make the filter abstraction more complete and make the atomic clock model cleaner. The atomic clock model is already logically separated from the filters associated with it, but because of the way the code is organized, the use of the model implies the use of the filter. The atomic clock should still communicate with the atomic clock on its own like it does today, retrieving telemetry data, but the aforementioned process could keep track of the atomic clock's discipline status, steering and other functionality thus creating a more generic way for the system to communicate with the atomic clock. The GPS based filter could greatly benefit from this approach, as they today are not currently doing anything but log occurrences where they were triggered. 
+
+\subsection{Value of share memory}
+Was it necessary?
 
 \subsection{Security}
 
