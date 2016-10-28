@@ -33,8 +33,8 @@ Write about how it was challenging dealing with both GPS and CSAC.
 
 	
 \subsection{Issues with MJD calculation}
-Modified Julian Day (MJD) is a way to express both date and time as a single number. It's convenient because the difference between the MJD for one day and the next, is exactly 1\footnote{For example, the MJD for 24/10-2016 00:00 is 57685.0 and the MJD for 25/10-2016 00:00
-is 57685.0. 12'o clock at the 25/10 would be 57658.5}. 
+Modified Julian Day (MJD) is a way to express both date and time as a single number. It's convenient when doing calculations with dates, because the difference between the MJD for one day and the next, is exactly 1\footnote{For example, the MJD for 24/10-2016 00:00 is 57685.0 and the MJD for 25/10-2016 00:00
+is 57685.0. 12'o clock at the 25/10 would be 57658.5}. Modified Julian Date is also heavily used in the clock model.
 
 
 \section{Architecture flaws}
@@ -43,10 +43,8 @@ This section is used to discuss some of the shortcomings in the current version 
 \subsection{Atomic clock management}
 The Sensor Server should have had a separate process that handled the filters and communication with the atomic clock. This would free the processes handling the connections, from dealing with the filters and make the filter abstraction more complete and make the atomic clock model cleaner. The atomic clock model is already logically separated from the filters associated with it, but because of the way the code is organized, the use of the model implies the use of the filter. The atomic clock should still communicate with the atomic clock on its own like it does today, retrieving telemetry data, but the aforementioned process could keep track of the atomic clock's discipline status, steering and other functionality thus creating a more generic way for the system to communicate with the atomic clock. The GPS based filter could greatly benefit from this approach, as they today are not currently doing anything but log occurrences where they were triggered. 
 
-\subsection{Value of share memory}
+\subsection{Value of shared memory}\label{shared_mem_value}
 Was it necessary?
-
-\subsection{Security}
 
 \section{Choice of programming language}
 The SMACC software was originally planned to be written in Java since this was my most fluent programming language. Java is great language, it's object oriented, it has a garbage collector and a lot of useful libraries. As development started, it quickly became apparent that some parts of the code would be performance critical and that portability really wasn't that important anyway. The platform was already decided and there was no reason to believe that it would change in the near future. As we all know, premature optimization is the root of all evil. Being reluctant to commit a deadly programming sin, i decided to look at other languages. Since performance was a concern, Python was also quickly dismissed as an option. C++ would probably have been the best choice, but having never written anything in C before made it sound more exciting and like a nice opportunity to learn something new. During the planning phase of SMACC development, raspbian-2015-05-07 was the latest build. It came with GCC 4.6.3 which only had experimental support for C11(\cite{GCC11}). With C11 no longer considered an option, C99 was the obvious choice given it's attractive features like:
