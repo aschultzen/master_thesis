@@ -10,12 +10,33 @@ When discussing how to implement the software realizing the spoof proof atomic c
   \item Needs access to all data in order to cross check and for maximum "situational awareness".
   \item Should support as many GPS receivers as possible.
   \item Easy interfacing, remote control.
-  \item Easy on the memory card.
   \item Easy to configure.
   \item Graphical user interface not a requirement
 \end{itemize}
 
-The Sensor Server architecture is based on the idea that a GPS receiver and a computer can be viewed abstractly as a single device, a Sensor. The Server and Sensor communicates over a network using Internet protocol. The Sensor runs a trivial program that receives data from a GPS receiver, formats the data according to Sensor Server protocol and sends the data to a Server (more about the Client, see \ref{sensor_client}). The Server on the other hand, is responsible for the heavy lifting.
+\subsection{Client/Server model}
+In order to connect many GPS receivers to the atomic clock controller, we decided to implement a client/server model. The atomic clock controller serves the same purpose as before, but also doubles as a server. The data transmitted, will still be the same, the only difference is the interface and media. A network interface will be used instead of USB, and the media can be whatever is available since TCP/IP is designed to be hardware independent. This means that one could for example use:
+\begin{itemize}
+  \item Twisted pair
+  \item Fiber optics
+  \item WiFi
+  \item 4G (cellular)
+\end{itemize}
+Because reaction time is a concern, high latency media is not recommended \footnote{IP over Avian Carriers as described in RFC 1149 is highly discouraged}. The GPS receivers that we have chosen to use, does not have a network interface, we instead use Raspberry PIs. Considering how cheap single board computer have become, the price of a Raspberry PI can be justified even just to network enable a GPS receiver. The latest model of the Raspberry Pi has even got a built in wireless network interface. See \ref{platform} for more about the Raspberry Pi 3. The combination the GPS receiver and the Raspberry PI, is in this report abstractly seen as one device. We call this device a Sensor. The Sensor is responsible for reporting data to the Server and not much more. The Sensor can be deployed using already existing infrastructure to communicate, thus making it easier to deploy than if each GPS receiver had to cabled directly to the atomic clock controller. There is no denying that the implementation of a Server/Client model greatly increases the complexity of the atomic clock controller software, but it makes up for it by eliminating the need for long signal cables and amplifiers. 
+
+\subsection{Architecture description}
+In order to connect the Sensors to the server, the architecture needs to be able to:
+\begin{itemize}
+  \item Handle connections to clients.
+  \item Update structures as clients status changes (disconnects or gets kicked out).
+  \item Receive data from clients
+\end{itemize}
+These are tasks that the atomic clock controller needs to be able to perform as well as controlling the clock and analyzing data. In order to implement the Server/Client model, the Server is implemented using the Linux Socket API.The API is based on BSD sockets and are available in in almost all Unix-like operating system (\cite{LINUX_KERNEL}, p.610). A socket is a handle that can be passed by a program to the network API in order to use the network connection. The plan was briefly to use Glib \cite{GLIB}, a library that provides building blocks for libraries and applications written in C, instead of using low-level sockets. This idea was scrapped because I felt that it would be overkill for this implementation. This decision is discussed under subsection \ref{glib}. 
+
+Having decided \textit{how} the clients should connect to the server, the next challenge becomes how the server should communicate with the clients and vice versa. We decided to use what is called \textit{blocking I/O} and \textit{fork()}. This is a very common approach, but not the fastest (\cite{UNIXN_WBA}, p. 188). It is however quite easy to implement. Blocking I/O means that read operations on the socket blocks the main thread in the process until data has been received. This is not as dramatic as it might seem: If a Socket call cannot be completed immediately, the process who issued the call will be put to sleep thus enabling the scheduler to schedule other processes for execution until conditions are right for the sleeping process (\cite{UNIXN_WBA}, p.435). Fork() is a system call used to create a new process. The new process is called a child and the process that called the fork() system call, is the parent. The child process is a duplicate of the parent process. The alternative to using fork(), is to create a thread. The creation of threads are typically less expensive in terms of CPU cycles than the creation of processes, but presents their own challenges. Processes always have their own virtual address space as opposed to threads who share their address space with the other threads within the process. This makes programming with threads more complex. The result of a thread crashing can have a more severe impact on the other threads within the same process since they all shared the same data. The new process is used by the server to handle the newly created connection. This means that for every connected client, there is a process created. This of course means that this solution does not scale awfully well. This is however not a big problem for us since the time taken for a Sensor to connect to the server really doesn't matter. Once all Sensors in a setup has connected, they should not disconnect unless taken down for maintenance or replacement. 
+
+\subsection{Security}
+Implementing good security is not an easy task and should not be taken lightly. The goal when developing the Sensor Server was to produce a rough prototype that could prove our concept. Time was therefor allocated towards producing code and features that would realize this goal, instead of attempting to implement security mechanisms that would have been flawed anyway because of time constraints.
 
 \subsection{Roles}\label{roles}
 A client connected to the server can have two roles. It can either be a Sensor or a Monitor. The Sensor role is already explained. The Monitor role was added in order for a user of the Sensor Server to connect to the server and check status or issue commands. For a client to assume the role of a Monitor, the client has to pick a negative integer as ID number. This way, the Server does not expect you as a client to report any NMEA data the way it would with a Sensor. The Monitor role can also be used to interface with the Server. See (\ref{interface}) for more.
@@ -195,11 +216,8 @@ Figure \ref{figure_csac_model} shows both the atomic clock model and filter in o
 \subsection{GPS data}\label{nmea_data}
 The GPS receivers that we have chosen for our system and possibly all GPS receivers, follow the National Marine Electronics Association's 0183 standard \cite{NMEA_MAIN}. NMEA data consists of sentences where the first word of the sentence, the type, defines how the sentence should be interpreted. The sentences used by the Sensor Server and Client, is the \texttt{GNRMC} for latitude, longitude and speed and \texttt{GNGGA} for altitude.  
 
-\subsection{Roles}\label{roles}
-A client connected to the server can have two roles. It can either be a Sensor or a Monitor. The Sensor role is already explained. The Monitor role was added in order for a user of the Sensor Server to connect to the server and check status or issue commands. For a client to assume the role of a Monitor, the client has to pick a negative integer as ID number. This way, the Server does not expect you as a client to report any NMEA data the way it would with a Sensor. The Monitor role can also be used to interface with the Server. See (\ref{interface}) for more.
-
-\subsection{Sockets and Forks}\label{sockets}
-In order to implement the Server/Client model, the Sensor Server and Sensor Client is implemented using the Linux Socket API. The API is based on BSD sockets and are available in in almost all Unix-like operating system (\cite{LINUX_KERNEL}, p.610). Listing \ref{server_connect} shows a sample of code taken from one of the Sensor Server's source file. The sample shows the following:
+\subsection{Client connection}\label{sockets}
+Every time a client connects to the server, a process is forked for the new connection. Listing \ref{server_connect} is sample of code taken from the core of the Sensor Server, and can be explained like this:
 \begin{itemize}
   \item Line 4: The server waits for a connection. \texttt{accept()} is a blocking function. The code does not continue past this point before a client has connected.  
   \item Line 12: A client has connected. The server creates a new process to handle the new connection. The new process is created using \texttt{fork()}.
@@ -241,8 +259,7 @@ In order to implement the Server/Client model, the Sensor Server and Sensor Clie
     }
   \end{minted}
   \label{server_connect}
-\end{code}
-Even though the \texttt{accept()} function in the sockets API is blocking, CPU cycles are not wasted. If a Socket call cannot be completed immediately, the process who issued the call will be put to sleep thus enabling the scheduler to schedule other processes for execution until conditions are right for the sleeping process (\cite{UNIXN_WBA}, p.435). It is also possible to use non-blocking socket calls, and while this often increases performance, it also increases complexity, and was therefor not chosen for this approach. It's also worth mentioning that one could create \textit{threads} instead of forking out processes for new connections. The creation of threads are typically less expensive in terms of CPU cycles than the creation of processes. Processes on the other hand, always have their own virtual address space as opposed to threads who share their address space with the other threads withing the process. This makes programming with threads more complex and the result of a crash more severe as it affects the other threads withing the same process as well. 
+\end{code} 
 
 \subsection{Shared memory \& Semaphores}\label{shared_mem_sem}
 As mentioned earlier (\ref{sockets}), every time a client connects, a new process is born to take care of the communication with the new client. Since every process has got its own virtual address space, the processes are isolated from each other. This posed a challenge because we wanted the Sensor Server as a whole with all processes to be able to communicate with each other and share data and communicate. IPC (inter process communication) is nothing new, and one way to accomplish it, is to use shared memory segments. The sensor server architecture uses several shared memory segments. The pointers to the shared memory segments are declared as \textit{extern} in \texttt{sensor\_server.h}. The extern keyword means the the variable has an external linkage, making it visible from other files than the one in which it is defined. Listing \ref{extern_structs} shows a code sample taken from \texttt{sensor\_server.h} where the shared memory segments are declared.
