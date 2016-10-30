@@ -1,9 +1,9 @@
 \documentclass[../main.tex]{subfiles}
 
 \chapter{Testing}
-When a GPS receiver is spoofed, its solved position or time (or both) might change. The result depends on the technique used to spoof. By moving a GPS receiver, one can simulate a spoofing attack since the location most certainly will change. It might also affect the time solved (but why? Figure this out). We also covered the antennas with aluminium foil to simulate a loss of signal.
+In this chapter, we present the tests that were conducted. Ideally, these tests would have been performed by using a GPS spoofer like the "Civil GPS spoofer" that were introduced in the introduction of this report (see \ref{benchmark_spoofer}). Unfortunately, this kind of hardware is hard to come by and spoofing GPS signals is not legal. What we did instead was manipulating the time solution of the GPS receivers by moving the antennas. By performing these tests, we where able to not only test the Server architecture in the atomic clock controller, but also the filters and the clock model. We also present data gathered during an unplanned GPS disturbance. 
 
-\section{Data acquisition}\label{data_aquisition}
+\section{Logging of reference data }\label{data_aquisition}
 In order to create an accurate clock-model of the atomic clock, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the atomic clock will correct it's frequency based on either a 1 PPS (Pulse per second) signal or a 10 MHz signal as discussed earlier under section (\ref{csac_com}) A similar approach was used in order to collect GPS data. Data from two u-blox NEO-M8T was gathered over the same time period as the data gathered from the atomic clock. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the atomic clock. It also provided valuable data that could be used to tune the filters in the atomic clock controller. The data gathering was done by simple Python scripts (appendix \ref{CL} and \ref{GL}) running on a computer connected to the GPS receivers and the atomic clock. Figure (\ref{CLS}) shows a block diagram of the setup.
 
 \section{Setup}
@@ -18,14 +18,22 @@ Figure \ref{ibd} shows how the Server, Sensors and atomic clock were physically 
 
 \begin{figure}[!htb]
 \centering
-  \includegraphics[scale=0.31]{measure_setup.pdf}
+  \includegraphics[scale=0.4]{measure_setup.pdf}
    \caption[Measurement setup]{Block diagram showing the setup of the measurement equipment}
    \label{msd}
 \end{figure}
 
+\begin{figure}[!htb]
+\centering
+  \includegraphics[scale=0.25]{roof.pdf}
+   \caption[Measurement setup]{Block diagram showing the position of the antennas as reported by the receivers. Map courtesy of Norgeskart\cite{KART}}
+   \label{msd}
+\end{figure}
+
+
 \section{Test 1}
 \subsection{Goal of test}
-The goal with this test was to use the Sensor Server system to detect a simulated spoofing attack. By moving the antennas, the KRL filter should be triggered as the solved longitude, altitude, latitude and speed should change. See \ref{kvsrlf} for more about the KRL filter. The clock model based filters might also trigger. See \ref{csac_filters}. The result would be observable by analyzing the log files produced by the Server and Clients and the data collected by the measuring setup.
+The goal with this test was to use the Sensor Server system to detect a simulated spoofing attack. By moving the antennas, the LS filter should be triggered as the solved longitude, altitude, latitude and speed should change. See \ref{kvsrlf} for more about the LS filter. The clock model based filters might also trigger. See \ref{csac_filters}. The result would be observable by analyzing the log files produced by the Server and Clients and the data collected by the measuring setup.
 
 \subsection{Description}\label{test1_description}
 The following is a step by step description of how the test was conducted. The time in the brackets was obtained from a wristwatch. It is written in the normal format as well as number of seconds after 10:48. This is because the data used to draw the graphs, started at 10:48 but uses seconds in the X axis. Comparison is therefore easier. It is important to note that nor the resolution or accuracy was of any notable concern when writing down the time. The time was mainly noted to make it easier to find any correlation between the steps taken and patterns found in the log files. 
@@ -51,7 +59,7 @@ The following is a step by step description of how the test was conducted. The t
    {Antenna covered in aluminium foil to simulate a jamming attack.}
 \end{wrapfigure} 
 
-Step 1 and 2 were designed to trigger the KRL filter, especially the check of solved latitude, longitude and altitude but also the speed, against known values. Step 5 and 6 was also designed to trigger the KRL filter, but more specifically the checking of solved speed. Step 7 and 8 was to designed to reveal what would happen with the both the KRL and the CM filter during a jamming attack as it was believed that covering the antennas with aluminium foil would block all signals out.
+Step 1 and 2 were designed to trigger the LS filter, especially the check of solved latitude, longitude and altitude but also the speed, against known values. Step 5 and 6 was also designed to trigger the LS filter, but more specifically the checking of solved speed. Step 7 and 8 was to designed to reveal what would happen with the both the LS and the CM filter during a jamming attack as it was believed that covering the antennas with aluminium foil would block all signals out.
 
 \subsection{Observations}\label{test1_observations}
 \subsubsection{Sensor Server logs}
@@ -59,42 +67,42 @@ By reviewing the log produced by the Sensor Server, the following was observed:
 
 \begin{itemize}
   \item No false positives, the filters were not triggered before the test started.
-  \item The KRL filter was triggered by Sensor 1 at 10:59:19 and cleared at 11:04:35.
+  \item The LS filter was triggered by Sensor 1 at 10:59:19 and cleared at 11:04:35.
   \begin{lstlisting}
-    [10/10/16 - 10:59:17] [ ALARM ] Sensor 1 triggered KRL filter!
+    [10/10/16 - 10:59:17] [ ALARM ] Sensor 1 triggered LS filter!
     ...
-    [10/10/16 - 11:04:35] [ ALARM ] Sensor 1 cleared KRL filter!
+    [10/10/16 - 11:04:35] [ ALARM ] Sensor 1 cleared LS filter!
   \end{lstlisting}
-  \item The KRL filter was triggered again at 11:08:27, but this time by Sensor 2. The alarm was cleared at 11:13:43.
+  \item The LS filter was triggered again at 11:08:27, but this time by Sensor 2. The alarm was cleared at 11:13:43.
     \begin{lstlisting}
-    [10/10/16 - 11:08:27] [ ALARM ] Sensor 2 triggered KRL filter!
+    [10/10/16 - 11:08:27] [ ALARM ] Sensor 2 triggered LS filter!
     ...
-    [10/10/16 - 11:13:43] [ ALARM ] Sensor 2 cleared KRL filter!
+    [10/10/16 - 11:13:43] [ ALARM ] Sensor 2 cleared LS filter!
   \end{lstlisting}
-  \item Once again, 11:22:03 the KRL filter was triggered by Sensor 1 and was not cleared until 11:29:21
+  \item Once again, 11:22:03 the LS filter was triggered by Sensor 1 and was not cleared until 11:29:21
      \begin{lstlisting}
-    [10/10/16 - 11:22:03] [ ALARM ] Sensor 1 triggered KRL filter!
+    [10/10/16 - 11:22:03] [ ALARM ] Sensor 1 triggered LS filter!
     ...
-    [10/10/16 - 11:29:21] [ ALARM ] Sensor 1 cleared KRL filter!
+    [10/10/16 - 11:29:21] [ ALARM ] Sensor 1 cleared LS filter!
   \end{lstlisting} 
-  \item At 11:27.05, it was the CM filter using the clock model that triggered. It stopped triggering 11:27:33. Sensor 2 also triggered the KRL filter 11:27:31 and cleared at 11:34:16.
+  \item At 11:27.05, it was the CM filter using the clock model that triggered. It stopped triggering 11:27:33. Sensor 2 also triggered the LS filter 11:27:31 and cleared at 11:34:16.
     \begin{lstlisting}
     [10/10/16 - 11:27:05] [ ALARM ] Steer > limit!
     ...
-    [10/10/16 - 11:27:31] [ ALARM ] Sensor 2 triggered KRL filter!
+    [10/10/16 - 11:27:31] [ ALARM ] Sensor 2 triggered LS filter!
     ...
     [10/10/16 - 11:27:33] [ ALARM ] Steer > limit!
   \end{lstlisting} 
-  \item The last 6 seconds, Sensor 2 triggered KRL filter and the clock model based filter was triggered at multiple occasions.
+  \item The last 6 seconds, Sensor 2 triggered LS filter and the clock model based filter was triggered at multiple occasions.
   \begin{lstlisting}
-    [10/10/16 - 11:34:15] [ ALARM ] Sensor 2 triggered KRL filter!
-    [10/10/16 - 11:34:16] [ ALARM ] Sensor 2 cleared KRL filter!
-    [10/10/16 - 11:34:17] [ ALARM ] Sensor 2 triggered KRL filter!
-    [10/10/16 - 11:34:18] [ ALARM ] Sensor 2 triggered KRL filter!
-    [10/10/16 - 11:34:19] [ ALARM ] Sensor 2 triggered KRL filter!
+    [10/10/16 - 11:34:15] [ ALARM ] Sensor 2 triggered LS filter!
+    [10/10/16 - 11:34:16] [ ALARM ] Sensor 2 cleared LS filter!
+    [10/10/16 - 11:34:17] [ ALARM ] Sensor 2 triggered LS filter!
+    [10/10/16 - 11:34:18] [ ALARM ] Sensor 2 triggered LS filter!
+    [10/10/16 - 11:34:19] [ ALARM ] Sensor 2 triggered LS filter!
     [10/10/16 - 11:34:19] [ ALARM ] Steer > limit!
     [10/10/16 - 11:34:20] [ ALARM ] Steer > limit!
-    [10/10/16 - 11:34:20] [ ALARM ] Sensor 2 cleared KRL filter!
+    [10/10/16 - 11:34:20] [ ALARM ] Sensor 2 cleared LS filter!
     [10/10/16 - 11:34:21] [ ALARM ] Steer > limit!
   \end{lstlisting} 
 \end{itemize}
@@ -102,61 +110,67 @@ By reviewing the log produced by the Sensor Server, the following was observed:
 \subsubsection{GPS data}\label{gpsdata_test1}
 The following figures are plots of the GPS data (NMEA) that was logged by the Sensors during test 1. Figure \ref{sensor1_alt} shows the altitude in meters for Sensor 1. The only thing that stands out in the plot, is when the antenna is covered in aluminium foil as show at around the 2000 second mark. At this point, the receiver is no longer able to solve a position thus generating valid but empty fields in the data. This creates a deep chasm in the plot. Because both receivers' antennas were covered in foil, all the plots share this trait. Figure \ref{sensor2_alt} shows the altitude in meters for Sensor 2. When compared with the altitude plot for Sensor 1 \ref{sensor1_alt}, Sensor 1 seems to correlate better. It is a puzzle why the Sensor 2 reported to have been moved 7 meters down, which it clearly was not. When examining figure \ref{sensor1_lat} and \ref{sensor2_lat}, showing the latitude for Sensor 1 and 2 (in that order), one can clearly see that Sensor 1 was moved to the south and Sensor 2 was moved to the north. One might also notice that Sensor 2 traveled further. The difference in travel is because Sensor 1's antenna did not utilize the full length of cable. Figure \ref{sensor1_long} and \ref{sensor2_long} shows a plot for the solved longitude for Sensor 1 and Sensor 2. When examining figure \ref{sensor1_long}, it seems as if the antenna was never moved. This is because the building the antenna was placed on, is position in a north to south line and the receiver was moved along with the roof. The antenna connected to Sensor 2 was not moved in straight line because the cable got caught in vegetation. The last two figures, figure \ref{sensor1_speed} and figure \ref{sensor2_speed} shows the speed solved by Sensor 1 and Sensor 2. They both correlate well with when the antennas were moved, however, the antenna connected to sensor 2 seems to be a little bit more sensitive than the on connected to Sensor
 
-\begin{figure}
+\begin{sidewaysfigure}
   \centering
   \includegraphics[width=1\textwidth]{gnssAlt1.pdf}
   \caption{The figure shows the solved altitude of the GPS receiver connected to Sensor 1, during test 1}
   \label{sensor1_alt}
-\end{figure} 
+\end{sidewaysfigure}
 
-\begin{figure}
+\begin{sidewaysfigure}
   \centering
   \includegraphics[width=1\textwidth]{gnssAlt2.pdf}
   \caption{The figure shows the solved altitude of the GPS receiver connected to Sensor 2, during test 1}
   \label{sensor2_alt}
-\end{figure}
+\end{sidewaysfigure}
 
-\begin{figure}
+\begin{sidewaysfigure}
   \centering
   \includegraphics[width=1\textwidth]{gnssLat1.pdf}
   \caption{The figure shows the solved latitude of the GPS receiver connected to Sensor 1, during test 1}
   \label{sensor1_lat}
-\end{figure} 
+\end{sidewaysfigure}
+ 
 
-\begin{figure}
+\begin{sidewaysfigure}
   \centering
   \includegraphics[width=1\textwidth]{gnssLat2.pdf}
   \caption{The figure shows the solved latitude of the GPS receiver connected to Sensor 2, during test 1}
   \label{sensor2_lat}
-\end{figure} 
+\end{sidewaysfigure}
+ 
 
-\begin{figure}
+\begin{sidewaysfigure}
   \centering
   \includegraphics[width=1\textwidth]{gnssLong1.pdf}
   \caption{The figure shows the solved longitude of the GPS receiver connected to Sensor 1, during test 1}
   \label{sensor1_long}
-\end{figure} 
+\end{sidewaysfigure}
+ 
 
-\begin{figure}
+\begin{sidewaysfigure}
   \centering
   \includegraphics[width=1\textwidth]{gnssLong2.pdf}
   \caption{The figure shows the solved longitude of the GPS receiver connected to Sensor 2, during test 1}
   \label{sensor2_long}
-\end{figure} 
+\end{sidewaysfigure}
+ 
 
-\begin{figure}
+\begin{sidewaysfigure}
   \centering
   \includegraphics[width=1\textwidth]{gnssSpeed1.pdf}
   \caption{The figure shows the solved speed of the GPS receiver connected to Sensor 1, during test 1}
   \label{sensor1_speed}
-\end{figure} 
+\end{sidewaysfigure}
+ 
 
-\begin{figure}
+\begin{sidewaysfigure}
   \centering
   \includegraphics[width=1\textwidth]{gnssSpeed2.pdf}
   \caption{The figure shows the solved speed of the GPS receiver connected to Sensor 2, during test 1}
   \label{sensor2_speed}
-\end{figure} 
+\end{sidewaysfigure}
+ 
 
 \newpage
 \subsection{Measurements}
@@ -169,23 +183,23 @@ Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for t
   \label{cns91_tel_freq}
 \end{figure} 
 
-\begin{figure}
+\begin{sidewaysfigure}
   \centering
   \includegraphics[width=1\textwidth]{cns91-and-csac-telemetry-phase.pdf}
   \caption{The figure shows the phase offset in nanoseconds for the atomic clock. The thick dark plot is from telemetry data gathered from the atomic clock. The lighter thin plot is data from the CNT-91 frequency counter.}
   \label{cns91_tel_phase}
-\end{figure} 
-
+\end{sidewaysfigure}
+ 
 \subsection{Conclusion}
-The observations reveal what we expected. After all, when moving a GPS receivers antenna, the solved position has to change. If it did not, the GPS receiver or antenna would have to be faulty. Step 5 and 6 did not produce the expected result. The reason was discovered to be an error in the KRL filter configuration. One of the clock model based filters where also triggered, which we did not expect. The filter that was triggered was the \textit{Simple prediction filter}. See \ref{csac_filters} for more about the clock model based filters. 
+The observations reveal what we expected. After all, when moving a GPS receivers antenna, the solved position has to change. If it did not, the GPS receiver or antenna would have to be faulty. Step 5 and 6 did not produce the expected result. The reason was discovered to be an error in the LS filter configuration. One of the clock model based filters where also triggered, which we did not expect. The filter that was triggered was the \textit{Simple prediction filter}. See \ref{csac_filters} for more about the clock model based filters. 
 
 \newpage
 \section{Test 2}
 \subsection{Goal of test}
-The goal of the second test was to reproduce the result from test 1, where one of the clock model based filters were triggered. This should make the Sensor Server disable the atomic clock's disciplining mode and steer the atomic clock after the clock model's predictions. We also wanted to test the KRL filter again to make sure we had fixed the error in the filter's configuration, from last test.
+The goal of the second test was to reproduce the result from test 1, where one of the clock model based filters were triggered. This should make the Sensor Server disable the atomic clock's disciplining mode and steer the atomic clock after the clock model's predictions. We also wanted to test the LS filter again to make sure we had fixed the error in the filter's configuration, from last test.
 
 \subsection{Change in setup}
-The setup in test 1 is quite similar to test 2. There is however some changes. Sensor 1 is no longer connected to the Sensor Server since the KRL filter no longer was main priority. Sensor 2 did however still log data during the test as it did during test 1.
+The setup in test 1 is quite similar to test 2. There is however some changes. Sensor 1 is no longer connected to the Sensor Server since the LS filter no longer was main priority. Sensor 2 did however still log data during the test as it did during test 1.
 
 \subsection{Description}\label{test2_description}
 The description of test 2 is similar to test 1(\ref{test1_description}). The only difference is that greater care was taken in obtaining an accurate time for the steps.
@@ -206,21 +220,21 @@ The following By reviewing the log produced by the Sensor Server, the following 
 
 \begin{itemize}
   \item No false positives, the filters were not triggered before the test started.
-  \item The KRL filter was triggered by at 13:12:10 and cleared at 13:19:54
+  \item The LS filter was triggered by at 13:12:10 and cleared at 13:19:54
   \begin{lstlisting}
-    [10/24/16 - 13:12:10] [ ALARM ] Sensor 2 triggered KRL filter!
+    [10/24/16 - 13:12:10] [ ALARM ] Sensor 2 triggered LS filter!
     ...
-    [10/24/16 - 13:19:54] [ ALARM ] Sensor 2 cleared KRL filter!
+    [10/24/16 - 13:19:54] [ ALARM ] Sensor 2 cleared LS filter!
   \end{lstlisting}
-  \item The KRL filter was triggered again at 13:23:12 for only a second. It was then triggered again two seconds later and was not cleared 13:23:43.
+  \item The LS filter was triggered again at 13:23:12 for only a second. It was then triggered again two seconds later and was not cleared 13:23:43.
     \begin{lstlisting}
-    [10/24/16 - 13:23:12] [ ALARM ] Sensor 2 triggered KRL filter!
+    [10/24/16 - 13:23:12] [ ALARM ] Sensor 2 triggered LS filter!
     ...
-    [10/24/16 - 13:23:13] [ ALARM ] Sensor 2 cleared KRL filter!
+    [10/24/16 - 13:23:13] [ ALARM ] Sensor 2 cleared LS filter!
     ...
-    [10/24/16 - 13:23:15] [ ALARM ] Sensor 2 triggered KRL filter!
+    [10/24/16 - 13:23:15] [ ALARM ] Sensor 2 triggered LS filter!
     ...
-    [10/24/16 - 13:23:43] [ ALARM ] Sensor 2 cleared KRL filter!
+    [10/24/16 - 13:23:43] [ ALARM ] Sensor 2 cleared LS filter!
   \end{lstlisting}
   \item More interestingly was the fact the \textit{Frequency correction filter} was triggered.
     \begin{lstlisting}

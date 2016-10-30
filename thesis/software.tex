@@ -140,14 +140,14 @@ The parser and handler are responsible for parsing data received from a client a
   \item The client is marked as ready for processing and a ready check is commenced. The ready check is used to make sure that all the sensors have received NMEA data and are ready to have filters applied. Once the filters have been applied, the lock is released and normal execution resumes. The ready check is explained further under subsection \ref{ready_check_alg}.
   \item If the clients ID is 0, it is considered unidentified and any other requests but to identify itself, is ignored.
   \item If the client is attempting to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempted to assume the role of a Sensor, the client will get disconnected. If it attempted to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. The reason why a Sensor would get disconnected and a monitor would not, is simple: When connecting the Sensor to the server, it should not be any doubt whether or not it has been accepted. If something is wrong, it is better that a user of the system has to deal with it there and then and configure the Sensor correct rather than allowing the user to do mistakes that severely impacts the efficiency of the system. See section \ref{roles} for more information about the Sensor and Monitor roles.
-  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load data for the Known Vs. Reported position filter (KRL) data into the clients KRL filter struct. The server will attempt to load this data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data. For more information about the KRL filter, see section \ref{kvsrlf}.
+  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load data for the Location and speed filter (LS) data into the clients LS filter struct. The server will attempt to load this data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data. For more information about LS filter, see section \ref{kvsrlf}.
 \end{itemize}
 
 
 \subsection{GPS filter}\label{gps_filters}
-There is currently only one filter using GPS data in the Sensor Server implementation to this data. This is the \textit{Known Vs. Reported location filter}. Figure \ref{gps_filters} is a block diagram showing the filter as a part of the Sensor Server.
+There is currently only one filter using GPS data in the Sensor Server implementation to this data. This is the \textit{Location and speed filter}. Figure \ref{gps_filters} is a block diagram showing the filter as a part of the Sensor Server.
 
-\subsubsection{Known Vs. Reported location filter}
+\subsubsection{Location and speed filter}
 \begin{figure}
 \centering
   \includegraphics[scale=0.3]{filters.pdf}
@@ -180,7 +180,7 @@ By configuring the Sensor Server with the location of the different Sensors, the
 When a Sensor connects to the Server and identifies itself, the Server will attempt to load a file containing the location of the Sensor as well as the accepted deviation values for the solved position. Listing \ref{krl_config} shows an example of such a file.
 
 \begin{code}
-  \caption{Known vs Reported location filter configuration file}
+  \caption{Location and speed filter configuration file}
     \begin{minted}
     [
     fontsize=\footnotesize,
@@ -203,11 +203,10 @@ When a Sensor connects to the Server and identifies itself, the Server will atte
 \subsection{Clock model filters}\label{csac_filters}
 Figure \ref{figure_csac_model} shows both the atomic clock model and filter in one figure. As explained in section \ref{csac_model}, the model of the atomic clock and the filters based upon, are closely related. 
 \begin{itemize}
-  \item Once the model has been running for 48 hours, it is ready to be used as a reference, filtering out abnormal data.
+  \item Once the model has been running for a configurable long time (48 hours was used during testing, see \ref{clock_model_harald} for more about the model), it is ready to be used as a reference, filtering out abnormal data.
   \item The filters are checked. There are currently three filters implemented using the atomic clock model as reference:
   \begin{itemize}
     \item \textit{Fast timing filter}. This is a simple filter that compares the current phase reported by the atomic clock with a pre-configured limit. If the current phase is higher, the filter is triggered.
-    \item \textit{Simple prediction filter}. This is also a simple filter, but instead of checking the phase, the currently applied steer value is compared with a value specified in the configuration file.
     \item \textit{Frequency correction filter}. This is a more sophisticated filter. It uses the atomic clock model to calculate a predicted steer value and compares it to the current steer value. If the current steer is too big, the filter is triggered. 
   \end{itemize}
   \item If any of the filters are triggered, the alarm is raised. The state of the alarm is expressed by an \texttt{int} that is either 0 or 1. If the alarm was not raised, the disciplining of the atomic clock is enabled if it was disabled, and the telemetry data is used to update the model.
@@ -456,7 +455,7 @@ Information can be queried by sending commands to the atomic clock. These comman
     U                 & Set ultra-low power mode parameters                & !U?{[}CRLF{]}                 \\ \hline
     T                 & Set/report time-of-day                             & !T?{[}CRLF{]}                 \\ \hline
     \end{tabular}
-  \caption*{Source: \cite{atomic clock_USERGUIDE}}
+  \caption*{Source: \ref{CSAC_USERGUIDE}}
 \end{table}
 
 The Sensor Server communicates with the atomic clock by invoking a script called \texttt{query\_csac.py}. This script can be found in the appendix (\ref{query_csac}). The script takes an argument which it sends to the atomic clock over serial, and prints the respond to the shell which the Sensor Server grabs. In this document, the word \textit{telemetry} gets mentioned quite often in context with the atomic clock. Telemetry can be obtained by querying the atomic clock. The telemetry is a string containing a plethora of information, but we are mainly interested in the following values:
@@ -469,11 +468,11 @@ The Sensor Server communicates with the atomic clock by invoking a script called
 
 Listing \ref{telemetry_string} show an example of telemetry received from the atomic clock. The fourth value from the right, is the \texttt{DisOK}, the fifth is the \texttt{phase} and the \texttt{steer} is the seventh. 
 
-\begin{lstlisting}[caption=Example of a telemetry string received from the atomic clock, label=telemetry_string]
-    0,0x0000,1209CS00909,0x0010,4381,0.86,1.573,17.62,0.996,28.26,-24,---,-1,1,1268126502,586969,1.0
+\begin{lstlisting}[caption={Example of a telemetry string received from the atomic clock},label={telemetry_string}]
+0,0x0000,1209CS00909,0x0010,4381,0.86,1.573,17.62,0.996,28.26,-24,---,-1,1,1268126502,586969,1.0
 \end{lstlisting}
 
-The SA.45 uses a high-resolution phase meter to improve synchronization and to calibrate the frequency of the atomic clock. The phase meter measures the difference in time between the internal 1 PPS signal and the external reference, in our case a GPS receiver. This difference is the \textit{phase} value. The atomic clock uses the phase value and steering algorithms to adjust the frequency of atomic clock's physics package thus simultaneously steering both the phase and frequency to that of the external reference. This is called \textit{disciplining} and is how the \textit{steer} value is computed. The last value, \textit{DiscOK} is simply the status of the 1 PPS disciplining routine \cite{atomic clock_USERGUIDE}.
+The SA.45 uses a high-resolution phase meter to improve synchronization and to calibrate the frequency of the atomic clock. The phase meter measures the difference in time between the internal 1 PPS signal and the external reference, in our case a GPS receiver. This difference is the \textit{phase} value. The atomic clock uses the phase value and steering algorithms to adjust the frequency of atomic clock's physics package thus simultaneously steering both the phase and frequency to that of the external reference. This is called \textit{disciplining} and is how the \textit{steer} value is computed. The last value, \textit{DiscOK} is simply the status of the 1 PPS disciplining routine \cite{CSAC_USERGUIDE}.
 
 \section{Data structures}
 In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
@@ -678,7 +677,7 @@ Beginning from the top:
   These values are defined in the \texttt{sensor\_server.h} file.
   \item \texttt{command\_code cm} is used by the parser to convey protocol compliant requests. See \ref{command_code} for more.
   \item \texttt{nmea\_container} is used to contain NMEA data in a more convenient way for the filters. See \ref{nmea_cont} for more about the struct, and \ref{nmea_data} for more about NMEA.
-  \item \texttt{filters fs} is a struct containing data for the GPS based filters. There is currently only one GPS based filter, the Known vs Reported location filter and it is explained in subsection \ref{gps_filters}.
+  \item \texttt{filters fs} is a struct containing data for the GPS based filters. There is currently only one GPS based filter, the Location and speed filter and it is explained in subsection \ref{gps_filters}.
   \item \texttt{pid\_t pid} is the process ID for the process forked out for the connected client.
   \item \texttt{time\_t timestamp} is time stamp that is stamped every time the Sensor's filter data is processed.
   \item \texttt{client\_id} and \texttt{client\_type} is the client's ID and the client's type, either "SENSOR" or "MONITOR". 

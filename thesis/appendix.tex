@@ -9,8 +9,31 @@ V 2.0 20161027 HHA
 The goal of clock modelling is to provide an estimate of two key parameters of the clock "state", the frequency offset and the clock drift, i.e. the rate of change of the frequency offset. The clock model will be used for two purposes: (1) As a reference for the clock frequency correction filter, in order to determine whether the current clock correction, as calculated and applied by the CSAC disciplining algorithm, is consistent with normal behavior of the clock; (2) In the case that a valid external disciplining pulse is lost, the model will be used to calculate the frequency corrections to be applied to the CSAC by the "spoof" proof clock controller. The model described below is a simple way of modelling the clock state, motivated by being easy to implement, more than being optimal for the task.  
 
 \section{Input data for the clock model}
-Input data for the clock model comes from the CSAC telemetry string, sampled nominally every second. The key data is contained in the field identified by "Steer". This is the CSAC disciplining algorithm's current estimate of the frequency correction (in relative units) that has to be applied to the CSAC microwave synthesizer to correct for the frequency error of the CSAC "physics package". Ref \cite{CSAC_USERGUIDE}. Sample telemetry string and explanation of the data fields below are from the CSAC User Guide[ref]. Note that the "Steer" value reported by the CSAC in disciplining mode is the frequency correction that is applied to make the CSAC in sync with the external applied reference pulse. If the reference pulse  is accurate – such as the 1 PPS pulse output from a properly operating GPS timing chip - then the negative "Steer" value is an estimate of the free-running CSAC  frequency offset, i.e. a calibration of the CSAC. As long as there is a valid and accurate reference pulse, a series of "Steer" values provide the basis for estimating the frequency offset of the CSAC, as well as its rate of change (drift). One should note that the PPS output from the GPS chip has substantial noise in the short term. In contrast, the CSAC itself is more stable than the GPS reference over timespans up to 10000 s \cite{CSAC_USERGUIDE}.  As a consequence, the steering corrections calculated by the CSAC are also noisy and that noise primarily due to noise in the reference pulse.  In order to provide good estimates of the clock state, it is useful to filter sampled steering data to remove the influence of noise. This will be described next.     
- 
+Input data for the clock model comes from the CSAC telemetry string, sampled nominally every second. The key data is contained in the field identified by "Steer". This is the CSAC disciplining algorithm's current estimate of the frequency correction (in relative units) that has to be applied to the CSAC microwave synthesizer to correct for the frequency error of the CSAC "physics package". Ref \cite{CSAC_USERGUIDE}. Sample telemetry string and explanation of the data fields below are from the CSAC User Guide[ref]. Note that the "Steer" value reported by the CSAC in disciplining mode is the frequency correction that is applied to make the CSAC in sync with the external applied reference pulse. If the reference pulse  is accurate – such as the 1 PPS pulse output from a properly operating GPS timing chip - then the negative "Steer" value is an estimate of the free-running CSAC  frequency offset, i.e. a calibration of the CSAC. 
+
+As long as there is a valid and accurate reference pulse, a series of "Steer" values provide the basis for estimating the frequency offset of the CSAC, as well as its rate of change (drift). 
+
+One should note that the PPS output from the GPS chip has substantial noise in the short term. In contrast, the CSAC itself is more stable than the GPS reference over timespans up to 10000 s \cite{CSAC_USERGUIDE}.  As a consequence, the steering corrections calculated by the CSAC are also noisy and that noise primarily due to noise in the reference pulse.  In order to provide good estimates of the clock state, it is useful to filter sampled steering data to remove the influence of noise. This will be described next. Figure \ref{telemetry_string_a} show an example telemetry string.
+
+\begin{lstlisting}[caption={Example of a telemetry string received from the atomic clock},label={telemetry_string_a}]
+0,0x0000,1209CS00909,0x0010,4381,0.86,1.573,17.62,0.996,28.26,-24,---,-1,1,1268126502,586969,1.0
+\end{lstlisting} 
+
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=1\textwidth]{csa_model_table6.png}
+  \caption{Part 1 of table showing telemetry parameters. The table is taken from the SA.45's manual \cite{CSAC_USERGUIDE}}
+  \label{phase_offset}
+\end{figure} 
+
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=1\textwidth]{csa_model_table6-2.png}
+  \caption{Part 2 of table showing telemetry parameters. The table is taken from the SA.45's manual \cite{CSAC_USERGUIDE}}
+  \label{phase_offset}
+\end{figure}  
+
+\newpage 
 \section{Smoothing of sampled frequency steering data and estimates of the clock state}
 The frequency steer filter will be based on smoothed values of current and previous "steer" data from the CSAC telemetry string.
 The method described here is a very simple approach, primarily chosen for its ease of implementation. It is based on the assumption that "Steer" values are sampled at regular intervals. The design of an optimized approach for clock parameter estimation is way beyond the scope of this work. Calculation of smoothed values. Smoothed values of the clock steering correction are calculated using an exponential filter. Input to the calculation is the current sampled "Steer" value, steer\_current,  along with its associated timestamp (in mjd), t\_current. The exponential filter has a parameter, w, whose inverse is the weight that each new sampled value adds to the existing smooth value:
