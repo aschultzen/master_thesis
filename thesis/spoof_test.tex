@@ -14,7 +14,7 @@ In order to create an accurate clock-model of the atomic clock, it was necessary
    \label{ibd}
 \end{figure}
 
-Figure \ref{ibd} shows how the Server, Sensors and atomic clock were physically set up. In order to assure good GPS satellite geometry, the antennas were placed at the roof of Justervesenets main office at Kjeller. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Antenna 1 was connected to GPS receiver 1 which in turn was connected to Sensor 1. It's the same deal with antenna 2 which was connected to GPS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The antenna connected to Sensor 1 did not utilize the full length of it's cable. This is because it proved challenging to find a place where the antenna could be placed in stable position, yet use the full length of the cable. The Sensors and the Server were connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the atomic clock and the Clients were configured to log all NMEA data received from the GPS receivers. The GPS receiver connected to antenna South is used to supply the atomic clock with a 1 PPS signal. Because the atomic clock model needs live data over time to mature, the system was started Friday 7. October 2016 and the test was performed Monday 10. October 2016. Figure \ref{msd} is a block diagram showing how the measuring setup was physically configured. Figure \ref{lab_setup_photo} is a photograph of the measuring setup. Not shown in the photo, is the source of the 10 MHz signal used a reference. This signal was carried by cable from the time laboratory at the second floor.
+Figure \ref{ibd} shows how the Server, Sensors and atomic clock were physically set up. In order to assure good GPS satellite geometry, the antennas were placed at the roof of Justervesenets office at Kjeller. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Figure \ref{sensor_kart} shows the placement of the antennas. Antenna 1 was connected to GPS receiver 1 which in turn was connected to Sensor 1. It's the same deal with antenna 2 which was connected to GPS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The antenna connected to Sensor 1 did not utilize the full length of it's cable. This is because it proved challenging to find a place where the antenna could be placed in stable position, yet use the full length of the cable. The Sensors and the Server were connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the atomic clock and the Clients were configured to log all NMEA data received from the GPS receivers. The GPS receiver connected to antenna South is used to supply the atomic clock with a 1 PPS signal. Because the atomic clock model needs live data over time to mature, the system was started Friday 7. October 2016 and the test was performed Monday 10. October 2016. Figure \ref{msd} is a block diagram showing how the measuring setup was physically configured. The measuring was done by a Spectracom CNT-91 frequency counter using a 10 MHz reference from Justervesenet's atomic clocks. The CNT-91 was configured to measure a continuous gap-less frequency at 1 second time intervals. Figure \ref{lab_setup_photo} is a photograph of the measuring setup.
 
 \begin{figure}[!htb]
 \centering
@@ -27,9 +27,8 @@ Figure \ref{ibd} shows how the Server, Sensors and atomic clock were physically 
 \centering
   \includegraphics[scale=0.25]{roof.pdf}
    \caption[Measurement setup]{Block diagram showing the position of the antennas as reported by the receivers. Map courtesy of Norgeskart\cite{KART}}
-   \label{msd}
+   \label{sensor_kart}
 \end{figure}
-
 
 \section{Test 1}
 \subsection{Goal of test}
@@ -190,7 +189,7 @@ Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for t
   \label{cns91_tel_phase}
 \end{sidewaysfigure}
  
-\subsection{Conclusion}
+\subsection{Test 1 conclusion}
 The observations reveal what we expected. After all, when moving a GPS receivers antenna, the solved position has to change. If it did not, the GPS receiver or antenna would have to be faulty. Step 5 and 6 did not produce the expected result. The reason was discovered to be an error in the LS filter configuration. One of the clock model based filters where also triggered, which we did not expect. The filter that was triggered was the \textit{Simple prediction filter}. See \ref{csac_filters} for more about the clock model based filters. 
 
 \newpage
@@ -264,6 +263,39 @@ Figure \ref{sensor2_measure} shows the measurements done during test 2.
 \end{figure} 
 
 \newpage
-\subsection{Conclusion}
+\subsection{Test 2 conclusion}
+
+\section{Unplanned disturbance}
+The data presented in this section was gathered while the atomic clock controller was building the clock model for one of the planned tests. The data is interesting because it shows a disturbance from an unknown cause. The data shown in the figures are from 5/10-2016 to 6/10-2016. Figure \ref{disturbance_holdover} shows that about 10 minutes after midnight the 6/10-2016, the atomic clock entered "holdover mode", indicating that the 1 PPS signal from the GPS receiver was lost. Figure \ref{disturbance_multipanel} shows the GPS receiver's solved altitude, longitude, latitude, speed and number of satellites. By examining the figure, it is obvious that the signal was lost minutes after the 57667 MJD (midnight) mark. The GPS receiver didn't achieve consistent lock before $\approx$ 57667.32 (7:45 in the morning). In the mean time, the clocks stability was impaired as figure \ref{disturbance_phase_frequency} and \ref{disturbance_phase_steer} clearly shows.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1\textwidth]{disturbance57667-csac-telemetry-mode-zoom-in.pdf}
+  \caption{The figure shows the disciplined mode as reported by the atomic clock.}
+  \label{disturbance_holdover}
+\end{figure} 
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1\textwidth]{disturbance57667-gps-sensor2-multipanel.pdf}
+  \caption{Figure shows solved position, speed and number of satellites as reported by the GPS receiver.}
+  \label{disturbance_multipanel}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1\textwidth]{disturbance57667-cnt91-csac-telemetry-phase-frequency-steer-combined.pdf}
+  \caption{Top figure shows phase offset in nanoseconds. The thin lightly colored line is as measured by the CNT-91 frequency counter. The solid darker line is from the telemetry string from the atomic clock.}
+  \label{disturbance_phase_frequency}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1\textwidth]{disturbance57667-csac-telemetry-phase-steer-combined-zoom-in-2.pdf}
+  \caption{Figure shows the phase offset and steering correction as reported in the telemetry string from the atomic clock.}
+  \label{disturbance_phase_steer}
+\end{figure} 
+
+ 
 
 
