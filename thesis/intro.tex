@@ -1,10 +1,9 @@
 \documentclass[../main.tex]{subfiles}
 
 \chapter{Introduction}
-In this report, we present the problem of GPS time applications and their vulnerable nature for spoofed GPS signals. We present detection and mitigation techniques, and a spoof proof atomic clock controller capable of detecting spoofing attacks conducted by the apex predator in the world of GPS spoofing.
+In this report, we present the problem of spoofed GPS signals for GPS time applications and our proposal for detecting and mitigating spoofing attacks. Our proposal includes using multiple GPS receivers, an atomic clock and a Client/Server architecture combined creating a spoof proof atomic clock controller. We also present our data gathered from testing our implementation as well as a thorough primer to the world of GPS.  
 
 \chapter{Background on GPS}
-\section{Global Positioning System: A short introduction}
 The Global Positioning System (GPS) is a utility owned by the United States that provides its user with positioning, navigation and timing services. At the end of 60's, the U.S Navy was developing the Polaris missile, a missile capable of being launched from a submarine. One of the requirements for launching the Polaris missile was exact knowledge of the submarines position. The problem led the Navy and The Applied Physics Laboratory at John Hopkins University to develop the Transit system, the earliest predecessor to the GPS system \cite{SteJ}.
 
 Today, roughly 40 years later we are surrounded by GPS technology.
