@@ -2,14 +2,11 @@
 
 \chapter{Discussion}\label{discussion}
 
-\section{Result of tests}
-
-
-\subsection{Architecture performance}
-When reviewing the results of
+\section{Test results}
+During the GPS manipulation tests as described under chapter \ref{gps_manipulation}, the Sensor Server part of the atomic clock controller worked perfectly. The system was stable and performed as designed over longer periods of time (over 4 days). The system logged data reliably and without fault, accepted connections and was responsive at all times tested. There were no memory leaks or segmentation faults and the system facilitated the detection of our GPS manipulation attempt with an a latency of 2 seconds (SPØR HARALD, HAN NEVNTE NOE HER). The communication with the atomic clock also worked flawless, providing data for logging and for the model as expected. The system did however fail to steer the atomic clock. When we attempted to reset and debug the system, we encountered a bug in the clock model as well. The bug affected the way the clock model initializes from the configuration file which meant that the model would need at least 48 hours to rebuild. The decision was made that we did not have enough time and the system was left the way it was. 
 
 \section{Shortcomings in current implementation}
-This section is used to discuss some of the shortcomings in the current version of the Sensor Server. Some functions were never implemented and others were not finished.
+This section is used to discuss some of the shortcomings in the current version of the atomic clock controller and Sensor Server. Some functions were never implemented and others were not finished in time.
 
 \subsection{Resizing shared memory segments}\label{resizing_shared}
 Ideally, the shared memory segments containing the client list should be resize-able and the size should depend on the number of connected clients. This proved difficult and I was not able to implement it. M. Kerrisk explains in his "The Linux Programming Interface" \cite{kerrisk2010linux}, that most UNIX implementations does not support resizing of a memory map like the shared memory segments used in the Sensor Server. However, there is a non-portable and Linux specific system call, \texttt{mremap()} that can be used on Linux system for this purpose. Unfortunately, the address returned by \texttt{mremap()} might be different from the old address to the shared memory segment. This would mean that pointer inside the shared segment might no longer be valid after a resize operation has been done. A way to avoid this problem caused by the remapping, would be to use offsets instead of pointers when referring to addresses in the mapped region. While troubleshooting problems I had using \texttt{mremap()}, I stumbled upon a bug report reported to the Kernel Bug Tracker \cite{BUG_TRACK} describing similar issues as I was having. This indicate that the trouble I was having might be because of a bug in the Linux kernel. I have yet to confirm this, but it did convince me to leave the implementation with its shortcomings rather than potentially wasting my time on something way out of my reach. The waste of memory would never by substantial anyway, considering that the size of the \texttt{client\_table\_entry} struct is a mere 4664 bytes. 
