@@ -214,7 +214,7 @@ Figure \ref{figure_csac_model} shows both the atomic clock model and filter in o
 \end{itemize}
 
 \subsection{GPS data}\label{nmea_data}
-The GPS receivers that we have chosen for our system and possibly all GPS receivers, follow the National Marine Electronics Association's 0183 standard \cite{NMEA_MAIN}. NMEA data consists of sentences where the first word of the sentence, the type, defines how the sentence should be interpreted. The sentences used by the Sensor Server and Client, is the \texttt{GNRMC} for latitude, longitude and speed and \texttt{GNGGA} for altitude.  
+The GPS receivers that we have chosen for our system and possibly all GPS receivers, follow the National Marine Electronics Association's 0183 standard \cite{NMEA_MAIN}. NMEA data consists of sentences where the first word of the sentence, the type, defines how the sentence should be interpreted. The sentences used by the Sensor Server and Client, is the \texttt{GNRMC} for latitude, longitude and speed and \texttt{GNGGA} for altitude. 
 
 \subsection{Client connection}\label{sockets}
 Every time a client connects to the server, a process is forked for the new connection. Listing \ref{server_connect} is sample of code taken from the core of the Sensor Server, and can be explained like this:
