@@ -29,7 +29,7 @@ In order to connect the Sensors to the server, the atomic clock controllers soft
   \item Update structures as clients status changes (disconnects or gets kicked out).
   \item Receive data from clients
 \end{itemize}
-These are tasks that the atomic clock controller needs to be able to perform as well as controlling the clock and analyzing data. In order to implement the Server/Client model, the Server is implemented using the Linux Socket API. The API is based on BSD sockets and are available in in almost all Unix-like operating system (\cite{LINUX_KERNEL}, p.610). A socket is a handle that can be passed by a program to the network API in order to use the network connection. The plan was briefly to use Glib \cite{GLIB}, a library that provides building blocks for libraries and applications written in C, instead of using low-level sockets. This idea was scrapped because I felt that it would be overkill for this implementation. This decision is discussed under subsection \ref{glib}. 
+These are tasks that the atomic clock controller needs to be able to perform as well as controlling the clock and analyzing data. In order to implement the Server/Client model, the Server is implemented using the Linux Socket API. The API is based on BSD sockets and are available in in almost all Unix-like operating system (\cite{LINUX_KERNEL}, p.610). A socket is a handle that can be passed by a program to the network API in order to use the network connection. The plan was briefly to use Glib \cite{GLIB}, a library that provides building blocks for libraries and applications written in C, instead of using low-level sockets. This idea was scrapped because I felt that it would be overkill for this implementation.
 
 Having decided \textit{how} the clients should connect to the server, the next challenge becomes how the server should communicate with the clients and vice versa. We decided to use what is called \textit{blocking I/O} and \textit{fork()}. This is a very common approach, but not the fastest (\cite{UNIXN_WBA}, p. 188). It is however quite easy to implement. Blocking I/O means that read operations on the socket blocks the main thread in the process until data has been received. This is not as dramatic as it might seem: If a Socket call cannot be completed immediately, the process who issued the call will be put to sleep thus enabling the scheduler to schedule other processes for execution until conditions are right for the sleeping process (\cite{UNIXN_WBA}, p.435). Fork() is a system call used to create a new process. The new process is called a child and the process that called the fork() system call, is the parent. The child process is a duplicate of the parent process. The alternative to using fork(), is to create a thread. The creation of threads are typically less expensive in terms of CPU cycles than the creation of processes, but presents their own challenges. Processes always have their own virtual address space as opposed to threads who share their address space with the other threads within the process. This makes programming with threads more complex. The result of a thread crashing can have a more severe impact on the other threads within the same process since they all shared the same data. The new process is used by the server to handle the newly created connection. This means that for every connected client, there is a process created. This of course means that this solution does not scale awfully well. This is however not a big problem for us since the time taken for a Sensor to connect to the server really doesn't matter. Once all Sensors in a setup has connected, they should not disconnect unless taken down for maintenance or replacement. 
 
@@ -43,7 +43,7 @@ Implementing good security is not an easy task and should not be taken lightly. 
 \chapter{Atomic clock controller implementation}
 
 \section{The Sensor Server} 
-Figure \ref{bd} shows a simplified block diagram of the Sensor Server and its tasks. Server tasks include:
+Figure \ref{sketch} shows a simplified block diagram of the Sensor Server and its tasks. Server tasks include:
 \begin{itemize}
   \item Handle connections to clients.
   \item Update structures as clients status changes (disconnects or gets kicked out).
@@ -53,9 +53,10 @@ Figure \ref{bd} shows a simplified block diagram of the Sensor Server and its ta
   \item Controlling the atomic clock.
 \end{itemize}
 
-\begin{figure}\label{bd}
+\begin{figure}
   \includegraphics[scale=0.4]{master_sketch_arrows.pdf}
    \caption[atomic clock atomic clock controller Block diagram]{A block diagram of our proposed solution}
+   \label{sketch}
 \end{figure}
 
 \section{Implementation description}
@@ -96,17 +97,17 @@ The "Server core" is the main process and the parent of every process created du
   \item The new process then updates its client table entry and proceeds to the listening loop. This is covered in section \ref{parser_and_handler}. See section \ref{client_table_entry} for more about the client table entry struct.
 \end{itemize}
 
-\subsection{Clock model}\label{csac_model}
+\subsection{Clock model implementation}\label{csac_model}
 \begin{figure}
 \centering
   \includegraphics[scale=0.30]{csac_model.pdf}
    \caption[Execution flow the clock model]{Block diagram showing the flow of execution in the atomic clock model}
    \label{figure_csac_model}
 \end{figure}
-Conceptually, the atomic clock model and the filter that uses the model is two separate tasks. In practice however, they are intertwined as figure \ref{figure_csac_model} suggests. See section \ref{hw_csac} for more about the atomic clock and section \ref{csac_model_harald} for the model itself.
+Conceptually, the atomic clock model and the filter that uses the model is two separate tasks. In practice however, they are intertwined as figure \ref{figure_csac_model} suggests. See section \ref{hw_csac} for more about the atomic clock and section \ref{clock_model_harald} for the model itself.
 
 \begin{itemize}
-  \item The configuration for the model is loaded. The configuration includes values defining the accepted limits for steering and phase difference. Optionally, it can also include state values from an "earlier" model \footnote{The functionality to restore an earlier model is not without restrictions. It is typically meant for a situation where the Server needs to be taken down for a couple hours and a new warm-up period is considered undesirable. This is better explained in section \ref{csac_model_harald}} that can be used to initialize the model further, thus reducing the warm-up time. If the loading of the configuration fails, an error message is printed, the \texttt{volatile sig\_atomic\_t done} is set to 1 and the process exits. This also breaks the server core (\ref{server_core}) loop. After all, the system needs the atomic clock to do the job it is intended for.
+  \item The configuration for the model is loaded. The configuration includes values defining the accepted limits for steering and phase difference. Optionally, it can also include state values from an "earlier" model \footnote{The functionality to restore an earlier model is not without restrictions. It is typically meant for a situation where the Server needs to be taken down for a couple hours and a new warm-up period is considered undesirable. This is better explained in section \ref{clock_model_harald}} that can be used to initialize the model further, thus reducing the warm-up time. If the loading of the configuration fails, an error message is printed, the \texttt{volatile sig\_atomic\_t done} is set to 1 and the process exits. This also breaks the server core (\ref{server_core}) loop. After all, the system needs the atomic clock to do the job it is intended for.
   \item A loop is entered. The loop breaks when \texttt{volatile sig\_atomic\_t done} equals 0. 
   \item The atomic clock lock is acquired and once the telemetry is queried from the atomic clock, it is released again.
   \item If the model is not initialized, telemetry data is used to initialize it. State values from earlier models will also be used if available in the earlier loaded configuration. See section \ref{csac_com} for more about communication with the atomic clock.
@@ -139,8 +140,8 @@ The parser and handler are responsible for parsing data received from a client a
   \item If the request received is to handle NMEA data, the checksum for that NMEA data is calculated. If the checksum check fails, the data is discarded. If it succeeds, the data is copied into \texttt{nmea\_container} struct (\ref{nmea_cont}) for easier handling.
   \item The client is marked as ready for processing and a ready check is commenced. The ready check is used to make sure that all the sensors have received NMEA data and are ready to have filters applied. Once the filters have been applied, the lock is released and normal execution resumes. The ready check is explained further under subsection \ref{ready_check_alg}.
   \item If the clients ID is 0, it is considered unidentified and any other requests but to identify itself, is ignored.
-  \item If the client is attempting to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempted to assume the role of a Sensor, the client will get disconnected. If it attempted to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. The reason why a Sensor would get disconnected and a monitor would not, is simple: When connecting the Sensor to the server, it should not be any doubt whether or not it has been accepted. If something is wrong, it is better that a user of the system has to deal with it there and then and configure the Sensor correct rather than allowing the user to do mistakes that severely impacts the efficiency of the system. See section \ref{roles} for more information about the Sensor and Monitor roles.
-  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load data for the Location and speed filter (LS) data into the clients LS filter struct. The server will attempt to load this data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data. For more information about LS filter, see section \ref{kvsrlf}.
+  \item If the client is attempting to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempted to assume the role of a Sensor, the client will get disconnected. If it attempted to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. The reason why a Sensor would get disconnected and a monitor would not, is simple: When connecting the Sensor to the server, it should not be any doubt whether or not it has been accepted. If something is wrong, it is better that a user of the system has to deal with it there and then and configure the Sensor correct rather than allowing the user to do mistakes that severely impacts the efficiency of the system. See section section \ref{arch_desc} for more information about the Sensor and Monitor roles.
+  \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load data for the Location and speed filter (LS) data into the clients LS filter struct. The server will attempt to load this data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data. For more information about LS filter, see section \ref{ls_filter}.
 \end{itemize}
 
 

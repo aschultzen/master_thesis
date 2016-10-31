@@ -192,7 +192,7 @@ The goal of the second test was to test the clock model based filters. This shou
 The setup in test 1 is quite similar to test 2. There is however some changes. Sensor 1 is no longer connected to the Sensor Server since the LS filter no longer was main priority. Sensor 2 did however still log data during the test as it did during test 1.
 
 \subsection{Description}\label{test2_description}
-The description of test 2 is similar to test 1(\ref{test1_description}). The only difference is that greater care was taken in obtaining an accurate time for the steps.
+The description of test 2 is similar to test 1 (see section \ref{test1_description}). The only difference is that greater care was taken in obtaining an accurate time for the steps.
 
 \begin{itemize}
   \item\relax 13:12:00 - 125: Started to move antenna 2 towards north.
@@ -255,7 +255,7 @@ Figure \ref{sensor2_measure} shows measurements done during test 2 as two graphs
 
 \newpage
 \subsection{Test 2 results}
-As mentioned under subsection \ref{test2_measurements}, the disciplining of the atomic clock was successfully deactivated when the steer value reported by the atomic clock exceed the steer value that was predicted by the model. It also shows that the atomic clock sadly was \textit{not} steered using the clock model.
+As mentioned under subsection \ref{test2_meaurements}, the disciplining of the atomic clock was successfully deactivated when the steer value reported by the atomic clock exceed the steer value that was predicted by the model. It also shows that the atomic clock sadly was \textit{not} steered using the clock model.
 
 \section{Unplanned disturbance}
 The data presented in this section was gathered while the atomic clock controller was building the clock model for one of the planned tests. The data is interesting because it shows a disturbance from an unknown cause. The data shown in the figures are from 5/10-2016 to 6/10-2016. Figure \ref{disturbance_holdover} shows that about 10 minutes after midnight the 6/10-2016, the atomic clock entered "holdover mode", indicating that the 1 PPS signal from the GPS receiver was lost. Figure \ref{disturbance_multipanel} shows the GPS receiver's solved altitude, longitude, latitude, speed and number of satellites. By examining the figure, it is obvious that the signal was lost minutes after the 57667 MJD (midnight) mark. The GPS receiver didn't achieve consistent lock before $\approx$ 57667.32 (7:45 in the morning). In the mean time, the clocks stability was impaired as figure \ref{disturbance_phase_frequency} and \ref{disturbance_phase_steer} clearly shows.
