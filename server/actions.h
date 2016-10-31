@@ -136,7 +136,7 @@ int client_query_csac(struct client_table_entry *monitor, char *query);
 *
 * @param target Client to load the data into
 */
-int load_krl_data(struct client_table_entry* target);
+int load_lsf_data(struct client_table_entry* target);
 
 /** @brief Prints the current state of the CSAC filter.
 *

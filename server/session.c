@@ -418,7 +418,7 @@ int respond(struct client_table_entry *cte)
             t_print("[%s] ID set to: %d\n", cte->ip,cte->client_id);
 
             if(cte->client_type == SENSOR) {
-                if(load_krl_data(cte)) {
+                if(load_lsf_data(cte)) {
                     t_print("Loaded filter data for client %d\n", cte->client_id);
                 } else {
                     t_print("Failed to load KRL filter data for Sensor %d\n", cte->client_id);
@@ -505,7 +505,7 @@ int respond(struct client_table_entry *cte)
             if(candidate == NULL) {
                 s_write(&(cte->transmission), ERROR_NO_CLIENT, sizeof(ERROR_NO_CLIENT));
             } else {
-                if(load_krl_data(candidate)) {
+                if(load_lsf_data(candidate)) {
                     s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
                 } else {
                     s_write(&(cte->transmission),ERROR_KRLD_LOAD_FAILED,

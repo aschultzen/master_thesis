@@ -1,7 +1,7 @@
 \documentclass[../main.tex]{subfiles}
 
 \section{Interfacing}\label{interface}
-As mentioned earlier (\ref{roles}), a client can assume the role of both a Monitor and a Sensor. The Sensor Server does not differentiate between the two roles other than when it routinely checks the status of its filters. This means that one could connect to the server using the Sensor Client software as a Monitor by configuring the Sensor Client software to use a negative integer as ID. At this point, this kind of functionality is not very useful as there is currently no way to change the ID of a client unless the client explicitly issues the command to do so, but it opens for the possibility to interface with the server. One way to interface with the Sensor Server is to connect to it using Telnet:
+As mentioned earlier under section (\ref{arch_desc}), a client can assume the role of both a Monitor and a Sensor. The Sensor Server does not differentiate between the two roles other than when it routinely checks the status of its filters. This means that one could connect to the server using the Sensor Client software as a Monitor by configuring the Sensor Client software to use a negative integer as ID. At this point, this kind of functionality is not very useful as there is currently no way to change the ID of a client unless the client explicitly issues the command to do so, but it opens for the possibility to interface with the server. One way to interface with the Sensor Server is to connect to it using Telnet:
 
 \begin{lstlisting}
 user@machine:/$ telnet 10.1.0.46 10001
