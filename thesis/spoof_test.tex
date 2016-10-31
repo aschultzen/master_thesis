@@ -1,7 +1,7 @@
 \documentclass[../main.tex]{subfiles}
 
 \chapter{GPS manipulation tests}\label{gps_manipulation}
-In this chapter, we present the tests that were conducted. Ideally, these tests would have been performed by using a GPS spoofer like the "Civil GPS spoofer" that were introduced in the introduction of this report (see \ref{benchmark_spoofer}). Unfortunately, this kind of hardware is hard to come by and spoofing GPS signals is not legal. What we did instead was manipulating the time solution of the GPS receivers by moving the antennas. By performing these tests, we where able to not only test the Server architecture in the atomic clock controller, but also the filters and the clock model. We also present data gathered during an unplanned GPS disturbance. 
+In this chapter, we present the tests that were conducted. Ideally, these tests would have been performed by using a GPS spoofer like the "Civil GPS spoofer" that were introduced in the introduction of this report (see \ref{benchmark_spoofer}). Unfortunately, or perhaps not, this kind of hardware is hard to come by and spoofing GPS signals is not legal. What we did instead was manipulating the time solution of the GPS receivers by moving the antennas. By performing these tests, we where able to not only test the Server architecture in the atomic clock controller, but also the filters and the clock model. We also present data gathered during an unplanned GPS disturbance. 
 
 \section{Logging of reference data }\label{data_aquisition}
 In order to create an accurate clock-model of the atomic clock, it was necessary to log data from it while it was running in a disciplined mode. In the disciplined mode, the atomic clock will correct it's frequency based on either a 1 PPS (Pulse per second) signal or a 10 MHz signal as discussed earlier under section (\ref{csac_com}) A similar approach was used in order to collect GPS data. Data from two u-blox NEO-M8T was gathered over the same time period as the data gathered from the atomic clock. By gathering the data over the same period, it was possible to detect any correlation between the time solved by the GPS receivers and any frequency adjustments done by the atomic clock. It also provided valuable data that could be used to tune the filters in the atomic clock controller. The data gathering was done by simple Python scripts (appendix \ref{CL} and \ref{GL}) running on a computer connected to the GPS receivers and the atomic clock. Figure (\ref{CLS}) shows a block diagram of the setup.
@@ -14,7 +14,45 @@ In order to create an accurate clock-model of the atomic clock, it was necessary
    \label{ibd}
 \end{figure}
 
-Figure \ref{ibd} shows how the Server, Sensors and atomic clock were physically set up. In order to assure good GPS satellite geometry, the antennas were placed at the roof of Justervesenets office at Kjeller. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Figure \ref{sensor_kart} shows the placement of the antennas. Antenna 1 was connected to GPS receiver 1 which in turn was connected to Sensor 1. It's the same deal with antenna 2 which was connected to GPS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The antenna connected to Sensor 1 did not utilize the full length of it's cable. This is because it proved challenging to find a place where the antenna could be placed in stable position, yet use the full length of the cable. The Sensors and the Server were connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the atomic clock and the Clients were configured to log all NMEA data received from the GPS receivers. The GPS receiver connected to antenna South is used to supply the atomic clock with a 1 PPS signal. Because the atomic clock model needs live data over time to mature, the system was started Friday 7. October 2016 and the test was performed Monday 10. October 2016. Figure \ref{msd} is a block diagram showing how the measuring setup was physically configured. The measuring was done by a Spectracom CNT-91 frequency counter using a 10 MHz reference from Justervesenet's atomic clocks. The CNT-91 was configured to measure a continuous gap-less frequency at 1 second time intervals. Figure \ref{lab_setup_photo} is a photograph of the measuring setup.
+Figure \ref{ibd} shows how the Server, Sensors and atomic clock were physically set up. In order to assure good GPS satellite geometry, the antennas were placed at the roof of Justervesenets office at Kjeller. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Figure \ref{sensor_kart} shows the placement of the antennas. Antenna 1 was connected to GPS receiver 1 which in turn was connected to Sensor 1. It's the same deal with antenna 2 which was connected to GPS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The antenna connected to Sensor 1 did not utilize the full length of it's cable. This is because it proved challenging to find a place where the antenna could be placed in stable position, yet use the full length of the cable. The Sensors and the Server were connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the atomic clock and the Clients were configured to log all NMEA data received from the GPS receivers. The GPS receiver connected to antenna South is used to supply the atomic clock with a 1 PPS signal. Because the atomic clock model needs live data over time to mature, the system was started Friday 7. October 2016 and the test was performed Monday 10. October 2016. Figure \ref{msd} is a block diagram showing how the measuring setup was physically configured. The measuring was done by a Spectracom CNT-91 frequency counter using a 10 MHz reference from Justervesenet's atomic clocks. The CNT-91 was configured to measure a continuous gap-less frequency at 1 second time intervals. Figure \ref{lab_setup_photo} is a photograph of the measuring setup. 
+
+\subsection{Raspberry Pi configuration}
+
+
+\section{Filter limits}
+Table \ref{gps_filter_table} shows the filter thresholds used during both test 1 and 2. Table \ref{clock_filter_table} shows the limits for the clock model based filters.
+
+\begin{table}[!htb]
+\centering
+\caption{Filter thresholds used during test 1 and 2}
+\label{gps_filter_table}
+  \begin{tabular}{|l|l|l|}
+  \hline
+  \multicolumn{1}{|c|}{} & \multicolumn{1}{c|}{Sensor 1} & \multicolumn{1}{c|}{Sensor 2} \\ \hline
+  Altitude reference                 & 123.8                         & 122.427                       \\ \hline
+  Longitude reference                & 1102.1948                     & 1102.1934                     \\ \hline
+  Latitude reference                 & 5958.5448                     & 5958.5231                     \\ \hline
+  Speed reference                    & 0                             & 0                             \\ \hline
+  Altitude deviation                 & 10                            & 10                            \\ \hline
+  Longitude deviation                & 0.005                         & 0.005                         \\ \hline
+  Latitude deviation                 & 0.005                         & 0.005                         \\ \hline
+  Speed deviation                    & 1                             & 1                             \\ \hline
+  \end{tabular}
+\end{table} 
+
+\begin{table}[!htb]
+\centering
+\caption{Clock model filter configuration}
+\label{clock_filter_table}
+\begin{tabular}{|l|l|}
+\hline
+Phase limit      & 123.8     \\ \hline
+Steer limit      & 1102.1948 \\ \hline
+Time constant    & 5958.5448 \\ \hline
+Warmup time      & 0         \\ \hline
+Prediction limit & 10        \\ \hline
+\end{tabular}
+\end{table}
 
 \begin{figure}[!htb]
 \centering

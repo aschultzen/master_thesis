@@ -115,7 +115,7 @@ Conceptually, the atomic clock model and the filter that uses the model is two s
   \item If the model is not initialized, telemetry data is used to initialize it. State values from earlier models will also be used if available in the earlier loaded configuration. See section \ref{csac_com} for more about communication with the atomic clock.
   \item A check is done to see if the model has been running for at least 48 hours. If it has, it is ready to be used a reference for the filters. See section \ref{csac_filters} for more about the atomic clock filters in particular.
   \item The telemetry received from the atomic clock is used to update the model. 
-  \item A check is done to see how if 24 hours have passed since the prediction values were last calculated. The model keeps track of steer predictions for yesterday and today. By using these two points of data, an estimation of the predicted steer can be calculated. 
+  \item A check is done to see if 24 hours have passed since the prediction values were last calculated. The model keeps track of steer predictions for yesterday and today. By using these two points of data, an estimation of the predicted steer can be calculated. 
 \end{itemize}
 
 \subsection{Parser and Handler}\label{parser_and_handler}
@@ -204,20 +204,20 @@ When a Sensor connects to the Server and identifies itself, the Server will atte
 \end{code}
 
 \subsection{Clock model filters}\label{csac_filters}
-Figure \ref{figure_csac_model} shows both the atomic clock model and filter in one figure. As explained in section \ref{csac_model}, the model of the atomic clock and the filters based upon, are closely related. 
+Figure \ref{figure_csac_model} shows both the atomic clock model and filter in one figure. As explained in section \ref{csac_model}, the model of the atomic clock and the filters based upon, are closely related. See \ref{clock_model_harald} for a description of the clock model. 
 \begin{itemize}
   \item Once the model has been running for a configurable long time (48 hours was used during testing, see \ref{clock_model_harald} for more about the model), it is ready to be used as a reference, filtering out abnormal data.
-  \item The filters are checked. There are currently three filters implemented using the atomic clock model as reference:
+  \item The filters are checked. There are currently two filters implemented using the atomic clock model as reference:
   \begin{itemize}
-    \item \textit{Fast timing filter}. This is a simple filter that compares the current phase reported by the atomic clock with a pre-configured limit. If the current phase is higher, the filter is triggered.
+    \item \textit{Timing jump filter}. This is a simple filter that compares the current phase reported by the atomic clock with a pre-configured limit. If the current phase is higher, the filter is triggered.
     \item \textit{Frequency correction filter}. This is a more sophisticated filter. It uses the atomic clock model to calculate a predicted steer value and compares it to the current steer value. If the current steer is too big, the filter is triggered. 
   \end{itemize}
   \item If any of the filters are triggered, the alarm is raised. The state of the alarm is expressed by an \texttt{int} that is either 0 or 1. If the alarm was not raised, the disciplining of the atomic clock is enabled if it was disabled, and the telemetry data is used to update the model.
-  \item If the alarm is raised, the disciplining of the atomic clock is deactivating, thus protecting the atomic clock from being affected by the spoofing. The model is now used to calculate steer values that are applied to the atomic clock instead.
+  \item If the alarm is raised, the disciplining of the atomic clock is deactivated, thus protecting the atomic clock from being affected by the spoofing. The model is now used to calculate steer values that are applied to the atomic clock instead.
 \end{itemize}
 
 \subsection{GPS data}\label{nmea_data}
-The GPS receivers that we have chosen for our system and possibly all GPS receivers, follow the National Marine Electronics Association's 0183 standard \cite{NMEA_MAIN}. NMEA data consists of sentences where the first word of the sentence, the type, defines how the sentence should be interpreted. The sentences used by the Sensor Server and Client, is the \texttt{GNRMC} for latitude, longitude and speed and \texttt{GNGGA} for altitude. 
+The GPS receivers that we have chosen for our system and possibly all GPS receivers, follow the National Marine Electronics Association's 0183 standard \cite{NMEA_MAIN}. NMEA data consists of sentences where the first word of the sentence, the type, defines how the sentence should be interpreted. The sentences used by the Sensor Server and Client, is the \texttt{GNRMC} for latitude, longitude and speed and \texttt{GNGGA} for altitude. See the u-blox manual \cite{UBLOXM8TMANUAL} for more about the different sentences.
 
 \subsection{Client connection}\label{sockets}
 Every time a client connects to the server, a process is forked for the new connection. Listing \ref{server_connect} is sample of code taken from the core of the Sensor Server, and can be explained like this:
@@ -429,7 +429,7 @@ The listing (\ref{parse_id}) shows how the parser attempts to find a match betwe
 Every time NMEA data is received and validated, the process that received the data will initiate a ready check. This is done by setting a flag in the client list entry called ready to 1, and calling the \texttt{nmea\_ready()} function. The \texttt{nmea\_ready()} function locks down the client linked list and iterates through it checking if the other processes are ready too. If all the other processes has received valid NMEA data from their respective client, the GPS filters(s) are applied. If they are not ready, the lock is release and the process carries on. This means that the last process to receive NMEA data gets the job of applying the filters \footnote{Since NMEA data is generated every second by the GPS receivers, it might be more appropriate to say that it is the scheduler that decides which process is coming in last. This of course depends on the distance between the Sensor and the Client}.
 
 \section{Sensor Server Protocol}\label{protocol}
-The Sensor Server protocol is quite simply a header file containing every keyword or command that the Sensor Server recognizes. The though behind it was that a client application (or script) could import the protocol header file and easily use and recognize commands used between the Server and a Client. Some constraints are also defined in the protocol header file, like maximum parameter size, maximum and minimum command size. The \textit{command codes} used by the parser, is also defined in the protocol header file. See subsection \ref{parser} for more about the use of protocol.
+The Sensor Server protocol is quite simply a header file containing every keyword or command that the Sensor Server recognizes. The thought behind it was that a client application (or script) could import the protocol header file and easily use and recognize commands used between the Server and a Client. Some constraints are also defined in the protocol header file, like maximum parameter size, maximum and minimum command size. The \textit{command codes} used by the parser, is also defined in the protocol header file. See subsection \ref{parser} for more about the use of protocol.
 
 \section{Atomic clock Communication}\label{csac_com}
 \begin{figure}[!htb]
@@ -458,7 +458,7 @@ Information can be queried by sending commands to the atomic clock. These comman
     U                 & Set ultra-low power mode parameters                & !U?{[}CRLF{]}                 \\ \hline
     T                 & Set/report time-of-day                             & !T?{[}CRLF{]}                 \\ \hline
     \end{tabular}
-  \caption*{Source: \ref{CSAC_USERGUIDE}}
+  \caption*{Source: \cite{CSAC_USERGUIDE}}
 \end{table}
 
 The Sensor Server communicates with the atomic clock by invoking a script called \texttt{query\_csac.py}. This script can be found in the appendix (\ref{query_csac}). The script takes an argument which it sends to the atomic clock over serial, and prints the respond to the shell which the Sensor Server grabs. In this document, the word \textit{telemetry} gets mentioned quite often in context with the atomic clock. Telemetry can be obtained by querying the atomic clock. The telemetry is a string containing a plethora of information, but we are mainly interested in the following values:
@@ -469,7 +469,7 @@ The Sensor Server communicates with the atomic clock by invoking a script called
   \item{Steer, the frequency adjustment.}
 \end{itemize}
 
-Listing \ref{telemetry_string} show an example of telemetry received from the atomic clock. The fourth value from the right, is the \texttt{DisOK}, the fifth is the \texttt{phase} and the \texttt{steer} is the seventh. 
+Listing \ref{telemetry_string} show an example of telemetry received from the atomic clock. The fourth value from the right, is the \texttt{DiscOK}, the fifth is the \texttt{phase} and the \texttt{steer} is the seventh. 
 
 \begin{lstlisting}[caption={Example of a telemetry string received from the atomic clock},label={telemetry_string}]
 0,0x0000,1209CS00909,0x0010,4381,0.86,1.573,17.62,0.996,28.26,-24,---,-1,1,1268126502,586969,1.0
