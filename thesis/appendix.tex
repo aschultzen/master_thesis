@@ -1,6 +1,20 @@
 \documentclass[../main.tex]{subfiles}
 
 \begin{appendices}
+
+\chapter{Acknowledgments}
+\section{Concept, clock model, filter values and graphs}
+Harald Hauglin, Chief engineer time & frequency metrology at Justervesenet was responsible for the following:
+\begin{itemize}
+	\item Describing the Clock model algorithm.
+	\item The concept of CSAC SMACC (Chip scale atomic clock smart miniature atomic clock controller) that this work is built on.
+	\item Created the graphs used in section \ref{gpsdata_test1}, \ref{test1_measurements}, \ref{gpsdata_test2}, \ref{test2_meaurements} and \ref{unplanned_disturb}.
+	\item Filter reference values, both for clock model based filters and GPS based filters.
+\end{itemize}
+
+Mr. Matt Davis is the author of \texttt{jdutil.py}\cite{MATT_DAVIS}, a library written for converting dates and time to MJD and back. Permission to use the jdutil.py was granted by Mr. Davis. The correspondence with Mr. Davis is included in the appendix under \ref{davis_email}.
+
+
 \chapter{Clock model}\label{clock_model_harald}
 Clock modelling and clock filters in the spoof proof clock controller
 V 2.0 20161027 HHA

@@ -162,7 +162,7 @@ The following figures are plots of the GPS data (NMEA) that was logged by the Se
  
 
 \newpage
-\subsection{Measurements}
+\subsection{Measurements}\label{test1_measurements}
 Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for the atomic clock. The thick dark plot in the middle is from telemetry data gathered from the atomic clock. Figure \ref{cns91_tel_phase} shows the phase offset in nanoseconds for the atomic clock. The interesting thing to observe in both of these figures, is the jump in frequency and phase offset once the antenna was covered in foil. There is also a clear correlation between movement of the antenna and the relative frequency offset as seen in figure \ref{cns91_tel_freq}. 
 
 \begin{figure}[!htb]
@@ -232,7 +232,7 @@ The following By reviewing the log produced by the Sensor Server, the following 
     \end{lstlisting}
 \end{itemize}
 
-\subsubsection{GPS data}
+\subsubsection{GPS data}\label{gpsdata_test2}
 Figure \ref{sensor2_everything} shows the plotted GPS data collected during test 2. As with GPS observed during test 1, there is a clear correlation between the plotted data and when the antenna was moved. The strange phenomena as described in test 1 (\ref{gpsdata_test1}) where the altitude was reported to be way too low, occurred in test 2 as well. 
 
 \begin{figure}
@@ -257,7 +257,7 @@ Figure \ref{sensor2_measure} shows measurements done during test 2 as two graphs
 \subsection{Test 2 results}
 As mentioned under subsection \ref{test2_meaurements}, the disciplining of the atomic clock was successfully deactivated when the steer value reported by the atomic clock exceed the steer value that was predicted by the model. It also shows that the atomic clock sadly was \textit{not} steered using the clock model.
 
-\section{Unplanned disturbance}
+\section{Unplanned disturbance}\label{unplanned_disturb}
 The data presented in this section was gathered while the atomic clock controller was building the clock model for one of the planned tests. The data is interesting because it shows a disturbance from an unknown cause. The data shown in the figures are from 5/10-2016 to 6/10-2016. Figure \ref{disturbance_holdover} shows that about 10 minutes after midnight the 6/10-2016, the atomic clock entered "holdover mode", indicating that the 1 PPS signal from the GPS receiver was lost. Figure \ref{disturbance_multipanel} shows the GPS receiver's solved altitude, longitude, latitude, speed and number of satellites. By examining the figure, it is obvious that the signal was lost minutes after the 57667 MJD (midnight) mark. The GPS receiver didn't achieve consistent lock before $\approx$ 57667.32 (7:45 in the morning). In the mean time, the clocks stability was impaired as figure \ref{disturbance_phase_frequency} and \ref{disturbance_phase_steer} clearly shows.
 
 \begin{figure}
