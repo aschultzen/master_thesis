@@ -1,9 +1,6 @@
 \documentclass[../main.tex]{subfiles}
 
 \chapter{Conclusion}
-The software that has been developed and is described in this report, demonstrates that it is possible to detect and mitigate a spoofing attack like the ones performed with the Civil GPS spoofer, using the multi-layered defense implemented in the spoof proof atomic clock controller. The frequency steering filter made possible by the clock model would have detected steering attempts larger than 50 
-
-Even if a spoofing attack was done carefully and slowly enough not to trigger the clock model based filters, it would not have been able to spoof two different receivers without giving away the attack. This would require multiple spoofers meticulously tuned thus making the whole attempt highly impractical. Introducing a third receiver, which with Sensor Server architecture is easy, would make it even harder.  
-
-
- It also demonstrates the efficiency of network enabling GPS receivers and using a Client/Server architecture to collect data over a network.   
+The software that has been developed and is described in this report, demonstrates that a
+fully operational spoof proof atomic clock controller would resist a spoofing attack mounted with a sophisticated GPS spoofer like the Civil GPS spoofer. We demonstrated the
+current implementations ability to detect and mitigate a simulated spoofing attack using multi-layered defense mechanisms. The frequency steering filter made possible by the clock model, would have detected steering attempts larger than $50*10^{12}$ or 0.05 nanoseconds per seconds as shown in section \ref{test2}. Even if a spoofing attack was done carefully and slowly enough not to trigger the clock model based filters, it would not have been able to spoof two different receivers without giving away the attack. This would require multiple spoofers, spoofing individual GPS receivers. The spoofers would have to be meticulously tuned not to spoof the neighboring receiver thus giving away the attempt. This makes the whole attempt highly impractical. Introducing a third receiver, which with Sensor Server architecture is very practical, would make it even harder. It also demonstrates the efficiency of network enabling GPS receivers and using the Sensor Server architecture to analyze data collected from network enabled receivers.    

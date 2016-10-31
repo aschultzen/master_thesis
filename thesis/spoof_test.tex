@@ -196,7 +196,7 @@ Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for t
 \subsection{Test 1 results}
 The observations from test 1 revealed some surprising results. When the antennas were moved horizontally, the altitude solved by Sensor 2 dramatically changed. The movement also resulted in a change in the timing solution. The GPS filter did however perform as expected. We discovered that the reason why the step 5 and 6 failed to trigger the filter, was that the limit for speed (see \ref{gps_filter_table} for more) was set too high. 
 
-\section{Test 2}
+\section{Test 2}\label{test2}
 \subsection{Goal of test}
 The goal of the second test was to test the clock model based filters. This should make the atomic clock controller disable the atomic clock's disciplining mode, and steer the atomic clock after the clock model's predictions. We also wanted to test the location and speed filter again to make sure we had fixed the error in the filter configuration from last test.
 
