@@ -41,7 +41,7 @@ struct command_code {
 /*!@brief Data used by the red_dev_filter.
 * Read from file.
 */
-struct krlf_data {
+struct lsf_data {
     double alt_ref;
     double lon_ref;
     double lat_ref;
@@ -59,15 +59,15 @@ struct disturbed_values {
     int speed_disturbed;
 };
 
-struct krlf {
-    struct krlf_data krlf_d;
+struct lsf {
+    struct lsf_data lsf_d;
     int moved;
     int was_moved;
     struct disturbed_values dv;
 };
 
 struct filters {
-    struct krlf krl_f;
+    struct lsf ls_f;
 };
 
 /*

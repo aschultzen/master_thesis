@@ -65,7 +65,7 @@ struct csac_model_data *cfd;
 static void remove_client_by_pid(pid_t pid);
 void remove_client_by_id(int id);
 static struct client_table_entry* create_client(struct client_table_entry* ptr);
-static void handle_sigchld(int signum);
+static void handle_sigchld();
 static void handle_sig(int signum);
 static void initialize_config(struct config_map_entry *conf_map,
                               struct server_config *s_conf);
@@ -224,7 +224,7 @@ static struct client_table_entry* create_client(struct client_table_entry* ptr)
 }
 
 /* SIGCHLD Handler */
-static void handle_sigchld(int signum)
+static void handle_sigchld()
 {
     pid_t pid;
     int   status;
@@ -306,8 +306,8 @@ void setup_session(int session_fd, struct client_table_entry *new_client)
     new_client->transmission.session_fd = session_fd;
 
     /* Zeroing out filters */
-    new_client->fs.krl_f.moved = 0;
-    new_client->fs.krl_f.was_moved = 0;
+    new_client->fs.ls_f.moved = 0;
+    new_client->fs.ls_f.was_moved = 0;
 
     new_client->marked_for_kick = 0;
     new_client->ready = 0;
