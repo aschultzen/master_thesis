@@ -6,10 +6,10 @@
 \section{Concept, clock model, filter values and graphs}
 Harald Hauglin, Chief engineer at Justervesenet was responsible for the following:
 \begin{itemize}
-	\item Describing the Clock model algorithm.
+	\item Describing the clock model algorithm as seen under chapter \ref{clock_model_harald}.
 	\item The concept of CSAC SMACC (Chip scale atomic clock smart miniature atomic clock controller) that this work is built on.
 	\item Created the graphs used in section \ref{gpsdata_test1}, \ref{test1_measurements}, \ref{gpsdata_test2}, \ref{test2_meaurements} and \ref{unplanned_disturb}.
-	\item Filter reference values, both for clock model based filters and GPS based filters.
+	\item Calculating the preliminary filter reference values, both for clock model based filters and GPS based filters. These were based on analysis of data gathered as described under subsection \ref{data_aquisition}. Optimal choice of filter parameters is considered to be outside of the scope of this work.
 \end{itemize}
 
 Mr. Matt Davis is the author of \texttt{jdutil.py}\cite{MATT_DAVIS}, a library written for converting dates and time to MJD and back. Permission to use the jdutil.py was granted by Mr. Davis. The correspondence with Mr. Davis is included in the appendix under \ref{davis_email}.
@@ -84,14 +84,16 @@ The predicted steering parameter for a given point in time t can now be computed
 
 The output of this model is the predicted CSAC steering correction for a given point in time t. 
 
-\section{Phase offset filter – fast timing filter}
-The "fast" timing filter will check the value of the "Phase" CSAC telemetry phase field. The CSAC disciplining algorithm steers the clock so that the generated PPS output is in sync with the reference PPS input. The reference value for the phase offset filter is therefore 0. Limits for acceptable deviations from the reference value has to be based on normal noise in the phase data. A representative series of phase data is shown in figure \ref{phase_offset}. 
+\section{Phase jump filter – fast timing filter}
+The "fast" timing filter will check the value of the "Phase" CSAC telemetry phase field. The CSAC disciplining algorithm steers the clock so that the generated PPS output is in sync with the reference PPS input. The reference value for the phase offset filter is therefore 0. Limits for acceptable deviations from the reference value has to be based on normal noise in the phase data. A representative series of phase data is shown in figure \ref{phase_offset1}. 
+
 \begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{clock_model_phase_offset.pdf}
   \caption{Figure shows phase offset in nanoseconds as measured by the CSAC}
-  \label{phase_offset}
+  \label{phase_offset1}
 \end{figure} 
+
 The filter parameter is a constant phase\_limit will be read from a configuration file. Flag for invalid timing will be raised when:
 
 \begin{displaymath}
@@ -101,7 +103,7 @@ The filter parameter is a constant phase\_limit will be read from a configuratio
 Tentatively phase\_limit is set to 50 ns. 
 
 \section{Frequency correction filter}
-The frequency correction filter will check the value of the CSAC telemetry "steer" field and compare it to the steering correction predicted by the clock model. Limits for acceptable deviations from the predicted value has to be based on normal noise in the frequency steering data. A representative series of sampled steering data along with model predictions is shown in figure [xxxx].
+The frequency correction filter will check the value of the CSAC telemetry "steer" field and compare it to the steering correction predicted by the clock model. Limits for acceptable deviations from the predicted value has to be based on normal noise in the frequency steering data. A representative series of sampled steering data along with model predictions is shown in figure \ref{phase_offset2}.
 Filtering of the current frequency steering can now be implemented as follows:
 
 \begin{displaymath}
@@ -113,7 +115,7 @@ The parameter steer\_limit will be read from a configuration file. The limit is 
   \centering
   \includegraphics[width=1\textwidth]{csac_modelling_prediction.pdf}
   \caption{Sampled clock steering corrections (gray), smoothed values (black solid line) and predicted clock steering values (dashed). Sampled data at 1 s intervals have been smoothed using an exponential filter with filter parameter w = 100000.}
-  \label{phase_offset}
+  \label{phase_offset2}
 \end{figure} 
 
 \chapter{Data acquisition}
@@ -256,5 +258,13 @@ On Sun, Oct 23, 2016 at 2:25 PM Aril Schultzen <aschultzen@gmail.com> wrote:
 	   \caption[Photograph of the measuring setup]{Photograph of the system used to measure the 10 MHz output from the atomic clock. Not in the picture is the source of the 10 MHz reference.}
 	   \label{lab_setup_photo}
 	\end{figure}
+
+\begin{figure}[!htb]
+	\centering
+  \includegraphics[scale=0.50]{antenna_foil_cover.jpg}
+  \caption[Antenna covered in aluminium foil]
+   {Antenna covered in aluminium foil to simulate a jamming attack.}
+   \label{antenna_foil_cover}
+\end{figure}
 
 \end{appendices}

@@ -16,12 +16,12 @@ In order to create an accurate clock-model of the atomic clock, it was necessary
 
 Figure \ref{ibd} shows how the Server, Sensors and atomic clock were physically set up. In order to assure good GPS satellite geometry, the antennas were placed at the roof of Justervesenets office at Kjeller. Antenna 1 was placed at a railing about a 1 meter above the ground, antenna 2 was placed at ground level. Figure \ref{sensor_kart} shows the placement of the antennas. Antenna 1 was connected to GPS receiver 1 which in turn was connected to Sensor 1. It's the same deal with antenna 2 which was connected to GPS receiver 2 which in turn was connected to Sensor 2. The distance between the two antennas was about 35 meters. The antenna connected to Sensor 1 did not utilize the full length of it's cable. This is because it proved challenging to find a place where the antenna could be placed in stable position, yet use the full length of the cable. The Sensors and the Server were connected to LAN through a Gigabit ethernet switch. The Server was configured to log telemetry received from the atomic clock and the Clients were configured to log all NMEA data received from the GPS receivers. The GPS receiver connected to antenna South is used to supply the atomic clock with a 1 PPS signal. Because the atomic clock model needs live data over time to mature, the system was started Friday 7. October 2016 and the test was performed Monday 10. October 2016. Figure \ref{msd} is a block diagram showing how the measuring setup was physically configured. The measuring was done by a Spectracom CNT-91 frequency counter using a 10 MHz reference from Justervesenet's atomic clocks. The CNT-91 was configured to measure a continuous gap-less frequency at 1 second time intervals. Figure \ref{lab_setup_photo} is a photograph of the measuring setup. Both Sensors were configured to use Justervesenet's internal NTP server and to use UTC instead of GMT+1.
 
-\section{Filter limits}
-Table \ref{gps_filter_table} shows the filter thresholds used during both test 1 and 2. Table \ref{clock_filter_table} shows the limits for the clock model based filters.
+\section{Test 1 filter limits}
+Table \ref{gps_filter_table} shows the filter thresholds used during both test 1. 
 
 \begin{table}[!htb]
 \centering
-\caption{Filter thresholds used during test 1 and 2}
+\caption{Filter thresholds used during test 1}
 \label{gps_filter_table}
   \begin{tabular}{|l|l|l|}
   \hline
@@ -33,23 +33,9 @@ Table \ref{gps_filter_table} shows the filter thresholds used during both test 1
   Altitude deviation                 & 10                            & 10                            \\ \hline
   Longitude deviation                & 0.005                         & 0.005                         \\ \hline
   Latitude deviation                 & 0.005                         & 0.005                         \\ \hline
-  Speed deviation                    & 1                             & 1                             \\ \hline
+  Speed deviation                    & 10                            & 10                             \\ \hline
   \end{tabular}
 \end{table} 
-
-\begin{table}[!htb]
-\centering
-\caption{Clock model filter configuration}
-\label{clock_filter_table}
-\begin{tabular}{|l|l|}
-\hline
-Phase limit      & 123.8     \\ \hline
-Steer limit      & 1102.1948 \\ \hline
-Time constant    & 5958.5448 \\ \hline
-Warmup time      & 0         \\ \hline
-Prediction limit & 10        \\ \hline
-\end{tabular}
-\end{table}
 
 \begin{figure}[!htb]
 \centering
@@ -67,7 +53,7 @@ Prediction limit & 10        \\ \hline
 
 \section{Test 1}
 \subsection{Goal of test}
-The goal with this test was to use the atomic clock controller to detect a simulated spoofing attack. By moving the antennas, the LS filter should be triggered as the solved longitude, altitude, latitude and speed should change. See \ref{ls_filter} for more about the location and speed filter. The result would be observable by analyzing the log files produced by the Server and Clients and the data collected by the measuring setup.
+The goal with this test was to use the atomic clock controller to detect a simulated spoofing attack. By moving the antennas, the location and speed filter should be triggered as the solved longitude, altitude, latitude and speed should change. See \ref{ls_filter} for more about the location and speed filter. The result would be observable by analyzing the log files produced by the Server and Clients and the data collected by the measuring setup.
 
 \subsection{Description}\label{test1_description}
 The following is a step by step description of how the test was conducted. The time in the brackets was obtained from a wristwatch. It is written in the normal format as well as number of seconds after 10:48. This is because the data used to draw the graphs, started at 10:48 but uses seconds in the X axis. Comparison is therefore easier. It is important to note that nor the resolution or accuracy was of any notable concern when writing down the time. The time was mainly noted to make it easier to find any correlation between the steps taken and patterns found in the log files. 
@@ -84,16 +70,8 @@ The following is a step by step description of how the test was conducted. The t
   \item\relax 11:28 - 2400: Removed foil from antenna 1.
   \item\relax 11:33 - 2700: Removed foil from antenna 2.
 \end{itemize}
-\newpage
 
-\begin{wrapfigure}{r}{0.40\textwidth}
-  \centering
-  \includegraphics[width=0.40\textwidth]{antenna_foil_cover.jpg}
-  \caption[Antenna covered in aluminium foil]
-   {Antenna covered in aluminium foil to simulate a jamming attack.}
-\end{wrapfigure} 
-
-Step 1 and 2 were designed to trigger the location and speed filter, especially the check of solved latitude, longitude and altitude but also the speed, against known values. Step 5 and 6 was also designed to trigger the location and speed filter, but more specifically the checking of solved speed. Step 7 and 8 was to designed to reveal what would happen during a jamming attack as it was believed that covering the antennas with aluminium foil would block all signals out.
+Step 1 and 2 were designed to trigger the location and speed filter, especially the check of solved latitude, longitude and altitude but also the speed, against known values. Step 5 and 6 was also designed to trigger the location and speed filter, but more specifically the checking of solved speed. Step 7 and 8 was to designed to reveal what would happen during a jamming attack as it was believed that covering the antennas with aluminium foil would block all signals out. A photography showing how the antenna was covered, can be seen under section \ref{antenna_foil_cover}.
 
 \subsection{Observations}\label{test1_observations}
 \subsubsection{Sensor Server logs}
@@ -107,24 +85,24 @@ By reviewing the log produced by the Sensor Server, the following was observed:
     ...
     [10/10/16 - 11:04:35] [ ALARM ] Sensor 1 cleared LS filter!
   \end{lstlisting}
-  \item The LS filter was triggered again at 11:08:27, but this time by Sensor 2. The alarm was cleared at 11:13:43.
+  \item The location and speed filter was triggered again at 11:08:27, but this time by Sensor 2. The alarm was cleared at 11:13:43.
     \begin{lstlisting}
     [10/10/16 - 11:08:27] [ ALARM ] Sensor 2 triggered LS filter!
     ...
     [10/10/16 - 11:13:43] [ ALARM ] Sensor 2 cleared LS filter!
   \end{lstlisting}
-  \item Once again, 11:22:03 the LS filter was triggered by Sensor 1 and was not cleared until 11:29:21
+  \item Once again, 11:22:03 the location and speed filter was triggered by Sensor 1 and was not cleared until 11:29:21
      \begin{lstlisting}
     [10/10/16 - 11:22:03] [ ALARM ] Sensor 1 triggered LS filter!
     ...
     [10/10/16 - 11:29:21] [ ALARM ] Sensor 1 cleared LS filter!
   \end{lstlisting} 
-  \item Sensor 2 triggered the LS filter 11:27:31 and cleared at 11:34:16.
+  \item Sensor 2 triggered the location and speed filter 11:27:31 and cleared at 11:34:16.
     \begin{lstlisting}
     [10/10/16 - 11:27:31] [ ALARM ] Sensor 2 triggered LS filter!
     [10/10/16 - 11:34:16] [ ALARM ] Sensor 2 cleared LS filter!
   \end{lstlisting} 
-  \item The last 3 seconds, Sensor 2 triggered and cleared the LS filter.
+  \item The last 3 seconds, Sensor 2 triggered and cleared the location and speed filter.
   \begin{lstlisting}
     [10/10/16 - 11:34:17] [ ALARM ] Sensor 2 triggered LS filter!
     [10/10/16 - 11:34:20] [ ALARM ] Sensor 2 cleared LS filter!
@@ -197,7 +175,7 @@ The following figures are plots of the GPS data (NMEA) that was logged by the Se
  
 
 \newpage
-\subsection{Measurements}\label{test1_measurements}
+\subsection{Timing measurements}\label{test1_measurements}
 Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for the atomic clock. The thick dark plot in the middle is from telemetry data gathered from the atomic clock. Figure \ref{cns91_tel_phase} shows the phase offset in nanoseconds for the atomic clock. The interesting thing to observe in both of these figures, is the jump in frequency and phase offset once the antenna was covered in foil. There is also a clear correlation between movement of the antenna and the relative frequency offset as seen in figure \ref{cns91_tel_freq}. 
 
 \begin{figure}[!htb]
@@ -216,16 +194,51 @@ Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for t
 
 \newpage
 \subsection{Test 1 results}
-The observations reveal what we expected. After all, when moving a GPS receivers antenna, the solved position has to change. If it did not, the GPS receiver or antenna would have to be faulty. Step 5 and 6 did not produce the expected result. The reason was discovered to be an error in the LS filter configuration.
+The observations from test 1 revealed some surprising results. When the antennas were moved horizontally, the altitude solved by Sensor 2 dramatically changed. The movement also resulted in a change in the timing solution. The GPS filter did however perform as expected. We discovered that the reason why the step 5 and 6 failed to trigger the filter, was that the limit for speed (see \ref{gps_filter_table} for more) was set too high. 
 
-\newpage
 \section{Test 2}
 \subsection{Goal of test}
-The goal of the second test was to test the clock model based filters. This should make the atomic clock controller disable the atomic clock's disciplining mode, and steer the atomic clock after the clock model's predictions. We also wanted to test the LS filter again to make sure we had fixed the error in the filter's configuration from last test.
+The goal of the second test was to test the clock model based filters. This should make the atomic clock controller disable the atomic clock's disciplining mode, and steer the atomic clock after the clock model's predictions. We also wanted to test the location and speed filter again to make sure we had fixed the error in the filter configuration from last test.
 
 \subsection{Change in setup}
-The setup in test 1 is quite similar to test 2. There is however some changes. Sensor 1 is no longer connected to the Sensor Server since the location and speed filter no longer was main priority. Sensor 2 did however still log data during the test as it did during test 1.
+The setup in test 1 is quite similar to test 2. There is however some changes. Sensor 1 is no longer connected to the atomic clock controller since the location and speed filter no longer was main priority. Sensor 2 did however still log data during the test as it did during test 1.
 
+\subsection{Test 2 filter limits}
+Table \ref{gps_filter_table2} shows the filter limits used in test. Note that the speed deviation is reduced to 1. Table \ref{clock_filter_table} shows the limits for the clock model based filters.
+
+\begin{table}[!htb]
+\centering
+\caption{Filter thresholds used during test 2}
+\label{gps_filter_table2}
+  \begin{tabular}{|l|l|l|}
+  \hline
+\multicolumn{1}{|c|}{Config value} & \multicolumn{1}{c|}{Sensor 2} \\ \hline
+Altitude reference                 & 122.427                       \\ \hline
+Longitude reference                & 1102.1934                     \\ \hline
+Latitude reference                 & 5958.5231                     \\ \hline
+Speed reference                    & 0                             \\ \hline
+Altitude deviation                 & 10                            \\ \hline
+Longitude deviation                & 0.005                         \\ \hline
+Latitude deviation                 & 0.005                         \\ \hline
+Speed deviation                    & 1                             \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{table}[!htb]
+\centering
+\caption{Clock model filter configuration}
+\label{clock_filter_table}
+\begin{tabular}{|l|l|}
+\hline
+Phase limit      & 50     \\ \hline
+Steer limit      & 50 \\ \hline
+Time constant    & 10000 \\ \hline
+Warmup time      & 2         \\ \hline
+Prediction limit & 200        \\ \hline
+\end{tabular}
+\end{table}
+
+\newpage
 \subsection{Description}\label{test2_description}
 The description of test 2 is similar to test 1 (see section \ref{test1_description}). The only difference is that greater care was taken in obtaining an accurate time for the steps.
 
@@ -241,7 +254,7 @@ The description of test 2 is similar to test 1 (see section \ref{test1_descripti
 
 \subsection{Observations}\label{test2_observations}
 \subsubsection{Sensor Server logs}
-The following By reviewing the log produced by the Sensor Server, the following was observed:
+By reviewing the log produced by the Sensor Server, the following was observed:
 
 \begin{itemize}
   \item No false positives, the filters were not triggered before the test started.
@@ -251,7 +264,7 @@ The following By reviewing the log produced by the Sensor Server, the following 
     ...
     [10/24/16 - 13:19:54] [ ALARM ] Sensor 2 cleared LS filter!
   \end{lstlisting}
-  \item The LS filter was triggered again at 13:23:12 for only a second. It was then triggered again two seconds later and was not cleared 13:23:43.
+  \item The location and speed filter was triggered again at 13:23:12 for only a second. It was then triggered again two seconds later and was not cleared 13:23:43.
     \begin{lstlisting}
     [10/24/16 - 13:23:12] [ ALARM ] Sensor 2 triggered LS filter!
     ...
@@ -278,24 +291,26 @@ Figure \ref{sensor2_everything} shows the plotted GPS data collected during test
 \end{figure} 
 
 \newpage
-\subsection{Measurements}\label{test2_meaurements}
+\subsection{Timing measurements}\label{test2_meaurements}
 Figure \ref{sensor2_measure} shows measurements done during test 2 as two graphs with two plots each. The thin lightly colored in the top figure, shows phase offset in nanoseconds. It reveals that the atomic clock was \textit{not} steered after the clock model once the disciplining was disabled. The figure at the bottom of figure \ref{sensor2_measure} shows relative frequency offset as measured by the CNT-91 frequency counter. The thin darkly colored line is a plot of the data received as telemetry from the atomic clock. It shows that the atomic clock was brought out of disciplining after roughly 140 seconds. 
+
+\subsection{Test 2 results}
+As mentioned under subsection \ref{test2_meaurements}, the disciplining of the atomic clock was successfully deactivated when the steer value reported by the atomic clock exceed the steer value that was predicted by the model. The phase jump filter was not triggered because the phase offset never reached the configured limit. The Frequency correction filter on the other hand, was triggered because the steer value exceeded the configured limit (see table \ref{clock_filter_table} for limits).It also shows that the atomic clock sadly was \textit{not} steered using the clock model.
 
 \begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{20161024-test2-telemetry-and-cnt91-combined-1.png}
-  \caption{The top figure shows a set of plots. The first plot is phase offset in nanoseconds. The long, sloped light line is a plot of the measurements done by the CNT-91 frequency counter. The dotted dark plot, is also the phase offset but as reported by the atomic clock. The bottom figure also shows two plots. Once again, the lighter plot in the background is relative frequency offset as measured by the CNT-91 frequency counter. The dark plot is frequency offset as reported by the atomic clock.}
+  \caption{Timing measurements and clock telemetry data. The upper panel is phase offset in nanoseconds. The long, sloped light line is a plot of the measurements done by the CNT-91 frequency counter. The dotted dark plot, is also the phase offset but as reported by the atomic clock. The bottom figure also shows two plots. Once again, the lighter plot in the background is frequency steering as measured by the CNT-91 frequency counter. The dark plot is frequency offset as reported by the atomic clock.}
   \label{sensor2_measure}
 \end{figure} 
 
 \newpage
-\subsection{Test 2 results}
-As mentioned under subsection \ref{test2_meaurements}, the disciplining of the atomic clock was successfully deactivated when the steer value reported by the atomic clock exceed the steer value that was predicted by the model. It also shows that the atomic clock sadly was \textit{not} steered using the clock model.
-
 \section{Unplanned disturbance}\label{unplanned_disturb}
-The data presented in this section was gathered while the atomic clock controller was building the clock model for one of the planned tests. The data is interesting because it shows a disturbance from an unknown cause. The data shown in the figures are from 5/10-2016 to 6/10-2016. Figure \ref{disturbance_holdover} shows that about 10 minutes after midnight the 6/10-2016, the atomic clock entered "holdover mode", indicating that the 1 PPS signal from the GPS receiver was lost. Figure \ref{disturbance_multipanel} shows the GPS receiver's solved altitude, longitude, latitude, speed and number of satellites. By examining the figure, it is obvious that the signal was lost minutes after the 57667 MJD (midnight) mark. The GPS receiver didn't achieve consistent lock before $\approx$ 57667.32 (7:45 in the morning). In the mean time, the clocks stability was impaired as figure \ref{disturbance_phase_frequency} and \ref{disturbance_phase_steer} clearly shows.
+The data presented in this section was gathered while the atomic clock controller was building the clock model for one of the planned tests. The data is interesting because it shows a disturbance from an unknown cause. The data shown in the figures are from 5/10-2016 to 6/10-2016. Figure \ref{disturbance_holdover} shows that about 10 minutes after midnight the 6/10-2016, the atomic clock entered "holdover mode", indicating that the 1 PPS signal from the GPS receiver was lost. Figure \ref{disturbance_multipanel} shows the GPS receiver's solved altitude, longitude, latitude, speed and number of satellites. By examining the figure, it is obvious that the signal was lost minutes after the 57667 MJD (midnight) mark. The GPS receiver didn't achieve consistent lock before $\approx$ 57667.32 (7:45 in the morning). In the mean time, the clocks stability was impaired as figure \ref{disturbance_phase_frequency} and \ref{disturbance_phase_steer} clearly shows. Figure \ref{disturbance_phase_steer} is interesting because it shows how the atomic clock seems to have a delay in it's steering algorithm. If the atomic clock controller was applying the clock model filters while this data was collected, the phase jump filter would have triggered before the atomic clock would have been able to apply steering. 
 
-\begin{figure}
+We have no idea what might be the origin of the disturbance. The following is therefor pure speculation: It is possible that if a trucker that spent the night parked by the road nearby used a GPS jammer to hide his or hers activity from an employer, that the jammer could have caused the disturbance. We did not find any traces of the disturbance when examining the logs from Sensor 1, but Sensor 1 is farther north, away from the road. It is possible that the jammer only had the range to jam Sensor 2 and not Sensor 1. The time-frame for the disturbance also supports this theory since the disturbance started around midnight and ended at around 7:45, in other words a good night sleep. This is of course only speculation as we do not have any data supporting it what so ever. 
+
+\begin{figure}[!hbt]
   \centering
   \includegraphics[width=1\textwidth]{disturbance57667-csac-telemetry-mode-zoom-in.pdf}
   \caption{The figure shows the disciplined mode as reported by the atomic clock.}

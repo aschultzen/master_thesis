@@ -1,4 +1,9 @@
 \documentclass[../main.tex]{subfiles}
 
 \chapter{Conclusion}
-The software that has been developed and is described in this report, demonstrates that it is possible to detect and mitigate a spoofing attack like the ones performed with the Civil GPS spoofer, using a spoof proof atomic clock controller. It also demonstrates the efficiency of network enabling GPS receivers and using a Client/Server architecture to collect data over a network.   
+The software that has been developed and is described in this report, demonstrates that it is possible to detect and mitigate a spoofing attack like the ones performed with the Civil GPS spoofer, using the multi-layered defense implemented in the spoof proof atomic clock controller. The frequency steering filter made possible by the clock model would have detected steering attempts larger than 50 
+
+Even if a spoofing attack was done carefully and slowly enough not to trigger the clock model based filters, it would not have been able to spoof two different receivers without giving away the attack. This would require multiple spoofers meticulously tuned thus making the whole attempt highly impractical. Introducing a third receiver, which with Sensor Server architecture is easy, would make it even harder.  
+
+
+ It also demonstrates the efficiency of network enabling GPS receivers and using a Client/Server architecture to collect data over a network.   
