@@ -1,7 +1,7 @@
 \documentclass[../main.tex]{subfiles}
 
 \section{Interfacing}\label{interface}
-As mentioned earlier under section (\ref{arch_desc}), a client can assume the role of both a Monitor and a Sensor. The Sensor Server does not differentiate between the two roles other than when it routinely checks the status of its filters. This means that one could connect to the server using the Sensor Client software as a Monitor by configuring the Sensor Client software to use a negative integer as ID. At this point, this kind of functionality is not very useful as there is currently no way to change the ID of a client unless the client explicitly issues the command to do so, but it opens for the possibility to interface with the server. One way to interface with the Sensor Server is to connect to it using Telnet:
+As mentioned earlier under section (\ref{arch_desc}), a client can assume the role of both a monitor and a sensor. The sensor server does not differentiate between the two roles other than when it routinely checks the status of its filters. This means that one could connect to the server using the sensor client software as a monitor by configuring the sensor client software to use a negative integer as ID. At this point, this kind of functionality is not very useful as there is currently no way to change the ID of a client unless the client explicitly issues the command to do so, but it opens for the possibility to interface with the server. One way to interface with the server is to connect to it using Telnet:
 
 \begin{lstlisting}
 user@machine:/$ telnet 10.1.0.46 10001
@@ -13,7 +13,7 @@ OK!
 
 >
 \end{lstlisting}
-It is also possible to assume the role of a Sensor by connecting to the server via telnet. This can be used to debug or troubleshoot the Sensor Server by manually feeding it NMEA data. The only requirement is that the communication is Sensor Server protocol compliant:
+It is also possible to assume the role of a sensor by connecting to the server via telnet. This can be used to debug or troubleshoot the sensor server by manually feeding it NMEA data. The only requirement is that the communication is sensor server protocol compliant:
 
 \begin{lstlisting}
 user@machine:/$ telnet 10.1.0.46 10001
@@ -26,10 +26,10 @@ OK!
 NMEA<GNRMC part of NMEA><GNGGA part of NMEA>
 OK!
 \end{lstlisting}
-Another possibility is of course to write scripts that communicates with the Sensor Server. An example script can be found in the appendix (\ref{script_example}).
+Another possibility is of course to write scripts that communicates with the server. An example script can be found in the appendix (\ref{script_example}).
 
 \begin{table}
-	\caption{Sensor Server available commands}
+	\caption{sensor server available commands}
 	\label{commands}
 	\begin{tabularx}{\textwidth}{|l|l|l|X|}
 	  \multicolumn{1}{l}{Command} & \multicolumn{1}{l}{Short} & \multicolumn{1}{l}{Parameter} & \multicolumn{1}{l}{Description}                                                                \\ \hline
@@ -38,12 +38,12 @@ Another possibility is of course to write scripts that communicates with the Sen
 	  DISCONNECT                  & EXIT                      & NONE                          & Disconnect from the server                                                                     \\ \hline
 	  PRINTCLIENTS                & PC                        & NONE                          & Prints an overview of connected clients                                                        \\ \hline
 	  PRINTSERVER                 & PS                        & NONE                          & Prints server state and config                                                                 \\ \hline
-	  PRINTTIME                   &                           & ID                            & Prints time solved from GNSS data received from Sensor \textless ID\textgreater                 \\ \hline
-	  PRINTAVGDIFF                & PAD                       & NONE                          & Prints the difference between current solved position and the average reported for all Sensors \\ \hline
-	  PRINTLOC                    & PL                        & ID                            & Print solved position for Sensor \textless ID\textgreater                                       \\ \hline
+	  PRINTTIME                   &                           & ID                            & Prints time solved from GNSS data received from sensor \textless ID\textgreater                 \\ \hline
+	  PRINTAVGDIFF                & PAD                       & NONE                          & Prints the difference between current solved position and the average reported for all sensors \\ \hline
+	  PRINTLOC                    & PL                        & ID                            & Print solved position for sensor \textless ID\textgreater                                       \\ \hline
 	  LISTDATA                    & LSD                       & NONE                          & List all dump files stored by the server                                                       \\ \hline
-	  DUMPDATA                    & DD                        & ID \& FILE                    & Dumps state of Sensor \textless ID\textgreater into a file named \textless FILE\textgreater      \\ \hline
-	  LOADDATA                    & LD                        & ID \& FILE                    & Load state stored in file called \textless FILE\textgreater into Sensor \textless ID\textgreater \\ \hline
+	  DUMPDATA                    & DD                        & ID \& FILE                    & Dumps state of sensor \textless ID\textgreater into a file named \textless FILE\textgreater      \\ \hline
+	  LOADDATA                    & LD                        & ID \& FILE                    & Load state stored in file called \textless FILE\textgreater into sensor \textless ID\textgreater \\ \hline
 	  QUERYCSAC                   & QC                        & COMMAND                       & Queries the CSAC with COMMAND.                                                                 \\ \hline
 	  LOADLSFDATA                  & LLSFD                      & ID                            & Load reference location data into Sensor \textless ID\textgreater                               \\ \hline
 	  PRINTCFD                    & PFD                       & NONE                          & Prints CSAC filter data\\ \hline                                                                        
