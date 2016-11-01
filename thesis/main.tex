@@ -157,12 +157,7 @@ program={Informatikk: programmering og nettverk},
 long]
 
 \begin{abstract}
-We present in this report, our work with developing a system that we believe should be able to detect GPS spoofing attacks done with an advanced, state of the art GPS spoofer.
-
-We describe a smart clock controller (SMACC) intended to complement a commercial disciplined clock so that it becomes "spoof proof", i.e. hardened against several classes of GPS jamming and spoofing attacks. The controller uses a multifactorial approach to evaluate the validity/integrity of received GPS signals based on a number of observables as well as clock correction modeling. In particular, multiple GNSS receivers in combination with the stability of a chip scale atomic clock (CSAC) is used to build a multi-layered situational awareness aimed to provide resilience against seamless GPS time hacking attacks. Moreover, the stability of the CSAC will provide enhanced holdover operation in the case of spoofing or jamming attacks. The "spoof proof CSAC SMACC" is built using inexpensive off-the-shelf commercial components.
-- ...accomodate multiple networked GPS sensors through a flexible client/server architechture
-- logging of GPS sensor data
-- logging of clock disciplining data
+The goal of this project is to create a prototype of a smart atomic clock controller running on commodity hardware, capable of spoof proofing a GPS controlled atomic clock, i.e harden it against GPS jamming and spoofing attacks. The project aims to use a multi-layered approach to evaluate the integrity of GPS signals and to use knowledge about the atomic clock and its behavior when GPS disciplined, to detect and mitigate a spoofing attack. We aim to demonstrate the efficiency of network enabling commodity GPS receivers and connecting them to a atomic clock controller by using a client/server architecture facilitating GPS and atomic clock data analysis. The preliminary GPS manipulation tests demonstrates the feasibility of the system.
 \end{abstract}
 
 % Where = hvor
