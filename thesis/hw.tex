@@ -2,6 +2,12 @@
 
 \chapter{Hardware}
 \section{Atomic Clock}\label{hw_csac}
+\begin{wrapfigure}{c}{0.45\textwidth}
+  \centering
+  \includegraphics[width=0.40\textwidth]{csac.jpg}
+  \caption[Symmetricom SA.45s CSAC]
+   {Symmetricom SA.45s CSAC. Courtesy Symmetricom.}
+\end{wrapfigure}
 We decided to use the Symmetricom SA.45 as the atomic clock. This is an atomic clock measuring only 16cc with 1 pulse per second (PPS) output and 1 PPS input for disciplining. The SA.45's strength is its low power consumption (less than 120mW) and low price. The SA.45 also uses a built-in controller which can be communicated with over a RS-232 serial interface. The ability to communicate with the atomic clock, issue commands and collect data is paramount for the feasibility of our proposal. It is worth mentioning that any atomic clock, such as Cesium standard or even a Rubidium standard, could be used given that they have a means to communicate basic telemetry like phase difference and steer values and can configured by wire to change modes of disciplining. For more about clock performance, review the SA.45s' user guide \cite{CSAC_USERGUIDE} and data sheet \cite{SADS}.
 
 \section{Atomic clock controller platform}\label{platform}
