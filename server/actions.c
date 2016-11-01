@@ -21,7 +21,7 @@
 #define ERROR_CSAC_FAILED "Communication with CSAC failed!\n"
 
 /* LOAD_REF_DEV_DATA */
-#define KRL_FILENAME "krl_data_sensor"
+#define KRL_FILENAME "ls_data_sensor"
 #define ALT_REF "alt_ref:"
 #define LON_REF "lon_ref:"
 #define LAT_REF "lat_ref:"

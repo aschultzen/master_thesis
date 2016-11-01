@@ -9,7 +9,7 @@
 #define ERROR_DUMPDATA_FAILED "ERROR:Failed to dump data\n"
 #define ERROR_LOADDATA_FAILED "ERROR:Failed to load data\n"
 #define ERROR_NO_COMMAND  "ERROR:No command specified\n"
-#define ERROR_KRLD_LOAD_FAILED "ERROR:Failed to load KRL data from file\n"
+#define ERROR_LSD_LOAD_FAILED "ERROR:Failed to load LS data from file\n"
 #define ERROR_CHECKSUM_FAILED "ERROR: Checksum failed!\n"
 #define ERROR_ILLEGAL_NMEA "ERROR: Received illegal/corrupt NMEA data\n"
 
@@ -421,9 +421,9 @@ int respond(struct client_table_entry *cte)
                 if(load_lsf_data(cte)) {
                     t_print("Loaded filter data for client %d\n", cte->client_id);
                 } else {
-                    t_print("Failed to load KRL filter data for Sensor %d\n", cte->client_id);
-                    s_write(&(cte->transmission),ERROR_KRLD_LOAD_FAILED,
-                            sizeof(ERROR_KRLD_LOAD_FAILED));
+                    t_print("Failed to load LS filter data for Sensor %d\n", cte->client_id);
+                    s_write(&(cte->transmission),ERROR_LSD_LOAD_FAILED,
+                            sizeof(ERROR_LSD_LOAD_FAILED));
                     return 0;
                 }
             }
@@ -508,8 +508,8 @@ int respond(struct client_table_entry *cte)
                 if(load_lsf_data(candidate)) {
                     s_write(&(cte->transmission), PROTOCOL_OK, sizeof(PROTOCOL_OK));
                 } else {
-                    s_write(&(cte->transmission),ERROR_KRLD_LOAD_FAILED,
-                            sizeof(ERROR_KRLD_LOAD_FAILED));
+                    s_write(&(cte->transmission),ERROR_LSD_LOAD_FAILED,
+                            sizeof(ERROR_LSD_LOAD_FAILED));
                 }
             }
         }
