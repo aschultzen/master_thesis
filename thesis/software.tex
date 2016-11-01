@@ -111,9 +111,9 @@ Conceptually, the atomic clock model and the filter that uses the model are two 
 \begin{itemize}
   \item The configuration for the model is loaded. The configuration includes values defining the accepted limits for steering and phase difference. Optionally, it can also include state values from an "earlier" model \footnote{The functionality to restore an earlier model is not without restrictions. It is typically meant for a situation where the Server needs to be taken down for a couple hours and a new warm-up period is considered undesirable. This is better explained in section \ref{clock_model_harald}} that can be used to initialize the model further, thus reducing the warm-up time. If the loading of the configuration fails, an error message is printed, the \texttt{volatile sig\_atomic\_t done} is set to 1 and the process exits. This also breaks the server core (\ref{server_core}) loop. After all, the system needs the atomic clock to do the job it is intended for.
   \item A loop is entered. The loop breaks when \texttt{volatile sig\_atomic\_t done} equals 0. 
-  \item The atomic clock lock is acquired and once the telemetry is queried from the atomic clock, it is released again.
+  \item The atomic clock lock is acquired and once the telemetry is queried from the atomic clock it is released again.
   \item If the model is not initialized, telemetry data is used to initialize it. State values from earlier models will also be used if available in the earlier loaded configuration. See section \ref{csac_com} for more about communication with the atomic clock.
-  \item A check is done to see if the model has been running for at least 48 hours. If it has, it is ready to be used a reference for the filters. See section \ref{csac_filters} for more about the atomic clock filters in particular.
+  \item A check is done to see if the model has been running for at least 48 hours. If it has, it is ready to be used as a reference for the filters. See section \ref{csac_filters} for more about the atomic clock filters in particular.
   \item The telemetry received from the atomic clock is used to update the model. 
   \item A check is done to see if 24 hours have passed since the prediction values were last calculated. The model keeps track of steer predictions for yesterday and today. By using these two points of data, an estimation of the predicted steer can be calculated. 
 \end{itemize}
@@ -135,14 +135,14 @@ Conceptually, the atomic clock model and the filter that uses the model are two 
 The parser and handler are responsible for parsing data received from a client and making sure every request is protocol compliant. Once the goal of the request has been established, the request is executed. A function named \texttt{respond()} is called in the listening loop. Every time data is received from a client, the data is sent to the parser (\texttt{parse\_input()}) to determine the validity of the request received. See subsection \ref{nmea_data} for more information about the GPS data received from the Sensors. Figure \ref{server_flow} and \ref{actions_core} are block diagrams showing the execution flow for this part of the server. The protocol is explained in greater detail under section \ref{protocol} and the parser is better explained under subsection \ref{parser}.
 
 \begin{itemize}
-  \item A loop is entered. The loop is broken when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. This is the same variable that is used in the Server core \ref{server_core} loop and for a good reason: If the server exits, then its children should too. 
-  \item If reading from the socket fails, the client gets disconnected. If it is successful, the client table entry for the connected client is checked to see if the client has been marked to be kicked. If it is, it gets disconnected. 
-  \item The data received from the client is parsed and checked against the protocol. If the request received from the client doesn't match any of the supported requests or commands, the request is ignored and the loop is entered again. See section \ref{protocol} for more information about the protocol and subsection \ref{parser} for more information about the parser.
+  \item A loop is entered. The loop is broken when \texttt{volatile sig\_atomic\_t done}\label{atomic_done} equals 0. This is the same variable that is used in the Server core \ref{server_core} loop and for a good reason: If the server exits, its children should too. 
+  \item If reading from the socket fails, the client gets disconnected. If it is successful, the client table entry for the connected client is checked to see if the client has been marked to be kicked. If so, the client is disconnected. 
+  \item The data received from the client is parsed and checked against the protocol. If the request received from the client does not match any of the supported requests or commands, the request is ignored and the loop is entered again. See section \ref{protocol} for more information about the protocol and subsection \ref{parser} for more information about the parser.
   \item If the request received is valid, the clients ID is checked to determine whether or not it has identified itself. If the client has identified itself, the request gets carried out. 
   \item If the request received is to handle NMEA data, the checksum for that NMEA data is calculated. If the checksum check fails, the data is discarded. If it succeeds, the data is copied into \texttt{nmea\_container} struct (\ref{nmea_cont}) for easier handling.
   \item The client is marked as ready for processing and a ready check is commenced. The ready check is used to make sure that all the sensors have received NMEA data and are ready to have filters applied. Once the filters have been applied, the lock is released and normal execution resumes. The ready check is explained further under subsection \ref{ready_check_alg}.
   \item If the clients ID is 0, it is considered unidentified and any other requests but to identify itself, is ignored.
-  \item If the client is attempting to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempted to assume the role of a Sensor, the client will get disconnected. If it attempted to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. The reason why a Sensor would get disconnected and a monitor would not, is simple: When connecting the Sensor to the server, it should not be any doubt whether or not it has been accepted. If something is wrong, it is better that a user of the system has to deal with it there and then and configure the Sensor correct rather than allowing the user to do mistakes that severely impacts the efficiency of the system. See section section \ref{arch_desc} for more information about the Sensor and Monitor roles.
+  \item If the client attempts to identify itself, the ID it attempts to use is checked against the rest of the connected clients. If the ID is already taken and the client attempts to assume the role of a Sensor, the client will get disconnected. If it attempts to assume the role of a Monitor, it will simply be notified that the chosen ID is taken and the request will be ignored. The reason why a Sensor would get disconnected and a monitor would not, is simple: When connecting the sensor to the server, it should not be any doubt whether or not it has been accepted. If something is wrong, it is better that a user of the system deals with the configuration at once rather than allowing the user to apply a faulty configuration that severely impacts the efficiency of the system. See section section \ref{arch_desc} for more information about the Sensor and Monitor roles.
   \item If the attempted ID is available, the client table entry for the client is updated with the requested ID and the server will attempt to load data for the Location and speed filter data into the clients location and speed filter struct. The server will attempt to load this data from a file named \texttt{krl\_data\_sensor<ID>}. If the load fails, the client will be disconnected. It is after all useless without its reference position data. For more information about location and speed filter, see section \ref{ls_filter}.
 \end{itemize}
 
@@ -157,7 +157,7 @@ There is currently only one filter using GPS data in the Sensor Server implement
    \caption[Order of execution in the filter]{Block diagram show the order of execution in the GPS filter(s)}
    \label{gps_filters}
 \end{figure}
-By configuring the Sensor Server with the location of the different Sensors, the server can trigger an action if a Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is higher or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to check whether or not the latitude part of the GPS receivers solved position is within "safe" (not spoofed) range.
+By configuring the Sensor Server with the location of the different Sensors, the server may trigger an action if a Sensor reports an abnormal solved position. The filter is triggered when either latitude, longitude, altitude or speed is higher or lower than the reference value minus or plus a deviation. Listing (\ref{ref_dev_filter_latitude}) shows an edited sample of code taken from \texttt{filters.c}. The code in the sample is part of the algorithm used to check whether or not the latitude part of the GPS receivers solved position is within "safe" (not spoofed) range.
 \begin{code}
   \caption{Listing shows sample of code taken from \texttt{filters.c} line 79. The code is part of the algorithm that compares the known position of a Sensor with the Sensor resolved position. The code has been edited for clarity.}
     \begin{minted}
@@ -224,8 +224,8 @@ Every time a client connects to the server, a process is forked for the new conn
 \begin{itemize}
   \item Line 4: The server waits for a connection. \texttt{accept()} is a blocking function. The code does not continue past this point before a client has connected.  
   \item Line 12: A client has connected. The server creates a new process to handle the new connection. The new process is created using \texttt{fork()}.
-  \item Line 13: Both the new process and its parent enters the if statements regarding its process identification (PID). The parent does not match the criteria of the ifs and returns to the top of the loop. The child on the other hand, matches the criteria for the if sentence at line 15.
-  \item Line 16: The child process closes it's parent's socket file descriptor and continues to setup the session at the next line.
+  \item Line 13: Both the new process and its parent enters the "if statements" regarding its process identification (PID). The parent does not match the criteria of the "ifs" and returns to the top of the loop. The child on the other hand, matches the criteria for the "if sentence" at line 15.
+  \item Line 16: The child process closes its parent's socket file descriptor and continues to setup the session at the next line.
 \end{itemize}
 \begin{code}
   \caption{Sample of code taken from \texttt{sensor\_server.c}(\ref{sensor_server.c}, line 494). The sample has been edited for clarity purposes.}
@@ -352,7 +352,7 @@ The map is an array containing pointers to the client list segment. These pointe
 \end{code}
 
 \subsection{Client linked list}\label{linked_list}
-Since the C standard does not provide data structures like linked lists, I had to choose between reinventing the wheel or finding some implementation to drop into the project. While studying another subject, I found a guide on how to use the linked list implementation from the linux kernel source code (\cite{KAZU_LIST}) in a user space program. Since the implementation was solid, well tested and had many useful functions, i decided to use it. The modified header file containing all the code, is GPL licensed.  
+Since the C standard does not provide data structures like linked lists, I had to choose between reinventing the wheel or finding some implementation to drop into the project. While studying another subject, I found a guide on how to use the linked list implementation from the linux kernel source code (\cite{KAZU_LIST}) in a user space program. Since the implementation was solid, well tested and had many useful functions, I decided to use it. The modified header file containing all the code, is GPL licensed.  
 Figure (\ref{linked_list_figure}) shows pieces of the shared memory segment linked together in a linked list structure.
 
 \begin{figure}
@@ -363,7 +363,7 @@ Figure (\ref{linked_list_figure}) shows pieces of the shared memory segment link
 \end{figure}  
 
 \subsubsection{Alternative to linked list}
-The initial reason for using a linked list to organize the connected clients, was to reduce the time spent iterating over a space of memory. With a linked list, it would not matter where the different pieces of memory were located, a pointer to next piece would always be readily available anyway.
+The initial reason for using a linked list to organize the connected clients, was to reduce the time spent iterating over a space of memory. With a linked list it would not matter where the different pieces of memory were located, a pointer to next piece would always be readily available anyway.
 
 \subsubsection{Semaphores}
 Having shared memory segments comes with a price. Whenever two or more processes are working on the same data set, they are prone to create race conditions, deadlocks and data corruption. Therefore, semaphores are used to lock the segments during read and write operations.
@@ -396,7 +396,7 @@ Having shared memory segments comes with a price. Whenever two or more processes
   \label{removeclient}
 \end{code}
 
-Listing \ref{removeclient} shows a typical example of a function locking down access to the shared memory segment containing the list of connected clients, by using a semaphore. In the example (\ref{removeclient}) a client has been disconnected from the server and the the list of connected clients are being updated. The semaphore is necessary to make sure that another process is not attempting to read or write to the segment while the data is deleted. If another process had attempted to execute the \texttt{sem\_wait()} on the semaphore, it would have been put in a queue. Depending on the operating system, it would most likely signal the scheduler to do a context switch since the resource was busy anyway and it therefor should relinquish control of the CPU. Once the semaphores is raised, it can be lowered again by another process. It is important to note that the semaphores are not a function of, or related to the memory segments by anything other than the name. The semaphores are just "flags" used to control access to a resource. There is no automatic raising or lowering of the associated semaphores by reading or writing to a specific shared memory segment. All functions in the sensor server does however use semaphores when dealing with shared memory segments in order to avoid deadlock and race conditions.
+Listing \ref{removeclient} shows a typical example of a function locking down access to the shared memory segment containing the list of connected clients by using a semaphore. In the example (\ref{removeclient}) a client has been disconnected from the server and the list of connected clients is updated. The semaphore is necessary to make sure that another process is not attempting to read or write to the segment while the data is deleted. If another process had attempted to execute the \texttt{sem\_wait()} on the semaphore, it would have been put in a queue. Depending on the operating system, it would most likely signal the scheduler to do a context switch since the resource was busy anyway and it therefor should relinquish control of the CPU. Once the semaphores is raised, it can be lowered again by another process. It is important to note that the semaphores are not a function of, or related to the memory segments by anything other than the name. The semaphores are just "flags" used to control access to a resource. There is no automatic raising or lowering of the associated semaphores by reading or writing to a specific shared memory segment. All functions in the sensor server use semaphores when dealing with shared memory segments in order to avoid deadlock and race conditions.
 
 \subsection{Client input parser}\label{parser}
 The parser used by the Sensor Server is a simple function. As explained in section \ref{parser_and_handler}, every time a client sends data to the Server, the data is sent though the parser in order to detect the purpose of the request. The parser uses the protocol and compares it with the input and looks for a match. Listing \ref{parse_id} shows a sample of code taken from the parser. 
@@ -423,13 +423,13 @@ The parser used by the Sensor Server is a simple function. As explained in secti
   \label{parse_id}
 \end{code}
 
-The listing (\ref{parse_id}) shows how the parser attempts to find a match between the input buffer and the protocol defined IDENTIFY command. On line 6 it attempts to copy any potential parameter. The parser does not care if the parameter is missing, but it will attempt to extract it from the input buffer. If no matches are found, the function returns 0, letting the calling function (\texttt{respond()})  know that the input from the client was invalid or illegal. Comparing strings is hard work and a relatively CPU intensive task. This is why the parser sets a \textit{command code} (\ref{command_code}) as seen on the last line. The command code is an integer defined in the protocol, and every command has got one. The code is used in the listening loop by \texttt{respond} to determine what action to perform in case a valid request. Comparing integers are "cheaper" than comparing strings, and since the string comparison job is already done once, there is no need to do it again.
+The listing (\ref{parse_id}) shows how the parser attempts to find a match between the input buffer and the protocol defined IDENTIFY command. On line 6 it attempts to copy any potential parameter. The parser does not care if the parameter is missing, but it will attempt to extract it from the input buffer. If no matches are found, the function returns 0, letting the calling function (\texttt{respond()})  know that the input from the client was invalid or illegal. Comparing strings is hard work and a relatively CPU intensive task. This is why the parser sets a \textit{command code} (\ref{command_code}) as seen on the last line. The command code is an integer defined in the protocol and the is a command code associated with every command. The code is used in the listening loop by \texttt{respond} to determine what action to perform in case a valid request. Comparing integers are "cheaper" than comparing strings, and since the string comparison job is already done once, there is no need to do it again.
 
 \subsection{Ready check algorithm}\label{ready_check_alg}
-Every time NMEA data is received and validated, the process that received the data will initiate a ready check. This is done by setting a flag in the client list entry called ready to 1, and calling the \texttt{nmea\_ready()} function. The \texttt{nmea\_ready()} function locks down the client linked list and iterates through it checking if the other processes are ready too. If all the other processes has received valid NMEA data from their respective client, the GPS filters(s) are applied. If they are not ready, the lock is release and the process carries on. This means that the last process to receive NMEA data gets the job of applying the filters \footnote{Since NMEA data is generated every second by the GPS receivers, it might be more appropriate to say that it is the scheduler that decides which process is coming in last. This of course depends on the distance between the Sensor and the Client}.
+Every time NMEA data is received and validated, the process that received the data will initiate a ready check. This is done by setting a flag in the client list entry called ready to 1, and calling the \texttt{nmea\_ready()} function. The \texttt{nmea\_ready()} function locks down the client linked list and iterates through it checking if the other processes are ready too. If all the other processes have received valid NMEA data from their respective client, the GPS filter is applied. If they are not ready, the lock is release and the process carries on. This means that the last process to receive NMEA data gets the job of applying the filters \footnote{Since NMEA data is generated every second by the GPS receivers, it might be more appropriate to say that the scheduler decides which process executes last. This of course also depends on the distance between the Sensor and the Client}.
 
 \section{Sensor Server Protocol}\label{protocol}
-The Sensor Server protocol is quite simply a header file containing every keyword or command that the Sensor Server recognizes. The thought behind it was that a client application (or script) could import the protocol header file and easily use and recognize commands used between the Server and a Client. Some constraints are also defined in the protocol header file, like maximum parameter size, maximum and minimum command size. The \textit{command codes} used by the parser, is also defined in the protocol header file. See subsection \ref{parser} for more about the use of protocol.
+The Sensor Server protocol is quite simply a header file containing every keyword or command that the Sensor Server recognizes. The thought behind it was that a client application (or script) could import the protocol header file and easily use and recognize commands used between the Server and a Client. Some constraints are also defined in the protocol header file, like maximum parameter size, maximum and minimum command size. The \textit{command codes} used by the parser are also defined in the protocol header file. See subsection \ref{parser} for more about the use of protocol.
 
 \section{Atomic clock Communication}\label{csac_com}
 \begin{figure}[!htb]
@@ -440,7 +440,7 @@ The Sensor Server protocol is quite simply a header file containing every keywor
 \end{figure}
 
 The SA.45 atomic clock includes a serial interface that enables communication with a PC by using a COM port. As mentioned earlier, our approach relies heavily on the ability to communicate with the atomic clock.
-Information can be queried by sending commands to the atomic clock. These commands are explained in table \ref{atomic clock_COMMANDS}. 
+Information may be queried by sending commands to the atomic clock. These commands are explained in table \ref{atomic clock_COMMANDS}. 
 
 \begin{table}[]
   \centering
@@ -461,7 +461,7 @@ Information can be queried by sending commands to the atomic clock. These comman
   \caption*{Source: \cite{CSAC_USERGUIDE}}
 \end{table}
 
-The Sensor Server communicates with the atomic clock by invoking a script called \texttt{query\_csac.py}. This script can be found in the appendix (\ref{query_csac}). The script takes an argument which it sends to the atomic clock over serial, and prints the respond to the shell which the Sensor Server grabs. In this document, the word \textit{telemetry} gets mentioned quite often in context with the atomic clock. Telemetry can be obtained by querying the atomic clock. The telemetry is a string containing a plethora of information, but we are mainly interested in the following values:
+The Sensor Server communicates with the atomic clock by invoking a script called \texttt{query\_csac.py}. This script can be found in the appendix (\ref{query_csac}). The script takes an argument which it sends to the atomic clock over serial, and prints the respond to the shell which the Sensor Server grabs. In this document the word \textit{telemetry} gets mentioned quite often in context with the atomic clock. Telemetry can be obtained by querying the atomic clock. The telemetry is a string containing a plethora of information, but we are mainly interested in the following values:
 
 \begin{itemize}
   \item{Phase, the difference between the atomic clock and the external signal signal at 1PPS in.}
@@ -469,16 +469,16 @@ The Sensor Server communicates with the atomic clock by invoking a script called
   \item{Steer, the frequency adjustment.}
 \end{itemize}
 
-Listing \ref{telemetry_string} show an example of telemetry received from the atomic clock. The fourth value from the right, is the \texttt{DiscOK}, the fifth is the \texttt{phase} and the \texttt{steer} is the seventh. 
+Listing \ref{telemetry_string} show an example of telemetry received from the atomic clock. The fourth value from the right, is the \texttt{DiscOK}, the fifth is the \texttt{phase} and the  seventh is the \texttt{steer}. 
 
 \begin{lstlisting}[caption={Example of a telemetry string received from the atomic clock},label={telemetry_string}]
 0,0x0000,1209CS00909,0x0010,4381,0.86,1.573,17.62,0.996,28.26,-24,---,-1,1,1268126502,586969,1.0
 \end{lstlisting}
 
-The SA.45 uses a high-resolution phase meter to improve synchronization and to calibrate the frequency of the atomic clock. The phase meter measures the difference in time between the internal 1 PPS signal and the external reference, in our case a GPS receiver. This difference is the \textit{phase} value. The atomic clock uses the phase value and steering algorithms to adjust the frequency of atomic clock's physics package thus simultaneously steering both the phase and frequency to that of the external reference. This is called \textit{disciplining} and is how the \textit{steer} value is computed. The last value, \textit{DiscOK} is simply the status of the 1 PPS disciplining routine \cite{CSAC_USERGUIDE}.
+The SA.45 uses a high-resolution phase meter to improve synchronization and to calibrate the frequency of the atomic clock. The phase meter measures the difference in time between the internal 1 PPS signal and the external reference, in our case a GPS receiver. This difference is the \textit{phase} value. The atomic clock uses the phase value and steering algorithms to adjust the frequency of atomic clock's physics package thus simultaneously steering both the phase and frequency towards the external reference. This is called \textit{disciplining} and is how the \textit{steer} value is computed. The last value, \textit{DiscOK} is simply the status of the 1 PPS disciplining routine \cite{CSAC_USERGUIDE}.
 
 \section{Data structures}
-In the C programming language, a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Before delving deeper into the code base of the sensor server, some crucial and often used structs will be explained in this section.
+In the C programming language a "struct" is a complex data type that defines a list of variables to be placed under the structs given name in a block of memory. This makes it possible for multiple variables to be accessed via a single pointer. Some crucial and often used structs is explained here.
 
 \subsection{server\_data}
 \begin{code}
@@ -499,7 +499,7 @@ In the C programming language, a "struct" is a complex data type that defines a 
     \end{minted}
   \label{server_data}
 \end{code}
-The \texttt{server\_data} struct as shown in listing \ref{server_data}, contains information about the server. Some of the of information like the PID, version, and when the server was started, is just information about the server itself. The number of clients and sensors on the other hand, is used to make sure that the server does not allow more connections than it can handle.
+The \texttt{server\_data} struct as shown in listing \ref{server_data}, contains information about the server. Some of the information like the PID, version and when the server was started, is just useful information about the server itself. The number of clients and sensors on the other hand are used to make sure that the server does not allow more connections than it can handle.
 
 \subsection{server\_synchro}\label{server_synchro}
 \begin{code}
@@ -520,7 +520,7 @@ The \texttt{server\_data} struct as shown in listing \ref{server_data}, contains
     \end{minted}
   \label{server_synchro}
 \end{code}
-The \texttt{server\_synchro} as shown in listing \ref{server_synchro}, contains "flags" used by synchronization mechanisms (\ref{shared_mem_sem}) that the server and its children processes uses to protect access to shared resources. The \texttt{csac\_sem} is used to control serial access to the atomic clock, making sure that only one request is sent to atomic clock at a time. The \texttt{client\_list\_sem} is used by functions manipulating and reading the client list structure, and the \texttt{ready\_sem} is used by ready check algorithm. See subsection \ref{ready_check_alg} for more about this.
+The \texttt{server\_synchro} as shown in listing \ref{server_synchro} contains "flags" used by synchronization mechanisms (\ref{shared_mem_sem}) that the server and its children use to protect access to shared resources. The \texttt{csac\_sem} is used to control serial access to the atomic clock, making sure that only one request is sent to atomic clock at a time. The \texttt{client\_list\_sem} is used by functions manipulating and reading the client list structure, and the \texttt{ready\_sem} is used by ready check algorithm. See subsection \ref{ready_check_alg} for more about this.
 
 \subsection{command\_code}\label{command_code}
 \begin{code}
@@ -595,7 +595,7 @@ The \texttt{command\_code} struct as shown in listing \ref{command_code_listing}
     \label{nmea_container}
 \end{code}
 
-The \texttt{nmea\_container} struct as shown in listing \ref{nmea_container}, is used by the handler (see section \ref{parser_and_handler}) which dissects the NMEA strings and validates them before it fills the respective members of the structs. The purpose of it is just to make it easier for the other parts of the Server to use the NMEA data.
+The \texttt{nmea\_container} struct as shown in listing \ref{nmea_container} is used by the handler (see section \ref{parser_and_handler}) which dissects the NMEA strings and validates them before it fills the respective members of the structs. The purpose of it is just to make it easier for the other parts of the Server to use the NMEA data.
 
 \subsection{list\_head}\label{list_head}
 \begin{code}
@@ -614,10 +614,10 @@ The \texttt{nmea\_container} struct as shown in listing \ref{nmea_container}, is
     \label{list_head_listing}
 \end{code}
 
-The \texttt{list\_head} struct is shown in listing \ref{list_head_listing}. The fields of the struct is pretty self explanatory. There is a pointer to the previous node and one to the next. One of the members of the \texttt{client\_table\_list} is a struct of type \texttt{list\_head}. This is what makes it possible to traverse the list.
+The \texttt{list\_head} struct is shown in listing \ref{list_head_listing}. The fields of the struct are pretty self explanatory. There is a pointer to the previous node and one to the next. One of the members of the \texttt{client\_table\_list} is a struct of type \texttt{list\_head}. This is what makes it possible to traverse the list.
 
 \subsection{transmission\_s}
-The \texttt{transmission\_s} struct as show in listing \ref{transmission_struct} is used by the child process forked out by the Server in the server core, communicates with the client. The struct has two members, a file descriptor for the socket and a buffer to store incoming data.
+The \texttt{transmission\_s} struct as show in listing \ref{transmission_struct} is used by the child process forked out by the Server in the server core to communicate with the client. The struct has two members, a file descriptor for the socket and a buffer to store incoming data.
 
 \begin{code}
   \caption{Sample of code taken from \texttt{net.h}(appendix \ref{net.h}) line 31}
@@ -638,7 +638,7 @@ The \texttt{transmission\_s} struct as show in listing \ref{transmission_struct}
 
 
 \subsection{client\_table\_entry}\label{client_table_entry}
-The client\_table\_entry struct is what the name suggests, it's an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. Listing \ref{struct_client_table} shows the complete struct. 
+The client\_table\_entry struct is what the name suggests, it is an entry in a list of clients. Every client connected to the server, no matter the purpose, has an entry in the client list. Listing \ref{struct_client_table} shows the complete struct. 
 
 \begin{code}
   \caption{Sample of code taken from \texttt{sensor\_server\_common.h}(appendix \ref{sensor_server_common.h}, line 90) shows the \texttt{client\_table\_entry} struct}
@@ -680,12 +680,12 @@ Beginning from the top:
   These values are defined in the \texttt{sensor\_server.h} file.
   \item \texttt{command\_code cm} is used by the parser to convey protocol compliant requests. See \ref{command_code} for more.
   \item \texttt{nmea\_container} is used to contain NMEA data in a more convenient way for the filters. See \ref{nmea_cont} for more about the struct, and \ref{nmea_data} for more about NMEA.
-  \item \texttt{filters fs} is a struct containing data for the GPS based filters. There is currently only one GPS based filter, the Location and speed filter and it is explained in subsection \ref{gps_filters}.
+  \item \texttt{filters fs} is a struct containing data for the GPS based filters. There is currently only one GPS based filter, the Location and speed filter. It is explained in subsection \ref{gps_filters}.
   \item \texttt{pid\_t pid} is the process ID for the process forked out for the connected client.
   \item \texttt{time\_t timestamp} is time stamp that is stamped every time the Sensor's filter data is processed.
   \item \texttt{client\_id} and \texttt{client\_type} is the client's ID and the client's type, either "SENSOR" or "MONITOR". 
   \item \texttt{ready} is used to indicate that a Sensor has received NMEA data and is ready for filter processing.
-  \item \texttt{marked\_for\_kick} is a flag. If it is 1, the client has been marked by a monitor indicating that it should be kicked. The next the client sends data to the Server, the client will be disconnected.
+  \item \texttt{marked\_for\_kick} is a flag. If it is 1, the client has been marked by a monitor indicating that it should be kicked. The next time the client sends data to the Server, the client will be disconnected.
   \item \texttt{char ip} is the connected client's IP address.
 \end{itemize}
 
@@ -699,7 +699,7 @@ The sensor client software is a simple program written in C99 whose only task is
   \item Initializes and loads configuration from configuration file. The configuration file includes path to the GPS receiver, the sensors ID number and a binary value for whether or not logging of NMEA should be done as well as path to 
   the log file. If the loading of the configuration file fails, default values are used instead:
   \begin{itemize}
-    \item The ID number is chosen at random but within legal limits.
+    \item The ID number is chosen randomly but within legal limits.
     \item Logging is disabled.
     \item Maximum of server connection attempts are set to 10.
     \item Path to GPS receiver is set to \texttt{/dev/ttyACM0}. This should be the path to the receiver unless another similar device is connected to the computer and given it is a Raspberry Pi running Raspbian.
