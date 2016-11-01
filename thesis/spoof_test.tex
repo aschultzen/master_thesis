@@ -9,7 +9,7 @@ In order to create an accurate clock model of the atomic clock, it was necessary
 \section{Setup}
 \begin{figure}
 \centering
-  \includegraphics[scale=0.31]{server_layout.pdf}
+  \includegraphics[scale=0.31]{server_layout_bw.pdf}
    \caption[atomic clock controller implementation block diagram]{A block diagram showing the tested implementation.}
    \label{ibd}
 \end{figure}
@@ -39,7 +39,7 @@ Table \ref{gps_filter_table} shows the filter thresholds used during test one.
 
 \begin{figure}[!htb]
 \centering
-  \includegraphics[scale=0.4]{measure_setup.pdf}
+  \includegraphics[scale=0.4]{measure_setup_bw.pdf}
    \caption[Measurement setup]{Block diagram showing the setup of the measurement equipment}
    \label{msd}
 \end{figure}
@@ -114,21 +114,21 @@ The figures in this section are plots of the GPS data that was logged by the sen
 
 \begin{sidewaysfigure}
   \centering
-  \includegraphics[width=1\textwidth]{gnssAlt1-1.png}
+  \includegraphics[width=1\textwidth]{gnssAlt1-1g.png}
   \caption{The figure shows the solved altitude of the GPS receiver connected to sensor one, during test one}
   \label{sensor1_alt}
 \end{sidewaysfigure}
 
 \begin{sidewaysfigure}
   \centering
-  \includegraphics[width=1\textwidth]{gnssAlt2-1.png}
+  \includegraphics[width=1\textwidth]{gnssAlt2-1g.png}
   \caption{The figure shows the solved altitude of the GPS receiver connected to sensor two, during test one}
   \label{sensor2_alt}
 \end{sidewaysfigure}
 
 \begin{sidewaysfigure}
   \centering
-  \includegraphics[width=1\textwidth]{gnssLat1-1.png}
+  \includegraphics[width=1\textwidth]{gnssLat1-1g.png}
   \caption{The figure shows the solved latitude of the GPS receiver connected to sensor one, during test one}
   \label{sensor1_lat}
 \end{sidewaysfigure}
@@ -136,7 +136,7 @@ The figures in this section are plots of the GPS data that was logged by the sen
 
 \begin{sidewaysfigure}
   \centering
-  \includegraphics[width=1\textwidth]{gnssLat2-1.png}
+  \includegraphics[width=1\textwidth]{gnssLat2-1g.png}
   \caption{The figure shows the solved latitude of the GPS receiver connected to sensor two, during test one}
   \label{sensor2_lat}
 \end{sidewaysfigure}
@@ -144,7 +144,7 @@ The figures in this section are plots of the GPS data that was logged by the sen
 
 \begin{sidewaysfigure}
   \centering
-  \includegraphics[width=1\textwidth]{gnssLong1-1.png}
+  \includegraphics[width=1\textwidth]{gnssLong1-1g.png}
   \caption{The figure shows the solved longitude of the GPS receiver connected to sensor one, during test one}
   \label{sensor1_long}
 \end{sidewaysfigure}
@@ -152,7 +152,7 @@ The figures in this section are plots of the GPS data that was logged by the sen
 
 \begin{sidewaysfigure}
   \centering
-  \includegraphics[width=1\textwidth]{gnssLong2-1.png}
+  \includegraphics[width=1\textwidth]{gnssLong2-1g.png}
   \caption{The figure shows the solved longitude of the GPS receiver connected to sensor two, during test one}
   \label{sensor2_long}
 \end{sidewaysfigure}
@@ -160,7 +160,7 @@ The figures in this section are plots of the GPS data that was logged by the sen
 
 \begin{sidewaysfigure}
   \centering
-  \includegraphics[width=1\textwidth]{gnssSpeed1-1.png}
+  \includegraphics[width=1\textwidth]{gnssSpeed1-1g.png}
   \caption{The figure shows the solved speed of the GPS receiver connected to sensor one, during test one}
   \label{sensor1_speed}
 \end{sidewaysfigure}
@@ -168,7 +168,7 @@ The figures in this section are plots of the GPS data that was logged by the sen
 
 \begin{sidewaysfigure}
   \centering
-  \includegraphics[width=1\textwidth]{gnssSpeed2-1.png}
+  \includegraphics[width=1\textwidth]{gnssSpeed2-1g.png}
   \caption{The figure shows the solved speed of the GPS receiver connected to sensor two, during test one}
   \label{sensor2_speed}
 \end{sidewaysfigure}
@@ -180,14 +180,14 @@ Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for t
 
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=1\textwidth]{cns91-and-csac-telemetry-frequency-1.png}
+  \includegraphics[width=1\textwidth]{cns91-and-csac-telemetry-frequency-1g.png}
   \caption{The figure shows the relative frequency offset for the atomic clock. The thick dark plot in the middle is from telemetry data gathered from the atomic clock. The lighter plot in the background is data from the CNT-91 frequency counter.}
   \label{cns91_tel_freq}
 \end{figure} 
 
 \begin{sidewaysfigure}
   \centering
-  \includegraphics[width=1\textwidth]{cns91-and-csac-telemetry-phase-1.png}
+  \includegraphics[width=1\textwidth]{cns91-and-csac-telemetry-phase-1g.png}
   \caption{The figure shows the phase offset in nanoseconds for the atomic clock. The thick dark plot is from telemetry data gathered from the atomic clock. The lighter thin plot is data from the CNT-91 frequency counter.}
   \label{cns91_tel_phase}
 \end{sidewaysfigure}
@@ -285,7 +285,7 @@ Figure \ref{sensor2_everything} shows the plotted GPS data collected during test
 
 \begin{figure}
   \centering
-  \includegraphics[width=1\textwidth]{20161024-test2-sensor2-multipanel-1.png}
+  \includegraphics[width=1\textwidth]{20161024-test2-sensor2-multipanel-1g.png}
   \caption{The figure shows (from the top) the latitude, longitude, altitude, speed and number of satellites as plotted from the GPS data collected during test two.}
   \label{sensor2_everything}
 \end{figure} 
@@ -299,7 +299,7 @@ As mentioned under subsection \ref{test2_meaurements} the disciplining of the at
 
 \begin{figure}
   \centering
-  \includegraphics[width=1\textwidth]{20161024-test2-telemetry-and-cnt91-combined-1.png}
+  \includegraphics[width=1\textwidth]{20161024-test2-telemetry-and-cnt91-combined-1g.png}
   \caption{Timing measurements and clock telemetry data. The upper panel is phase offset in nanoseconds. The long, sloped light line is a plot of the measurements done by the CNT-91 frequency counter. The dotted dark plot, is also the phase offset but as reported by the atomic clock. The lighter plot in the background of the bottom panel is frequency steering as measured by the CNT-91 frequency counter. The dark plot is frequency offset as reported by the atomic clock.}
   \label{sensor2_measure}
 \end{figure} 
@@ -312,28 +312,28 @@ We have no idea what might be the origin of the disturbance. The following is th
 
 \begin{figure}[!hbt]
   \centering
-  \includegraphics[width=1\textwidth]{disturbance57667-csac-telemetry-mode-zoom-in.pdf}
+  \includegraphics[width=1\textwidth]{disturbance57667-csac-telemetry-mode-zoom-in-1g.png}
   \caption{The figure shows the disciplined mode as reported by the atomic clock.}
   \label{disturbance_holdover}
 \end{figure} 
 
 \begin{figure}
   \centering
-  \includegraphics[width=1\textwidth]{disturbance57667-gps-sensor2-multipanel-1.png}
+  \includegraphics[width=1\textwidth]{disturbance57667-gps-sensor2-multipanel-1g.png}
   \caption{Figure shows solved position, speed and number of satellites as reported by the GPS receiver.}
   \label{disturbance_multipanel}
 \end{figure}
 
 \begin{figure}
   \centering
-  \includegraphics[width=1\textwidth]{disturbance57667-cnt91-csac-telemetry-phase-frequency-steer-combined-1.png}
+  \includegraphics[width=1\textwidth]{disturbance57667-cnt91-csac-telemetry-phase-frequency-steer-combined-1g.png}
   \caption{Top figure shows phase offset in nanoseconds. The thin lightly colored line is as measured by the CNT-91 frequency counter. The solid darker line is from the telemetry string from the atomic clock.}
   \label{disturbance_phase_frequency}
 \end{figure}
 
 \begin{figure}
   \centering
-  \includegraphics[width=1\textwidth]{disturbance57667-csac-telemetry-phase-steer-combined-zoom-in-2-1.png}
+  \includegraphics[width=1\textwidth]{disturbance57667-csac-telemetry-phase-steer-combined-zoom-in-2-1g.png}
   \caption{Figure shows the phase offset and steering correction as reported in the telemetry string from the atomic clock.}
   \label{disturbance_phase_steer}
 \end{figure} 
