@@ -17,11 +17,11 @@ In order to create an accurate clock model of the atomic clock, it was necessary
 Figure \ref{ibd} shows how the server, sensors and atomic clock were physically set up. In order to assure good GPS satellite geometry the antennas were placed at the roof of Justervesenet's office at Kjeller. Antenna one was placed at a railing about one meter above the ground, antenna two was placed at ground level. Figure \ref{sensor_kart} shows the placement of the antennas. Antenna one was connected to GPS receiver one which in turn was connected to sensor one. It was the same deal with antenna two which was connected to GPS receiver two which in turn was connected to sensor two. The distance between the two antennas was about 35 meters. The antenna connected to sensor one was not placed as far away is the cable would have allowed. This is because it proved challenging to find a suitable place to securely place the antenna and at the same time use the full length of the cable. The sensors and the server were connected to a LAN through a Gigabit Ethernet switch. The server was configured to log telemetry received from the atomic clock and the clients were configured to log all NMEA data received from their respective GPS receiver. GPS receiver two  supplied the atomic clock with a one PPS signal. Because the atomic clock model needs live data over time to mature, the system was started the Seventh of October, 2016 and the test was performed Tenth of October, 2016. Figure \ref{msd} is a block diagram showing how the measuring setup was physically configured. The measuring was done using a Spectracom CNT-91 frequency counter using a 10 MHz reference from Justervesenet's atomic clocks. The CNT-91 was configured to measure a continuous gap-less frequency at one second time-intervals. Figure \ref{lab_setup_photo} is a photograph of the measuring setup. Both sensors were configured to use Justervesenet's internal NTP server and to use UTC instead of GMT+1.
 
 \section{Test one filter limits}
-Table \ref{gps_filter_table} shows the filter thresholds used during test 1. 
+Table \ref{gps_filter_table} shows the filter thresholds used during test one. 
 
 \begin{table}[!htb]
 \centering
-\caption{Filter thresholds used during test 1}
+\caption{Filter thresholds used during test one}
 \label{gps_filter_table}
   \begin{tabular}{|l|l|l|}
   \hline
@@ -110,7 +110,7 @@ By reviewing the log produced by the server, the following was observed:
 \end{itemize}
 
 \subsubsection{GPS data}\label{gpsdata_test1}
-The following figures are plots of the GPS data that was logged by the sensors during test one. Figure \ref{sensor1_alt} shows the altitude in meters reported by sensor one. The only thing that stands out in the plot is when the antenna is covered in aluminium foil as show at around the 2000 second mark. At this point the receiver is no longer able to solve a position thus generating valid but empty fields in the data. This creates a deep void in the plot. Because both receivers' antennas were covered in foil, all the plots share this trait. Figure \ref{sensor2_alt} shows the altitude in meters as reported by sensor two. When compared with the altitude plot for sensor one \ref{sensor1_alt}, sensor one seems to correlate better. It is a puzzle why sensor two reported to have been moved seven meters down which it clearly was not. When examining figure \ref{sensor1_lat} and \ref{sensor2_lat} showing the latitude for sensor one and two (in that order), one can clearly see that sensor one was moved to the south and sensor two was moved to the north. One might also notice that sensor two traveled further. The difference in travel is because sensor one's antenna did not utilize the full length of cable. Figure \ref{sensor1_long} and \ref{sensor2_long} shows a plot for the solved longitude for sensor one and sensor two. When examining figure \ref{sensor1_long} it seems as if the antenna was never moved. This is because the building the antenna was placed on is position in a north to south line and the receiver was moved along with the roof. The antenna connected to sensor two was not moved in straight line because the cable got caught in vegetation. The last two figures, figure \ref{sensor1_speed} and figure \ref{sensor2_speed} shows the speed solved by sensor one and sensor two. They both correlate well with when the antennas were moved, however the antenna connected to sensor two seems to be a little bit more sensitive than the antenna connected to sensor one.
+The figures in this section are plots of the GPS data that was logged by the sensors during test one. Figure \ref{sensor1_alt} shows the altitude in meters reported by sensor one. The only thing that stands out in the plot is when the antenna is covered in aluminium foil as shown at around the 2000 second mark. At this point the receiver is no longer able to solve a position thus generating valid but empty fields in the NMEA data. This creates a deep void in the plot. Because both receivers' antennas were covered in aluminium foil, the plots all share this trait. Figure \ref{sensor2_alt} shows the altitude in meters as reported by sensor two. When compared with the altitude plot for sensor one \ref{sensor1_alt}, sensor one seems to correlate better. It is a puzzle why sensor two reported to have been moved seven meters down which it clearly was not. When examining figure \ref{sensor1_lat} and \ref{sensor2_lat} showing the latitude for sensor one and two (in that order), one can clearly see that sensor one was moved to the south and sensor two was moved to the north. One might also notice that sensor two traveled further. The difference in travel is because sensor one's cable is shorter. This explained in the description of test one. Figure \ref{sensor1_long} and \ref{sensor2_long} shows a plot for the solved longitude for sensor one and two. When examining figure \ref{sensor1_long} it seems as if the antenna was never moved. This is because the building the antenna was placed on is position in a north to south line and the receiver was moved along with the roof. The antenna connected to sensor two was not moved in straight line because the cable got caught in vegetation. The last two figures, figure \ref{sensor1_speed} and figure \ref{sensor2_speed} shows the speed solved by sensor one and two. They both correlate well with when the antennas were moved. However the antenna connected to sensor two seems to be slightly more sensitive than the antenna connected to sensor one.
 
 \begin{sidewaysfigure}
   \centering
@@ -176,7 +176,7 @@ The following figures are plots of the GPS data that was logged by the sensors d
 
 \newpage
 \subsection{Timing measurements}\label{test1_measurements}
-Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for the atomic clock. The thick dark plot in the middle is from telemetry data gathered from the atomic clock. Figure \ref{cns91_tel_phase} shows the phase offset in nanoseconds for the atomic clock. The interesting thing to observe in both of these figures, is the jump in frequency and phase offset once the antenna was covered in foil. There is also a clear correlation between movement of the antenna and the relative frequency offset as seen in figure \ref{cns91_tel_freq}. 
+Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for the atomic clock. The thick dark plot in the middle is from telemetry data gathered from the atomic clock. Figure \ref{cns91_tel_phase} shows the phase offset in nanoseconds for the atomic clock. The interesting thing to observe in both of these figures, is the jump in frequency and phase offset once the antenna was covered in aluminium foil. There is also a clear correlation between movement of the antenna and the relative frequency offset as seen in figure \ref{cns91_tel_freq}. 
 
 \begin{figure}[!htb]
   \centering
@@ -194,21 +194,21 @@ Figure \ref{cns91_tel_freq} shows the relative frequency offset($10^{12}$) for t
 
 \newpage
 \subsection{Test one results}
-The observations from test 1 revealed some surprising results. When the antennas were moved horizontally, the altitude solved by sensor 2 dramatically changed. The movement also resulted in a change in the timing solution. The GPS filter did however perform as expected. We discovered that the reason why the step 5 and 6 failed to trigger the filter, was that the limit for speed (see \ref{gps_filter_table} for more) was set too high. 
+The observations from test one revealed some surprising results. When the antennas were moved horizontally the altitude solved by sensor two dramatically changed. The movement also resulted in a change in the timing solution. The GPS filter did however perform as expected. We discovered that the reason why the step five and six failed to trigger the filter, was that the limit for speed (see \ref{gps_filter_table} for more) erroneously was set too high. 
 
-\section{Test 2}\label{test2}
+\section{Test two}\label{test2}
 \subsection{Goal of test}
-The goal of the second test was to test the clock model based filters. This should make the atomic clock controller disable the atomic clock's disciplining mode, and steer the atomic clock after the clock model's predictions. We also wanted to test the location and speed filter again to make sure we had fixed the error in the filter configuration from last test.
+The goal of the second test was to test the clock model based filters. The test should make the atomic clock controller disable the atomic clock's disciplining mode and steer the atomic clock after the clock model's predictions. We also wanted to test the location and speed filter again to make sure we had fixed the error in the filter configuration from last test.
 
 \subsection{Change in setup}
-The setup in test 1 is quite similar to test 2. There is however some changes. Sensor 1 is no longer connected to the atomic clock controller since the location and speed filter no longer was main priority. Sensor 2 did however still log data during the test as it did during test 1.
+The setup in test one is quite similar to test two. There is however some changes. Sensor one is no longer connected to the atomic clock controller because the location and speed filter no longer was the main priority to test. 
 
-\subsection{Test 2 filter limits}
-Table \ref{gps_filter_table2} shows the filter limits used in test. Note that the speed deviation is reduced to 1. Table \ref{clock_filter_table} shows the limits for the clock model based filters.
+\subsection{Test two filter limits}
+Table \ref{gps_filter_table2} shows the filter limits used in test two. Note that the speed deviation is set to 1. Table \ref{clock_filter_table} shows the limits for the clock model based filters.
 
 \begin{table}[!htb]
 \centering
-\caption{Filter thresholds used during test 2}
+\caption{Filter thresholds used during test two}
 \label{gps_filter_table2}
   \begin{tabular}{|l|l|l|}
   \hline
@@ -240,10 +240,10 @@ Prediction limit & 200        \\ \hline
 
 \newpage
 \subsection{Description}\label{test2_description}
-The description of test 2 is similar to test 1 (see section \ref{test1_description}). The only difference is that greater care was taken in obtaining an accurate time for the steps.
+The description of test two is similar to test two (see section \ref{test1_description}). One difference is that greater care was taken in obtaining an accurate time for the steps.
 
 \begin{itemize}
-  \item\relax 13:12:00 - 125: Started to move antenna 2 towards north.
+  \item\relax 13:12:00 - 125: Started to move antenna two towards north.
   \item\relax 13:12:45 - 170: Reached destination.
   \item\relax 13:18:00 - 485: Started the move back to original location.
   \item\relax 13:19:00 - 545: Reached destination.
@@ -254,7 +254,7 @@ The description of test 2 is similar to test 1 (see section \ref{test1_descripti
 
 \subsection{Observations}\label{test2_observations}
 \subsubsection{Sensor Server logs}
-By reviewing the log produced by the Sensor Server, the following was observed:
+By reviewing the log produced by the sensor server the following was observed:
 
 \begin{itemize}
   \item No false positives, the filters were not triggered before the test started.
@@ -281,34 +281,34 @@ By reviewing the log produced by the Sensor Server, the following was observed:
 \end{itemize}
 
 \subsubsection{GPS data}\label{gpsdata_test2}
-Figure \ref{sensor2_everything} shows the plotted GPS data collected during test 2. As with GPS observed during test 1, there is a clear correlation between the plotted data and when the antenna was moved. The strange phenomena as described in test 1 (\ref{gpsdata_test1}) where the altitude was reported to be way too low, occurred in test 2 as well. 
+Figure \ref{sensor2_everything} shows the plotted GPS data collected during test two. As with the GPS data observed during test one, there is a clear correlation between the plotted data and when the antenna was moved. The strange phenomena as described in test one (\ref{gpsdata_test1}) where the altitude was reported to be way too low, occurred in test two as well. 
 
 \begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{20161024-test2-sensor2-multipanel-1.png}
-  \caption{The figure shows (from the top) the latitude, longitude, altitude, speed and number of satellites as plotted from the GPS data collected during test 2.}
+  \caption{The figure shows (from the top) the latitude, longitude, altitude, speed and number of satellites as plotted from the GPS data collected during test two.}
   \label{sensor2_everything}
 \end{figure} 
 
 \newpage
 \subsection{Timing measurements}\label{test2_meaurements}
-Figure \ref{sensor2_measure} shows measurements done during test 2 as two graphs with two plots each. The thin lightly colored in the top figure, shows phase offset in nanoseconds. It reveals that the atomic clock was \textit{not} steered after the clock model once the disciplining was disabled. The figure at the bottom of figure \ref{sensor2_measure} shows relative frequency offset as measured by the CNT-91 frequency counter. The thin darkly colored line is a plot of the data received as telemetry from the atomic clock. It shows that the atomic clock was brought out of disciplining after roughly 140 seconds. 
+Figure \ref{sensor2_measure} shows measurements done during test two as two graphs with two plots each. The thin light colored line in the top panel shows phase offset in nanoseconds. It reveals that the atomic clock was \textit{not} steered after the clock model once the disciplining was disabled. The panel at the bottom of figure \ref{sensor2_measure} shows relative frequency offset as measured by the CNT-91 frequency counter. The thin darkly colored line is a plot of the data received as telemetry from the atomic clock. It shows that the atomic clock was brought out of disciplining after roughly 140 seconds. 
 
-\subsection{Test 2 results}
-As mentioned under subsection \ref{test2_meaurements}, the disciplining of the atomic clock was successfully deactivated when the steer value reported by the atomic clock exceed the steer value that was predicted by the model. The phase jump filter was not triggered because the phase offset never reached the configured limit. The Frequency correction filter on the other hand, was triggered because the steer value exceeded the configured limit (see table \ref{clock_filter_table} for limits).It also shows that the atomic clock sadly was \textit{not} steered using the clock model.
+\subsection{Test two results}
+As mentioned under subsection \ref{test2_meaurements} the disciplining of the atomic clock was successfully deactivated when the steer value reported by the atomic clock exceed the steer value that was predicted by the model. The phase jump filter was not triggered because the phase offset never reached the configured limit. The frequency correction filter on the other hand, was triggered because the steer value exceeded the configured limit (see table \ref{clock_filter_table} for limits).It also shows that the atomic clock sadly was \textit{not} steered using the clock model.
 
 \begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{20161024-test2-telemetry-and-cnt91-combined-1.png}
-  \caption{Timing measurements and clock telemetry data. The upper panel is phase offset in nanoseconds. The long, sloped light line is a plot of the measurements done by the CNT-91 frequency counter. The dotted dark plot, is also the phase offset but as reported by the atomic clock. The bottom figure also shows two plots. Once again, the lighter plot in the background is frequency steering as measured by the CNT-91 frequency counter. The dark plot is frequency offset as reported by the atomic clock.}
+  \caption{Timing measurements and clock telemetry data. The upper panel is phase offset in nanoseconds. The long, sloped light line is a plot of the measurements done by the CNT-91 frequency counter. The dotted dark plot, is also the phase offset but as reported by the atomic clock. The lighter plot in the background of the bottom panel is frequency steering as measured by the CNT-91 frequency counter. The dark plot is frequency offset as reported by the atomic clock.}
   \label{sensor2_measure}
 \end{figure} 
 
 \newpage
 \section{Unplanned disturbance}\label{unplanned_disturb}
-The data presented in this section was gathered while the atomic clock controller was building the clock model for one of the planned tests. The data is interesting because it shows a disturbance from an unknown cause. The data shown in the figures are from 5/10-2016 to 6/10-2016. Figure \ref{disturbance_holdover} shows that about 10 minutes after midnight the 6/10-2016, the atomic clock entered "holdover mode", indicating that the 1 PPS signal from the GPS receiver was lost. Figure \ref{disturbance_multipanel} shows the GPS receiver's solved altitude, longitude, latitude, speed and number of satellites. By examining the figure, it is obvious that the signal was lost minutes after the 57667 MJD (midnight) mark. The GPS receiver didn't achieve consistent lock before $\approx$ 57667.32 (7:45 in the morning). In the mean time, the clocks stability was impaired as figure \ref{disturbance_phase_frequency} and \ref{disturbance_phase_steer} clearly shows. Figure \ref{disturbance_phase_steer} is interesting because it shows how the atomic clock seems to have a delay in it's steering algorithm. If the atomic clock controller was applying the clock model filters while this data was collected, the phase jump filter would have triggered before the atomic clock would have been able to apply steering. 
+The data presented in this section was gathered while the atomic clock controller was building the clock model for one of the planned tests. The data is interesting because it shows a disturbance from an unknown source. The data shown in the figures are from the Fifth of October, 2016 to the Sixth of October, 2016. Figure \ref{disturbance_holdover} shows that about 10 minutes after midnight the Sixth of October, 2016 the atomic clock entered "holdover mode", indicating that the 1 PPS signal from the GPS receiver was lost. Figure \ref{disturbance_multipanel} shows the GPS receiver's solved altitude, longitude, latitude, speed and number of satellites. By examining the figure, it is obvious that the signal was lost minutes after the 57667 MJD (midnight) mark. The GPS receiver did not achieve consistent lock before $\approx$ 57667.32 (7:45 in the morning). In the mean time, the clocks stability was impaired as figure \ref{disturbance_phase_frequency} and \ref{disturbance_phase_steer} clearly shows. Figure \ref{disturbance_phase_steer} is interesting because it shows how the atomic clock seems to have a delay in it's steering algorithm. If the atomic clock controller was applying the clock model filters while this data was collected, the phase jump filter would have triggered before the atomic clock would have been able to apply steering. 
 
-We have no idea what might be the origin of the disturbance. The following is therefor pure speculation: It is possible that a trucker spent the night parked by the road used a GPS jammer to hide his or hers activities from an employer, and that the disturbance is reflection of the jammer's signal. We did not find any traces of the disturbance when examining the logs from sensor one. It might have been shielded from a reflection because of it's position. The time-frame for the disturbance also supports this theory since the disturbance started around midnight and ended at around 7:45, in other words a good night sleep. This is of course only speculation as we do not have any data supporting it what so ever. 
+We have no idea what might be the origin of the disturbance. The following is therefor pure speculation: It is possible that a trucker spent the night parked by the road used a GPS jammer to hide his or hers activities from an employer, and that the observed disturbance is a reflection of the jammer's signal. We did not find any traces of the disturbance when examining the logs from sensor one. Sensor one might have been shielded from a reflection because of its position. The time-frame for the disturbance also supports this theory since the disturbance started around midnight and ended at around 7:45, in other words a good night sleep. This is of course only speculation as we do not have any data supporting it what so ever. 
 
 \begin{figure}[!hbt]
   \centering
