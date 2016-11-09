@@ -417,6 +417,25 @@ int check_filters(struct csac_model_data *cmd)
     return 0;
 }
 
+int get_telemetry(char *buffer, int buffer_len)
+{
+    memset(buffer, '\0', buffer_len);
+    /* Acquiring lock*/
+    if(sem_wait(&(s_synch->csac_sem)))
+        return 0;
+
+    /* Querying CSAC */
+    run_command("python get_telemetry.py", buffer);
+    if(strlen(buffer) == 0)
+        return 0;
+
+    /* Releasing lock */
+    if(sem_post(&(s_synch->csac_sem)))
+        return 0;
+
+    return 1;
+}
+
 int start_csac_model(struct csac_model_data *cfd)
 {   
     int raised_alarm = 0;
@@ -451,58 +470,55 @@ int start_csac_model(struct csac_model_data *cfd)
         cfd->cf_conf.warmup_days = 2;
     }
 
+    while(!model_init) {
+        if(get_telemetry(program_buf, 200))
+            t_print("Failed to retrieve telemetry\n");
+
+        model_init = init_csac_model(cfd, program_buf);
+    }
+
     /* Keep going as long as the server is running */
     while(!s_synch->done) {
-        /* Acquiring lock*/
-        sem_wait(&(s_synch->csac_sem));
 
-        /* Querying CSAC */
-        run_command("python get_telemetry.py",
-                                program_buf);
+        /* Retrieving telemetry */
+        if(get_telemetry(program_buf, 200))
+            t_print("Failed to retrieve telemetry\n");
 
-        /* Releasing lock */
-        sem_post(&(s_synch->csac_sem));
-
-        /* Initialize model if not already initialized */
-        if(!model_init) {
-            model_init = init_csac_model(cfd, program_buf);
-        } else {
-            /* checking alarm */
-            if(cfd->days_passed >= cfd->cf_conf.warmup_days){
-                raised_alarm = check_filters(cfd);
+        /* If the alarm is not raised */
+        if(!raised_alarm){
+            if(!csac_disc){
+                enable_csac_disc();
+                csac_disc = 1;
             }
-        
-            /* If the alarm is raised */
-            if(raised_alarm){
-                if(csac_disc){
-                    disable_csac_disc();
-                    csac_disc = 0;
-                }
-
-                /* Get mjd to update filter */
-                double mjd_today = get_mjdf();
-                
-                /* Calculating MJD */
-                cfd->t_current = mjd_today;
-
-                /* Calc steer predict */
-                int steer_pred = (int)get_steer_predict(cfd);
-                steer_pred = steer_pred * 1000;
-
-                /* Steering CSAC */
-                steer_csac(steer_pred);
-            }
-
-            /* If the alarm is not raised */
-            if(!raised_alarm){
-                if(!csac_disc){
-                    enable_csac_disc();
-                    csac_disc = 1;
-                }
-                update_csac_model(cfd, program_buf); 
-            }
+            update_csac_model(cfd, program_buf); 
         }
 
+        /* checking alarm */
+        if(cfd->days_passed >= cfd->cf_conf.warmup_days){
+            raised_alarm = check_filters(cfd);
+        }
+
+        /* If the alarm is raised */
+        if(raised_alarm){
+           if(csac_disc){
+               disable_csac_disc();
+               csac_disc = 0;
+           }
+
+            /* Get mjd to update filter */
+            double mjd_today = get_mjdf();
+           
+            /* Calculating MJD */
+            cfd->t_current = mjd_today;
+           
+            /* Calc steer predict */
+            int steer_pred = (int)get_steer_predict(cfd);
+            steer_pred = steer_pred * 1000;
+        
+            /* Steering CSAC */
+            steer_csac(steer_pred);
+        }
+        
         /* If logging enabled, log all data from the CSAC */
         if(s_conf->csac_logging) {
             log_to_file(s_conf->csac_log_path, program_buf,1);
