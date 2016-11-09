@@ -115,25 +115,19 @@ static int load_telemetry(struct csac_model_data
     return 1;
 }
 
-static void calc_smooth(struct csac_model_data
-                        *cfd)
+static void calc_smooth(struct csac_model_data *cfd)
 {
     double W = cfd->cf_conf.time_constant;
 
     /* Setting previous values */
     cfd->t_smooth_previous = cfd->t_smooth_current;
-    cfd->steer_smooth_previous =
-        cfd->steer_smooth_current;
+    cfd->steer_smooth_previous = cfd->steer_smooth_current;
 
     /* Calculating t_smooth_current */
-    cfd->t_smooth_current = (((W-1)/W) *
-                             cfd->t_smooth_previous) + ((1/W) *
-                                     cfd->t_current);
+    cfd->t_smooth_current = (((W-1)/W) * cfd->t_smooth_previous) + ((1/W) * cfd->t_current);
 
     /* Calculating steer_smooth_current */
-    cfd->steer_smooth_current = (((W-1)/W) *
-                                 cfd->steer_smooth_previous) + ((1/W) *
-                                         cfd->steer_current);
+    cfd->steer_smooth_current = (((W-1)/W) * cfd->steer_smooth_previous) + ((1/W) * cfd->steer_current);
 }
 
 /*
@@ -167,10 +161,8 @@ static void update_model(struct csac_model_data *cfd)
     cfd->t_smooth_today = cfd->t_smooth_current;
 
     /* Updating steer_smooth */
-    cfd->steer_smooth_yesterday =
-        cfd->steer_smooth_today;
-    cfd->steer_smooth_today =
-        cfd->steer_smooth_current;
+    cfd->steer_smooth_yesterday = cfd->steer_smooth_today;
+    cfd->steer_smooth_today = cfd->steer_smooth_current;
 
     /* Updating steer prediction, just for show */
     get_steer_predict(cfd);
@@ -180,13 +172,9 @@ double get_steer_predict(struct csac_model_data *cfd)
 {
     if(cfd->days_passed >= cfd->cf_conf.warmup_days) {
         cfd->steer_prediction = cfd->t_current - cfd->t_smooth_today;
-        cfd->steer_prediction = cfd->steer_prediction *
-                                (cfd->steer_smooth_today -
-                                 cfd->steer_smooth_yesterday);
-        cfd->steer_prediction = cfd->steer_prediction /
-                                (cfd->t_smooth_today - cfd->t_smooth_yesterday);
-        cfd->steer_prediction = cfd->steer_prediction
-                                +cfd->steer_smooth_today;
+        cfd->steer_prediction = cfd->steer_prediction * (cfd->steer_smooth_today - cfd->steer_smooth_yesterday);
+        cfd->steer_prediction = cfd->steer_prediction / (cfd->t_smooth_today - cfd->t_smooth_yesterday);
+        cfd->steer_prediction = cfd->steer_prediction +cfd->steer_smooth_today;
         return cfd->steer_prediction;
     } else {
         return -1;
@@ -194,10 +182,8 @@ double get_steer_predict(struct csac_model_data *cfd)
 }
 
 /* Making sure there are no 0 values about */
-int init_csac_model(struct csac_model_data *cfd,
-                     char *telemetry)
+int init_csac_model(struct csac_model_data *cfd, char *telemetry)
 {
-
     if(!load_telemetry(cfd, telemetry)) {
         return 0;
     }
@@ -205,32 +191,25 @@ int init_csac_model(struct csac_model_data *cfd,
     /* Setting preliminary values, don't want to divide by zero */
     cfd->t_smooth_current = cfd->t_current;
     cfd->t_smooth_today = cfd->t_smooth_current;
-    cfd->t_smooth_yesterday = cfd->t_smooth_current
-                              -0.1;
+    cfd->t_smooth_yesterday = cfd->t_smooth_current-0.1;
 
     /* Setting values from config if preset */
     if(cfd->cf_conf.init_cfd_from_file) {
-        cfd->steer_smooth_current =
-            cfd->cf_conf.init_cfd_ssc;
-        cfd->steer_smooth_today =
-            cfd->cf_conf.init_cfd_sst;
-        cfd->steer_smooth_previous =
-            cfd->cf_conf.init_cfd_ssp;
-        cfd->steer_smooth_yesterday =
-            cfd->cf_conf.init_cfd_ssy;
+        cfd->steer_smooth_current = cfd->cf_conf.init_cfd_ssc;
+        cfd->steer_smooth_today = cfd->cf_conf.init_cfd_sst;
+        cfd->steer_smooth_previous = cfd->cf_conf.init_cfd_ssp;
+        cfd->steer_smooth_yesterday = cfd->cf_conf.init_cfd_ssy;
 
         /* Setting preliminary values, don't want to divide by zero */
     } else {
         cfd->steer_smooth_current = cfd->steer_current;
-        cfd->steer_smooth_today =
-            cfd->steer_smooth_current;
-        cfd->steer_smooth_previous =
-            cfd->steer_smooth_today;
+        cfd->steer_smooth_today = cfd->steer_smooth_current;
+        cfd->steer_smooth_previous = cfd->steer_smooth_today;
     }
 
-    if(cfd->cf_conf.warmup_days == 0) {
-        cfd->new_day = 1;
-    }
+    //if(cfd->cf_conf.warmup_days == 0) {
+    //    cfd->new_day = 1;
+    //}
 
     return 1;
 }
@@ -438,8 +417,7 @@ int check_filters(struct csac_model_data *cmd)
     return 0;
 }
 
-int start_csac_model(struct csac_model_data
-                      *cfd)
+int start_csac_model(struct csac_model_data *cfd)
 {   
     int raised_alarm = 0;
     int csac_disc = 1;
@@ -464,6 +442,15 @@ int start_csac_model(struct csac_model_data
         return -1;
     }
 
+    /* 
+    * Force a minimum warm-up time of 
+    * 2 days when not restoring the model from
+    * file 
+    */
+    if( (cfd->cf_conf.warmup_days < 2) && (!cfd->cf_conf.init_cfd_from_file) ){
+        cfd->cf_conf.warmup_days = 2;
+    }
+
     /* Keep going as long as the server is running */
     while(!s_synch->done) {
         /* Acquiring lock*/
@@ -479,41 +466,41 @@ int start_csac_model(struct csac_model_data
         /* Initialize model if not already initialized */
         if(!model_init) {
             model_init = init_csac_model(cfd, program_buf);
-        }
+        } else {
+            /* checking alarm */
+            if(cfd->days_passed >= cfd->cf_conf.warmup_days){
+                raised_alarm = check_filters(cfd);
+            }
+        
+            /* If the alarm is raised */
+            if(raised_alarm){
+                if(csac_disc){
+                    disable_csac_disc();
+                    csac_disc = 0;
+                }
 
-        /* checking alarm */
-        if(cfd->days_passed >= cfd->cf_conf.warmup_days){
-            raised_alarm = check_filters(cfd);
-        }
-	
-        /* If the alarm is raised */
-        if(raised_alarm){
-            if(csac_disc){
-                disable_csac_disc();
-                csac_disc = 0;
+                /* Get mjd to update filter */
+                double mjd_today = get_mjdf();
+                
+                /* Calculating MJD */
+                cfd->t_current = mjd_today;
+
+                /* Calc steer predict */
+                int steer_pred = (int)get_steer_predict(cfd);
+                steer_pred = steer_pred * 1000;
+
+                /* Steering CSAC */
+                steer_csac(steer_pred);
             }
 
-            /* Get mjd to update filter */
-            double mjd_today = get_mjdf();
-            
-            /* Calculating MJD */
-            cfd->t_current = mjd_today;
-
-            /* Calc steer predict */
-            int steer_pred = (int)get_steer_predict(cfd);
-            steer_pred = steer_pred * 1000;
-
-            /* Steering CSAC */
-            steer_csac(steer_pred);
-        }
-
-        /* If the alarm is not raised */
-        if(!raised_alarm){
-            if(!csac_disc){
-                enable_csac_disc();
-                csac_disc = 1;
+            /* If the alarm is not raised */
+            if(!raised_alarm){
+                if(!csac_disc){
+                    enable_csac_disc();
+                    csac_disc = 1;
+                }
+                update_csac_model(cfd, program_buf); 
             }
-            update_csac_model(cfd, program_buf); 
         }
 
         /* If logging enabled, log all data from the CSAC */
