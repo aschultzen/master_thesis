@@ -13,7 +13,7 @@ def main_routine():
 	sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser),encoding='ascii',newline="\r\n")
 
 	# Open log file, mostly used for debug
-	log_file = open("query_csac.txt", "a+")
+	log_file = open("query_csac_log.txt", "a+")
 
 	# The query to use 
 	query = sys.argv[1].strip("\r\n")
@@ -59,7 +59,7 @@ def main_routine():
 
 	current_time = datetime.datetime.now().time()
 	
-	log_string = ("[" + current_time.isoformat() + "] " +  "Queried CSAC: "  + "'" +  query + "' " + str(retry_count) + " times\n")	
+	log_string = ("[" + current_time.isoformat() + "] " +  "Queried CSAC: "  + "'" +  query + "' " + str(retry_count) + " times, response :" + response + "\n")	
 	log_file.write(log_string)
 
 if __name__ == '__main__':
