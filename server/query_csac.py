@@ -5,6 +5,7 @@ import time
 import io
 import os
 import serial
+import datetime
 
 def main_routine():
 	# Opening serial stream, use ASCII
@@ -55,8 +56,12 @@ def main_routine():
 	print(response)
 	ser.close()
 	query = query.strip("\r\n")
-	log_string = ("Issued query " + "'" +  query + "' " + str(retry_count) + " times\n")	
+
+	current_time = datetime.datetime.now().time()
+	
+	log_string = ("[" + current_time.isoformat() + "] " +  "Queried CSAC: "  + "'" +  query + "' " + str(retry_count) + " times\n")	
 	log_file.write(log_string)
+
 if __name__ == '__main__':
 	main_routine()
 
