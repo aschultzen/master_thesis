@@ -437,7 +437,7 @@ int get_telemetry(char *buffer, int buffer_len)
 }
 
 int start_csac_model(struct csac_model_data *cfd)
-{   
+{
     int raised_alarm = 0;
     int csac_disc = 1;
 
@@ -471,8 +471,8 @@ int start_csac_model(struct csac_model_data *cfd)
     }
 
     while(!model_init) {
-        if(get_telemetry(program_buf, 200))
-            t_print("Failed to retrieve telemetry\n");
+        if(!get_telemetry(program_buf, 200))
+            t_print("Init model: Failed to retrieve telemetry\n");
 
         model_init = init_csac_model(cfd, program_buf);
     }
@@ -481,7 +481,7 @@ int start_csac_model(struct csac_model_data *cfd)
     while(!s_synch->done) {
 
         /* Retrieving telemetry */
-        if(get_telemetry(program_buf, 200))
+        if(!get_telemetry(program_buf, 200))
             t_print("Failed to retrieve telemetry\n");
 
         /* If the alarm is not raised */
