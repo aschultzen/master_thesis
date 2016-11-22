@@ -56,25 +56,36 @@
 
 \subsection{Trusler}
 \begin{frame}
-\frametitle{Trusler mot GPS timing}
-\begin{itemize}
-  \item Jamming.
-  \item Narring.
+  \frametitle{Trusler mot GPS timing}
   \begin{itemize}
-    \item Replay.
-    \item Data-nivå. 
-    \item Signal-nivå.
-  \end{itemize}
-  \item Feil i utstyr.
-\end{itemize}    
+    \item Jamming. 
+    \item Narring.
+    \begin{itemize}
+      \item Replay.
+      \item Data-nivå. 
+      \item Signal-nivå.
+    \end{itemize}
+    \item Feil i utstyr.
+  \end{itemize}    
 \end{frame}
 
 \section{Mottiltak}
 \begin{frame}
 \frametitle{Mottiltak}
   \begin{itemize}
-    \item To mottakere.
+    \item Bruke flere GPS mottakere.
     \item Referanseklokke.
+  \end{itemize}
+\end{frame}
+
+\subsection{Flere GPS mottakere}
+\begin{frame} 
+  \frametitle{Bruke flere GPS mottakere}
+  Gitt følgende scenario hvor en bruker tre GPS mottakere:
+  \begin{itemize}
+    \item \textbf{Ingen av mottakerne er narret:} Hver mottakers løste posisjon er lik deres respektive kjente posisjoner. Alle løser samme tid.
+    \item \textbf{En eller flere mottakere er narret:} Hvis en mottaker er narret, vil den løse annen tid en de/den som ikke er narret. Er flere enn en men ikke alle narret, vil de narrede også løse samme sted.
+    \item \textbf{Alle mottakerne er narret:} Alle mottakerne løser samme posisjon klokka bias.
   \end{itemize}
 \end{frame}
 
