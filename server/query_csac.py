@@ -6,10 +6,19 @@ import io
 import os
 import serial
 import datetime
+import binascii
+
+def xored(string):
+	result = 0
+	for char in string:
+    		result = result ^ ord(char)
+	result = hex(result)
+	result = result.decode().upper()
+	return result[2:]
 
 def main_routine():
 	# Opening serial stream, use ASCII
-	ser = serial.Serial("/dev/ttyUSB0",57600, timeout=0.1)
+	ser = serial.Serial("/dev/ttyS0",57600, timeout=0.1)
 	sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser),encoding='ascii',newline="\r\n")
 
 	# Open log file, mostly used for debug
@@ -17,6 +26,8 @@ def main_routine():
 
 	# The query to use 
 	query = sys.argv[1].strip("\r\n")
+
+	checksum = xored(query)
 
 	# How long to sleep between read from serial con.
 	sleep_time = 0.2	
@@ -40,8 +51,8 @@ def main_routine():
 
 	response_len = 0
 
-	if(len(query) > 1):
-		query = "!" + query + "\r\n"
+	#if(len(query) > 1):
+	query = "!" + query + "*" + checksum + "\r\n"
 
 	retry_count = 0
 
@@ -58,7 +69,7 @@ def main_routine():
 	query = query.strip("\r\n")
 
 	current_time = datetime.datetime.now().time()
-	
+
 	log_string = ("[" + current_time.isoformat() + "] " +  "Queried CSAC: "  + "'" +  query + "' " + str(retry_count) + " times, response :" + response + "\n")	
 	log_file.write(log_string)
 

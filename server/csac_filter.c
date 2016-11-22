@@ -49,23 +49,23 @@ static double get_mjdf()
     return mjd_today;
 }
 
-static int load_telemetry(struct csac_model_data
-                          *cfd, char *telemetry)
+static int load_telemetry(struct csac_model_data *cfd, char *telemetry)
 {
     const int BUFFER_LEN = 100;
     char buffer[BUFFER_LEN];
 
     /* Checking discipline mode of the CSAC */
-    if(!substring_extractor(13,14,',',buffer,100,
-                            telemetry,strlen(telemetry))) {
+    if(!substring_extractor(13,14,',',buffer, BUFFER_LEN, telemetry,strlen(telemetry))) {
         printf("Failed to extract DiscOK from CSAC data\n");
         return 0;
     } else {
         if(sscanf(buffer, "%d", &cfd->discok) == EOF) {
+			printf("Failed to cast DiscOK to int\n");
             return 0;
         }
-        /* CSAC is in holdover or acquiring */
+        /* CSAC is in holdover*/
         if(cfd->discok == 2) {
+            log_to_file(s_conf->log_path, "CSAC in holdover, discarding telemetry. \n", 2);
             return 0;
         }
     }
@@ -75,8 +75,7 @@ static int load_telemetry(struct csac_model_data
         printf("Failed to extract Phase from CSAC data\n");
         return 0;
     } else {
-        if(sscanf(buffer, "%lf",
-                  &cfd->phase_current) == EOF) {
+        if(sscanf(buffer, "%lf", &cfd->phase_current) == EOF) {
             return 0;
         }
     }
@@ -86,8 +85,7 @@ static int load_telemetry(struct csac_model_data
         printf("Failed to extract Steer from CSAC data\n");
         return 0;
     } else {
-        if(sscanf(buffer, "%lf",
-                  &cfd->steer_current) == EOF) {
+        if(sscanf(buffer, "%lf", &cfd->steer_current) == EOF) {
             return 0;
         }
     }
@@ -249,8 +247,7 @@ int update_csac_model(struct csac_model_data
             memset(log_output, '\0', 200);
             snprintf(log_output, 100, "%lf\n",
                      cfd->steer_prediction);
-            log_to_file(cfd->cf_conf.pred_log_path,
-                        log_output, 1);
+            log_to_file(cfd->cf_conf.pred_log_path, log_output, 1);
         }
     }
     return 1;
@@ -375,6 +372,7 @@ void disable_csac_disc()
 
     /* Releasing lock on CSAC serial*/
     sem_post(&(s_synch->csac_sem));
+    log_to_file(s_conf->log_path, program_buf, 2);
 }
 
 void enable_csac_disc()
@@ -394,6 +392,7 @@ void enable_csac_disc()
 
     /* Releasing lock on CSAC serial*/
     sem_post(&(s_synch->csac_sem));
+    log_to_file(s_conf->log_path, program_buf, 2);
 }
 
 int check_filters(struct csac_model_data *cmd)
@@ -425,7 +424,7 @@ int get_telemetry(char *buffer, int buffer_len)
         return 0;
 
     /* Querying CSAC */
-    run_command("python get_telemetry.py", buffer);
+    run_command("python query_csac.py ^", buffer);
     if(strlen(buffer) == 0)
         return 0;
 
@@ -447,8 +446,7 @@ int start_csac_model(struct csac_model_data *cfd)
     int model_init = 0;
 
     /* csac_filter config */
-    struct config_map_entry
-        conf_map[CSAC_FILTER_CONFIG_ENTRIES];
+    struct config_map_entry conf_map[CSAC_FILTER_CONFIG_ENTRIES];
 
     /* Initialize config map */
     initialize_config(conf_map, &cfd->cf_conf);
@@ -471,12 +469,12 @@ int start_csac_model(struct csac_model_data *cfd)
     }
 
     while(!model_init) {
-        if(!get_telemetry(program_buf, 200))
-            t_print("Init model: Failed to retrieve telemetry\n");
-
+        if(!get_telemetry(program_buf, 200)) {
+            fprintf(stderr,"Init model: Failed to retrieve telemetry\n");
+		}
         model_init = init_csac_model(cfd, program_buf);
     }
-
+	
     /* Keep going as long as the server is running */
     while(!s_synch->done) {
 
@@ -507,18 +505,18 @@ int start_csac_model(struct csac_model_data *cfd)
 
             /* Get mjd to update filter */
             double mjd_today = get_mjdf();
-           
+
             /* Calculating MJD */
             cfd->t_current = mjd_today;
-           
+
             /* Calc steer predict */
             int steer_pred = (int)get_steer_predict(cfd);
             steer_pred = steer_pred * 1000;
-        
+
             /* Steering CSAC */
             steer_csac(steer_pred);
         }
-        
+
         /* If logging enabled, log all data from the CSAC */
         if(s_conf->csac_logging) {
             log_to_file(s_conf->csac_log_path, program_buf,1);
