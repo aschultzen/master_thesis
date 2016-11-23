@@ -79,17 +79,25 @@
 \subsubsection{Referansenarrer}
 \begin{frame}
   \frametitle{"The Civil GPS Spoofer"}
+  \begin{figure}
+    \includegraphics[scale=0.2]{pics/texas_spoofer.jpg}
+    \caption{Civil GPS Spoofer}
+  \end{figure}
   "The Civil GPS Spoofer"
   \begin{itemize}
-    \item Laget et av et team fra \textit{The University of Texas at Austin} i 2012
+    \item Laget et av et team fra \textit{The University of Texas at Austin} i 2012 \cite{EVPMUGA}
     \item Implementert i SDR
     \item Kan lage opptil 14 "falske" L1 C/A signaler
   \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{"The Civil GPS Spoofer"}
   Nøkkelfunksjoner:
   \begin{itemize}
     \item Sømløs narring, offeret låser på en kopi av det autentiske signalet. Ingen forandring i løsning.
     \item Angriper manipulerer signalet.
-    \item Angriperen har ofte stort spillerom under angrepet på grunn av dårlige oscillatorer.
+    \item Angriperen har gjerne et stort spillerom under angrepet da oscillatoren i mottakeren ofte er av lav kvalitet.
   \end{itemize}
 \end{frame}
 
@@ -98,7 +106,7 @@
 \frametitle{Mottiltak}
   \begin{itemize}
     \item Bruke flere GPS mottakere.
-    \item Referanseklokke.
+    \item Bruke stabil klokke som referanse.
   \end{itemize}
 \end{frame}
 
@@ -121,6 +129,18 @@
     \item Verifisere GPS løsning.
     \item Realisere nøyaktig timing selv når GPS disiplinering ikke er mulig.
   \end{itemize}
+  \begin{columns}
+    \column{0.5\textwidth}
+      \begin{figure}
+        \includegraphics[scale=0.2]{pics/5071A.jpg}
+        \caption{Symmetricom 5071A Cesium Primary Frequency Standard (500 000 NOK)}
+      \end{figure}
+    \column{0.5\textwidth}
+      \begin{figure}
+        \includegraphics[scale=0.2]{thesis/graphics/csac.jpg}
+      \caption{Symmetricom SA.45s CSAC (5000 NOK)}
+    \end{figure}
+  \end{columns}
 \end{frame}
 
 \section{Testing}
