@@ -1,6 +1,13 @@
 \documentclass[xcolor=table]{beamer}
 \usepackage[utf8]{inputenc}
 
+\usepackage[
+    backend=biber,
+    style=numeric,
+    sorting=none
+]{biblatex}
+\addbibresource{thesis/refs.bib}
+
 \title[Spoof proof GPS timing] % (optional, only for long titles)
 {Spoof proof GPS timing}
 \subtitle{A detection and mitigation system for GPS time spoofing}
@@ -69,6 +76,23 @@
   \end{itemize}    
 \end{frame}
 
+\subsubsection{Referansenarrer}
+\begin{frame}
+  \frametitle{"The Civil GPS Spoofer"}
+  "The Civil GPS Spoofer"
+  \begin{itemize}
+    \item Laget et av et team fra \textit{The University of Texas at Austin} i 2012
+    \item Implementert i SDR
+    \item Kan lage opptil 14 "falske" L1 C/A signaler
+  \end{itemize}
+  Nøkkelfunksjoner:
+  \begin{itemize}
+    \item Sømløs narring, offeret låser på en kopi av det autentiske signalet. Ingen forandring i løsning.
+    \item Angriper manipulerer signalet.
+    \item Angriperen har ofte stort spillerom under angrepet på grunn av dårlige oscillatorer.
+  \end{itemize}
+\end{frame}
+
 \section{Mottiltak}
 \begin{frame}
 \frametitle{Mottiltak}
@@ -85,7 +109,17 @@
   \begin{itemize}
     \item \textbf{Ingen av mottakerne er narret:} Hver mottakers løste posisjon er lik deres respektive kjente posisjoner. Alle løser samme tid.
     \item \textbf{En eller flere mottakere er narret:} Hvis en mottaker er narret, vil den løse annen tid en de/den som ikke er narret. Er flere enn en men ikke alle narret, vil de narrede også løse samme sted.
-    \item \textbf{Alle mottakerne er narret:} Alle mottakerne løser samme posisjon klokka bias.
+    \item \textbf{Alle mottakerne er narret:} Alle mottakerne løser samme posisjon og klokkebias.
+  \end{itemize}
+\end{frame}
+
+\subsection{Referanseklokke}
+\begin{frame}
+  \frametitle{Referanseklokke}
+  Med en stabil og pålitelig klokke, har en muligheter til å:
+  \begin{itemize}
+    \item Verifisere GPS løsning.
+    \item Realisere nøyaktig timing selv når GPS disiplinering ikke er mulig.
   \end{itemize}
 \end{frame}
 
@@ -103,6 +137,12 @@
 \section{Konklusjon}
 \begin{frame}
   \frametitle{Konklusjon}
+\end{frame}
+
+\section{Bibliografi}
+\begin{frame}[allowframebreaks]%in case more than 1 slide needed
+  \frametitle{Bibliografi}
+  \printbibliography[heading=bibintoc]
 \end{frame}
 
 \end{document}
