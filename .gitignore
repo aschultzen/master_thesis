@@ -9,3 +9,5 @@
 *.toc
 *.out
 *.run.xml
+*.nav
+*.snm
