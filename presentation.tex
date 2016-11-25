@@ -160,14 +160,43 @@
 
 \subsection{Implementasjon}
 \begin{frame}
-  \frametitle{Implementasjon}
+  \frametitle{Atomic Clock Controller Software}
   \begin{itemize}
-    \item Client/Server modell
+    \item Klient/Server modell
     \item Filtre
     \item Klokkemodell
     \item Klokkestyring
   \end{itemize}
 \end{frame}
+
+\subsubsection{Klient/Server modell}
+\begin{frame}
+  \frametitle{Klient/Server modell}
+  \begin{itemize}
+    \item Mottaker + Raspberry PI = Sensor
+    \item Antall mottakere begrenset av Serverens CPU og RAM
+    \item Eliminerer behovet for lange signalkabler, mulig å bruke et vanlig nettverk:
+    \begin{itemize}
+      \item Fiber
+      \item Mobilnett (3G og 4G)
+      \item WiFi
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Klient/Server modell}
+  \begin{itemize}
+    \item Klienten kobler til Serveren
+    \item Klienten sender utvalgt NMEA (GPS data) til Server
+    \item Server analyserer (filtrerer mottatt data) sammenlikner med:
+    \begin{itemize}
+      \item Klokkemodell: Forventede styringsverdier
+      \item Filtre: Forventet lokasjons og hastighet.   
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
 
 \section{Testing}
 \begin{frame}
