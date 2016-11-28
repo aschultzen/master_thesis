@@ -174,7 +174,7 @@
   \frametitle{Klient/Server modell}
   \begin{itemize}
     \item Mottaker + Raspberry PI = Sensor
-    \item Antall mottakere begrenset av Serverens CPU og RAM
+    \item Antall mottakere begrenset av serverens CPU og RAM
     \item Eliminerer behovet for lange signalkabler, mulig å bruke et vanlig nettverk:
     \begin{itemize}
       \item Fiber
@@ -188,25 +188,121 @@
 \frametitle{Klient/Server modell}
   \begin{itemize}
     \item Klienten kobler til Serveren
-    \item Klienten sender utvalgt NMEA (GPS data) til Server
+    \item Klienten sender utvalgt NMEA (GPS data) til server
     \item Server analyserer (filtrerer mottatt data) sammenlikner med:
     \begin{itemize}
       \item Klokkemodell: Forventede styringsverdier
-      \item Filtre: Forventet lokasjons og hastighet.   
+      \item Lokasjon: Forventet lokasjons og hastighet.   
     \end{itemize}
+    \item Styrer klokka etter klokkemodellen ved detektert angrep
   \end{itemize}
 \end{frame}
 
-
-\section{Testing}
+\section{Lokasjonsfilter test}
 \begin{frame}
-\frametitle{Beskrivelse}
+\frametitle{Oppsett}
+  \begin{itemize}
+    \item Server logger data fra klokka
+    \item Sensorer logger data fra GPS
+  \end{itemize}
   \subsection{Beskrivelse}
+      \begin{figure}
+        \includegraphics[scale=0.25]{thesis/graphics/server_layout.eps}
+        \caption{Oppsett av server og klienter under test}
+      \end{figure}
 \end{frame}
 
 \begin{frame}
-\frametitle{Resultat}
-  \subsection{Resultat}
+\frametitle{Oppsett: måleutstyr}
+  \begin{itemize}
+    \item CNT-91 måler 1 PPS ut fra CSAC
+    \item CNT-91 bruker 10 MHz fra tidslabb som referanse
+  \end{itemize}
+      \begin{figure}
+        \includegraphics[scale=0.25]{thesis/graphics/measure_setup.pdf}
+        \caption{Oppsett av måleutstyr}
+      \end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Oppsett: plassering av mottakere}
+      \begin{figure}
+        \includegraphics[scale=0.18]{thesis/graphics/roof.eps}
+        \caption{Plasseringen av GPS mottakere}
+      \end{figure}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Oppsett: grenseverdier for filter}
+    \begin{table}[!htb]
+      \centering
+      \caption{Filter grenser}
+      \label{gps_filter_table}
+        \begin{tabular}{|l|l|l|}
+        \hline
+        \multicolumn{1}{|c|}{} & \multicolumn{1}{c|}{Sensor one} & \multicolumn{1}{c|}{Sensor two}         \\ \hline
+        Altitude reference                 & 123.8$^{\circ}$ & 122.427$^{\circ}$                            \\ \hline
+        Longitude reference                & 1102.1948$^{\circ}$ & 1102.1934$^{\circ}$                     \\ \hline
+        Latitude reference                 & 5958.5448$^{\circ}$ & 5958.5231$^{\circ}$                     \\ \hline
+        Speed reference                    & 0 knot        & 0 knot                                       \\ \hline
+        Altitude deviation                 & 10$^{\circ}$        & 10$^{\circ}$                            \\ \hline
+        Longitude deviation                & 0.005$^{\circ}$     & 0.005$^{\circ}$                         \\ \hline
+        Latitude deviation                 & 0.005$^{\circ}$     & 0.005$^{\circ}$                         \\ \hline
+        Speed deviation                    & 10 knot        & 10 knot                                     \\ \hline
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}
+\frametitle{Utførelse}
+  \begin{columns}
+    \column{0.5\textwidth}
+      \begin{itemize}
+        \item Beveget antenne 1 mot antenne 2
+        \item Beveget antenne 2 mot antenne 1
+        \item Dekket antenne med aluminiumsfolie
+        \item Noterte tid for hver handling
+      \end{itemize}
+    \column{0.5\textwidth}
+      \begin{figure}
+        \includegraphics[scale=0.20]{thesis/graphics/antenna_foil_cover.jpg}
+        \caption{Antenne dekket med folie}
+      \end{figure}  
+    \end{columns}  
+\end{frame}
+
+\begin{frame}
+\frametitle{Observasjon: GPS log}
+  \subsection{Observasjon}
+            \vspace{-40pt}
+    \begin{columns}
+      \column{0.5\textwidth}
+      \begin{figure}
+        \includegraphics[scale=0.40]{thesis/graphics/gnssAlt1-1.png}
+      \end{figure}
+                  \vspace{-30pt}
+      \begin{figure}
+        \includegraphics[scale=0.40]{thesis/graphics/gnssLat1-1.png}
+      \end{figure}
+
+      \column{0.5\textwidth}
+      \begin{figure}
+        \includegraphics[scale=0.40]{thesis/graphics/gnssLong1-1.png}
+      \end{figure}
+            \vspace{-30pt}
+      \begin{figure}
+        \includegraphics[scale=0.40]{thesis/graphics/gnssSpeed1-1.png}
+      \end{figure}
+
+    \end{columns}  
+\end{frame}
+
+\begin{frame}
+\frametitle{Observasjon: Målesystem}
+      \begin{figure}
+        \includegraphics[scale=0.70]{thesis/graphics/cns91-and-csac-telemetry-frequency-1.png}
+        \caption{Oppsett av server og klienter under test}
+      \end{figure}
 \end{frame}
 
 \section{Konklusjon}
