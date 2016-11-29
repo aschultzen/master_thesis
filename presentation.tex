@@ -1,6 +1,8 @@
 \documentclass[xcolor=table]{beamer}
 \usepackage[utf8]{inputenc}
 \usepackage{listings}
+\usepackage{adjustbox}
+\usepackage{graphicx}
 
 \usepackage[
     backend=biber,
@@ -199,7 +201,7 @@
   \end{itemize}
 \end{frame}
 
-\section{Lokasjonsfilter test}
+\section{Lokasjon og hastighetsfilter test}
 \begin{frame}
 \frametitle{Oppsett}
   \begin{itemize}
@@ -256,13 +258,16 @@
 
 \begin{frame}
 \frametitle{Utførelse}
+Sekund 0 er 10:48.
   \begin{columns}
     \column{0.5\textwidth}
       \begin{itemize}
-        \item Beveget antenne 1 mot antenne 2
-        \item Beveget antenne 2 mot antenne 1
-        \item Dekket antenne med aluminiumsfolie
-        \item Noterte tid for hver handling
+        \item 600s: Beveget antenne 1 mot antenne 2
+        \item 1140s: Beveget antenne 2 mot antenne 1
+        \item 1560s: Viftet antenne 1 rundt i en halvsirkel
+        \item 1800s: Viftet antenne 2 rundt i en halvsirkel
+        \item 1920s: Dekket antenne 1 med aluminiumsfolie
+        \item 2220s: Dekket antenne 2 med aluminiumsfolie
       \end{itemize}
     \column{0.5\textwidth}
       \begin{figure}
@@ -300,7 +305,7 @@
 
 \begin{frame}[fragile]
 \frametitle{Observasjon: Server log}
-  \subsection{Observasjon}
+Utdrag fra server log:
       \begin{lstlisting}[basicstyle=\tiny]
         [10/10/16 - 10:59:17] [ ALARM ] Sensor 1 triggered LS filter!
         [10/10/16 - 11:04:35] [ ALARM ] Sensor 1 cleared LS filter!
@@ -313,13 +318,17 @@
         [10/10/16 - 11:34:17] [ ALARM ] Sensor 2 triggered LS filter!
         [10/10/16 - 11:34:20] [ ALARM ] Sensor 2 cleared LS filter!
       \end{lstlisting} 
+\begin{itemize}
+  \item Ingen falske positive.
+  \item Hastighetsfilteret ble ikke utløst
+\end{itemize}
 \end{frame}
 
 \begin{frame}
 \frametitle{Observasjon: Målesystem}
       \begin{figure}
         \includegraphics[scale=0.70]{thesis/graphics/cns91-and-csac-telemetry-frequency-1.png}
-        \caption{Måleserie gjort under test lokasjonsfilter test}
+        \caption{Måleserie gjort under test av lokasjon og hastighetsfilter}
       \end{figure}
 \end{frame}
 
@@ -327,12 +336,71 @@
 \begin{frame}
 \frametitle{Oppsett}
   \begin{itemize}
-    \item Samme som før, men tester nå også klokkemodellen og styring.
+    \item Testet klokkemodellen og styring.
+    \item Justerte ned grenseverdi for hastighet
+    \item Tok bare med en Sensor da fokus var på klokkemodell.
   \end{itemize}
-  \subsection{Beskrivelse}
-      \begin{figure}
-        \includegraphics[scale=0.25]{thesis/graphics/server_layout.eps}
-        \caption{Oppsett av server og klienter under test}
+\end{frame}
+
+\subsection{Beskrivelse}
+\begin{frame}
+  \frametitle{Oppsett: grenseverdier for filter}
+    \begin{columns}
+    \column{0.5\textwidth}
+      \begin{table}[!htb]
+      \centering
+        \caption{Filter thresholds used during test two}
+        \label{gps_filter_table2}
+          \resizebox{0.9\textwidth}{!}{\begin{tabular}{|l|l|l|}
+            \hline
+            \multicolumn{1}{|c|}{Config value} & \multicolumn{1}{c|}{Sensor 2} \\ \hline
+            Altitude reference                 & 122.427$^{\circ}$             \\ \hline
+            Longitude reference                & 1102.1934$^{\circ}$           \\ \hline
+            Latitude reference                 & 5958.5231$^{\circ}$           \\ \hline
+            Speed reference                    & 0 knot                        \\ \hline
+            Altitude deviation                 & 10$^{\circ}$                  \\ \hline
+            Longitude deviation                & 0.005$^{\circ}$               \\ \hline
+            Latitude deviation                 & 0.005$^{\circ}$               \\ \hline
+            Speed deviation                    & 1 knot                             \\ \hline
+          \end{tabular}}
+      \end{table}
+
+      \column{0.5\textwidth}
+
+      \begin{table}[!htb]
+      \centering
+      \caption{Clock model filter configuration}
+      \label{clock_filter_table}
+       \resizebox{0.7\textwidth}{!}{\begin{tabular}{|l|l|}
+          \hline
+          Phase limit      & 50     \\ \hline
+          Steer limit      & 50     \\ \hline
+          Time constant    & 10000  \\ \hline
+          Warmup time      & 2      \\ \hline
+          Prediction limit & 200    \\ \hline
+        \end{tabular}}
+      \end{table}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Beskrivelse}
+\end{frame}
+
+\begin{frame}
+\subsection{Observasjon}
+\frametitle{Observasjon: GPS log}
+        \begin{figure}
+        \includegraphics[scale=0.25]{thesis/graphics/20161024-test2-sensor2-multipanel-1-1.png}
+        \caption{Lengdegrad og breddegrad for Sensor 2 under test 2}
+      \end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Observasjon: GPS log}
+        \begin{figure}
+        \includegraphics[scale=0.25]{thesis/graphics/20161024-test2-sensor2-multipanel-1-2.png}
+        \caption{Oppsett av måleutstyr}
       \end{figure}
 \end{frame}
 
