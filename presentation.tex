@@ -281,8 +281,29 @@ Sekund 0 er 10:48.
 \end{center}
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{Observasjon: Server log}
+Utdrag fra server log:
+      \begin{lstlisting}[basicstyle=\ttfamily\tiny]
+        [10/10/16 - 10:59:17] [ ALARM ] Sensor 1 triggered LS filter!
+        [10/10/16 - 11:04:35] [ ALARM ] Sensor 1 cleared LS filter!
+        [10/10/16 - 11:08:27] [ ALARM ] Sensor 2 triggered LS filter!
+        [10/10/16 - 11:13:43] [ ALARM ] Sensor 2 cleared LS filter!
+        [10/10/16 - 11:22:03] [ ALARM ] Sensor 1 triggered LS filter!
+        [10/10/16 - 11:29:21] [ ALARM ] Sensor 1 cleared LS filter!
+        [10/10/16 - 11:27:31] [ ALARM ] Sensor 2 triggered LS filter!
+        [10/10/16 - 11:34:16] [ ALARM ] Sensor 2 cleared LS filter!
+        [10/10/16 - 11:34:17] [ ALARM ] Sensor 2 triggered LS filter!
+        [10/10/16 - 11:34:20] [ ALARM ] Sensor 2 cleared LS filter!
+      \end{lstlisting} 
+\begin{itemize}
+  \item Ingen falske positive.
+  \item Hastighetsfilteret ble ikke utløst
+\end{itemize}
+\end{frame}
+
 \begin{frame}
-\frametitle{Observasjon: GPS log}
+\frametitle{Observasjon: GPS log Sensor 1}
   \subsection{Observasjon}
     \vspace{-40pt}
     \begin{columns}
@@ -305,25 +326,27 @@ Sekund 0 er 10:48.
     \end{columns}  
 \end{frame}
 
-\begin{frame}[fragile]
-\frametitle{Observasjon: Server log}
-Utdrag fra server log:
-      \begin{lstlisting}[basicstyle=\ttfamily\tiny]
-        [10/10/16 - 10:59:17] [ ALARM ] Sensor 1 triggered LS filter!
-        [10/10/16 - 11:04:35] [ ALARM ] Sensor 1 cleared LS filter!
-        [10/10/16 - 11:08:27] [ ALARM ] Sensor 2 triggered LS filter!
-        [10/10/16 - 11:13:43] [ ALARM ] Sensor 2 cleared LS filter!
-        [10/10/16 - 11:22:03] [ ALARM ] Sensor 1 triggered LS filter!
-        [10/10/16 - 11:29:21] [ ALARM ] Sensor 1 cleared LS filter!
-        [10/10/16 - 11:27:31] [ ALARM ] Sensor 2 triggered LS filter!
-        [10/10/16 - 11:34:16] [ ALARM ] Sensor 2 cleared LS filter!
-        [10/10/16 - 11:34:17] [ ALARM ] Sensor 2 triggered LS filter!
-        [10/10/16 - 11:34:20] [ ALARM ] Sensor 2 cleared LS filter!
-      \end{lstlisting} 
-\begin{itemize}
-  \item Ingen falske positive.
-  \item Hastighetsfilteret ble ikke utløst
-\end{itemize}
+\begin{frame}
+\frametitle{Observasjon: GPS log Sensor 2}
+    \vspace{-40pt}
+    \begin{columns}
+      \column{0.5\textwidth}
+      \begin{figure}
+        \includegraphics[scale=0.40]{thesis/graphics/gnssAlt2-1.png}
+      \end{figure}
+      \vspace{-30pt}
+      \begin{figure}
+        \includegraphics[scale=0.40]{thesis/graphics/gnssLat2-1.png}
+      \end{figure}
+      \column{0.5\textwidth}
+      \begin{figure}
+        \includegraphics[scale=0.40]{thesis/graphics/gnssLong2-1.png}
+      \end{figure}
+      \vspace{-30pt}
+      \begin{figure}
+        \includegraphics[scale=0.40]{thesis/graphics/gnssSpeed2-1.png}
+      \end{figure}
+    \end{columns}  
 \end{frame}
 
 \begin{frame}
@@ -386,7 +409,31 @@ Utdrag fra server log:
 \end{frame}
 
 \begin{frame}
-\frametitle{Beskrivelse}
+\frametitle{Utførelse}
+      \begin{itemize}
+        \item 13:12:00 - 125s: Beveget antenne 2 mot nord
+        \item 13:23:00 - 785s: Viftet antenne 1 rundt i en halvsirkel
+        \item 13:23:45 - 830s: Stoppet bevegelse
+        \item 13:27:00 - 1070s: Aktiverte disiplinering av klokka manuelt
+      \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Observasjon: Server log}
+Utdrag fra server log:
+    \begin{lstlisting}[basicstyle=\ttfamily\tiny]
+      [10/24/16 - 13:12:10] [ ALARM ] Sensor 2 triggered LS filter!
+      [10/24/16 - 13:12:42] [ ALARM ] Steer > predicted!
+      [10/24/16 - 13:19:54] [ ALARM ] Sensor 2 cleared LS filter!
+      [10/24/16 - 13:23:12] [ ALARM ] Sensor 2 triggered LS filter!
+      [10/24/16 - 13:23:13] [ ALARM ] Sensor 2 cleared LS filter!
+      [10/24/16 - 13:23:15] [ ALARM ] Sensor 2 triggered LS filter!
+      [10/24/16 - 13:23:43] [ ALARM ] Sensor 2 cleared LS filter!
+    \end{lstlisting} 
+\begin{itemize}
+  \item Ingen falske positive
+  \item Frekvenskorreksjonsfilteret utløst
+\end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -403,6 +450,22 @@ Utdrag fra server log:
         \begin{figure}
         \includegraphics[scale=0.8]{thesis/graphics/20161024-test2-sensor2-multipanel-1-2.png}
         \caption{Høyde og hastighet}
+      \end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Observasjon: Målesystem}
+      \begin{figure}
+        \includegraphics[scale=0.70]{thesis/graphics/20161024-test2-telemetry-and-cnt91-combined-1-1.png}
+        \caption{Måleserie gjort under klokkemodell test}
+      \end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Observasjon: Målesystem}
+      \begin{figure}
+        \includegraphics[scale=0.70]{thesis/graphics/20161024-test2-telemetry-and-cnt91-combined-1-2.png}
+        \caption{Måleserie gjort under klokkemodell test}
       \end{figure}
 \end{frame}
 
