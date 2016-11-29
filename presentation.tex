@@ -3,6 +3,8 @@
 \usepackage{listings}
 \usepackage{adjustbox}
 \usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{tikz}  
 
 \usepackage[
     backend=biber,
@@ -244,14 +246,14 @@
         \begin{tabular}{|l|l|l|}
         \hline
         \multicolumn{1}{|c|}{} & \multicolumn{1}{c|}{Sensor one} & \multicolumn{1}{c|}{Sensor two}         \\ \hline
-        Altitude reference                 & 123.8$^{\circ}$ & 122.427$^{\circ}$                            \\ \hline
-        Longitude reference                & 1102.1948$^{\circ}$ & 1102.1934$^{\circ}$                     \\ \hline
-        Latitude reference                 & 5958.5448$^{\circ}$ & 5958.5231$^{\circ}$                     \\ \hline
-        Speed reference                    & 0 knot        & 0 knot                                       \\ \hline
-        Altitude deviation                 & 10$^{\circ}$        & 10$^{\circ}$                            \\ \hline
-        Longitude deviation                & 0.005$^{\circ}$     & 0.005$^{\circ}$                         \\ \hline
-        Latitude deviation                 & 0.005$^{\circ}$     & 0.005$^{\circ}$                         \\ \hline
-        Speed deviation                    & 10 knot        & 10 knot                                     \\ \hline
+        Høyde referanse                 & 123.8$^{\circ}$ & 122.427$^{\circ}$                            \\ \hline
+        Lengdegrad referanse                & 1102.1948$^{\circ}$ & 1102.1934$^{\circ}$                     \\ \hline
+        Breddegrad referanse                 & 5958.5448$^{\circ}$ & 5958.5231$^{\circ}$                     \\ \hline
+        Hastighet referanse                    & 0 knot        & 0 knot                                       \\ \hline
+        Høyde avvik                 & 10$^{\circ}$        & 10$^{\circ}$                            \\ \hline
+        Lengdegrad avvik                & 0.005$^{\circ}$     & 0.005$^{\circ}$                         \\ \hline
+        Breddegrad avvik                 & 0.005$^{\circ}$     & 0.005$^{\circ}$                         \\ \hline
+        Hastighet avvik                    & 10 knot        & 10 knot                                     \\ \hline
         \end{tabular}
     \end{table}
 \end{frame}
@@ -259,54 +261,54 @@
 \begin{frame}
 \frametitle{Utførelse}
 Sekund 0 er 10:48.
-  \begin{columns}
-    \column{0.5\textwidth}
       \begin{itemize}
-        \item 600s: Beveget antenne 1 mot antenne 2
-        \item 1140s: Beveget antenne 2 mot antenne 1
-        \item 1560s: Viftet antenne 1 rundt i en halvsirkel
-        \item 1800s: Viftet antenne 2 rundt i en halvsirkel
-        \item 1920s: Dekket antenne 1 med aluminiumsfolie
-        \item 2220s: Dekket antenne 2 med aluminiumsfolie
+        \item 10:58 - 600s: Beveget antenne 1 mot antenne 2
+        \item 11:07 - 1140s: Beveget antenne 2 mot antenne 1
+        \item 11:12 - 1560s: Viftet antenne 1 rundt i en halvsirkel
+        \item 11:18 - 1800s: Viftet antenne 2 rundt i en halvsirkel
+        \item 11:20 - 1920s: Dekket antenne 1 med aluminiumsfolie
+        \item 11:25 - 2220s: Dekket antenne 2 med aluminiumsfolie
       \end{itemize}
-    \column{0.5\textwidth}
-      \begin{figure}
-        \includegraphics[scale=0.20]{thesis/graphics/antenna_foil_cover.jpg}
-        \caption{Antenne dekket med folie}
-      \end{figure}  
-    \end{columns}  
+\end{frame}
+
+\begin{frame}
+\frametitle{Utførelse}
+\begin{center}
+\begin{tikzpicture}
+  \node (img1) {\includegraphics[height=5cm]{thesis/graphics/antenna_foil_over_hacked.jpg}};
+  \node (img2) at (img1.south east) {\includegraphics[height=4.5cm]{thesis/graphics/antenna_foil_cover.jpg}};
+\end{tikzpicture}
+\end{center}
 \end{frame}
 
 \begin{frame}
 \frametitle{Observasjon: GPS log}
   \subsection{Observasjon}
-            \vspace{-40pt}
+    \vspace{-40pt}
     \begin{columns}
       \column{0.5\textwidth}
       \begin{figure}
         \includegraphics[scale=0.40]{thesis/graphics/gnssAlt1-1.png}
       \end{figure}
-                  \vspace{-30pt}
+      \vspace{-30pt}
       \begin{figure}
         \includegraphics[scale=0.40]{thesis/graphics/gnssLat1-1.png}
       \end{figure}
-
       \column{0.5\textwidth}
       \begin{figure}
         \includegraphics[scale=0.40]{thesis/graphics/gnssLong1-1.png}
       \end{figure}
-            \vspace{-30pt}
+      \vspace{-30pt}
       \begin{figure}
         \includegraphics[scale=0.40]{thesis/graphics/gnssSpeed1-1.png}
       \end{figure}
-
     \end{columns}  
 \end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Observasjon: Server log}
 Utdrag fra server log:
-      \begin{lstlisting}[basicstyle=\tiny]
+      \begin{lstlisting}[basicstyle=\ttfamily\tiny]
         [10/10/16 - 10:59:17] [ ALARM ] Sensor 1 triggered LS filter!
         [10/10/16 - 11:04:35] [ ALARM ] Sensor 1 cleared LS filter!
         [10/10/16 - 11:08:27] [ ALARM ] Sensor 2 triggered LS filter!
@@ -349,19 +351,19 @@ Utdrag fra server log:
     \column{0.5\textwidth}
       \begin{table}[!htb]
       \centering
-        \caption{Filter thresholds used during test two}
+        \caption{Grenseverdier for lokasjon og hastighetsfilter}
         \label{gps_filter_table2}
           \resizebox{0.9\textwidth}{!}{\begin{tabular}{|l|l|l|}
             \hline
             \multicolumn{1}{|c|}{Config value} & \multicolumn{1}{c|}{Sensor 2} \\ \hline
-            Altitude reference                 & 122.427$^{\circ}$             \\ \hline
-            Longitude reference                & 1102.1934$^{\circ}$           \\ \hline
-            Latitude reference                 & 5958.5231$^{\circ}$           \\ \hline
-            Speed reference                    & 0 knot                        \\ \hline
-            Altitude deviation                 & 10$^{\circ}$                  \\ \hline
-            Longitude deviation                & 0.005$^{\circ}$               \\ \hline
-            Latitude deviation                 & 0.005$^{\circ}$               \\ \hline
-            Speed deviation                    & 1 knot                             \\ \hline
+            Høyde referanse                 & 122.427$^{\circ}$             \\ \hline
+            Lengdegrad referanse                & 1102.1934$^{\circ}$           \\ \hline
+            Breddegrad referanse                 & 5958.5231$^{\circ}$           \\ \hline
+            Hastighet referanse                    & 0 knot                        \\ \hline
+            Høyde avvik                 & 10$^{\circ}$                  \\ \hline
+            Lengdegrad avvik                & 0.005$^{\circ}$               \\ \hline
+            Breddegrad avvik                 & 0.005$^{\circ}$               \\ \hline
+            Hastighet avvik                    & 1 knot                             \\ \hline
           \end{tabular}}
       \end{table}
 
@@ -369,7 +371,7 @@ Utdrag fra server log:
 
       \begin{table}[!htb]
       \centering
-      \caption{Clock model filter configuration}
+      \caption{Klokkemodell konfigurasjon}
       \label{clock_filter_table}
        \resizebox{0.7\textwidth}{!}{\begin{tabular}{|l|l|}
           \hline
@@ -391,20 +393,18 @@ Utdrag fra server log:
 \subsection{Observasjon}
 \frametitle{Observasjon: GPS log}
         \begin{figure}
-        \includegraphics[scale=0.25]{thesis/graphics/20161024-test2-sensor2-multipanel-1-1.png}
-        \caption{Lengdegrad og breddegrad for Sensor 2 under test 2}
+        \includegraphics[scale=0.8]{thesis/graphics/20161024-test2-sensor2-multipanel-1-1.png}
+        \caption{Lengdegrad og breddegrad}
       \end{figure}
 \end{frame}
 
 \begin{frame}
 \frametitle{Observasjon: GPS log}
         \begin{figure}
-        \includegraphics[scale=0.25]{thesis/graphics/20161024-test2-sensor2-multipanel-1-2.png}
-        \caption{Oppsett av måleutstyr}
+        \includegraphics[scale=0.8]{thesis/graphics/20161024-test2-sensor2-multipanel-1-2.png}
+        \caption{Høyde og hastighet}
       \end{figure}
 \end{frame}
-
-
 
 \section{Konklusjon}
 \begin{frame}
