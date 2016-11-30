@@ -192,10 +192,11 @@
 \begin{frame}
   \frametitle{Klient/Server arkitektur}
   \begin{itemize}
-    \item 3000 linjer med C99 kode
+    \item 3000+ linjer med C99 kode
     \item Håndterer av/pålogging av klienter
+    \item Håndtere mottak og formatering av GPS data
     \item En prosess per pålogging
-    \item Delt minne mellom prosesser
+    \item Delt minne mellom prosesser (anonym MMAP)
       \begin{itemize}
         \item Semaforer og barrierer for beskyttelse
       \end{itemize}
@@ -206,16 +207,21 @@
         \item Rapportere filterstatus
         \item Lagre og gjenopprette tilstand i sensorer
         \item Laste inn nye lokasjonsdata
+        \item Avslutte egen og andres tilkobling
       \end{itemize}
   \end{itemize}
 \end{frame}
 
 \subsubsection{Klokkemodell}
 \begin{frame}
+  \frametitle{Klokkemodell}
+
 \end{frame}
 
 \subsubsection{Filtre}
 \begin{frame}
+  \frametitle{Filtre}
+  
 \end{frame}
 
 
