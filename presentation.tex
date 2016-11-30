@@ -159,6 +159,17 @@
   \end{columns}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Referanseklokke}
+  Vi valgte Symmetricom SA.45s. 
+  \begin{itemize}
+    \item Lav vekt og størrelse
+    \item Kortidsstabilitet på rundt ($10^{-11}$)
+    \item Intern frekvensteller og styringsalgoritme
+    \item Kommuniserer over RS-232
+  \end{itemize}
+\end{frame}
+
 \section{Implementasjon}
 \subsection{Krav}
 \begin{frame}
@@ -174,11 +185,11 @@
   \end{itemize}
 \end{frame}
 
-\subsection{Klient/Server arkitektur}
+\subsection{Sensor server arkitektur}
 \begin{frame}
-  \frametitle{Klient/Server arkitektur}
+  \frametitle{Sensor server arkitektur}
   \begin{itemize}
-    \item Mottaker + Raspberry PI = Sensor
+    \item Mottaker + Raspberry PI = GPS mottaker med nettverkskort = Sensor
     \item Eliminerer behovet for lange signalkabler, mulig å bruke et vanlig nettverk:
     \begin{itemize}
       \item Fiber
@@ -190,7 +201,7 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Klient/Server arkitektur}
+  \frametitle{Sensor server arkitektur}
   \begin{itemize}
     \item 3000+ linjer med C99 kode
     \item Håndterer av/pålogging av klienter
@@ -208,6 +219,7 @@
         \item Lagre og gjenopprette tilstand i sensorer
         \item Laste inn nye lokasjonsdata
         \item Avslutte egen og andres tilkobling
+        \item Sende kommandoer til atomklokka 
       \end{itemize}
   \end{itemize}
 \end{frame}
@@ -215,18 +227,48 @@
 \subsubsection{Klokkemodell}
 \begin{frame}
   \frametitle{Klokkemodell}
-
+    Klokkemodellen brukt i oppgaven er designet av Harald Hauglin. Brukes til:
+    \begin{itemize}
+      \item Referanse for frekvensavvik og klokkedrift 
+      \item Generere brukbare styringsparameter i tilfelle GPS løsning ikke lenger er til å stole på.
+    \end{itemize}
+    Modellen er logisk en del av serveren og kjører i en egen prosess.
+    \begin{itemize}
+      \item Kommuniserer kontinuerlig med atomklokka
+      \item Blir regnet som "moden" etter to dager (konfigurerbart).
+    \end{itemize}
 \end{frame}
 
 \subsubsection{Filtre}
 \begin{frame}
   \frametitle{Filtre}
-  
+  Filtrene brukes til å detektere avvik. Enten:
+        \begin{itemize}
+          \item GPS basert
+          \item Klokkemodell basert
+        \end{itemize}
+  For øyeblikket kun implementert tre filtre:
+  \begin{itemize}
+    \item Lokasjon og hastighetsfilter
+                  \begin{itemize}
+                    \item Data fra sensorene blir samlet formatert.
+                    \item Sjekker løst posisjon og hastighet mot referanseverdier
+                  \end{itemize}
+    \item Fasehoppfilter
+                    \begin{itemize}
+                      \item Sammenlikner nåværende fase som rapportert av atomklokka med en pre-konfigurert grense.
+                    \end{itemize}
+    \item Frekvenskorreksjonsfilter
+                    \begin{itemize}
+                      \item Sammenlikner nåværende styringsverdi med en forventet styringsverdi regnet ut med modellen.
+                    \end{itemize}
+  \end{itemize}
+  Pre-konfigurerte referanseverdier er basert på et gjennomsnitt kalkulert fra en lengre måleserie.
 \end{frame}
-
 
 \section{Lokasjon og hastighetsfilter test}
 \begin{frame}
+Det lå i planene å utføre en test med en ekte "spoofer". Dette hadde vi dessverre ikke tilgang til da vi utførte følgende test. Vi manipulerte derfor tidsløsningen ved å bevege antenne.
 \frametitle{Oppsett}
   \begin{itemize}
     \item Server logger data fra klokka
@@ -491,7 +533,23 @@ Utdrag fra server log:
       \end{figure}
 \end{frame}
 
-\section{Ikke løste problemer}
+\section{Konklusjon}
+\begin{frame}
+  \frametitle{Konklusjon}
+  Vi har demonstrert:
+  \begin{itemize}
+    \item At en fullt fungerende \textit{"spoof proof atomic clock controller"} ville ha vært i stand til å stå imot et angrep utført med en sofistikert GPS spoofer slik som \textit{"The Civil GPS spoofer"}.
+    \item Nåværende implementasjonen evne til å detektere en forstyrrelse av GPS signaler og en begrenset evne til å begrense skaden av nevnte forstyrrelse.
+    \item Effektivitet til Sensor server arkitekturen. 
+    \begin{itemize}
+      \item Lav responstid
+      \item Høy stabilitet 
+      \item Enkel å bygge ut med flere sensorer
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{I ettertid}
 \begin{frame}
   \begin{itemize}
   \item Kommunikasjon med atomklokke
@@ -508,11 +566,6 @@ Utdrag fra server log:
     \end{itemize}
   \item GPS filter ikke ferdig integrert.
   \end{itemize}
-\end{frame}
-
-\section{Konklusjon}
-\begin{frame}
-  \frametitle{Konklusjon}
 \end{frame}
 
 \section{Bibliografi}
