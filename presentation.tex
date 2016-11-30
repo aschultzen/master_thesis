@@ -25,10 +25,12 @@
   Universitetet i Oslo
 }
 
+\setcounter{tocdepth}{1}
 \date{\today}
 \usetheme{Marburg}
 
 \begin{document}
+
 \frame{\titlepage}
 \begin{frame}
 \frametitle{Agenda}
@@ -58,33 +60,34 @@
   \end{itemize}
 \end{frame}
 
-\subsection{Utfordringer}
 \begin{frame}
-\frametitle{Utfordringer med GPS timing}
+\centering
+Utfordringer og trusler
+\end{frame}
+
+\subsection{Utfordringer og trusler}
+\begin{frame}
+\frametitle{Utfordringer og trusler}
+Utfordringer:
   \begin{itemize}
     \item Avhengig av å ha en antenne med fri sikt.
     \item Kjent kodestruktur.
     \item Naive mottakere.
   \end{itemize}
-  GPS basert timing kan derfor ses på som en ukryptert og fysisk usikker kanal inn i mange industrielle kontroll systemer.
-\end{frame}
-
-\subsection{Trusler}
-\begin{frame}
-  \frametitle{Trusler mot GPS timing}
+  Terror mulig motiv for:
   \begin{itemize}
-    \item Jamming. 
-    \item Narring ("spoofing").
-    \begin{itemize}
-      \item Replay.
-      \item Data-nivå. 
-      \item Signal-nivå.
-    \end{itemize}
+    \item Jamming.
+    \item Spoofing.
     \item Feil i utstyr.
-  \end{itemize}    
+  \end{itemize}  
 \end{frame}
 
-\subsubsection{Referansetrussel}
+\begin{frame}
+\centering
+Referansetrusselen
+\end{frame}
+
+\subsubsection{Referansetrusselen}
 \begin{frame}
   \frametitle{"The Civil GPS Spoofer"}
   \begin{figure}
@@ -94,7 +97,7 @@
   "The Civil GPS Spoofer"
   \begin{itemize}
     \item Laget et av et team fra \textit{The University of Texas at Austin} i 2012 \cite{EVPMUGA}
-    \item Implementert i Software definert radio
+    \item Implementert i "SDR"
     \item Simulere opptil 14 "falske" satellitter.
   \end{itemize}
 \end{frame}
@@ -107,6 +110,11 @@
     \item Angriper manipulerer signalet.
     \item Angriperen har gjerne et stort spillerom under angrepet da oscillatoren i mottakeren ofte er av lav kvalitet.
   \end{itemize}
+\end{frame}
+
+\begin{frame}
+\centering
+Deteksjon og mottiltak
 \end{frame}
 
 \section{Deteksjon og mottiltak}
@@ -164,17 +172,21 @@
   Vi valgte Symmetricom SA.45s. 
   \begin{itemize}
     \item Lav vekt og størrelse
-    \item Kortidsstabilitet på rundt ($10^{-11}$)
+    \item Kortidsstabilitet på rundt ($10^{-11}$)s.
     \item Intern frekvensteller og styringsalgoritme
     \item Kommuniserer over RS-232
   \end{itemize}
 \end{frame}
 
-\section{Implementasjon}
-\subsection{Krav}
 \begin{frame}
-  \frametitle{Krav}
-  Følgende krav ble identifisert til systemet:
+\centering
+Implementasjon
+\end{frame}
+
+\section{Implementasjon}
+\subsection{Ønsket funksjonalitet}
+\begin{frame}
+  \frametitle{Ønsket funksjonalitet}
   \begin{itemize}
     \item Kunne detektere angrep hurtig
     \item Ha mulighet for å logge data
@@ -190,7 +202,7 @@
   \frametitle{Sensor server arkitektur}
   \begin{itemize}
     \item Mottaker + Raspberry PI = GPS mottaker med nettverkskort = Sensor
-    \item Eliminerer behovet for lange signalkabler, mulig å bruke et vanlig nettverk:
+    \item Eliminerer behovet for lange signalkabler, bruke nettverk:
     \begin{itemize}
       \item Fiber
       \item Mobilnett (3G og 4G)
@@ -224,6 +236,11 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}
+\centering
+Implementasjon: Klokkemodell
+\end{frame}
+
 \subsubsection{Klokkemodell}
 \begin{frame}
   \frametitle{Klokkemodell}
@@ -234,9 +251,14 @@
     \end{itemize}
     Modellen er logisk en del av serveren og kjører i en egen prosess.
     \begin{itemize}
-      \item Kommuniserer kontinuerlig med atomklokka
-      \item Blir regnet som "moden" etter to dager (konfigurerbart).
+      \item Kommuniserer med atomklokka
+      \item Moden etter to dager (konfigurerbart).
     \end{itemize}
+\end{frame}
+
+\begin{frame}
+\centering
+Implementasjon: Filtre
 \end{frame}
 
 \subsubsection{Filtre}
@@ -244,8 +266,8 @@
   \frametitle{Filtre}
   Filtrene brukes til å detektere avvik. Enten:
         \begin{itemize}
-          \item GPS basert
-          \item Klokkemodell basert
+          \item GPS-basert
+          \item Klokkemodell-basert
         \end{itemize}
   For øyeblikket kun implementert tre filtre:
   \begin{itemize}
@@ -256,24 +278,24 @@
                   \end{itemize}
     \item Fasehoppfilter
                     \begin{itemize}
-                      \item Sammenlikner nåværende fase som rapportert av atomklokka med en pre-konfigurert grense.
+                      \item Sammenlikner nåværende fase med pre-konfigurert grense.
                     \end{itemize}
     \item Frekvenskorreksjonsfilter
                     \begin{itemize}
-                      \item Sammenlikner nåværende styringsverdi med en forventet styringsverdi regnet ut med modellen.
+                      \item Sammenlikner nåværende styringsverdi med en forventet styringsverdi
                     \end{itemize}
   \end{itemize}
   Pre-konfigurerte referanseverdier er basert på et gjennomsnitt kalkulert fra en lengre måleserie.
 \end{frame}
 
-\section{Lokasjon og hastighetsfilter test}
 \begin{frame}
-Det lå i planene å utføre en test med en ekte "spoofer". Dette hadde vi dessverre ikke tilgang til da vi utførte følgende test. Vi manipulerte derfor tidsløsningen ved å bevege antenne.
+\centering
+Test av lokasjon- og hastighetsfilter
+\end{frame}
+
+\section{Test av lokasjon- og hastighetsfilter}
+\begin{frame}
 \frametitle{Oppsett}
-  \begin{itemize}
-    \item Server logger data fra klokka
-    \item Sensorer logger data fra GPS
-  \end{itemize}
   \subsection{Beskrivelse}
       \begin{figure}
         \includegraphics[scale=0.25]{thesis/graphics/server_layout.eps}
@@ -282,11 +304,7 @@ Det lå i planene å utføre en test med en ekte "spoofer". Dette hadde vi dessv
 \end{frame}
 
 \begin{frame}
-\frametitle{Oppsett: måleutstyr}
-  \begin{itemize}
-    \item CNT-91 måler 1 PPS ut fra CSAC
-    \item CNT-91 bruker 10 MHz fra tidslabb som referanse
-  \end{itemize}
+\frametitle{Oppsett}
       \begin{figure}
         \includegraphics[scale=0.25]{thesis/graphics/measure_setup.pdf}
         \caption{Oppsett av måleutstyr}
@@ -302,36 +320,13 @@ Det lå i planene å utføre en test med en ekte "spoofer". Dette hadde vi dessv
 \end{frame}
 
 \begin{frame}
-  \frametitle{Oppsett: grenseverdier for filter}
-    \begin{table}[!htb]
-      \centering
-      \caption{Filter grenser}
-      \label{gps_filter_table}
-        \begin{tabular}{|l|l|l|}
-        \hline
-        \multicolumn{1}{|c|}{} & \multicolumn{1}{c|}{Sensor one} & \multicolumn{1}{c|}{Sensor two}         \\ \hline
-        Høyde referanse                 & 123.8$^{\circ}$ & 122.427$^{\circ}$                            \\ \hline
-        Lengdegrad referanse                & 1102.1948$^{\circ}$ & 1102.1934$^{\circ}$                     \\ \hline
-        Breddegrad referanse                 & 5958.5448$^{\circ}$ & 5958.5231$^{\circ}$                     \\ \hline
-        Hastighet referanse                    & 0 knot        & 0 knot                                       \\ \hline
-        Høyde avvik                 & 10$^{\circ}$        & 10$^{\circ}$                            \\ \hline
-        Lengdegrad avvik                & 0.005$^{\circ}$     & 0.005$^{\circ}$                         \\ \hline
-        Breddegrad avvik                 & 0.005$^{\circ}$     & 0.005$^{\circ}$                         \\ \hline
-        Hastighet avvik                    & 10 knot        & 10 knot                                     \\ \hline
-        \end{tabular}
-    \end{table}
-\end{frame}
-
-\begin{frame}
 \frametitle{Utførelse}
-Sekund 0 er 10:48.
       \begin{itemize}
-        \item 10:58 - 600s: Beveget antenne 1 mot antenne 2
-        \item 11:07 - 1140s: Beveget antenne 2 mot antenne 1
-        \item 11:12 - 1560s: Viftet antenne 1 rundt i en halvsirkel
-        \item 11:18 - 1800s: Viftet antenne 2 rundt i en halvsirkel
-        \item 11:20 - 1920s: Dekket antenne 1 med aluminiumsfolie
-        \item 11:25 - 2220s: Dekket antenne 2 med aluminiumsfolie
+        \item Flyttet antenne 1 mot antenne 2
+        \item Flyttet antenne 2 mot antenne 1
+        \item Viftet antenne 1 rundt i en halvsirkel
+        \item Viftet antenne 2 rundt i en halvsirkel
+        \item Dekket antennene
       \end{itemize}
 \end{frame}
 
@@ -345,72 +340,14 @@ Sekund 0 er 10:48.
 \end{center}
 \end{frame}
 
-\begin{frame}[fragile]
-\frametitle{Observasjon: Server log}
-Utdrag fra server log:
-      \begin{lstlisting}[basicstyle=\ttfamily\tiny]
-        [10/10/16 - 10:59:17] [ ALARM ] Sensor 1 triggered LS filter!
-        [10/10/16 - 11:04:35] [ ALARM ] Sensor 1 cleared LS filter!
-        [10/10/16 - 11:08:27] [ ALARM ] Sensor 2 triggered LS filter!
-        [10/10/16 - 11:13:43] [ ALARM ] Sensor 2 cleared LS filter!
-        [10/10/16 - 11:22:03] [ ALARM ] Sensor 1 triggered LS filter!
-        [10/10/16 - 11:29:21] [ ALARM ] Sensor 1 cleared LS filter!
-        [10/10/16 - 11:27:31] [ ALARM ] Sensor 2 triggered LS filter!
-        [10/10/16 - 11:34:16] [ ALARM ] Sensor 2 cleared LS filter!
-        [10/10/16 - 11:34:17] [ ALARM ] Sensor 2 triggered LS filter!
-        [10/10/16 - 11:34:20] [ ALARM ] Sensor 2 cleared LS filter!
-      \end{lstlisting} 
-\begin{itemize}
-  \item Ingen falske positive.
-  \item Hastighetsfilteret ble ikke utløst
-\end{itemize}
-\end{frame}
-
 \begin{frame}
-\frametitle{Observasjon: GPS log Sensor 1}
-  \subsection{Observasjon}
-    \vspace{-40pt}
-    \begin{columns}
-      \column{0.5\textwidth}
-      \begin{figure}
-        \includegraphics[scale=0.40]{thesis/graphics/gnssAlt1-1.png}
-      \end{figure}
-      \vspace{-30pt}
-      \begin{figure}
-        \includegraphics[scale=0.40]{thesis/graphics/gnssLat1-1.png}
-      \end{figure}
-      \column{0.5\textwidth}
-      \begin{figure}
-        \includegraphics[scale=0.40]{thesis/graphics/gnssLong1-1.png}
-      \end{figure}
-      \vspace{-30pt}
-      \begin{figure}
-        \includegraphics[scale=0.40]{thesis/graphics/gnssSpeed1-1.png}
-      \end{figure}
-    \end{columns}  
-\end{frame}
-
-\begin{frame}
-\frametitle{Observasjon: GPS log Sensor 2}
-    \vspace{-40pt}
-    \begin{columns}
-      \column{0.5\textwidth}
-      \begin{figure}
-        \includegraphics[scale=0.40]{thesis/graphics/gnssAlt2-1.png}
-      \end{figure}
-      \vspace{-30pt}
-      \begin{figure}
-        \includegraphics[scale=0.40]{thesis/graphics/gnssLat2-1.png}
-      \end{figure}
-      \column{0.5\textwidth}
-      \begin{figure}
-        \includegraphics[scale=0.40]{thesis/graphics/gnssLong2-1.png}
-      \end{figure}
-      \vspace{-30pt}
-      \begin{figure}
-        \includegraphics[scale=0.40]{thesis/graphics/gnssSpeed2-1.png}
-      \end{figure}
-    \end{columns}  
+\frametitle{Observasjon}
+      \begin{itemize}
+        \item Ingen falske positive
+        \item GPS log korrelerer
+        \item Server log korrelerer
+        \item Frekvensmåling korrelerer
+      \end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -421,116 +358,52 @@ Utdrag fra server log:
       \end{figure}
 \end{frame}
 
-\section{Klokkemodell test}
+\begin{frame}
+\centering
+Test av klokkemodell og filtre
+\end{frame}
+
+\section{Test av klokkemodell og filtre}
 \begin{frame}
 \frametitle{Oppsett}
   \begin{itemize}
     \item Testet klokkemodellen og styring.
-    \item Justerte ned grenseverdi for hastighet
-    \item Tok bare med en Sensor da fokus var på klokkemodell.
+    \item Tok bare med en sensor da fokus var på klokkemodell.
+    \item Justerte grenseverdier
   \end{itemize}
-\end{frame}
-
-\subsection{Beskrivelse}
-\begin{frame}
-  \frametitle{Oppsett: grenseverdier for filter}
-    \begin{columns}
-    \column{0.5\textwidth}
-      \begin{table}[!htb]
-      \centering
-        \caption{Grenseverdier for lokasjon og hastighetsfilter}
-        \label{gps_filter_table2}
-          \resizebox{0.9\textwidth}{!}{\begin{tabular}{|l|l|l|}
-            \hline
-            \multicolumn{1}{|c|}{Config value} & \multicolumn{1}{c|}{Sensor 2} \\ \hline
-            Høyde referanse                 & 122.427$^{\circ}$             \\ \hline
-            Lengdegrad referanse                & 1102.1934$^{\circ}$           \\ \hline
-            Breddegrad referanse                 & 5958.5231$^{\circ}$           \\ \hline
-            Hastighet referanse                    & 0 knot                        \\ \hline
-            Høyde avvik                 & 10$^{\circ}$                  \\ \hline
-            Lengdegrad avvik                & 0.005$^{\circ}$               \\ \hline
-            Breddegrad avvik                 & 0.005$^{\circ}$               \\ \hline
-            Hastighet avvik                    & 1 knot                             \\ \hline
-          \end{tabular}}
-      \end{table}
-
-      \column{0.5\textwidth}
-
-      \begin{table}[!htb]
-      \centering
-      \caption{Klokkemodell konfigurasjon}
-      \label{clock_filter_table}
-       \resizebox{0.7\textwidth}{!}{\begin{tabular}{|l|l|}
-          \hline
-          Phase limit      & 50     \\ \hline
-          Steer limit      & 50     \\ \hline
-          Time constant    & 10000  \\ \hline
-          Warmup time      & 2      \\ \hline
-          Prediction limit & 200    \\ \hline
-        \end{tabular}}
-      \end{table}
-    \end{columns}
 \end{frame}
 
 \begin{frame}
 \frametitle{Utførelse}
       \begin{itemize}
-        \item 13:12:00 - 125s: Beveget antenne 2 mot nord
-        \item 13:23:00 - 785s: Viftet antenne 1 rundt i en halvsirkel
-        \item 13:23:45 - 830s: Stoppet bevegelse
-        \item 13:27:00 - 1070s: Aktiverte disiplinering av klokka manuelt
+        \item Flyttet antenne 
+        \item Viftet antenne rundt i en halvsirkel
+        \item Aktiverte disiplinering av klokka manuelt
       \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]
-\frametitle{Observasjon: Server log}
-Utdrag fra server log:
-    \begin{lstlisting}[basicstyle=\ttfamily\tiny]
-      [10/24/16 - 13:12:10] [ ALARM ] Sensor 2 triggered LS filter!
-      [10/24/16 - 13:12:42] [ ALARM ] Steer > predicted!
-      [10/24/16 - 13:19:54] [ ALARM ] Sensor 2 cleared LS filter!
-      [10/24/16 - 13:23:12] [ ALARM ] Sensor 2 triggered LS filter!
-      [10/24/16 - 13:23:13] [ ALARM ] Sensor 2 cleared LS filter!
-      [10/24/16 - 13:23:15] [ ALARM ] Sensor 2 triggered LS filter!
-      [10/24/16 - 13:23:43] [ ALARM ] Sensor 2 cleared LS filter!
-    \end{lstlisting} 
-\begin{itemize}
-  \item Ingen falske positive
-  \item Frekvenskorreksjonsfilteret utløst
-\end{itemize}
+\begin{frame}
+\frametitle{Observasjon}
+      \begin{itemize}
+        \item Ingen falske positive
+        \item GPS log korrelerer
+        \item Server log korrelerer
+        \item Frekvensmåling korrelerer
+      \end{itemize}
 \end{frame}
 
 \begin{frame}
 \subsection{Observasjon}
-\frametitle{Observasjon: GPS log}
-        \begin{figure}
-        \includegraphics[scale=0.8]{thesis/graphics/20161024-test2-sensor2-multipanel-1-1.png}
-        \caption{Lengdegrad og breddegrad}
-      \end{figure}
-\end{frame}
-
-\begin{frame}
-\frametitle{Observasjon: GPS log}
-        \begin{figure}
-        \includegraphics[scale=0.8]{thesis/graphics/20161024-test2-sensor2-multipanel-1-2.png}
-        \caption{Høyde og hastighet}
-      \end{figure}
-\end{frame}
-
-\begin{frame}
-\frametitle{Observasjon: Målesystem}
-      \begin{figure}
-        \includegraphics[scale=0.70]{thesis/graphics/20161024-test2-telemetry-and-cnt91-combined-1-1.png}
-        \caption{Måleserie gjort under klokkemodell test}
-      \end{figure}
-\end{frame}
-
-\begin{frame}
-\frametitle{Observasjon: Målesystem}
+\frametitle{Observasjon}
       \begin{figure}
         \includegraphics[scale=0.70]{thesis/graphics/20161024-test2-telemetry-and-cnt91-combined-1-2.png}
         \caption{Måleserie gjort under klokkemodell test}
       \end{figure}
+\end{frame}
+
+\begin{frame}
+\centering
+Konklusjon
 \end{frame}
 
 \section{Konklusjon}
@@ -549,7 +422,12 @@ Utdrag fra server log:
   \end{itemize}
 \end{frame}
 
-\section{I ettertid}
+\begin{frame}
+\centering
+Etter innlevering
+\end{frame}
+
+\section{Etter innlevering}
 \begin{frame}
   \begin{itemize}
   \item Kommunikasjon med atomklokke
