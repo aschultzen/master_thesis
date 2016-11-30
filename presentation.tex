@@ -17,20 +17,13 @@
 {Spoof proof GPS timing}
 \subtitle{A detection and mitigation system for GPS time spoofing}
 \author[A. Schultzen] % (optional, for multiple authors)
-{A.~Schultzen\inst{1}$^{,}$\inst{3}}
+{A.~Schultzen\inst{1}}
 \institute[Universities Here and There] % (optional)
 {
   \inst{1}%
-  Department of Informatics\\
-  University of Oslo
-  \and
-  \inst{3}
-  UNIK\\
-  University Graduate Center
+  Institutt for informatikk\\
+  Universitetet i Oslo
 }
-\date[KPT 2004] % (optional)
-{Conference on Presentation Techniques, 2004}
-\subject{Computer Science}
 
 \date{\today}
 \usetheme{Marburg}
@@ -45,11 +38,21 @@
 
 \section{Introduksjon}
 \begin{frame}
-\frametitle{Bruksområder for GPS timing}
-	\subsection{Bruksområder for GPS timing}
-  GPS timing er timing generert av GPS disiplinerte klokker. Eksempler på bruksområder er:
+\frametitle{GPS timing}
+	\subsection{GPS timing}
   \begin{itemize}
-    \item Tidsstempling av transaksjoner på Internett .
+    \item Bare tre satellitter \textit{egentlig} nødvendig for å finne sin posisjon.
+    \item Fjerde satellitt brukes for å korrigere klokka.    
+    \item GPS mottakeren er nå synkronisert med atomklokkene i GPS satellittene.
+    \item GPS timing er klokker disiplinert av GPS.
+  \end{itemize}
+  \begin{itemize}
+    \item Tidsstempling 
+    \begin{itemize}
+      \item E-handel
+      \item Høyhastighets aksjehandel
+      \item Logging etc.
+    \end{itemize}
     \item Fasemålinger i kraftnett.
     \item Telekommunikasjon.
   \end{itemize}
@@ -71,7 +74,7 @@
   \frametitle{Trusler mot GPS timing}
   \begin{itemize}
     \item Jamming. 
-    \item Narring.
+    \item Narring ("spoofing").
     \begin{itemize}
       \item Replay.
       \item Data-nivå. 
@@ -81,7 +84,7 @@
   \end{itemize}    
 \end{frame}
 
-\subsubsection{Referansenarrer}
+\subsubsection{Referansetrussel}
 \begin{frame}
   \frametitle{"The Civil GPS Spoofer"}
   \begin{figure}
@@ -91,8 +94,8 @@
   "The Civil GPS Spoofer"
   \begin{itemize}
     \item Laget et av et team fra \textit{The University of Texas at Austin} i 2012 \cite{EVPMUGA}
-    \item Implementert i SDR
-    \item Kan lage opptil 14 "falske" L1 C/A signaler
+    \item Implementert i Software definert radio
+    \item Simulere opptil 14 "falske" satellitter.
   \end{itemize}
 \end{frame}
 
@@ -106,24 +109,32 @@
   \end{itemize}
 \end{frame}
 
-\section{Mottiltak}
+\section{Deteksjon og mottiltak}
 \begin{frame}
-\frametitle{Mottiltak}
+\frametitle{Deteksjon og mottiltak}
   \begin{itemize}
-    \item Bruke flere GPS mottakere.
-    \item Bruke stabil klokke som referanse.
+    \item Deteksjon
+    \begin{itemize}
+      \item Bruke flere GPS mottakere med kjent posisjon.
+      \item Bruke stabil klokke som referanse.
+    \end{itemize}
+    \item Mottiltak: Bruke klokke som tidskilde.
   \end{itemize}
 \end{frame}
 
 \subsection{Flere GPS mottakere}
 \begin{frame} 
-  \frametitle{Bruke flere GPS mottakere}
-  Gitt følgende scenario hvor en bruker tre GPS mottakere:
+  \frametitle{Flere GPS mottakere og kjent posisjon}
   \begin{itemize}
-    \item \textbf{Ingen av mottakerne er narret:} Hver mottakers løste posisjon er lik deres respektive kjente posisjoner. Alle løser samme tid.
-    \item \textbf{En eller flere mottakere er narret:} Hvis en mottaker er narret, vil den løse annen tid en de/den som ikke er narret. Er flere enn en men ikke alle narret, vil de narrede også løse samme sted.
-    \item \textbf{Alle mottakerne er narret:} Alle mottakerne løser samme posisjon og klokkebias.
+    \item En GPS mottakere med ukjent posisjon: Lett
+    \item En GPS mottakere med kjent posisjon: Gjennomførbart
+    \item To GPS mottakere med kjent posisjon: Svært komplisert
+    \begin{itemize}
+      \item Minimum en mottakere løser feil posisjon.
+      \item Med mindre narren er like langt fra begge, forskjell i tidsløsning.  
+    \end{itemize}
   \end{itemize}
+  Kompleksiteten øker for hver GPS mottaker som legges til.
 \end{frame}
 
 \subsection{Referanseklokke}
@@ -154,54 +165,59 @@
   \frametitle{Krav}
   Følgende krav ble identifisert til systemet:
   \begin{itemize}
-    \item Kunne detektere at angrep hurtig
+    \item Kunne detektere angrep hurtig
     \item Ha mulighet for å logge data
     \item Rask og enkel tilgang til innsamlet data
-    \item Ha støtte for mange GPS mottakere
+    \item Enkelt kunne koble til flere GPS mottakere
     \item Kunne administreres over nettverk
     \item Konfigurerbar 
   \end{itemize}
 \end{frame}
 
-\subsection{Implementasjon}
+\subsection{Klient/Server arkitektur}
 \begin{frame}
-  \frametitle{Atomic Clock Controller Software}
-  \begin{itemize}
-    \item Klient/Server modell
-    \item Filtre
-    \item Klokkemodell
-    \item Klokkestyring
-  \end{itemize}
-\end{frame}
-
-\subsubsection{Klient/Server modell}
-\begin{frame}
-  \frametitle{Klient/Server modell}
+  \frametitle{Klient/Server arkitektur}
   \begin{itemize}
     \item Mottaker + Raspberry PI = Sensor
-    \item Antall mottakere begrenset av serverens CPU og RAM
     \item Eliminerer behovet for lange signalkabler, mulig å bruke et vanlig nettverk:
     \begin{itemize}
       \item Fiber
       \item Mobilnett (3G og 4G)
       \item WiFi
     \end{itemize}
+    \item Antall mottakere begrenset av serverens maskinvare.
   \end{itemize}
 \end{frame}
 
 \begin{frame}
-\frametitle{Klient/Server modell}
+  \frametitle{Klient/Server arkitektur}
   \begin{itemize}
-    \item Klienten kobler til Serveren
-    \item Klienten sender utvalgt NMEA (GPS data) til server
-    \item Server analyserer (filtrerer mottatt data) sammenlikner med:
-    \begin{itemize}
-      \item Klokkemodell: Forventede styringsverdier
-      \item Lokasjon: Forventet lokasjons og hastighet.   
-    \end{itemize}
-    \item Styrer klokka etter klokkemodellen ved detektert angrep
+    \item 3000 linjer med C99 kode
+    \item Håndterer av/pålogging av klienter
+    \item En prosess per pålogging
+    \item Delt minne mellom prosesser
+      \begin{itemize}
+        \item Semaforer og barrierer for beskyttelse
+      \end{itemize}
+    \item Mulighet for brukere å koble på og gi kommandoer, f.eks:
+      \begin{itemize}
+        \item Rapporterer lokasjon og tid
+        \item Rapportere server status
+        \item Rapportere filterstatus
+        \item Lagre og gjenopprette tilstand i sensorer
+        \item Laste inn nye lokasjonsdata
+      \end{itemize}
   \end{itemize}
 \end{frame}
+
+\subsubsection{Klokkemodell}
+\begin{frame}
+\end{frame}
+
+\subsubsection{Filtre}
+\begin{frame}
+\end{frame}
+
 
 \section{Lokasjon og hastighetsfilter test}
 \begin{frame}
@@ -467,6 +483,25 @@ Utdrag fra server log:
         \includegraphics[scale=0.70]{thesis/graphics/20161024-test2-telemetry-and-cnt91-combined-1-2.png}
         \caption{Måleserie gjort under klokkemodell test}
       \end{figure}
+\end{frame}
+
+\section{Ikke løste problemer}
+\begin{frame}
+  \begin{itemize}
+  \item Kommunikasjon med atomklokke
+    \frametitle{Ikke løste problemer}
+    \begin{itemize}
+      \item Antatt å ha vært et problem med konfigurasjonen av serialport.
+      \item Systematisk feilsøkt etter innlevering. Forsøkt:
+      \begin{itemize}
+        \item Forskjellige kabler
+        \item Forskjellige datamaskiner
+        \item Verifisert med "serial port sniffer", riktig kommando sendes.
+      \end{itemize}
+      \item Kan være et fastvare problem
+    \end{itemize}
+  \item GPS filter ikke ferdig integrert.
+  \end{itemize}
 \end{frame}
 
 \section{Konklusjon}
