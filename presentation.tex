@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage{wrapfig}
 \usepackage{tikz}  
+\usepackage[norsk]{babel}
 
 \usepackage[
     backend=biber,
@@ -43,9 +44,8 @@
 \frametitle{GPS timing}
 	\subsection{GPS timing}
   \begin{itemize}
-    \item Bare tre satellitter \textit{egentlig} nødvendig for å finne sin posisjon.
-    \item Fjerde satellitt brukes for å korrigere klokka.    
-    \item GPS mottakeren er nå synkronisert med atomklokkene i GPS satellittene.
+    \item Tre satellitter \textit{egentlig} nødvendig.
+    \item Fjerde satellitt gir synkronisert klokke.   
     \item GPS timing er klokker disiplinert av GPS.
   \end{itemize}
   \begin{itemize}
@@ -74,7 +74,7 @@ Utfordringer:
     \item Kjent kodestruktur.
     \item Naive mottakere.
   \end{itemize}
-  Terror mulig motiv for:
+  Terror, sabotasje mulig motiv for:
   \begin{itemize}
     \item Jamming.
     \item Spoofing.
@@ -139,7 +139,7 @@ Deteksjon og mottiltak
     \item To GPS mottakere med kjent posisjon: Svært komplisert
     \begin{itemize}
       \item Minimum en mottakere løser feil posisjon.
-      \item Med mindre narren er like langt fra begge, forskjell i tidsløsning.  
+      \item Med mindre "spooferen" er like langt fra begge, forskjell i tidsløsning.  
     \end{itemize}
   \end{itemize}
   Kompleksiteten øker for hver GPS mottaker som legges til.
@@ -172,9 +172,9 @@ Deteksjon og mottiltak
   Vi valgte Symmetricom SA.45s. 
   \begin{itemize}
     \item Lav vekt og størrelse
-    \item Kortidsstabilitet på rundt ($10^{-11}$)s.
+    \item Kortidsstabilitet på rundt $10^{-11}$ sekunder.
     \item Intern frekvensteller og styringsalgoritme
-    \item Kommuniserer over RS-232
+    \item Kommuniserer telemetri over RS-232
   \end{itemize}
 \end{frame}
 
@@ -188,11 +188,11 @@ Implementasjon
 \begin{frame}
   \frametitle{Ønsket funksjonalitet}
   \begin{itemize}
-    \item Kunne detektere angrep hurtig
-    \item Ha mulighet for å logge data
+    \item Detektere angrep hurtig
+    \item Mulighet for å logge data
     \item Rask og enkel tilgang til innsamlet data
-    \item Enkelt kunne koble til flere GPS mottakere
-    \item Kunne administreres over nettverk
+    \item Enkelt koble til flere GPS mottakere
+    \item Administreres over nettverk
     \item Konfigurerbar 
   \end{itemize}
 \end{frame}
@@ -201,7 +201,7 @@ Implementasjon
 \begin{frame}
   \frametitle{Sensor server arkitektur}
   \begin{itemize}
-    \item Mottaker + Raspberry PI = GPS mottaker med nettverkskort = Sensor
+    \item Mottaker + Raspberry PI = Sensor
     \item Eliminerer behovet for lange signalkabler, bruke nettverk:
     \begin{itemize}
       \item Fiber
