@@ -1,0 +1,53 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{:Author: Aril Schultzen}
+\PYG{l+s+sd}{:Email: aschultzen@gmail.com }
+\PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+
+\PYG{k+kn}{import} \PYG{n+nn}{ctypes}
+\PYG{k+kn}{import} \PYG{n+nn}{fileinput}
+\PYG{k+kn}{import} \PYG{n+nn}{sys}
+\PYG{k+kn}{import} \PYG{n+nn}{datetime}
+\PYG{k+kn}{import} \PYG{n+nn}{time}
+\PYG{k+kn}{import} \PYG{n+nn}{io}
+\PYG{k+kn}{import} \PYG{n+nn}{os}
+\PYG{k+kn}{import} \PYG{n+nn}{serial}
+\PYG{k+kn}{import} \PYG{n+nn}{jdutil}
+
+
+\PYG{k}{def} \PYG{n+nf}{get\PYGZus{}today\PYGZus{}mjd}\PYG{p}{():}
+    \PYG{n}{today} \PYG{o}{=} \PYG{n}{datetime}\PYG{o}{.}\PYG{n}{datetime}\PYG{o}{.}\PYG{n}{utcnow}\PYG{p}{()}
+    \PYG{k}{return} \PYG{n}{jdutil}\PYG{o}{.}\PYG{n}{jd\PYGZus{}to\PYGZus{}mjd}\PYG{p}{(}\PYG{n}{jdutil}\PYG{o}{.}\PYG{n}{datetime\PYGZus{}to\PYGZus{}jd}\PYG{p}{(}\PYG{n}{today}\PYG{p}{))}
+
+
+\PYG{k}{def} \PYG{n+nf}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{message}\PYG{p}{):}
+    \PYG{n}{current\PYGZus{}time} \PYG{o}{=} \PYG{n}{datetime}\PYG{o}{.}\PYG{n}{datetime}\PYG{o}{.}\PYG{n}{now}\PYG{p}{()}\PYG{o}{.}\PYG{n}{time}\PYG{p}{()}
+    \PYG{n}{complete\PYGZus{}message} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}[\PYGZdq{}} \PYG{o}{+} \PYG{n+nb}{str}\PYG{p}{(}
+        \PYG{n}{current\PYGZus{}time}\PYG{o}{.}\PYG{n}{isoformat}\PYG{p}{(}
+        \PYG{p}{))} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}] \PYGZdq{}} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}[\PYGZdq{}} \PYG{o}{+} \PYG{n}{message} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}]\PYGZdq{}}
+    \PYG{k}{print}\PYG{p}{(}\PYG{n}{complete\PYGZus{}message}\PYG{p}{)}
+
+
+\PYG{k}{def} \PYG{n+nf}{main\PYGZus{}routine}\PYG{p}{():}
+    \PYG{n}{log\PYGZus{}file} \PYG{o}{=} \PYG{n+nb}{open}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}dp.txt\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}a+\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Started CSAC logging script\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{ser} \PYG{o}{=} \PYG{n}{serial}\PYG{o}{.}\PYG{n}{Serial}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}/dev/ttyUSB0\PYGZdq{}}\PYG{p}{,} \PYG{l+m+mi}{57600}\PYG{p}{,} \PYG{n}{timeout}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{)}
+    \PYG{n}{sio} \PYG{o}{=} \PYG{n}{io}\PYG{o}{.}\PYG{n}{TextIOWrapper}\PYG{p}{(}
+        \PYG{n}{io}\PYG{o}{.}\PYG{n}{BufferedRWPair}\PYG{p}{(}\PYG{n}{ser}\PYG{p}{,}
+                          \PYG{n}{ser}\PYG{p}{),}
+        \PYG{n}{encoding}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}ascii\PYGZsq{}}\PYG{p}{,}
+     \PYG{n}{newline}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+se}{\PYGZbs{}r}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+
+    \PYG{k}{while}\PYG{p}{(}\PYG{n+nb+bp}{True}\PYG{p}{):}
+        \PYG{n}{log\PYGZus{}file} \PYG{o}{=} \PYG{n+nb}{open}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}dp.txt\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}a+\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{ser}\PYG{o}{.}\PYG{n}{write}\PYG{p}{(}\PYG{n}{b}\PYG{l+s+s1}{\PYGZsq{}\PYGZca{}\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{time}\PYG{o}{.}\PYG{n}{sleep}\PYG{p}{(}\PYG{l+m+mf}{0.1}\PYG{p}{)}
+        \PYG{n}{telemetry} \PYG{o}{=} \PYG{n}{sio}\PYG{o}{.}\PYG{n}{readline}\PYG{p}{()}
+        \PYG{n}{output} \PYG{o}{=} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n}{get\PYGZus{}today\PYGZus{}mjd}\PYG{p}{())} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{},\PYGZdq{}} \PYG{o}{+} \PYG{n}{telemetry}
+        \PYG{n}{log\PYGZus{}file}\PYG{o}{.}\PYG{n}{write}\PYG{p}{(}\PYG{n}{output}\PYG{p}{)}
+        \PYG{n}{log\PYGZus{}file}\PYG{o}{.}\PYG{n}{close}\PYG{p}{()}
+        \PYG{n}{time}\PYG{o}{.}\PYG{n}{sleep}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}
+
+\PYG{k}{if} \PYG{n}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}\PYGZsq{}}\PYG{p}{:}
+    \PYG{n}{main\PYGZus{}routine}\PYG{p}{()}
+\end{Verbatim}

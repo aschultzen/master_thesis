@@ -1,0 +1,17 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}ifndef CONFIG\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}H}
+
+\PYG{c+cp}{\PYGZsh{}define FORMAT\PYGZus{}INT \PYGZdq{}\PYGZpc{}d\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define FORMAT\PYGZus{}FLOAT \PYGZdq{}\PYGZpc{}f\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define FORMAT\PYGZus{}STRING \PYGZdq{}\PYGZpc{}s\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define FORMAT\PYGZus{}DOUBLE \PYGZdq{}\PYGZpc{}lf\PYGZdq{}}
+
+\PYG{k}{struct} \PYG{n}{config\PYGZus{}map\PYGZus{}entry} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{entry\PYGZus{}name}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{modifier}\PYG{p}{;}
+    \PYG{k+kt}{void} \PYG{o}{*}\PYG{n}{destination}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !CONFIG\PYGZus{}H */}
+\end{Verbatim}

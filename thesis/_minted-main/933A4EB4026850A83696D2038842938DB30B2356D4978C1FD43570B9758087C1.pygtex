@@ -1,0 +1,18 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k+kt}{void} \PYG{n+nf}{remove\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{id}\PYG{p}{)}
+    \PYG{p}{\PYGZob{}}
+        \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{p}{;}
+        \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{temp\PYGZus{}remove}\PYG{p}{;}
+
+        \PYG{n}{sem\PYGZus{}wait}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+        \PYG{n}{list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{p}{,}
+                                 \PYG{n}{temp\PYGZus{}remove}\PYG{p}{,}\PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{,}
+                                 \PYG{n}{list}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id} \PYG{o}{==} \PYG{n}{id}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{list\PYGZus{}del}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{number\PYGZus{}of\PYGZus{}clients}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+        \PYG{n}{sem\PYGZus{}post}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+    \PYG{p}{\PYGZcb{}}
+\end{Verbatim}

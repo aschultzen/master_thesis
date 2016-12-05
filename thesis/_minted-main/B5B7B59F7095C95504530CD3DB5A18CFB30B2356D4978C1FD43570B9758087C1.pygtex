@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYG{k}{static} \PYG{k+kt}{int} \PYG{n+nf}{parse\PYGZus{}input}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cte}\PYG{p}{)\PYGZob{}}
+    \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{incoming} \PYG{o}{=} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{.}\PYG{n}{iobuffer}\PYG{p}{;}
+  \PYG{p}{...}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}IDENTIFY} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}IDENTIFY}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+          \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}IDENTIFY}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),}\PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}IDENTIFY}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+\end{Verbatim}

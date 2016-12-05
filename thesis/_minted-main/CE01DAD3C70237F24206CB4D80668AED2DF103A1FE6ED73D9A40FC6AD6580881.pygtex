@@ -1,0 +1,28 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}ifndef COLORS\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define COLORS\PYGZus{}H}
+
+\PYG{c+cm}{/* RESET */}
+\PYG{c+cp}{\PYGZsh{}define RESET \PYGZdq{}\PYGZbs{}033[0m\PYGZdq{}}
+
+\PYG{c+cm}{/* COLORS */}
+\PYG{c+cp}{\PYGZsh{}define BLK\PYGZus{}WHT \PYGZdq{}\PYGZbs{}033[030;47m\PYGZdq{}}
+
+\PYG{c+cm}{/* BOLD */}
+\PYG{c+cp}{\PYGZsh{}define BOLD\PYGZus{}BLK\PYGZus{}WHT \PYGZdq{}\PYGZbs{}033[1;30;47m\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define BOLD\PYGZus{}GRN\PYGZus{}BLK \PYGZdq{}\PYGZbs{}033[1;32;40m\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define BOLD\PYGZus{}RED\PYGZus{}BLK \PYGZdq{}\PYGZbs{}033[1;31;40m\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define BOLD\PYGZus{}YLW\PYGZus{}BLK \PYGZdq{}\PYGZbs{}033[1;33;40m\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define BOLD\PYGZus{}CYN\PYGZus{}BLK \PYGZdq{}\PYGZbs{}033[1;36;40m\PYGZdq{}}
+
+\PYG{c+cm}{/* BOLD INVERTED*/}
+\PYG{c+cp}{\PYGZsh{}define BOLD\PYGZus{}BLK\PYGZus{}GRN \PYGZdq{}\PYGZbs{}033[7;32;40m\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define BOLD\PYGZus{}BLK\PYGZus{}RED \PYGZdq{}\PYGZbs{}033[7;31;40m\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define BOLD\PYGZus{}BLK\PYGZus{}YLW \PYGZdq{}\PYGZbs{}033[7;33;40m\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define BOLD\PYGZus{}WHT\PYGZus{}CYN \PYGZdq{}\PYGZbs{}033[1;37;46m\PYGZdq{}}
+
+\PYG{c+cm}{/* UNDERLINED */}
+\PYG{c+cp}{\PYGZsh{}define UNDER\PYGZus{}RED\PYGZus{}BLACK \PYGZdq{}\PYGZbs{}033[4;031;40m\PYGZdq{}}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !COLORS\PYGZus{}H */}
+\end{Verbatim}

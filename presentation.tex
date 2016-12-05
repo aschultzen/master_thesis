@@ -33,36 +33,44 @@
 \begin{document}
 
 \frame{\titlepage}
-\begin{frame}
-\frametitle{Agenda}
-\section *{Agenda}
-\tableofcontents
-\end{frame}
 
 \section{Introduksjon}
+  \frametitle{Introduksjon}
 \begin{frame}
-\frametitle{GPS timing}
-	\subsection{GPS timing}
-  \begin{itemize}
-    \item Tre satellitter \textit{egentlig} nødvendig.
-    \item Fjerde satellitt gir synkronisert klokke.   
-    \item GPS timing er klokker disiplinert av GPS.
-  \end{itemize}
-  \begin{itemize}
-    \item Tidsstempling 
-    \begin{itemize}
-      \item E-handel
-      \item Høyhastighets aksjehandel
-      \item Logging etc.
-    \end{itemize}
-    \item Fasemålinger i kraftnett.
-    \item Telekommunikasjon.
-  \end{itemize}
+  Laget et rammeverk for å teste forskjellige spoofing deteksjonsalgoritmer. Ikke gjort før.
 \end{frame}
 
+\subsection{GPS timing}
 \begin{frame}
-\centering
-Utfordringer og trusler
+\frametitle{GPS timing}
+  \begin{figure}
+  \vspace{-30pt}
+      \includegraphics[scale=0.17]{thesis/graphics/trilaterate.pdf}
+      \caption{Trilaterasjon}
+    \end{figure}
+\end{frame}
+
+\subsection{Anvendelse}
+\begin{frame}
+\frametitle{GPS timing}
+  \begin{columns}
+    \column{0.5\textwidth}
+        \begin{figure}
+        \includegraphics[scale=0.045]{thesis/graphics/Cell-Tower.jpg}
+        \caption{Mobilmast \cite{CELLTOWER}}
+      \end{figure}
+    %\begin{itemize}
+    %    \item Tidsstempling 
+    %    \item Fasemålinger i kraftnett.
+    %    \item Telekommunikasjon.
+    %\end{itemize}
+    \column{0.5\textwidth}
+      \vspace{-30pt}
+    \begin{figure}
+        \includegraphics[scale=0.030]{thesis/graphics/New_York_Stock_Exchange,_Wall_Street.jpg}
+        \caption{Wall Street \cite{NEWYORK}}
+      \end{figure}
+  \end{columns}
 \end{frame}
 
 \subsection{Utfordringer og trusler}
@@ -80,11 +88,6 @@ Utfordringer:
     \item Spoofing.
     \item Feil i utstyr.
   \end{itemize}  
-\end{frame}
-
-\begin{frame}
-\centering
-Referansetrusselen
 \end{frame}
 
 \subsubsection{Referansetrusselen}
@@ -110,11 +113,6 @@ Referansetrusselen
     \item Angriper manipulerer signalet.
     \item Angriperen har gjerne et stort spillerom under angrepet da oscillatoren i mottakeren ofte er av lav kvalitet.
   \end{itemize}
-\end{frame}
-
-\begin{frame}
-\centering
-Deteksjon og mottiltak
 \end{frame}
 
 \section{Deteksjon og mottiltak}
@@ -178,11 +176,6 @@ Deteksjon og mottiltak
   \end{itemize}
 \end{frame}
 
-\begin{frame}
-\centering
-Implementasjon
-\end{frame}
-
 \section{Implementasjon}
 \subsection{Ønsket funksjonalitet}
 \begin{frame}
@@ -236,11 +229,6 @@ Implementasjon
   \end{itemize}
 \end{frame}
 
-\begin{frame}
-\centering
-Implementasjon: Klokkemodell
-\end{frame}
-
 \subsubsection{Klokkemodell}
 \begin{frame}
   \frametitle{Klokkemodell}
@@ -254,11 +242,6 @@ Implementasjon: Klokkemodell
       \item Kommuniserer med atomklokka
       \item Moden etter to dager (konfigurerbart).
     \end{itemize}
-\end{frame}
-
-\begin{frame}
-\centering
-Implementasjon: Filtre
 \end{frame}
 
 \subsubsection{Filtre}
@@ -286,11 +269,6 @@ Implementasjon: Filtre
                     \end{itemize}
   \end{itemize}
   Pre-konfigurerte referanseverdier er basert på et gjennomsnitt kalkulert fra en lengre måleserie.
-\end{frame}
-
-\begin{frame}
-\centering
-Test av lokasjon- og hastighetsfilter
 \end{frame}
 
 \section{Test av lokasjon- og hastighetsfilter}
@@ -358,11 +336,6 @@ Test av lokasjon- og hastighetsfilter
       \end{figure}
 \end{frame}
 
-\begin{frame}
-\centering
-Test av klokkemodell og filtre
-\end{frame}
-
 \section{Test av klokkemodell og filtre}
 \begin{frame}
 \frametitle{Oppsett}
@@ -401,11 +374,6 @@ Test av klokkemodell og filtre
       \end{figure}
 \end{frame}
 
-\begin{frame}
-\centering
-Konklusjon
-\end{frame}
-
 \section{Konklusjon}
 \begin{frame}
   \frametitle{Konklusjon}
@@ -420,11 +388,6 @@ Konklusjon
       \item Enkel å bygge ut med flere sensorer
     \end{itemize}
   \end{itemize}
-\end{frame}
-
-\begin{frame}
-\centering
-Etter innlevering
 \end{frame}
 
 \section{Etter innlevering}

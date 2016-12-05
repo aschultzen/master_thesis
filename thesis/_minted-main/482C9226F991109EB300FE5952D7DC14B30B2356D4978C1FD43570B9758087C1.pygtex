@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{struct} \PYG{n}{transmission\PYGZus{}s} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{session\PYGZus{}fd}\PYG{p}{;}
+        \PYG{k+kt}{char} \PYG{n}{iobuffer}\PYG{p}{[}\PYG{n}{IO\PYGZus{}BUFFER\PYGZus{}SIZE}\PYG{p}{];}
+    \PYG{p}{\PYGZcb{};}
+\end{Verbatim}

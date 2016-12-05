@@ -1,0 +1,156 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * @file actions.h}
+\PYG{c+cm}{ * @brief File containing function prototypes and includes for actions.c}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Function prototypes for functions that implements different}
+\PYG{c+cm}{ * actions that a MONITOR or the system can use to manipulate the}
+\PYG{c+cm}{ * state of the SENSORS or print stats or similar.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Be advised that any reference to MONITOR in this file means}
+\PYG{c+cm}{ * a client connected to the server who\PYGZsq{}s role is that of a}
+\PYG{c+cm}{ * monitor of the system and not a monitor like a peripheral}
+\PYG{c+cm}{ * connected to a computer. The names of these roles are under}
+\PYG{c+cm}{ * discussion and will probably be changed to avoid misunderstanding.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * @author Aril Schultzen}
+\PYG{c+cm}{ * @date 9.11.2015}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef ACTIONS\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define ACTIONS\PYGZus{}H}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}sensor\PYGZus{}server.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}serial.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}dirent.h\PYGZgt{}}
+
+\PYG{c+cm}{/** @brief Kicks a client (both MONITOR or SENSOR)}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Marks the client so respond() in session.c can}
+\PYG{c+cm}{ * disconnect it the next time that client transmits}
+\PYG{c+cm}{ * data. The kick is in other words not instant, this}
+\PYG{c+cm}{ * is however an easy way to gracefully disconnect a}
+\PYG{c+cm}{ * client.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * @param client Pointer to the client\PYGZus{}table\PYGZus{}entry for the candidate to be kicked.}
+\PYG{c+cm}{ * @return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{kick\PYGZus{}client}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{client}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Prints clients solved time to MONITOR}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Extracts the time solved by the GPS receiver, transmitted}
+\PYG{c+cm}{ * via NMEA and stored in the client\PYGZus{}table\PYGZus{}struct at the server,}
+\PYG{c+cm}{ * and transmits it to the MONITOR that requested it.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * @param monitor Pointer to MONITOR who made the request.}
+\PYG{c+cm}{ * @param client Pointer to SENSOR whose time was requested.}
+\PYG{c+cm}{ * @return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{print\PYGZus{}client\PYGZus{}time}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{monitor}\PYG{p}{,}
+                       \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{client}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Prints a table of clients to the MONITOR}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Transmits a table of the connected clients to the MONITOR.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * @param monitor Pointer to MONITOR who made the request.}
+\PYG{c+cm}{ * @return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{print\PYGZus{}clients}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{monitor}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Prints table of available commands to requesting MONITOR.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * @param monitor Pointer to MONITOR who made the request.}
+\PYG{c+cm}{ * @return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{print\PYGZus{}help}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{monitor}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Prints location of SENSOR to requesting MONITOR.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Prints a overview of current as well as MIN, MAX and AVERAGE}
+\PYG{c+cm}{ * values of LAT, LON, ALT and SPEED recovered from NMEA.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * @param monitor Pointer to MONITOR who made the request.}
+\PYG{c+cm}{ * @param client Pointer to SENSOR whose location is requested.}
+\PYG{c+cm}{ * @return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{print\PYGZus{}location}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{monitor}\PYG{p}{,}
+                    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{client}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Prints difference between current position and average.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Prints the difference between the current position values}
+\PYG{c+cm}{ * recorded from NMEA, and the calculated averages.}
+\PYG{c+cm}{ * Two sensors in close proximity (100m \PYGZgt{}) should be}
+\PYG{c+cm}{ * subjected to the same noise. If the difference between}
+\PYG{c+cm}{ * sensor A (current\PYGZhy{}avg) and sensor B (current\PYGZhy{}avg) changes,}
+\PYG{c+cm}{ * this could mean that one of them is being spoofed.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * @param monitor Pointer to MONITOR who made the request.}
+\PYG{c+cm}{ * @return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{print\PYGZus{}avg\PYGZus{}diff}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{monitor}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Dumps NMEA data to file for given client}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * @param client Pointer to client whose data should be dumped.}
+\PYG{c+cm}{ * @param filename Pointer to filename.}
+\PYG{c+cm}{ * @param human\PYGZus{}readable Switch to determine if humanly readable data should be made as well.}
+\PYG{c+cm}{ * @return 1 if success, 0 if fail.}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{datadump}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{client}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{filename}\PYG{p}{,}
+             \PYG{k+kt}{int} \PYG{n}{human\PYGZus{}readable}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief List dump files in folder}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * @param monitor Pointer to requesting monitor}
+\PYG{c+cm}{ * @return 1 if success, 0 if fail.}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{listdumps}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{monitor}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Loads NMEA data into the NMEA struct of a given client (target).}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* @param target Pointer to the client whose NMEA data should be loaded}
+\PYG{c+cm}{* from file.}
+\PYG{c+cm}{* @param filename Pointer to the filename of the data file.}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{int} \PYG{n+nf}{loaddata}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{target}\PYG{p}{,}  \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{filename}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Uses the query\PYGZus{}csac.py to communicate with the CSAC.}
+\PYG{c+cm}{*		   Stores the response in a buffer.}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* @param buffer Buffer to store the response}
+\PYG{c+cm}{* @param query Command (query) to send to the CSAC.}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{int} \PYG{n+nf}{query\PYGZus{}csac}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{query}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{buffer}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Uses the query\PYGZus{}csac.py to communicate with the CSAC}
+\PYG{c+cm}{*		   Prints the response from the CSAC back to the client}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* @param monitor Monitor who made the request}
+\PYG{c+cm}{* @param query Command (query) to send to the CSAC.}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{int} \PYG{n+nf}{client\PYGZus{}query\PYGZus{}csac}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{monitor}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{query}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Loads data for the REF\PYGZus{}DEV\PYGZus{}FILTER into the client.}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* @param target Client to load the data into}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{int} \PYG{n+nf}{load\PYGZus{}lsf\PYGZus{}data}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{target}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Prints the current state of the CSAC filter.}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* @param monitor Monitor to print the data to.}
+\PYG{c+cm}{* @return Status of sprintf() used to build string.}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{void} \PYG{n+nf}{print\PYGZus{}cfd}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{monitor}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{update\PYGZus{}count}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Dumps the state of the CSAC filter to file.}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* @param Path to desired file to use.}
+\PYG{c+cm}{* @return 1 if successful, 0 else.}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{int} \PYG{n+nf}{dump\PYGZus{}cfd}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{path}\PYG{p}{);}
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !ACTIONS\PYGZus{}H */}
+\end{Verbatim}

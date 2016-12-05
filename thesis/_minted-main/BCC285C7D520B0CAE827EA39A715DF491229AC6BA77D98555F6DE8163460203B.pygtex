@@ -1,0 +1,80 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * @file sensor\PYGZus{}server.h}
+\PYG{c+cm}{ * @author Aril Schultzen}
+\PYG{c+cm}{ * @date 13.04.2016}
+\PYG{c+cm}{ * @brief File containing function prototypes, structs and includes for sensor\PYGZus{}server.c}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef SENSOR\PYGZus{}SERVER\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define SENSOR\PYGZus{}SERVER\PYGZus{}H}
+
+\PYG{c+cp}{\PYGZsh{}define PATH\PYGZus{}LENGTH\PYGZus{}MAX 1000}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}fcntl.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}sys/stat.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}session.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}serial.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}sensor\PYGZus{}server\PYGZus{}common.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}csac\PYGZus{}filter.h\PYGZdq{}}
+
+\PYG{c+cm}{/*!@struct*/}
+\PYG{c+cm}{/*!@brief Contains configuration values for the server}
+\PYG{c+cm}{*/}
+\PYG{k}{struct} \PYG{n}{server\PYGZus{}config} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{max\PYGZus{}clients}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{warm\PYGZus{}up\PYGZus{}seconds}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{human\PYGZus{}readable\PYGZus{}dumpdata}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{csac\PYGZus{}path}\PYG{p}{[}\PYG{n}{PATH\PYGZus{}LENGTH\PYGZus{}MAX}\PYG{p}{];}
+    \PYG{k+kt}{int} \PYG{n}{logging}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{log\PYGZus{}path}\PYG{p}{[}\PYG{n}{PATH\PYGZus{}LENGTH\PYGZus{}MAX}\PYG{p}{];}
+    \PYG{k+kt}{int} \PYG{n}{csac\PYGZus{}logging}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{csac\PYGZus{}log\PYGZus{}path}\PYG{p}{[}\PYG{n}{PATH\PYGZus{}LENGTH\PYGZus{}MAX}\PYG{p}{];}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Made extern because the sessions should}
+\PYG{c+cm}{* exit if the server is given a SIGINT/TERM}
+\PYG{c+cm}{*/}
+\PYG{k}{extern} \PYG{k}{volatile} \PYG{k+kt}{sig\PYGZus{}atomic\PYGZus{}t} \PYG{n}{done}\PYG{p}{;}
+
+\PYG{c+cm}{/* Also used by session and action */}
+\PYG{k}{extern} \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{client\PYGZus{}list}\PYG{p}{;}
+\PYG{k}{extern} \PYG{k}{struct} \PYG{n}{server\PYGZus{}data} \PYG{o}{*}\PYG{n}{s\PYGZus{}data}\PYG{p}{;}
+\PYG{k}{extern} \PYG{k}{struct} \PYG{n}{server\PYGZus{}synchro} \PYG{o}{*}\PYG{n}{s\PYGZus{}synch}\PYG{p}{;}
+\PYG{k}{extern} \PYG{k}{struct} \PYG{n}{server\PYGZus{}config} \PYG{o}{*}\PYG{n}{s\PYGZus{}conf}\PYG{p}{;}
+\PYG{k}{extern} \PYG{k}{struct} \PYG{n}{csac\PYGZus{}filter\PYGZus{}data} \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{;}
+
+\PYG{c+cm}{/** @brief Removes a client whose ID matches parameter}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Iterates through the linked list and removes the}
+\PYG{c+cm}{ * node containing the client whose ID matches the parameter.}
+\PYG{c+cm}{ * @param id ID for the client}
+\PYG{c+cm}{ * @return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{remove\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{id}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Returns a client whose ID matches parameter}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Iterates through the linked list and returns}
+\PYG{c+cm}{ * a pointer to the client\PYGZus{}table\PYGZus{}entry struct in the}
+\PYG{c+cm}{ * list that corresponds with the parameter.}
+\PYG{c+cm}{ * @param id ID for the client}
+\PYG{c+cm}{ * @return client\PYGZus{}table\PYGZus{}entry *}
+\PYG{c+cm}{ */}
+\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n+nf}{get\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{id}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Prints information about the server.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Transmits info about the server:}
+\PYG{c+cm}{ * Time when started, PID, number of clients,}
+\PYG{c+cm}{ * number of sensors, max number of clients,}
+\PYG{c+cm}{ * sensor warm\PYGZhy{}up time and version.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * @param client MONITOR who made the request.}
+\PYG{c+cm}{ * @return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{print\PYGZus{}server\PYGZus{}data}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{monitor}\PYG{p}{);}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !SENSOR\PYGZus{}SERVER\PYGZus{}H */}
+\end{Verbatim}

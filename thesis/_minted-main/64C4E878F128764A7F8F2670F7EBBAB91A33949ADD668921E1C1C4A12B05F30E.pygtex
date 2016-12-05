@@ -1,0 +1,649 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}session.h\PYGZdq{}}
+
+\PYG{c+cm}{/* ERRORS*/}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}ILLEGAL\PYGZus{}COMMAND \PYGZdq{}ERROR:Illegal command\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}NO\PYGZus{}ID \PYGZdq{}ERROR:Client not identified\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}ID\PYGZus{}IN\PYGZus{}USE \PYGZdq{}ERROR:ID in use\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}ILLEGAL\PYGZus{}MESSAGE\PYGZus{}SIZE \PYGZdq{}\PYGZbs{}rERROR:Illegal message size\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}WARMUP\PYGZus{}NOT\PYGZus{}SENSOR \PYGZdq{}ERROR:Warm\PYGZhy{}up only applies to sensors\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}DUMPDATA\PYGZus{}FAILED \PYGZdq{}ERROR:Failed to dump data\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}LOADDATA\PYGZus{}FAILED \PYGZdq{}ERROR:Failed to load data\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}NO\PYGZus{}COMMAND  \PYGZdq{}ERROR:No command specified\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}KRLD\PYGZus{}LOAD\PYGZus{}FAILED \PYGZdq{}ERROR:Failed to load KRL data from file\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}CHECKSUM\PYGZus{}FAILED \PYGZdq{}ERROR: Checksum failed!\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}ILLEGAL\PYGZus{}NMEA \PYGZdq{}ERROR: Received illegal/corrupt NMEA data\PYGZbs{}n\PYGZdq{}}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n+nf}{nmea\PYGZus{}ready}\PYG{p}{();}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n+nf}{extract\PYGZus{}nmea\PYGZus{}data}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cte}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{calculate\PYGZus{}nmea\PYGZus{}average}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cte}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{calculate\PYGZus{}nmea\PYGZus{}diff}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cte}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n+nf}{parse\PYGZus{}input}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cte}\PYG{p}{);}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Used by spawned client processes to \PYGZdq{}mark\PYGZdq{} that their NMEA}
+\PYG{c+cm}{* data is ready for processing. Works as a barrier in a way.}
+\PYG{c+cm}{*/}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n+nf}{nmea\PYGZus{}ready}\PYG{p}{()}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{c\PYGZus{}iter}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{temp}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{ready} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+    \PYG{c+cm}{/* iterating through the list of clients */}
+    \PYG{n}{list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe}\PYG{p}{(}\PYG{n}{c\PYGZus{}iter}\PYG{p}{,} \PYG{n}{temp}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{,} \PYG{n}{list}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{c+cm}{/* Is it a SENSOR?*/}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{c\PYGZus{}iter}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}type} \PYG{o}{==} \PYG{n}{SENSOR}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{c+cm}{/* Is it ready?*/}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{c\PYGZus{}iter}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ready}\PYG{p}{)\PYGZob{}}
+                \PYG{n}{ready}\PYG{o}{++}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{c+cm}{/* if everyone is ready, clear ready flag and carry on */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{ready} \PYG{o}{==} \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{number\PYGZus{}of\PYGZus{}sensors}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe}\PYG{p}{(}\PYG{n}{c\PYGZus{}iter}\PYG{p}{,} \PYG{n}{temp}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{,} \PYG{n}{list}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{c\PYGZus{}iter}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ready} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Extract position data from NMEA */}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n+nf}{extract\PYGZus{}nmea\PYGZus{}data}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cte}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{buffsize} \PYG{o}{=} \PYG{l+m+mi}{100}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{buffer}\PYG{p}{[}\PYG{n}{buffsize}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{buffer}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{buffsize}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Extracting latitude */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{n}{LATITUDE\PYGZus{}START}\PYG{p}{,}\PYG{n}{LATITUDE\PYGZus{}START} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+s+sc}{\PYGZsq{},\PYGZsq{}}\PYG{p}{,}\PYG{n}{buffer}\PYG{p}{,} \PYG{n}{buffsize}\PYG{p}{,}
+                        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}rmc}\PYG{p}{,} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}rmc}\PYG{p}{)))}
+    \PYG{p}{\PYGZob{}}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}current} \PYG{o}{=} \PYG{n}{atof}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{);}       
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+
+    \PYG{c+cm}{/* Extracting longitude */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{n}{LONGITUDE\PYGZus{}START}\PYG{p}{,}\PYG{n}{LONGITUDE\PYGZus{}START} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+s+sc}{\PYGZsq{},\PYGZsq{}}\PYG{p}{,}\PYG{n}{buffer}\PYG{p}{,} \PYG{n}{buffsize}\PYG{p}{,}
+                        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}rmc}\PYG{p}{,} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}rmc}\PYG{p}{)))}
+    \PYG{p}{\PYGZob{}}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}current} \PYG{o}{=} \PYG{n}{atof}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Extracting altitude */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{n}{ALTITUDE\PYGZus{}START}\PYG{p}{,}\PYG{n}{ALTITUDE\PYGZus{}START} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+s+sc}{\PYGZsq{},\PYGZsq{}}\PYG{p}{,}\PYG{n}{buffer}\PYG{p}{,} \PYG{n}{buffsize}\PYG{p}{,}
+                        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}gga}\PYG{p}{,} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}gga}\PYG{p}{)))}
+    \PYG{p}{\PYGZob{}}    
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}current} \PYG{o}{=} \PYG{n}{atof}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Extracting speed */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{n}{SPEED\PYGZus{}START}\PYG{p}{,}\PYG{n}{SPEED\PYGZus{}START} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+s+sc}{\PYGZsq{},\PYGZsq{}}\PYG{p}{,}\PYG{n}{buffer}\PYG{p}{,} \PYG{n}{buffsize}\PYG{p}{,}
+                        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}rmc}\PYG{p}{,} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}rmc}\PYG{p}{)))}
+    \PYG{p}{\PYGZob{}}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}current} \PYG{o}{=} \PYG{n}{atof}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Calculate the average NMEA values */}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{calculate\PYGZus{}nmea\PYGZus{}average}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cte}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* Updating number of samples */}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{n\PYGZus{}samples}\PYG{o}{++}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Updating total */}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}total} \PYG{o}{=} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}total} \PYG{o}{+} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}current}\PYG{p}{;}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}total} \PYG{o}{=} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}total} \PYG{o}{+} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}current}\PYG{p}{;}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}total} \PYG{o}{=} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}total} \PYG{o}{+} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}current}\PYG{p}{;}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}total} \PYG{o}{=} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}total} \PYG{o}{+} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}current}\PYG{p}{;}
+
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}average} \PYG{o}{=} \PYG{p}{(} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}total} \PYG{o}{/} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{n\PYGZus{}samples} \PYG{p}{);}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}average} \PYG{o}{=} \PYG{p}{(} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}total} \PYG{o}{/} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{n\PYGZus{}samples} \PYG{p}{);}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}average} \PYG{o}{=} \PYG{p}{(} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}total} \PYG{o}{/} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{n\PYGZus{}samples} \PYG{p}{);}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}average} \PYG{o}{=} \PYG{p}{(} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}total} \PYG{o}{/} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{n\PYGZus{}samples} \PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Calculate the diff between current}
+\PYG{c+cm}{* NMEA values and the average values.}
+\PYG{c+cm}{*/}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{calculate\PYGZus{}nmea\PYGZus{}diff}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cte}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}avg\PYGZus{}diff} \PYG{o}{=} \PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}current} \PYG{o}{\PYGZhy{}} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}average}\PYG{p}{);}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}avg\PYGZus{}diff} \PYG{o}{=} \PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}current} \PYG{o}{\PYGZhy{}} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}average}\PYG{p}{);}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}avg\PYGZus{}diff} \PYG{o}{=} \PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}current} \PYG{o}{\PYGZhy{}} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}average}\PYG{p}{);}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}avg\PYGZus{}diff} \PYG{o}{=} \PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}current} \PYG{o}{\PYGZhy{}} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}average}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Parses input from clients. Return value indicates status.}
+\PYG{c+cm}{* Uses the command\PYGZus{}code struct to convey parameter and command code.}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* Returns \PYGZhy{}1 if size is wrong}
+\PYG{c+cm}{* Returns 0 if protocol is not followed}
+\PYG{c+cm}{* Returns 1 if all is ok}
+\PYG{c+cm}{*/}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n+nf}{parse\PYGZus{}input}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cte}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{incoming} \PYG{o}{=} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{.}\PYG{n}{iobuffer}\PYG{p}{;}
+
+    \PYG{c+cm}{/* INPUT TO BIG */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{p}{(}\PYG{n}{MAX\PYGZus{}PARAMETER\PYGZus{}SIZE} \PYG{o}{+} \PYG{n}{MAX\PYGZus{}COMMAND\PYGZus{}SIZE}\PYG{p}{)} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* INPUT TO SMALL */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{p}{(}\PYG{n}{MIN\PYGZus{}PARAMETER\PYGZus{}SIZE} \PYG{o}{+} \PYG{n}{MIN\PYGZus{}COMMAND\PYGZus{}SIZE}\PYG{p}{)} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* ZEROING COMMAND CODE */}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{c+cm}{/* ZEROING ID\PYGZus{}PARAMETER */}
+    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+    \PYG{c+cm}{/* NMEA */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}NMEA} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}NMEA}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* IDENTIFY */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}IDENTIFY} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}IDENTIFY}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}IDENTIFY}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),}
+               \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}IDENTIFY}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* IDENTIFY SHORT */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}IDENTIFY\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}IDENTIFY\PYGZus{}SHORT}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+               \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}IDENTIFY\PYGZus{}SHORT}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),} \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}IDENTIFY}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* DUMPDATA */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}DUMPDATA} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}DUMPDATA}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}DUMPDATA}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),}
+               \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}DUMPDATA}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* DUMPDATA\PYGZus{}SHORT */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}DUMPDATA\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}DUMPDATA\PYGZus{}SHORT}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+               \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}DUMPDATA\PYGZus{}SHORT}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),} \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}DUMPDATA}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* PRINT\PYGZus{}LOCATION */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}PRINT\PYGZus{}LOCATION} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}PRINT\PYGZus{}LOCATION}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+               \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}PRINT\PYGZus{}LOCATION}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),} \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}PRINT\PYGZus{}LOCATION}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* PRINT\PYGZus{}LOCATION\PYGZus{}SHORT */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}PRINT\PYGZus{}LOCATION\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}PRINT\PYGZus{}LOCATION\PYGZus{}SHORT}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+               \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}PRINT\PYGZus{}LOCATION\PYGZus{}SHORT}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),} \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}PRINT\PYGZus{}LOCATION}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* PRINTTIME */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}PRINTTIME} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}PRINTTIME}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+               \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}PRINTTIME}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),} \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}PRINTTIME}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* PRINTCLIENTS */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}PRINTCLIENTS} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{||}
+            \PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}PRINTCLIENTS\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}PRINTCLIENTS}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* PRINTSERVER */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}PRINTSERVER} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{||}
+            \PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}PRINTSERVER\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}PRINTSERVER}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* KICK */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}KICK} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}KICK}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}KICK}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),}
+               \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}KICK}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* EXIT */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}EXIT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}DISCONNECT}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* DISCONNECT */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}DISCONNECT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{||}
+            \PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}DISCONNECT\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}DISCONNECT}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* HELP */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}HELP} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{||}
+            \PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}HELP\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}HELP}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* PRINTAVGDIFF */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}PRINTAVGDIFF} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{||}
+            \PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}PRINTAVGDIFF\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}PRINTAVGDIFF}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* LISTDUMPS */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}LISTDUMPS} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{||}
+            \PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}LISTDUMPS\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}LISTDUMPS}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* LOADDATA */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}LOADDATA} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}LOADDATA}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}LOADDATA}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),}
+               \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}LOADDATA}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* LOADDATA\PYGZus{}SHORT */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}LOADDATA\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}LOADDATA\PYGZus{}SHORT}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+               \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}LOADDATA\PYGZus{}SHORT}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),} \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}LOADDATA}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* QUERYCSAC */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}QUERYCSAC} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}QUERYCSAC}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+               \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}QUERYCSAC}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),} \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}QUERYCSAC}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* QUERYCSAC\PYGZus{}SHORT */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}QUERYCSAC\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}QUERYCSAC\PYGZus{}SHORT}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+               \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}QUERYCSAC\PYGZus{}SHORT}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),} \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}QUERYCSAC}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* PRINT\PYGZus{}LOADKRLDATA */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}LOADKRLDATA} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}LOADKRLDATA}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+               \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}LOADKRLDATA}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),} \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}LOADKRLDATA}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* PRINT\PYGZus{}LOADKRLDATA\PYGZus{}SHORT */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}LOADKRLDATA\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}LOADKRLDATA\PYGZus{}SHORT}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+               \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}LOADKRLDATA\PYGZus{}SHORT}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),} \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}LOADKRLDATA}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* PROTOCOL\PYGZus{}PRINTCFD */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}PRINTCFD} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}PRINTCFD}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}PRINTCFD}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),}
+               \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}PRINTCFD}\PYG{p}{;}
+        \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}PRINTCFD}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* PROTOCOL\PYGZus{}PRINTCFD\PYGZus{}SHORT */}
+    \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{strstr}\PYG{p}{((}\PYG{k+kt}{char}\PYG{o}{*}\PYG{p}{)}\PYG{n}{incoming}\PYG{p}{,} \PYG{n}{PROTOCOL\PYGZus{}PRINTCFD\PYGZus{}SHORT} \PYG{p}{)} \PYG{o}{==} \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}PRINTCFD\PYGZus{}SHORT}\PYG{p}{)} \PYG{p}{);}
+        \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+               \PYG{p}{(}\PYG{n}{incoming}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}PRINTCFD\PYGZus{}SHORT}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),} \PYG{n}{length}\PYG{p}{);}
+        \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{=} \PYG{n}{CODE\PYGZus{}PRINTCFD}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Attempting to retrive ID */}
+    \PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}d\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter}\PYG{p}{);}
+
+    \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Responds to client action */}
+\PYG{k+kt}{int} \PYG{n+nf}{respond}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cte}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{bzero}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,} \PYG{n}{MAX\PYGZus{}PARAMETER\PYGZus{}SIZE}\PYG{p}{);}
+    \PYG{c+cm}{/* Only print \PYGZdq{}\PYGZgt{}\PYGZdq{} if client is monitor */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{l+s}{\PYGZdq{}\PYGZgt{}\PYGZdq{}}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k+kt}{int} \PYG{n}{read\PYGZus{}status} \PYG{o}{=} \PYG{n}{s\PYGZus{}read}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{));} \PYG{c+cm}{/* Blocking */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{read\PYGZus{}status} \PYG{o}{==} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}[ CLIENT \PYGZpc{}d ] Read failed or interrupted!}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{marked\PYGZus{}for\PYGZus{}kick}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k+kt}{int} \PYG{n}{parse\PYGZus{}status} \PYG{o}{=} \PYG{n}{parse\PYGZus{}input}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{);}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{parse\PYGZus{}status} \PYG{o}{==} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}MESSAGE\PYGZus{}SIZE}\PYG{p}{,}
+                \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}MESSAGE\PYGZus{}SIZE}\PYG{p}{));}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{parse\PYGZus{}status} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}COMMAND}\PYG{p}{,}
+                \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}COMMAND}\PYG{p}{));}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{c+cm}{/* PARSING OK, CONTINUING */}
+    \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{c+cm}{/* Comparing CODES to determine the correct action */}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}DISCONNECT}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{PROTOCOL\PYGZus{}GOODBYE}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}GOODBYE}\PYG{p}{));}
+            \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}HELP}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{print\PYGZus{}help}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}IDENTIFY}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}COMMAND}\PYG{p}{,}
+                        \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}COMMAND}\PYG{p}{));}
+                \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{c+cm}{/* Checking to see if the ID is in use */}
+            \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{p}{;}
+            \PYG{n}{list\PYGZus{}for\PYGZus{}each\PYGZus{}entry}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{,} \PYG{n}{list}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id} \PYG{o}{==} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                    \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{l+s}{\PYGZdq{}ID in use!}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{l+m+mi}{11}\PYG{p}{);}
+                    \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)\PYGZob{}}
+                        \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+                    \PYG{p}{\PYGZcb{}}
+                    \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{p}{\PYGZcb{}}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{c+cm}{/* Determining role */}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}type} \PYG{o}{=} \PYG{n}{MONITOR}\PYG{p}{;}
+                \PYG{k}{struct} \PYG{n}{timeval} \PYG{n}{timeout} \PYG{o}{=} \PYG{p}{\PYGZob{}}\PYG{n}{MONITOR\PYGZus{}TIMEOUT}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{\PYGZcb{};}
+                \PYG{n}{set\PYGZus{}timeout}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{,} \PYG{n}{timeout}\PYG{p}{);}
+
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}type} \PYG{o}{=} \PYG{n}{SENSOR}\PYG{p}{;}
+                \PYG{n}{sem\PYGZus{}wait}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}sem}\PYG{p}{));}
+                \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{number\PYGZus{}of\PYGZus{}sensors}\PYG{o}{++}\PYG{p}{;}
+                \PYG{n}{sem\PYGZus{}post}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}sem}\PYG{p}{));}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{c+cm}{/* Everything is good, setting id and responding*/}
+            \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{PROTOCOL\PYGZus{}OK}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}OK}\PYG{p}{));}
+            \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id} \PYG{o}{=} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter}\PYG{p}{;}
+            \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}[\PYGZpc{}s] ID set to: \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ip}\PYG{p}{,}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{);}
+
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}type} \PYG{o}{==} \PYG{n}{SENSOR}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{load\PYGZus{}krl\PYGZus{}data}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}Loaded filter data for client \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{);}
+                \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}Failed to load KRL filter data for Sensor \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{);}
+                    \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),}\PYG{n}{ERROR\PYGZus{}KRLD\PYGZus{}LOAD\PYGZus{}FAILED}\PYG{p}{,}
+                            \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}KRLD\PYGZus{}LOAD\PYGZus{}FAILED}\PYG{p}{));}
+                    \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{p}{\PYGZcb{}}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{c+cm}{/* Stop here if client is unidentified */}
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}NO\PYGZus{}ID}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}NO\PYGZus{}ID}\PYG{p}{));}
+            \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}NMEA}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{c+cm}{/* Fetching data from buffer */}
+            \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{rmc\PYGZus{}start} \PYG{o}{=} \PYG{n}{strstr}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{.}\PYG{n}{iobuffer}\PYG{p}{,} \PYG{n}{RMC}\PYG{p}{);}
+            \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{gga\PYGZus{}start} \PYG{o}{=} \PYG{n}{strstr}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{.}\PYG{n}{iobuffer}\PYG{p}{,} \PYG{n}{GGA}\PYG{p}{);}
+
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{rmc\PYGZus{}start} \PYG{o}{==} \PYG{n+nb}{NULL} \PYG{o}{||} \PYG{n}{gga\PYGZus{}start} \PYG{o}{==} \PYG{n+nb}{NULL}\PYG{p}{)\PYGZob{}}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}NMEA}\PYG{p}{,} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}NMEA}\PYG{p}{));}
+                \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}rmc}\PYG{p}{,} \PYG{n}{rmc\PYGZus{}start}\PYG{p}{,} \PYG{n}{gga\PYGZus{}start} \PYG{o}{\PYGZhy{}} \PYG{n}{rmc\PYGZus{}start}\PYG{p}{);}
+            \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}gga}\PYG{p}{,} \PYG{n}{gga\PYGZus{}start}\PYG{p}{,}
+                   \PYG{p}{(} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{.}\PYG{n}{iobuffer}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{p}{(}\PYG{n}{rmc\PYGZus{}start} \PYG{o}{\PYGZhy{}} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{.}\PYG{n}{iobuffer}\PYG{p}{)}
+                     \PYG{o}{\PYGZhy{}} \PYG{p}{(}\PYG{n}{gga\PYGZus{}start} \PYG{o}{\PYGZhy{}} \PYG{n}{rmc\PYGZus{}start}\PYG{p}{)));}
+
+            \PYG{c+cm}{/* Checking NMEA checksum */}
+            \PYG{k+kt}{int} \PYG{n}{rmc\PYGZus{}checksum} \PYG{o}{=} \PYG{n}{calculate\PYGZus{}nmea\PYGZus{}checksum}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}rmc}\PYG{p}{);}
+            \PYG{k+kt}{int} \PYG{n}{gga\PYGZus{}checksum} \PYG{o}{=} \PYG{n}{calculate\PYGZus{}nmea\PYGZus{}checksum}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{raw\PYGZus{}gga}\PYG{p}{);}
+
+            \PYG{c+cm}{/* Continue to filters if ok */}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{rmc\PYGZus{}checksum} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{gga\PYGZus{}checksum}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{PROTOCOL\PYGZus{}OK}\PYG{p}{,} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}OK}\PYG{p}{));}
+                \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{timestamp} \PYG{o}{=} \PYG{n}{time}\PYG{p}{(}\PYG{n+nb}{NULL}\PYG{p}{);}
+                \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{checksum\PYGZus{}passed} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+
+                \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{extract\PYGZus{}nmea\PYGZus{}data}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{))\PYGZob{}}
+                    \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+                \PYG{p}{\PYGZcb{}}
+
+                \PYG{n}{calculate\PYGZus{}nmea\PYGZus{}average}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{);}
+                \PYG{n}{calculate\PYGZus{}nmea\PYGZus{}diff}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{);}
+
+                \PYG{c+cm}{/* Checksums where OK, client marked ready */}
+                \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ready} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+
+                \PYG{c+cm}{/* Acquiring ready\PYGZhy{}lock */}
+                \PYG{n}{sem\PYGZus{}wait}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ready\PYGZus{}sem}\PYG{p}{));}
+
+                \PYG{c+cm}{/* Checking if the other clients are ready as well*/}
+                \PYG{k+kt}{int} \PYG{n}{ready} \PYG{o}{=} \PYG{n}{nmea\PYGZus{}ready}\PYG{p}{();}
+
+                \PYG{c+cm}{/* If everyone is ready, process data */}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{ready}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{apply\PYGZus{}filters}\PYG{p}{();}
+                \PYG{p}{\PYGZcb{}}
+                \PYG{c+cm}{/* Releasing ready\PYGZhy{}lock */}
+                \PYG{n}{sem\PYGZus{}post}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ready\PYGZus{}sem}\PYG{p}{));}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{checksum\PYGZus{}passed} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}RMC and GGA received from \PYGZpc{}d , checksum failed!}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{);}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}CHECKSUM\PYGZus{}FAILED}\PYG{p}{,} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}CHECKSUM\PYGZus{}FAILED}\PYG{p}{));}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}PRINT\PYGZus{}LOCATION}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{candidate} \PYG{o}{=} \PYG{n}{get\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter}\PYG{p}{);}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{candidate} \PYG{o}{==} \PYG{n+nb}{NULL}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{));}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{n}{print\PYGZus{}location}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{,} \PYG{n}{candidate}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}LOADKRLDATA}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{candidate} \PYG{o}{=} \PYG{n}{get\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter}\PYG{p}{);}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{candidate} \PYG{o}{==} \PYG{n+nb}{NULL}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{));}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{load\PYGZus{}krl\PYGZus{}data}\PYG{p}{(}\PYG{n}{candidate}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{PROTOCOL\PYGZus{}OK}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{PROTOCOL\PYGZus{}OK}\PYG{p}{));}
+                \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),}\PYG{n}{ERROR\PYGZus{}KRLD\PYGZus{}LOAD\PYGZus{}FAILED}\PYG{p}{,}
+                            \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}KRLD\PYGZus{}LOAD\PYGZus{}FAILED}\PYG{p}{));}
+                \PYG{p}{\PYGZcb{}}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}PRINTCLIENTS}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{print\PYGZus{}clients}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}PRINTSERVER}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{print\PYGZus{}server\PYGZus{}data}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}PRINTTIME}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{candidate} \PYG{o}{=} \PYG{n}{get\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter}\PYG{p}{);}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{candidate} \PYG{o}{!=} \PYG{n+nb}{NULL}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{print\PYGZus{}client\PYGZus{}time}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{,} \PYG{n}{candidate}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{));}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}KICK}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{candidate} \PYG{o}{=} \PYG{n}{get\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter}\PYG{p}{);}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{candidate} \PYG{o}{==} \PYG{n+nb}{NULL}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{));}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{n}{kick\PYGZus{}client}\PYG{p}{(}\PYG{n}{candidate}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}DUMPDATA}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{int} \PYG{n}{filename\PYGZus{}buffer\PYGZus{}size} \PYG{o}{=} \PYG{n}{MAX\PYGZus{}FILENAME\PYGZus{}SIZE}\PYG{p}{;}
+            \PYG{k+kt}{char} \PYG{n}{filename}\PYG{p}{[}\PYG{n}{filename\PYGZus{}buffer\PYGZus{}size}\PYG{p}{];}
+            \PYG{k+kt}{int} \PYG{n}{target\PYGZus{}id}\PYG{p}{;}
+            \PYG{k+kt}{char} \PYG{n}{id\PYGZus{}buffer}\PYG{p}{[}\PYG{n}{ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX}\PYG{p}{];}
+            \PYG{n}{bzero}\PYG{p}{(}\PYG{n}{id\PYGZus{}buffer}\PYG{p}{,} \PYG{n}{ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX}\PYG{p}{);}
+            \PYG{n}{bzero}\PYG{p}{(}\PYG{n}{filename}\PYG{p}{,} \PYG{n}{filename\PYGZus{}buffer\PYGZus{}size}\PYG{p}{);}
+
+            \PYG{c+cm}{/* Attempting to extract filename */}
+            \PYG{n}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{} \PYGZsq{}}\PYG{p}{,} \PYG{n}{filename}\PYG{p}{,} \PYG{n}{filename\PYGZus{}buffer\PYGZus{}size}\PYG{p}{,}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+                                \PYG{n}{MAX\PYGZus{}FILENAME\PYGZus{}SIZE}\PYG{p}{);}
+
+            \PYG{c+cm}{/* If length of filename = 0 (no filename specified).. */}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{filename}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{c+cm}{/* ...Cast to int without a care */}
+                \PYG{n}{target\PYGZus{}id} \PYG{o}{=} \PYG{n}{atoi}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{c+cm}{/* Else, extract ID */}
+            \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{n}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{} \PYGZsq{}}\PYG{p}{,} \PYG{n}{id\PYGZus{}buffer}\PYG{p}{,} \PYG{n}{ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX}\PYG{p}{,}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+                                    \PYG{n}{ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX}\PYG{p}{);}
+                \PYG{n}{target\PYGZus{}id} \PYG{o}{=} \PYG{n}{atoi}\PYG{p}{(}\PYG{n}{id\PYGZus{}buffer}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{target\PYGZus{}id}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}COMMAND}\PYG{p}{,}
+                        \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}COMMAND}\PYG{p}{));}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{candidate} \PYG{o}{=} \PYG{n}{get\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{n}{target\PYGZus{}id}\PYG{p}{);}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{candidate} \PYG{o}{!=} \PYG{n+nb}{NULL}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{datadump}\PYG{p}{(}\PYG{n}{candidate}\PYG{p}{,}\PYG{n}{filename}\PYG{p}{,} \PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{human\PYGZus{}readable\PYGZus{}dumpdata}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+                        \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}DUMPDATA\PYGZus{}FAILED}\PYG{p}{,}
+                                \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}DUMPDATA\PYGZus{}FAILED}\PYG{p}{));}
+                    \PYG{p}{\PYGZcb{}}
+                \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{));}
+                \PYG{p}{\PYGZcb{}}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}LOADDATA}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{int} \PYG{n}{filename\PYGZus{}buffer\PYGZus{}size} \PYG{o}{=} \PYG{n}{MAX\PYGZus{}FILENAME\PYGZus{}SIZE}\PYG{p}{;}
+            \PYG{k+kt}{char} \PYG{n}{filename}\PYG{p}{[}\PYG{n}{filename\PYGZus{}buffer\PYGZus{}size}\PYG{p}{];}
+            \PYG{k+kt}{int} \PYG{n}{target\PYGZus{}id}\PYG{p}{;}
+            \PYG{k+kt}{char} \PYG{n}{id\PYGZus{}buffer}\PYG{p}{[}\PYG{n}{ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX}\PYG{p}{];}
+            \PYG{n}{bzero}\PYG{p}{(}\PYG{n}{id\PYGZus{}buffer}\PYG{p}{,} \PYG{n}{ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX}\PYG{p}{);}
+            \PYG{n}{bzero}\PYG{p}{(}\PYG{n}{filename}\PYG{p}{,} \PYG{n}{filename\PYGZus{}buffer\PYGZus{}size}\PYG{p}{);}
+
+            \PYG{n}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{} \PYGZsq{}}\PYG{p}{,} \PYG{n}{filename}\PYG{p}{,} \PYG{n}{filename\PYGZus{}buffer\PYGZus{}size}\PYG{p}{,}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+                                \PYG{n}{MAX\PYGZus{}FILENAME\PYGZus{}SIZE}\PYG{p}{);}
+
+            \PYG{c+cm}{/* No filename specified, abort */}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{filename}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}NO\PYGZus{}FILENAME}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}NO\PYGZus{}FILENAME}\PYG{p}{));}
+                \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{c+cm}{/* Extract target id and move on */}
+            \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{n}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{} \PYGZsq{}}\PYG{p}{,} \PYG{n}{id\PYGZus{}buffer}\PYG{p}{,} \PYG{n}{ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX}\PYG{p}{,}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{,}
+                                    \PYG{n}{ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX}\PYG{p}{);}
+                \PYG{n}{target\PYGZus{}id} \PYG{o}{=} \PYG{n}{atoi}\PYG{p}{(}\PYG{n}{id\PYGZus{}buffer}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{target\PYGZus{}id}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}COMMAND}\PYG{p}{,}
+                        \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}ILLEGAL\PYGZus{}COMMAND}\PYG{p}{));}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{candidate} \PYG{o}{=} \PYG{n}{get\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{n}{target\PYGZus{}id}\PYG{p}{);}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{candidate} \PYG{o}{!=} \PYG{n+nb}{NULL}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{k+kt}{int} \PYG{n}{load\PYGZus{}status} \PYG{o}{=} \PYG{n}{loaddata}\PYG{p}{(}\PYG{n}{candidate}\PYG{p}{,}\PYG{n}{filename}\PYG{p}{);}
+                    \PYG{k}{if}\PYG{p}{(}\PYG{n}{load\PYGZus{}status} \PYG{o}{==} \PYG{n}{ERROR\PYGZus{}CODE\PYGZus{}NO\PYGZus{}FILE}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                        \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}NO\PYGZus{}FILE}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}NO\PYGZus{}FILE}\PYG{p}{));}
+                    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{load\PYGZus{}status} \PYG{o}{==} \PYG{n}{ERROR\PYGZus{}CODE\PYGZus{}READ\PYGZus{}FAILED}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                        \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}READ\PYGZus{}FAILED}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}READ\PYGZus{}FAILED}\PYG{p}{));}
+                    \PYG{p}{\PYGZcb{}}
+                \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}NO\PYGZus{}CLIENT}\PYG{p}{));}
+                \PYG{p}{\PYGZcb{}}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}PRINTAVGDIFF}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{print\PYGZus{}avg\PYGZus{}diff}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}LISTDUMPS}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{listdumps}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}QUERYCSAC}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{ERROR\PYGZus{}NO\PYGZus{}COMMAND}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}NO\PYGZus{}COMMAND}\PYG{p}{));}
+                \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{client\PYGZus{}query\PYGZus{}csac}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{,} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{parameter}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{code} \PYG{o}{==} \PYG{n}{CODE\PYGZus{}PRINTCFD}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{print\PYGZus{}cfd}\PYG{p}{(}\PYG{n}{cte}\PYG{p}{,} \PYG{n}{cte}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cm}\PYG{p}{.}\PYG{n}{id\PYGZus{}parameter}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}No action made for this part of the protocol}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

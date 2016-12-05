@@ -1,0 +1,41 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{struct} \PYG{n}{nmea\PYGZus{}container} \PYG{p}{\PYGZob{}}
+        \PYG{c+cm}{/* Raw data */}
+        \PYG{k+kt}{char} \PYG{n}{raw\PYGZus{}gga}\PYG{p}{[}\PYG{n}{SENTENCE\PYGZus{}LENGTH}\PYG{p}{];}
+        \PYG{k+kt}{char} \PYG{n}{raw\PYGZus{}rmc}\PYG{p}{[}\PYG{n}{SENTENCE\PYGZus{}LENGTH}\PYG{p}{];}
+
+        \PYG{c+cm}{/* Latitude */}
+        \PYG{k+kt}{double} \PYG{n}{lat\PYGZus{}current}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{lat\PYGZus{}average}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{lat\PYGZus{}avg\PYGZus{}diff}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{lat\PYGZus{}total}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{lat\PYGZus{}disturbed}\PYG{p}{;}
+
+        \PYG{c+cm}{/* Longitude */}
+        \PYG{k+kt}{double} \PYG{n}{lon\PYGZus{}current}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{lon\PYGZus{}average}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{lon\PYGZus{}avg\PYGZus{}diff}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{lon\PYGZus{}total}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{lon\PYGZus{}disturbed}\PYG{p}{;}
+
+        \PYG{c+cm}{/* Altitude */}
+        \PYG{k+kt}{double} \PYG{n}{alt\PYGZus{}current}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{alt\PYGZus{}average}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{alt\PYGZus{}avg\PYGZus{}diff}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{alt\PYGZus{}total}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{alt\PYGZus{}disturbed}\PYG{p}{;}
+
+        \PYG{c+cm}{/* Speed */}
+        \PYG{k+kt}{double} \PYG{n}{speed\PYGZus{}current}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{speed\PYGZus{}average}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{speed\PYGZus{}avg\PYGZus{}diff}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{speed\PYGZus{}total}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{speed\PYGZus{}disturbed}\PYG{p}{;}
+
+        \PYG{c+cm}{/* CHECKSUM */}
+        \PYG{k+kt}{int} \PYG{n}{checksum\PYGZus{}passed}\PYG{p}{;}
+
+        \PYG{c+cm}{/* COUNTER FOR AVERAGE */}
+        \PYG{k+kt}{int} \PYG{n}{n\PYGZus{}samples}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{};}
+\end{Verbatim}

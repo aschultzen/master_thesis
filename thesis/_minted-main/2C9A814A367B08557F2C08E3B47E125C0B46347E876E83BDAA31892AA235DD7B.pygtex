@@ -1,0 +1,62 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}ifndef NMEA\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define NMEA\PYGZus{}H}
+
+\PYG{c+cm}{/* NMEA SENTENCES */}
+\PYG{c+cp}{\PYGZsh{}define GGA \PYGZdq{}\PYGZdl{}GNGGA\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define RMC \PYGZdq{}\PYGZdl{}GNRMC\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define SENTENCE\PYGZus{}LENGTH 100}
+
+\PYG{c+cm}{/* NMEA SENTENCES DELIMITER POSITIONS */}
+\PYG{c+cp}{\PYGZsh{}define ALTITUDE\PYGZus{}START 9}
+\PYG{c+cp}{\PYGZsh{}define LATITUDE\PYGZus{}START 3}
+\PYG{c+cp}{\PYGZsh{}define LONGITUDE\PYGZus{}START 5}
+\PYG{c+cp}{\PYGZsh{}define RMC\PYGZus{}TIME\PYGZus{}START 1}
+\PYG{c+cp}{\PYGZsh{}define SPEED\PYGZus{}START 7}
+
+\PYG{c+cp}{\PYGZsh{}define SAFE 0}
+\PYG{c+cp}{\PYGZsh{}define HIGH 1}
+\PYG{c+cp}{\PYGZsh{}define LOW \PYGZhy{}1}
+
+\PYG{k}{struct} \PYG{n}{nmea\PYGZus{}container} \PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* Raw data */}
+    \PYG{k+kt}{char} \PYG{n}{raw\PYGZus{}gga}\PYG{p}{[}\PYG{n}{SENTENCE\PYGZus{}LENGTH}\PYG{p}{];}
+    \PYG{k+kt}{char} \PYG{n}{raw\PYGZus{}rmc}\PYG{p}{[}\PYG{n}{SENTENCE\PYGZus{}LENGTH}\PYG{p}{];}
+
+    \PYG{c+cm}{/* Latitude */}
+    \PYG{k+kt}{double} \PYG{n}{lat\PYGZus{}current}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{lat\PYGZus{}average}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{lat\PYGZus{}avg\PYGZus{}diff}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{lat\PYGZus{}total}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{lat\PYGZus{}disturbed}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Longitude */}
+    \PYG{k+kt}{double} \PYG{n}{lon\PYGZus{}current}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{lon\PYGZus{}average}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{lon\PYGZus{}avg\PYGZus{}diff}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{lon\PYGZus{}total}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{lon\PYGZus{}disturbed}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Altitude */}
+    \PYG{k+kt}{double} \PYG{n}{alt\PYGZus{}current}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{alt\PYGZus{}average}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{alt\PYGZus{}avg\PYGZus{}diff}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{alt\PYGZus{}total}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{alt\PYGZus{}disturbed}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Speed */}
+    \PYG{k+kt}{double} \PYG{n}{speed\PYGZus{}current}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{speed\PYGZus{}average}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{speed\PYGZus{}avg\PYGZus{}diff}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{speed\PYGZus{}total}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{speed\PYGZus{}disturbed}\PYG{p}{;}
+
+    \PYG{c+cm}{/* CHECKSUM */}
+    \PYG{k+kt}{int} \PYG{n}{checksum\PYGZus{}passed}\PYG{p}{;}
+
+    \PYG{c+cm}{/* COUNTER FOR AVERAGE */}
+    \PYG{k+kt}{int} \PYG{n}{n\PYGZus{}samples}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !NMEA\PYGZus{}H */}
+\end{Verbatim}

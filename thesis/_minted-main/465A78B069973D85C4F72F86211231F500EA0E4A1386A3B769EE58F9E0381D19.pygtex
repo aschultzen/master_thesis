@@ -1,0 +1,29 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{import} \PYG{n+nn}{ctypes}
+\PYG{k+kn}{import} \PYG{n+nn}{fileinput}\PYG{o}{,} \PYG{n+nn}{sys}
+\PYG{k+kn}{import} \PYG{n+nn}{datetime}
+\PYG{k+kn}{import} \PYG{n+nn}{time}
+\PYG{k+kn}{import} \PYG{n+nn}{io}
+\PYG{k+kn}{import} \PYG{n+nn}{os}
+\PYG{k+kn}{import} \PYG{n+nn}{serial}
+
+\PYG{k}{def} \PYG{n+nf}{main\PYGZus{}routine}\PYG{p}{():}
+    \PYG{n}{ser} \PYG{o}{=} \PYG{n}{serial}\PYG{o}{.}\PYG{n}{Serial}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}/dev/ttyUSB0\PYGZdq{}}\PYG{p}{,}\PYG{l+m+mi}{57600}\PYG{p}{,} \PYG{n}{timeout}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{)}
+    \PYG{n}{sio} \PYG{o}{=} \PYG{n}{io}\PYG{o}{.}\PYG{n}{TextIOWrapper}\PYG{p}{(}\PYG{n}{io}\PYG{o}{.}\PYG{n}{BufferedRWPair}\PYG{p}{(}\PYG{n}{ser}\PYG{p}{,} \PYG{n}{ser}\PYG{p}{),}\PYG{n}{encoding}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}ascii\PYGZsq{}}\PYG{p}{,}\PYG{n}{newline}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+se}{\PYGZbs{}r\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+
+    \PYG{n}{log\PYGZus{}file} \PYG{o}{=} \PYG{n+nb}{open}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}telemetry.txt\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}a+\PYGZdq{}}\PYG{p}{)}
+
+    \PYG{n}{telemetry\PYGZus{}len} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{while} \PYG{p}{(}\PYG{n}{telemetry\PYGZus{}len} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{60}\PYG{p}{):}
+   	\PYG{n}{ser}\PYG{o}{.}\PYG{n}{write}\PYG{p}{(}\PYG{n}{b}\PYG{l+s+s1}{\PYGZsq{}!\PYGZca{}}\PYG{l+s+se}{\PYGZbs{}r\PYGZbs{}n}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+    	\PYG{n}{time}\PYG{o}{.}\PYG{n}{sleep}\PYG{p}{(}\PYG{l+m+mf}{0.01}\PYG{p}{)}
+    	\PYG{n}{telemetry} \PYG{o}{=} \PYG{n}{sio}\PYG{o}{.}\PYG{n}{readline}\PYG{p}{()}
+    	\PYG{n}{telemetry} \PYG{o}{=} \PYG{n}{telemetry}\PYG{o}{.}\PYG{n}{strip}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+se}{\PYGZbs{}r\PYGZbs{}n\PYGZbs{}x00}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+    	\PYG{n}{telemetry\PYGZus{}len} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{telemetry}\PYG{p}{)}
+
+    \PYG{k}{print}\PYG{p}{(}\PYG{n}{telemetry}\PYG{p}{)}
+    \PYG{n}{ser}\PYG{o}{.}\PYG{n}{close}\PYG{p}{()}
+    \PYG{n}{log\PYGZus{}file}\PYG{o}{.}\PYG{n}{write}\PYG{p}{(}\PYG{n}{telemetry} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}	
+\PYG{k}{if} \PYG{n}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}\PYGZsq{}}\PYG{p}{:}
+    \PYG{n}{main\PYGZus{}routine}\PYG{p}{()}
+\end{Verbatim}

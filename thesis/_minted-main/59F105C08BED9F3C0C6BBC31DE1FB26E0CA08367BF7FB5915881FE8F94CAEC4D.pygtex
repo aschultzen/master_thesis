@@ -1,0 +1,322 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}utils.h\PYGZdq{}}
+
+\PYG{c+cm}{/* These are also in action.c, duplicates are no solution */}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}FCLOSE \PYGZdq{}Failed to close file, out of space?\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}FWRITE \PYGZdq{}Failed to write to file, aborting.\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}FREAD \PYGZdq{}Failed to read file, aborting.\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}FOPEN \PYGZdq{}Failed to open file, aborting.\PYGZbs{}n\PYGZdq{}}
+
+\PYG{c+cp}{\PYGZsh{}define MJD\PYGZus{}SCRIPT\PYGZus{}PATH \PYGZdq{}./get\PYGZus{}mjd.py\PYGZdq{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{die} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{line\PYGZus{}number}\PYG{p}{,} \PYG{k}{const} \PYG{k+kt}{char} \PYG{o}{*} \PYG{n}{format}\PYG{p}{,} \PYG{p}{...)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{va\PYGZus{}list} \PYG{n}{vargs}\PYG{p}{;}
+    \PYG{n}{va\PYGZus{}start} \PYG{p}{(}\PYG{n}{vargs}\PYG{p}{,} \PYG{n}{format}\PYG{p}{);}
+    \PYG{n}{fprintf} \PYG{p}{(}\PYG{n}{stderr}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}d: \PYGZdq{}}\PYG{p}{,} \PYG{n}{line\PYGZus{}number}\PYG{p}{);}
+    \PYG{n}{vfprintf} \PYG{p}{(}\PYG{n}{stderr}\PYG{p}{,} \PYG{n}{format}\PYG{p}{,} \PYG{n}{vargs}\PYG{p}{);}
+    \PYG{n}{fprintf} \PYG{p}{(}\PYG{n}{stderr}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}.}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+    \PYG{n}{exit}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Extracts IP address from sockaddr struct.}
+\PYG{c+cm}{* Supports both IPV4 and IPV6}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{void} \PYG{n+nf}{extract\PYGZus{}ip\PYGZus{}str}\PYG{p}{(}\PYG{k}{const} \PYG{k}{struct} \PYG{n}{sockaddr} \PYG{o}{*}\PYG{n}{sa}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{s}\PYG{p}{,} \PYG{k+kt}{size\PYGZus{}t} \PYG{n}{maxlen}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{switch}\PYG{p}{(}\PYG{n}{sa}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{sa\PYGZus{}family}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{case} \PYG{n+nl}{AF\PYGZus{}INET}\PYG{p}{:}
+        \PYG{n}{inet\PYGZus{}ntop}\PYG{p}{(}\PYG{n}{AF\PYGZus{}INET}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{p}{(((}\PYG{k}{struct} \PYG{n}{sockaddr\PYGZus{}in} \PYG{o}{*}\PYG{p}{)}\PYG{n}{sa}\PYG{p}{)}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{sin\PYGZus{}addr}\PYG{p}{),}
+                  \PYG{n}{s}\PYG{p}{,} \PYG{n}{maxlen}\PYG{p}{);}
+        \PYG{k}{break}\PYG{p}{;}
+
+    \PYG{k}{case} \PYG{n+nl}{AF\PYGZus{}INET6}\PYG{p}{:}
+        \PYG{n}{inet\PYGZus{}ntop}\PYG{p}{(}\PYG{n}{AF\PYGZus{}INET6}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{p}{(((}\PYG{k}{struct} \PYG{n}{sockaddr\PYGZus{}in6} \PYG{o}{*}\PYG{p}{)}\PYG{n}{sa}\PYG{p}{)}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{sin6\PYGZus{}addr}\PYG{p}{),}
+                  \PYG{n}{s}\PYG{p}{,} \PYG{n}{maxlen}\PYG{p}{);}
+        \PYG{k}{break}\PYG{p}{;}
+
+    \PYG{k}{default}\PYG{o}{:}
+        \PYG{n}{strncpy}\PYG{p}{(}\PYG{n}{s}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Unknown AF\PYGZdq{}}\PYG{p}{,} \PYG{n}{maxlen}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Extracts IP from session file descriptor}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{void} \PYG{n+nf}{get\PYGZus{}ip\PYGZus{}str}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{session\PYGZus{}fd}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{ip}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{sockaddr} \PYG{n}{addr}\PYG{p}{;}
+    \PYG{n}{addr}\PYG{p}{.}\PYG{n}{sa\PYGZus{}family} \PYG{o}{=} \PYG{n}{AF\PYGZus{}INET}\PYG{p}{;}
+    \PYG{k+kt}{socklen\PYGZus{}t} \PYG{n}{addr\PYGZus{}len} \PYG{o}{=} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{addr}\PYG{p}{);}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{getpeername}\PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{p}{,} \PYG{p}{(}\PYG{k}{struct} \PYG{n}{sockaddr} \PYG{o}{*}\PYG{p}{)} \PYG{o}{\PYGZam{}}\PYG{n}{addr}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{addr\PYGZus{}len}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{die}\PYG{p}{(}\PYG{l+m+mi}{44}\PYG{p}{,}\PYG{l+s}{\PYGZdq{}getsocketname failed}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{n}{extract\PYGZus{}ip\PYGZus{}str}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{addr}\PYG{p}{,}\PYG{n}{ip}\PYG{p}{,} \PYG{n}{addr\PYGZus{}len}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Print with timestamp:}
+\PYG{c+cm}{* Example : [01.01.01 \PYGZhy{} 10:10:10] [\PYGZlt{}Some string\PYGZgt{}]}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{void} \PYG{n+nf}{t\PYGZus{}print}\PYG{p}{(}\PYG{k}{const} \PYG{k+kt}{char}\PYG{o}{*} \PYG{n}{format}\PYG{p}{,} \PYG{p}{...)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{char} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{100}\PYG{p}{];}
+    \PYG{k+kt}{time\PYGZus{}t} \PYG{n}{rawtime}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{tm} \PYG{o}{*}\PYG{n}{info}\PYG{p}{;}
+    \PYG{n}{time}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{rawtime}\PYG{p}{);}
+    \PYG{n}{info} \PYG{o}{=} \PYG{n}{gmtime}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{rawtime}\PYG{p}{);}
+    \PYG{n}{strftime}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{,}\PYG{l+m+mi}{80}\PYG{p}{,}\PYG{l+s}{\PYGZdq{}[\PYGZpc{}x \PYGZhy{} \PYGZpc{}X] \PYGZdq{}}\PYG{p}{,} \PYG{n}{info}\PYG{p}{);}
+    \PYG{k+kt}{va\PYGZus{}list} \PYG{n}{argptr}\PYG{p}{;}
+    \PYG{n}{va\PYGZus{}start}\PYG{p}{(}\PYG{n}{argptr}\PYG{p}{,} \PYG{n}{format}\PYG{p}{);}
+    \PYG{n}{fputs}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{,} \PYG{n}{stdout}\PYG{p}{);}
+    \PYG{n}{vfprintf}\PYG{p}{(}\PYG{n}{stdout}\PYG{p}{,} \PYG{n}{format}\PYG{p}{,} \PYG{n}{argptr}\PYG{p}{);}
+    \PYG{n}{va\PYGZus{}end}\PYG{p}{(}\PYG{n}{argptr}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Loads config.}
+\PYG{c+cm}{* Returns: 0 fail | 1 success}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{int} \PYG{n+nf}{load\PYGZus{}config}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{config\PYGZus{}map\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cme}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{path}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{entries}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{FILE} \PYG{o}{*}\PYG{n}{config\PYGZus{}file}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{file\PYGZus{}len}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{input\PYGZus{}buffer}\PYG{p}{;}
+
+    \PYG{k+kt}{int} \PYG{n}{status} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+    \PYG{n}{config\PYGZus{}file}\PYG{o}{=}\PYG{n}{fopen}\PYG{p}{(}\PYG{n}{path}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}r\PYGZdq{}}\PYG{p}{);}
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{config\PYGZus{}file}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}config\PYGZus{}loader(): Failed to load config file, aborting.}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{n}{fseek}\PYG{p}{(}\PYG{n}{config\PYGZus{}file} \PYG{p}{,} \PYG{l+m+mi}{0L} \PYG{p}{,} \PYG{n}{SEEK\PYGZus{}END}\PYG{p}{);}
+    \PYG{n}{file\PYGZus{}len} \PYG{o}{=} \PYG{n}{ftell}\PYG{p}{(}\PYG{n}{config\PYGZus{}file}\PYG{p}{);}
+    \PYG{n}{rewind}\PYG{p}{(}\PYG{n}{config\PYGZus{}file}\PYG{p}{);}
+
+    \PYG{k+kt}{char} \PYG{n}{temp\PYGZus{}buffer}\PYG{p}{[}\PYG{n}{file\PYGZus{}len}\PYG{p}{];}
+
+    \PYG{c+cm}{/* Alocating memory for the file buffer */}
+    \PYG{n}{input\PYGZus{}buffer} \PYG{o}{=} \PYG{n}{calloc}\PYG{p}{(} \PYG{n}{file\PYGZus{}len}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{));}
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{input\PYGZus{}buffer}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{fclose}\PYG{p}{(}\PYG{n}{config\PYGZus{}file}\PYG{p}{);}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}config\PYGZus{}loader(): Memory allocation failed, aborting.}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Get the file into the buffer */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{fread}\PYG{p}{(} \PYG{n}{input\PYGZus{}buffer} \PYG{p}{,} \PYG{n}{file\PYGZus{}len}\PYG{p}{,} \PYG{l+m+mi}{1} \PYG{p}{,} \PYG{n}{config\PYGZus{}file}\PYG{p}{)} \PYG{o}{!=} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{fclose}\PYG{p}{(}\PYG{n}{config\PYGZus{}file}\PYG{p}{);}
+        \PYG{n}{free}\PYG{p}{(}\PYG{n}{input\PYGZus{}buffer}\PYG{p}{);}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}config\PYGZus{}loader(): Read failed, aborting}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k+kt}{int} \PYG{n}{counter} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{while}\PYG{p}{(}\PYG{n}{counter} \PYG{o}{\PYGZlt{}} \PYG{n}{entries}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{memset}\PYG{p}{(}\PYG{n}{temp\PYGZus{}buffer}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,}\PYG{n}{file\PYGZus{}len}\PYG{p}{);}
+        \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{search\PYGZus{}ptr} \PYG{o}{=} \PYG{n}{strstr}\PYG{p}{(}\PYG{n}{input\PYGZus{}buffer}\PYG{p}{,}\PYG{n}{cme}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{entry\PYGZus{}name}\PYG{p}{);}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{search\PYGZus{}ptr} \PYG{o}{!=} \PYG{n+nb}{NULL}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{search\PYGZus{}ptr}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{cme}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{entry\PYGZus{}name}\PYG{p}{);}
+            \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{temp\PYGZus{}buffer}\PYG{p}{,} \PYG{n}{search\PYGZus{}ptr}\PYG{o}{+}\PYG{p}{(}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{cme}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{entry\PYGZus{}name}\PYG{p}{)}\PYG{o}{*}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{))),}
+                   \PYG{n}{length}\PYG{p}{);}
+            \PYG{n}{status} \PYG{o}{=} \PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{temp\PYGZus{}buffer}\PYG{p}{,} \PYG{n}{cme}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{modifier}\PYG{p}{,} \PYG{n}{cme}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{destination}\PYG{p}{);}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{status} \PYG{o}{==} \PYG{n}{EOF} \PYG{o}{||} \PYG{n}{status} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{fclose}\PYG{p}{(}\PYG{n}{config\PYGZus{}file}\PYG{p}{);}
+                \PYG{n}{free}\PYG{p}{(}\PYG{n}{input\PYGZus{}buffer}\PYG{p}{);}
+                \PYG{k}{return} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{n}{counter}\PYG{o}{++}\PYG{p}{;}
+        \PYG{n}{cme}\PYG{o}{++}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{n}{fclose}\PYG{p}{(}\PYG{n}{config\PYGZus{}file}\PYG{p}{);}
+    \PYG{n}{free}\PYG{p}{(}\PYG{n}{input\PYGZus{}buffer}\PYG{p}{);}
+    \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{calculate\PYGZus{}nmea\PYGZus{}checksum}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{nmea}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{char} \PYG{n}{checksum} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{received\PYGZus{}checksum} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{calculated\PYGZus{}checksum} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+
+    \PYG{c+cm}{/* Substring to iterate over */}
+    \PYG{k+kt}{char} \PYG{n}{substring}\PYG{p}{[}\PYG{l+m+mi}{100}\PYG{p}{]} \PYG{o}{=} \PYG{p}{\PYGZob{}}\PYG{l+m+mi}{0}\PYG{p}{\PYGZcb{};}
+
+    \PYG{c+cm}{/* Finding end (*) and calculate length */}
+    \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{substring\PYGZus{}end} \PYG{o}{=} \PYG{n}{strstr}\PYG{p}{(}\PYG{n}{nmea}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}*\PYGZdq{}}\PYG{p}{);}
+    \PYG{k+kt}{int} \PYG{n}{length} \PYG{o}{=} \PYG{n}{substring\PYGZus{}end} \PYG{o}{\PYGZhy{}} \PYG{p}{(}\PYG{n}{nmea}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Copying the substring */}
+    \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{substring}\PYG{p}{,} \PYG{n}{nmea}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{length}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Calculating checksum */}
+    \PYG{k}{for}\PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{length}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{checksum} \PYG{o}{=} \PYG{n}{checksum} \PYG{o}{\PYGZca{}} \PYG{n}{substring}\PYG{p}{[}\PYG{n}{i}\PYG{p}{];}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Reusing substring buffer */}
+    \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{substring}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}x}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{checksum}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Converting calculated checksum to int */}
+    \PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{substring}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}d\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{calculated\PYGZus{}checksum}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Fetching received checksum */}
+    \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{substring}\PYG{p}{,} \PYG{n}{substring\PYGZus{}end}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{nmea}\PYG{p}{));}
+
+    \PYG{c+cm}{/* Converting received checksum to int*/}
+    \PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{substring}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}d\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{received\PYGZus{}checksum}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Comparing checksum */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{received\PYGZus{}checksum} \PYG{o}{==} \PYG{n}{calculated\PYGZus{}checksum}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Used to extract words from between two delimiters}
+\PYG{c+cm}{* delim\PYGZus{}num\PYGZus{}1 \PYGZhy{}\PYGZgt{} The number of the first delimiter, ex.3}
+\PYG{c+cm}{* delim\PYGZus{}num\PYGZus{}2 \PYGZhy{}\PYGZgt{} The number of the second delimiter, ex.5}
+\PYG{c+cm}{* delimiter \PYGZhy{}\PYGZgt{} The character to be used as a delimiter}
+\PYG{c+cm}{* string \PYGZhy{}\PYGZgt{} Input}
+\PYG{c+cm}{* buffer \PYGZhy{}\PYGZgt{} To transport the string}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{int} \PYG{n+nf}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{start}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{end}\PYG{p}{,} \PYG{k+kt}{char} \PYG{n}{delimiter}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{buffer}\PYG{p}{,}
+                        \PYG{k+kt}{int} \PYG{n}{buffsize}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{string}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{str\PYGZus{}len}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{delim\PYGZus{}counter} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{buffer\PYGZus{}index} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+    \PYG{k}{const} \PYG{k+kt}{int} \PYG{n}{carriage\PYGZus{}return} \PYG{o}{=} \PYG{l+m+mi}{13}\PYG{p}{;}
+
+    \PYG{n}{bzero}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{,} \PYG{n}{buffsize}\PYG{p}{);}
+
+    \PYG{k}{for}\PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{str\PYGZus{}len}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{c+cm}{/* Second delim (end) reached, stopping. */}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{delim\PYGZus{}counter} \PYG{o}{==} \PYG{n}{end} \PYG{o}{||} \PYG{p}{(}\PYG{k+kt}{int}\PYG{p}{)}\PYG{n}{string}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{==} \PYG{n}{carriage\PYGZus{}return}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{string}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{==} \PYG{n}{delimiter}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{delim\PYGZus{}counter}\PYG{o}{++}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{c+cm}{/* The first delim is reached */}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{delim\PYGZus{}counter} \PYG{o}{\PYGZgt{}=} \PYG{n}{start}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{buffer}\PYG{p}{[}\PYG{n}{buffer\PYGZus{}index}\PYG{p}{]} \PYG{o}{=} \PYG{n}{string}\PYG{p}{[}\PYG{n}{i}\PYG{p}{];}
+                \PYG{n}{buffer\PYGZus{}index}\PYG{o}{++}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{c+cm}{/* Reached end of string without encountering end delimit */}
+    \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{str\PYGZus{}len\PYGZus{}u}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{buffer}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{buf\PYGZus{}len}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{prev} \PYG{o}{=} \PYG{l+s+sc}{\PYGZsq{}X\PYGZsq{}}\PYG{p}{;}
+    \PYG{k}{for}\PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{buf\PYGZus{}len}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mh}{0x0a} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{prev} \PYG{o}{==} \PYG{l+m+mh}{0x0a}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{n}{i}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{n}{prev} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{n}{i}\PYG{p}{];}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{return} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Mega hackish code for getting MJD */}
+\PYG{k+kt}{int} \PYG{n+nf}{get\PYGZus{}today\PYGZus{}mjd}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{buffer}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{status} \PYG{o}{=} \PYG{n}{run\PYGZus{}command}\PYG{p}{(}\PYG{n}{MJD\PYGZus{}SCRIPT\PYGZus{}PATH}\PYG{p}{,} \PYG{n}{buffer}\PYG{p}{);}
+    \PYG{c+cm}{/* Removing newline */}
+    \PYG{n}{buffer}\PYG{p}{[}\PYG{n}{strcspn}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{return} \PYG{n}{status}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{run\PYGZus{}command}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{path}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{output}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{FILE} \PYG{o}{*}\PYG{n}{fp}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{buffer\PYGZus{}size} \PYG{o}{=} \PYG{l+m+mi}{1000}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{buffer}\PYG{p}{[}\PYG{n}{buffer\PYGZus{}size}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{n}{buffer\PYGZus{}size}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Open the command for reading. */}
+    \PYG{n}{fp} \PYG{o}{=} \PYG{n}{popen}\PYG{p}{(}\PYG{n}{path}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}r\PYGZdq{}}\PYG{p}{);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{fp} \PYG{o}{==} \PYG{n+nb}{NULL}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}Failed to run command}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Read the output a line at a time \PYGZhy{} output it. */}
+    \PYG{k}{while} \PYG{p}{(}\PYG{n}{fgets}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{fp}\PYG{p}{)} \PYG{o}{!=} \PYG{n+nb}{NULL}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{strcat}\PYG{p}{(}\PYG{n}{output}\PYG{p}{,}\PYG{n}{buffer}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* close */}
+    \PYG{n}{pclose}\PYG{p}{(}\PYG{n}{fp}\PYG{p}{);}
+    \PYG{k}{return} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{output}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{log\PYGZus{}to\PYGZus{}file}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{path}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{content}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{stamp\PYGZus{}switch}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{FILE} \PYG{o}{*}\PYG{n}{log\PYGZus{}file}\PYG{p}{;}
+    \PYG{n}{log\PYGZus{}file} \PYG{o}{=} \PYG{n}{fopen}\PYG{p}{(}\PYG{n}{path}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}a+\PYGZdq{}}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Open file */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{log\PYGZus{}file}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}FOPEN}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Add MJD timestamp */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{stamp\PYGZus{}switch} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{timestamp\PYGZus{}size} \PYG{o}{=} \PYG{l+m+mi}{50}\PYG{p}{;}
+        \PYG{k+kt}{char} \PYG{n}{timestamp}\PYG{p}{[}\PYG{n}{timestamp\PYGZus{}size}\PYG{p}{];}
+        \PYG{n}{memset}\PYG{p}{(}\PYG{n}{timestamp}\PYG{p}{,}\PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{n}{timestamp\PYGZus{}size}\PYG{p}{);}
+
+        \PYG{n}{get\PYGZus{}today\PYGZus{}mjd}\PYG{p}{(}\PYG{n}{timestamp}\PYG{p}{);}
+        \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{fprintf}\PYG{p}{(}\PYG{n}{log\PYGZus{}file}\PYG{p}{,}\PYG{l+s}{\PYGZdq{}\PYGZpc{}s,\PYGZdq{}}\PYG{p}{,}\PYG{n}{timestamp}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+            \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}FWRITE}\PYG{p}{);}
+            \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Just stamp with regular time */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{stamp\PYGZus{}switch} \PYG{o}{==} \PYG{l+m+mi}{2}\PYG{p}{)\PYGZob{}}
+        \PYG{k+kt}{char} \PYG{n}{timestamp}\PYG{p}{[}\PYG{l+m+mi}{100}\PYG{p}{];}
+        \PYG{n}{memset}\PYG{p}{(}\PYG{n}{timestamp}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{l+m+mi}{100}\PYG{p}{);}
+        \PYG{k+kt}{time\PYGZus{}t} \PYG{n}{rawtime}\PYG{p}{;}
+        \PYG{k}{struct} \PYG{n}{tm} \PYG{o}{*}\PYG{n}{info}\PYG{p}{;}
+        \PYG{n}{time}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{rawtime}\PYG{p}{);}
+        \PYG{n}{info} \PYG{o}{=} \PYG{n}{gmtime}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{rawtime}\PYG{p}{);}
+        \PYG{n}{strftime}\PYG{p}{(}\PYG{n}{timestamp}\PYG{p}{,}\PYG{l+m+mi}{80}\PYG{p}{,}\PYG{l+s}{\PYGZdq{}[\PYGZpc{}x \PYGZhy{} \PYGZpc{}X] \PYGZdq{}}\PYG{p}{,} \PYG{n}{info}\PYG{p}{);} 
+
+        \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{fprintf}\PYG{p}{(}\PYG{n}{log\PYGZus{}file}\PYG{p}{,}\PYG{l+s}{\PYGZdq{}\PYGZpc{}s,\PYGZdq{}}\PYG{p}{,}\PYG{n}{timestamp}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+            \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}FWRITE}\PYG{p}{);}
+            \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Write content to file */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{p}{(}\PYG{n}{fprintf}\PYG{p}{(}\PYG{n}{log\PYGZus{}file}\PYG{p}{,}\PYG{l+s}{\PYGZdq{}\PYGZpc{}s\PYGZdq{}}\PYG{p}{,}\PYG{n}{content}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}FWRITE}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Close file */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{fclose}\PYG{p}{(}\PYG{n}{log\PYGZus{}file}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}FCLOSE}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

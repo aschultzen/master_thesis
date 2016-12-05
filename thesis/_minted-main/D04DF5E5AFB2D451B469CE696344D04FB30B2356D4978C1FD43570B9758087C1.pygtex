@@ -1,0 +1,15 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{static} \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n+nf}{get\PYGZus{}mem\PYGZus{}piece}\PYG{p}{()}
+    \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{;}
+        \PYG{k}{for}\PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{max\PYGZus{}clients}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)\PYGZob{}}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}map}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{!=} \PYG{n+nb}{NULL}\PYG{p}{)\PYGZob{}}
+                \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{tmp} \PYG{o}{=} \PYG{n}{client\PYGZus{}list\PYGZus{}map}\PYG{p}{[}\PYG{n}{i}\PYG{p}{];}
+                \PYG{n}{client\PYGZus{}list\PYGZus{}map}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{n+nb}{NULL}\PYG{p}{;}
+                \PYG{k}{return} \PYG{n}{tmp}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{i}\PYG{o}{++}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{k}{return} \PYG{n+nb}{NULL}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+\end{Verbatim}

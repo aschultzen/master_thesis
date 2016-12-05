@@ -1,0 +1,200 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}filters.h\PYGZdq{}}
+
+\PYG{c+cp}{\PYGZsh{}define ALARM\PYGZus{}MMF \PYGZdq{}[ ALARM ] Client \PYGZpc{}d triggered MIN\PYGZus{}MAX!\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ALARM\PYGZus{}MMF\PYGZus{}RETURNED \PYGZdq{}[ ALARM ] Client \PYGZpc{}d MIN\PYGZus{}MAX returned!\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ALARM\PYGZus{}RDF \PYGZdq{}[ ALARM ] Client \PYGZpc{}d triggered REF\PYGZus{}DEV!\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ALARM\PYGZus{}RDF\PYGZus{}RETURNED \PYGZdq{}[ ALARM ] Client \PYGZpc{}d REF\PYGZus{}DEV returned!\PYGZbs{}n\PYGZdq{}}
+
+\PYG{c+cp}{\PYGZsh{}define LOG\PYGZus{}FILE \PYGZdq{}server\PYGZus{}log\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define LOG\PYGZus{}STRING\PYGZus{}LENGTH 100}
+\PYG{c+cp}{\PYGZsh{}define MJD\PYGZus{}LENGTH 15}
+
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n+nf}{log\PYGZus{}alarm}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{client\PYGZus{}id}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{alarm}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* allocating memory for string */}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{log\PYGZus{}string}\PYG{p}{[}\PYG{n}{LOG\PYGZus{}STRING\PYGZus{}LENGTH}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{n}{log\PYGZus{}string}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{n}{LOG\PYGZus{}STRING\PYGZus{}LENGTH}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Formatting alarm */}
+    \PYG{k+kt}{char} \PYG{n}{alarm\PYGZus{}buffer}\PYG{p}{[}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{alarm}\PYG{p}{)} \PYG{o}{+} \PYG{n}{ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{n}{alarm\PYGZus{}buffer}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{alarm}\PYG{p}{)} \PYG{o}{+} \PYG{n}{ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX}\PYG{p}{);}
+    \PYG{n}{snprintf}\PYG{p}{(}\PYG{n}{alarm\PYGZus{}buffer}\PYG{p}{,} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{alarm}\PYG{p}{)} \PYG{o}{+} \PYG{n}{ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX}\PYG{p}{,} \PYG{n}{alarm}\PYG{p}{,} \PYG{n}{client\PYGZus{}id}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Formatting output*/}
+    \PYG{n}{snprintf}\PYG{p}{(}\PYG{n}{log\PYGZus{}string}\PYG{p}{,} \PYG{n}{LOG\PYGZus{}STRING\PYGZus{}LENGTH}\PYG{p}{,} \PYG{l+s}{\PYGZdq{} \PYGZpc{}s\PYGZdq{}}\PYG{p}{,} \PYG{n}{alarm\PYGZus{}buffer}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Logging */}
+    \PYG{k}{return} \PYG{n}{log\PYGZus{}to\PYGZus{}file}\PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{log\PYGZus{}path}\PYG{p}{,} \PYG{n}{log\PYGZus{}string}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+
+\PYG{k+kt}{void} \PYG{n+nf}{raise\PYGZus{}alarm}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{iterator}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{safe}\PYG{p}{;}
+
+    \PYG{n}{list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe}\PYG{p}{(}\PYG{n}{iterator}\PYG{p}{,} \PYG{n}{safe}\PYG{p}{,}\PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{,} \PYG{n}{list}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{c+cm}{/* Checking MIN\PYGZhy{}MAX */}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{was\PYGZus{}moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+                \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{logging}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{log\PYGZus{}alarm}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{,} \PYG{n}{ALARM\PYGZus{}MMF}\PYG{p}{);}
+                \PYG{p}{\PYGZcb{}}
+                \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ALARM\PYGZus{}MMF}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{was\PYGZus{}moved}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{was\PYGZus{}moved} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                    \PYG{k}{if}\PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{logging}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                        \PYG{n}{log\PYGZus{}alarm}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{,} \PYG{n}{ALARM\PYGZus{}MMF\PYGZus{}RETURNED}\PYG{p}{);}
+                    \PYG{p}{\PYGZcb{}}
+                    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ALARM\PYGZus{}MMF\PYGZus{}RETURNED}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{);}
+                \PYG{p}{\PYGZcb{}}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{c+cm}{/* Checking REF\PYGZhy{}DEV */}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{was\PYGZus{}moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+                \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{logging}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{log\PYGZus{}alarm}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{,} \PYG{n}{ALARM\PYGZus{}RDF}\PYG{p}{);}
+                \PYG{p}{\PYGZcb{}}
+                \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ALARM\PYGZus{}RDF}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{);}
+
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{was\PYGZus{}moved}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{was\PYGZus{}moved} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                    \PYG{k}{if}\PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{logging}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                        \PYG{n}{log\PYGZus{}alarm}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{,} \PYG{n}{ALARM\PYGZus{}RDF\PYGZus{}RETURNED}\PYG{p}{);}
+                    \PYG{p}{\PYGZcb{}}
+                    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ALARM\PYGZus{}RDF\PYGZus{}RETURNED}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id}\PYG{p}{);}
+                \PYG{p}{\PYGZcb{}}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{ref\PYGZus{}dev\PYGZus{}filter}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{iterator}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{safe}\PYG{p}{;}
+
+    \PYG{n}{list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe}\PYG{p}{(}\PYG{n}{iterator}\PYG{p}{,} \PYG{n}{safe}\PYG{p}{,}\PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{,} \PYG{n}{list}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}current} \PYG{o}{\PYGZgt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lat\PYGZus{}ref} \PYG{o}{+}
+                \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lat\PYGZus{}dev}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lat\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{HIGH}\PYG{p}{;}
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}HIGH : \PYGZpc{}lf / \PYGZpc{}lf}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}current}\PYG{p}{,}
+                   \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lat\PYGZus{}ref} \PYG{o}{+} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lat\PYGZus{}dev}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}current} \PYG{o}{\PYGZlt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lat\PYGZus{}ref} \PYG{o}{\PYGZhy{}}
+                  \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lat\PYGZus{}dev}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lat\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{LOW}\PYG{p}{;}
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}LOW : \PYGZpc{}lf / \PYGZpc{}lf}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}current}\PYG{p}{,}
+                   \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lat\PYGZus{}ref} \PYG{o}{\PYGZhy{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lat\PYGZus{}dev}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lat\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{SAFE}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}current} \PYG{o}{\PYGZgt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{alt\PYGZus{}ref} \PYG{o}{+}
+                \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{alt\PYGZus{}dev}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{alt\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{HIGH}\PYG{p}{;}
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}HIGH : \PYGZpc{}lf / \PYGZpc{}lf}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}current}\PYG{p}{,}
+                   \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{alt\PYGZus{}ref} \PYG{o}{+} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{alt\PYGZus{}dev}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}current} \PYG{o}{\PYGZlt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{alt\PYGZus{}ref} \PYG{o}{\PYGZhy{}}
+                  \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{alt\PYGZus{}dev}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{alt\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{LOW}\PYG{p}{;}
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}LOW : \PYGZpc{}lf / \PYGZpc{}lf}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}current}\PYG{p}{,}
+                   \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{alt\PYGZus{}ref} \PYG{o}{\PYGZhy{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{alt\PYGZus{}dev}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{alt\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{SAFE}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}current} \PYG{o}{\PYGZgt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lon\PYGZus{}ref} \PYG{o}{+}
+                \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lon\PYGZus{}dev}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lon\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{HIGH}\PYG{p}{;}
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}HIGH : \PYGZpc{}lf / \PYGZpc{}lf}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}current}\PYG{p}{,}
+                   \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lon\PYGZus{}ref} \PYG{o}{+} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lon\PYGZus{}dev}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}current} \PYG{o}{\PYGZlt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lon\PYGZus{}ref} \PYG{o}{\PYGZhy{}}
+                  \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lon\PYGZus{}dev}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lon\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{LOW}\PYG{p}{;}
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}LOW : \PYGZpc{}lf / \PYGZpc{}lf}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}current}\PYG{p}{,}
+                   \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lon\PYGZus{}ref} \PYG{o}{\PYGZhy{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{lon\PYGZus{}dev}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lon\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{SAFE}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}current} \PYG{o}{\PYGZgt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{speed\PYGZus{}ref} \PYG{o}{+}
+                \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{speed\PYGZus{}dev}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{speed\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{HIGH}\PYG{p}{;}
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}HIGH : \PYGZpc{}lf / \PYGZpc{}lf}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}current}\PYG{p}{,}
+                   \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{speed\PYGZus{}ref} \PYG{o}{+} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{speed\PYGZus{}dev}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}current} \PYG{o}{\PYGZlt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{speed\PYGZus{}ref} \PYG{o}{\PYGZhy{}}
+                  \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{speed\PYGZus{}dev}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{speed\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{LOW}\PYG{p}{;}
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}HIGH : \PYGZpc{}lf / \PYGZpc{}lf}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}current}\PYG{p}{,}
+                   \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{speed\PYGZus{}ref} \PYG{o}{\PYGZhy{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{rdd}\PYG{p}{.}\PYG{n}{speed\PYGZus{}dev}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{rdf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{speed\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{SAFE}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{min\PYGZus{}max\PYGZus{}filter}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{iterator}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{safe}\PYG{p}{;}
+
+    \PYG{n}{list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe}\PYG{p}{(}\PYG{n}{iterator}\PYG{p}{,} \PYG{n}{safe}\PYG{p}{,}\PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{,} \PYG{n}{list}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}current} \PYG{o}{\PYGZgt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}high}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lat\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{HIGH}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}current} \PYG{o}{\PYGZlt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lat\PYGZus{}low}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lat\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{LOW}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lat\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{SAFE}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}current} \PYG{o}{\PYGZgt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}high}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lon\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{HIGH}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}current} \PYG{o}{\PYGZlt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{lon\PYGZus{}low}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lon\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{LOW}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{lon\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{SAFE}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}current} \PYG{o}{\PYGZgt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}high}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{alt\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{HIGH}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}current} \PYG{o}{\PYGZlt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{alt\PYGZus{}low}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{alt\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{LOW}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{alt\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{SAFE}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}current} \PYG{o}{\PYGZgt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}high}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{speed\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{HIGH}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}current} \PYG{o}{\PYGZlt{}} \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{nmea}\PYG{p}{.}\PYG{n}{speed\PYGZus{}low}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{speed\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{LOW}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{iterator}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fs}\PYG{p}{.}\PYG{n}{mmf}\PYG{p}{.}\PYG{n}{dv}\PYG{p}{.}\PYG{n}{speed\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{SAFE}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

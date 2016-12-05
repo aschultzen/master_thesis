@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+ch}{\PYGZsh{}! /usr/bin/env python}
+
+\PYG{k+kn}{import} \PYG{n+nn}{datetime}
+\PYG{k+kn}{import} \PYG{n+nn}{jdutil}
+\PYG{k+kn}{from} \PYG{n+nn}{dateutil} \PYG{k+kn}{import} \PYG{n}{parser}
+
+\PYG{n}{today} \PYG{o}{=} \PYG{n}{datetime}\PYG{o}{.}\PYG{n}{datetime}\PYG{o}{.}\PYG{n}{utcnow}\PYG{p}{()}
+\PYG{k}{print}\PYG{p}{(}\PYG{n}{jdutil}\PYG{o}{.}\PYG{n}{jd\PYGZus{}to\PYGZus{}mjd}\PYG{p}{(}\PYG{n}{jdutil}\PYG{o}{.}\PYG{n}{datetime\PYGZus{}to\PYGZus{}jd}\PYG{p}{(}\PYG{n}{today}\PYG{p}{)))} 
+\end{Verbatim}

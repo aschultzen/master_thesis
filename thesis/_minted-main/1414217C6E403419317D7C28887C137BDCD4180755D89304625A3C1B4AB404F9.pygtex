@@ -1,0 +1,16 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nl}{cfd\PYGZus{}state\PYGZus{}path}\PYG{p}{:} \PYG{n}{cfd\PYGZus{}state}\PYG{p}{.}\PYG{n}{txt}
+\PYG{n+nl}{telemetry\PYGZus{}log}\PYG{p}{:} \PYG{n}{telemetry}\PYG{p}{.}\PYG{n}{txt}
+\PYG{n+nl}{pred\PYGZus{}log\PYGZus{}path}\PYG{p}{:} \PYG{n}{pred}\PYG{p}{.}\PYG{n}{txt}
+\PYG{n+nl}{log\PYGZus{}predict}\PYG{p}{:} \PYG{l+m+mi}{0}
+\PYG{n+nl}{init\PYGZus{}cfd\PYGZus{}from\PYGZus{}file}\PYG{p}{:} \PYG{l+m+mi}{0}
+\PYG{n+nl}{init\PYGZus{}cfd\PYGZus{}steer\PYGZus{}smooth\PYGZus{}current}\PYG{p}{:} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{49.134799}
+\PYG{n+nl}{init\PYGZus{}cfd\PYGZus{}steer\PYGZus{}smooth\PYGZus{}today}\PYG{p}{:} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{43.508808}
+\PYG{n+nl}{init\PYGZus{}cfd\PYGZus{}steer\PYGZus{}smooth\PYGZus{}previous}\PYG{p}{:} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{49.135013}
+\PYG{n+nl}{init\PYGZus{}cfd\PYGZus{}steer\PYGZus{}smooth\PYGZus{}yesterday}\PYG{p}{:} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{43.091711}
+\PYG{n+nl}{phase\PYGZus{}limit}\PYG{p}{:} \PYG{l+m+mi}{50}
+\PYG{n+nl}{steer\PYGZus{}limit}\PYG{p}{:} \PYG{l+m+mi}{50}
+\PYG{n+nl}{time\PYGZus{}constant}\PYG{p}{:} \PYG{l+m+mi}{10000}
+\PYG{n+nl}{warmup\PYGZus{}days}\PYG{p}{:} \PYG{l+m+mi}{0}
+\PYG{n+nl}{pred\PYGZus{}limit}\PYG{p}{:} \PYG{l+m+mi}{200}
+\end{Verbatim}

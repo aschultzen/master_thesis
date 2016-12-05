@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{struct} \PYG{n}{server\PYGZus{}synchro} \PYG{p}{\PYGZob{}}
+        \PYG{n}{sem\PYGZus{}t} \PYG{n}{ready\PYGZus{}sem}\PYG{p}{;}
+        \PYG{n}{sem\PYGZus{}t} \PYG{n}{csac\PYGZus{}sem}\PYG{p}{;}
+        \PYG{n}{sem\PYGZus{}t} \PYG{n}{client\PYGZus{}list\PYGZus{}sem}\PYG{p}{;}
+        \PYG{k}{volatile} \PYG{k+kt}{sig\PYGZus{}atomic\PYGZus{}t} \PYG{n}{done}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{};}
+\end{Verbatim}

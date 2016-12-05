@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{struct} \PYG{n}{server\PYGZus{}data} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{number\PYGZus{}of\PYGZus{}clients}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{number\PYGZus{}of\PYGZus{}sensors}\PYG{p}{;}
+        \PYG{k+kt}{time\PYGZus{}t} \PYG{n}{started}\PYG{p}{;}
+        \PYG{k+kt}{pid\PYGZus{}t} \PYG{n}{pid}\PYG{p}{;}
+        \PYG{k+kt}{char} \PYG{n}{version}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{];}
+\end{Verbatim}

@@ -1,0 +1,12 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{struct} \PYG{n}{server\PYGZus{}config} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{max\PYGZus{}clients}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{warm\PYGZus{}up\PYGZus{}seconds}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{human\PYGZus{}readable\PYGZus{}dumpdata}\PYG{p}{;}
+        \PYG{k+kt}{char} \PYG{n}{csac\PYGZus{}path}\PYG{p}{[}\PYG{n}{PATH\PYGZus{}LENGTH\PYGZus{}MAX}\PYG{p}{];}
+        \PYG{k+kt}{int} \PYG{n}{logging}\PYG{p}{;}
+        \PYG{k+kt}{char} \PYG{n}{log\PYGZus{}path}\PYG{p}{[}\PYG{n}{PATH\PYGZus{}LENGTH\PYGZus{}MAX}\PYG{p}{];}
+        \PYG{k+kt}{int} \PYG{n}{csac\PYGZus{}logging}\PYG{p}{;}
+        \PYG{k+kt}{char} \PYG{n}{csac\PYGZus{}log\PYGZus{}path}\PYG{p}{[}\PYG{n}{PATH\PYGZus{}LENGTH\PYGZus{}MAX}\PYG{p}{];}
+    \PYG{p}{\PYGZcb{};}
+\end{Verbatim}

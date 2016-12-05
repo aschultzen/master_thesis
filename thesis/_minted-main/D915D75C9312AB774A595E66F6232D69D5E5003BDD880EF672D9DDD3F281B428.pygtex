@@ -1,0 +1,130 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * @file utils.h}
+\PYG{c+cm}{ * @author Aril Schultzen}
+\PYG{c+cm}{ * @date 13.04.2016}
+\PYG{c+cm}{ * @brief File containing function prototypes and includes for utils.c}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef UTILS\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define UTILS\PYGZus{}H}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdio.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdarg.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdlib.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}arpa/inet.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}string.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}time.h\PYGZgt{}}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}list.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}config.h\PYGZdq{}}
+
+\PYG{c+cm}{/** @brief Terminates program and prints the line}
+\PYG{c+cm}{ *		   number where die was called from.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *  @param line\PYGZus{}number Line number where die() was written}
+\PYG{c+cm}{ *  @param format String with error description.}
+\PYG{c+cm}{ *	@return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{die} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{line\PYGZus{}number}\PYG{p}{,} \PYG{k}{const} \PYG{k+kt}{char} \PYG{o}{*} \PYG{n}{format}\PYG{p}{,} \PYG{p}{...);}
+
+\PYG{c+cm}{/** @brief Extracts IP address from file descriptor}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	@param session\PYGZus{}fd file descriptor for the session}
+\PYG{c+cm}{ *	@param ip Buffer to store the IP address as string.}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{get\PYGZus{}ip\PYGZus{}str}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{session\PYGZus{}fd}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{ip}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Extracts IP address from sockaddr struct}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	Used by get\PYGZus{}ip\PYGZus{}str() to extract IP address from}
+\PYG{c+cm}{ *	sockaddr struct.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	@param session\PYGZus{}fd file descriptor for the session}
+\PYG{c+cm}{ *	@param ip Buffer to store the IP address as string.}
+\PYG{c+cm}{ *	@return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{extract\PYGZus{}ip\PYGZus{}str}\PYG{p}{(}\PYG{k}{const} \PYG{k}{struct} \PYG{n}{sockaddr} \PYG{o}{*}\PYG{n}{sa}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{s}\PYG{p}{,} \PYG{k+kt}{size\PYGZus{}t} \PYG{n}{maxlen}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Print function with time\PYGZhy{}stamp}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	Print function like printf() but with time\PYGZhy{}stamp}
+\PYG{c+cm}{ *  in square bracket appended before the String.}
+\PYG{c+cm}{ * 	Example: [04/13/16 \PYGZhy{} 08:50:41] Waiting for connections..}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	@param format String to print}
+\PYG{c+cm}{ *	@return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{t\PYGZus{}print}\PYG{p}{(}\PYG{k}{const} \PYG{k+kt}{char}\PYG{o}{*} \PYG{n}{format}\PYG{p}{,} \PYG{p}{...);}
+
+\PYG{c+cm}{/** @brief Loads config from file using config\PYGZus{}map\PYGZus{}entry struct}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	Uses the config\PYGZus{}map\PYGZus{}entry struct to find the correct entry}
+\PYG{c+cm}{ * 	in the config file, cast it to correct type and fill the}
+\PYG{c+cm}{ * 	respective memory area (pointer).}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	@param cme Pointer to the config\PYGZus{}map\PYGZus{}entry struct}
+\PYG{c+cm}{ *	@param path Path to config file}
+\PYG{c+cm}{ *	@param entries Entries in the config file}
+\PYG{c+cm}{ *	@return 1 if success, 0 if fail.}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{load\PYGZus{}config}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{config\PYGZus{}map\PYGZus{}entry} \PYG{o}{*}\PYG{n}{cme}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{path}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{entries}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Calculates the checksum of a given string of NMEA data.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *  Used to check the integrity of NMEA data from the}
+\PYG{c+cm}{ *	GPS receiver before potential analysis.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	@param nmea String containing NMEA data to check}
+\PYG{c+cm}{ *	@return 1 if success, 0 if fail.}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{calculate\PYGZus{}nmea\PYGZus{}checksum}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{s}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Extracts words from a String}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	Used to extract a substring from a string by using a}
+\PYG{c+cm}{ *  delimiter. The from and to parameters defines which}
+\PYG{c+cm}{ *	occurrence of the delimiter in the parent string to}
+\PYG{c+cm}{ *	use as start and end for the substring.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	@param start The delimiter number to start from}
+\PYG{c+cm}{ *	@param end The delimiter number to stop}
+\PYG{c+cm}{ *	@param delimiter Symbol/character to use as delimit}
+\PYG{c+cm}{ *	@param buffer Buffer to store the word(s)}
+\PYG{c+cm}{ *	@param buffsize Size of buffer}
+\PYG{c+cm}{ *	@param string Pointer to parent string}
+\PYG{c+cm}{ *	@param str\PYGZus{}len Length of parent string}
+\PYG{c+cm}{ *	@return 1 if success, 0 if no string within the delimits was found.}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{start}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{end}\PYG{p}{,} \PYG{k+kt}{char} \PYG{n}{delimiter}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{buffer}\PYG{p}{,}
+                        \PYG{k+kt}{int} \PYG{n}{buffsize}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{string}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{str\PYGZus{}len}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Counts bytes from start to first occurence of null character}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	@param buffer Buffer to search through}
+\PYG{c+cm}{ *	@param buf\PYGZus{}len Length of the buffer in bytes}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{str\PYGZus{}len\PYGZus{}u}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{buffer}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{buf\PYGZus{}len}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Calls a script using run\PYGZus{}command to get mjd(now).}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	@param buffer Buffer to store response}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{get\PYGZus{}today\PYGZus{}mjd}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{buffer}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Run a script or a program through the shell}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	@param path Path to program}
+\PYG{c+cm}{ *	@param output Buffer to store response}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{run\PYGZus{}command}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{path}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{output}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Log to file}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *	@param content Data to log}
+\PYG{c+cm}{ *	@param path Path to the log file to log to}
+\PYG{c+cm}{ *	@param stamp\PYGZus{}switch 0 if no timestamp, 1 if MJD.}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{log\PYGZus{}to\PYGZus{}file}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{path}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{content}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{stamp\PYGZus{}switch}\PYG{p}{);}
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !UTILS\PYGZus{}H */}
+\end{Verbatim}

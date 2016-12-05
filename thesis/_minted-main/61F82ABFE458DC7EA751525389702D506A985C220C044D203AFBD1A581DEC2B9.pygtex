@@ -1,0 +1,44 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{:Author: Aril Schultzen}
+\PYG{l+s+sd}{:Email: aschultzen@gmail.com }
+\PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{c+c1}{\PYGZsh{} This script attempts to connect to the}
+\PYG{c+c1}{\PYGZsh{} Sensor Server at \PYGZlt{}ip\PYGZgt{} : \PYGZdq{}port\PYGZdq{} and }
+\PYG{c+c1}{\PYGZsh{} IDs itself as \PYGZlt{}id\PYGZgt{}. It will then}
+\PYG{c+c1}{\PYGZsh{} poll the time solved by the GNSS receiver}
+\PYG{c+c1}{\PYGZsh{} connected to Sensor\PYGZlt{}id\PYGZgt{} until}
+\PYG{c+c1}{\PYGZsh{} terminated. }
+
+\PYG{k+kn}{import} \PYG{n+nn}{socket}  
+\PYG{k+kn}{import} \PYG{n+nn}{sys}  
+\PYG{k+kn}{import} \PYG{n+nn}{time}
+
+\PYG{n}{ip} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}10.1.0.46\PYGZdq{}}
+\PYG{n}{port} \PYG{o}{=} \PYG{l+m+mi}{10001}
+\PYG{n+nb}{id} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+\PYG{k}{try}\PYG{p}{:}
+    \PYG{n}{s} \PYG{o}{=} \PYG{n}{socket}\PYG{o}{.}\PYG{n}{socket}\PYG{p}{(}\PYG{n}{socket}\PYG{o}{.}\PYG{n}{AF\PYGZus{}INET}\PYG{p}{,} \PYG{n}{socket}\PYG{o}{.}\PYG{n}{SOCK\PYGZus{}STREAM}\PYG{p}{)}
+\PYG{k}{except} \PYG{n}{socket}\PYG{o}{.}\PYG{n}{error}\PYG{p}{,} \PYG{n}{msg}\PYG{p}{:}
+    \PYG{k}{print} \PYG{l+s+s1}{\PYGZsq{}Failed to create socket. Error code: \PYGZsq{}} \PYG{o}{+} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n}{msg}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])} \PYG{o}{+} \PYG{l+s+s1}{\PYGZsq{} , Error message : \PYGZsq{}} \PYG{o}{+} \PYG{n}{msg}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}
+    \PYG{n}{sys}\PYG{o}{.}\PYG{n}{exit}\PYG{p}{();}
+\PYG{k}{try}\PYG{p}{:}
+    \PYG{n}{remote\PYGZus{}ip} \PYG{o}{=} \PYG{n}{socket}\PYG{o}{.}\PYG{n}{gethostbyname}\PYG{p}{(} \PYG{n}{ip} \PYG{p}{)}
+ 
+\PYG{k}{except} \PYG{n}{socket}\PYG{o}{.}\PYG{n}{gaierror}\PYG{p}{:}
+    \PYG{k}{print} \PYG{l+s+s1}{\PYGZsq{}Could not resolve hostname\PYGZsq{}}
+    \PYG{n}{sys}\PYG{o}{.}\PYG{n}{exit}\PYG{p}{()}
+     
+\PYG{n}{s}\PYG{o}{.}\PYG{n}{connect}\PYG{p}{((}\PYG{n}{remote\PYGZus{}ip} \PYG{p}{,} \PYG{n}{port}\PYG{p}{))}
+\PYG{n}{s}\PYG{o}{.}\PYG{n}{sendall}\PYG{p}{(}\PYG{n}{b}\PYG{l+s+s1}{\PYGZsq{}IDENTIFY \PYGZhy{}10\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{recv\PYGZus{}buff} \PYG{o}{=} \PYG{n}{s}\PYG{o}{.}\PYG{n}{recv}\PYG{p}{(}\PYG{l+m+mi}{1024}\PYG{p}{)}
+
+\PYG{k}{while}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{):}
+	\PYG{n}{s}\PYG{o}{.}\PYG{n}{sendall}\PYG{p}{(}\PYG{n}{b}\PYG{l+s+s1}{\PYGZsq{}PRINTTIME\PYGZsq{}} \PYG{o}{+} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n+nb}{id}\PYG{p}{))}
+	\PYG{n}{time}\PYG{o}{.}\PYG{n}{sleep}\PYG{p}{(}\PYG{l+m+mf}{0.1}\PYG{p}{)}
+	\PYG{n}{recv\PYGZus{}buff} \PYG{o}{=} \PYG{n}{s}\PYG{o}{.}\PYG{n}{recv}\PYG{p}{(}\PYG{l+m+mi}{1024}\PYG{p}{)}
+	\PYG{n}{recv\PYGZus{}buff} \PYG{o}{=} \PYG{n}{recv\PYGZus{}buff}\PYG{o}{.}\PYG{n}{strip}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}\PYGZgt{}}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+	\PYG{k}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Sensor \PYGZdq{}} \PYG{o}{+} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n+nb}{id}\PYG{p}{)} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{} GNSS solved time: \PYGZdq{}} \PYG{o}{+} \PYG{n}{recv\PYGZus{}buff}\PYG{p}{)}
+	\PYG{n}{time}\PYG{o}{.}\PYG{n}{sleep}\PYG{p}{(}\PYG{l+m+mf}{0.9}\PYG{p}{)}
+\end{Verbatim}

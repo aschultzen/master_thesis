@@ -1,0 +1,14 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}net.h\PYGZdq{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{s\PYGZus{}read}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{transmission\PYGZus{}s} \PYG{o}{*}\PYG{n}{tsm}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{bzero}\PYG{p}{(}\PYG{n}{tsm}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{iobuffer}\PYG{p}{,}\PYG{n}{IO\PYGZus{}BUFFER\PYGZus{}SIZE}\PYG{p}{);}
+    \PYG{k}{return} \PYG{n}{read}\PYG{p}{(}\PYG{n}{tsm}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{session\PYGZus{}fd}\PYG{p}{,} \PYG{n}{tsm}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{iobuffer}\PYG{p}{,}\PYG{n}{IO\PYGZus{}BUFFER\PYGZus{}SIZE}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{s\PYGZus{}write}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{transmission\PYGZus{}s} \PYG{o}{*}\PYG{n}{tsm}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{message}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{length}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{n}{write}\PYG{p}{(}\PYG{n}{tsm}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{session\PYGZus{}fd}\PYG{p}{,} \PYG{n}{message}\PYG{p}{,} \PYG{n}{length}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

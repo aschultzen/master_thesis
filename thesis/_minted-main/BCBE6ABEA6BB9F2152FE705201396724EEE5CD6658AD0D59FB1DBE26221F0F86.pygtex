@@ -1,0 +1,533 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}csac\PYGZus{}filter.h\PYGZdq{}}
+
+\PYG{c+cm}{/* PATH TO CONFIG FILE */}
+\PYG{c+cp}{\PYGZsh{}define CSAC\PYGZus{}FILTER\PYGZus{}CONFIG\PYGZus{}PATH \PYGZdq{}cfilter\PYGZus{}config.ini\PYGZdq{}}
+
+\PYG{c+cm}{/* CONFIG CONSTANTS */}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}CFD\PYGZus{}PATH \PYGZdq{}cfd\PYGZus{}state\PYGZus{}path: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}INIT\PYGZus{}FROM\PYGZus{}FILE \PYGZdq{}init\PYGZus{}cfd\PYGZus{}from\PYGZus{}file: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}TELEMETRY\PYGZus{}LOG \PYGZdq{}telemetry\PYGZus{}log: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}LOG\PYGZus{}PREDICTION \PYGZdq{}log\PYGZus{}predict: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}LOG\PYGZus{}PRED\PYGZus{}PATH \PYGZdq{}pred\PYGZus{}log\PYGZus{}path: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}INIT\PYGZus{}SSC \PYGZdq{}init\PYGZus{}cfd\PYGZus{}steer\PYGZus{}smooth\PYGZus{}current: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}INIT\PYGZus{}SST \PYGZdq{}init\PYGZus{}cfd\PYGZus{}steer\PYGZus{}smooth\PYGZus{}today: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}INIT\PYGZus{}SSP \PYGZdq{}init\PYGZus{}cfd\PYGZus{}steer\PYGZus{}smooth\PYGZus{}previous: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}INIT\PYGZus{}SSY \PYGZdq{}init\PYGZus{}cfd\PYGZus{}steer\PYGZus{}smooth\PYGZus{}yesterday: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}PHASE\PYGZus{}LIMIT \PYGZdq{}phase\PYGZus{}limit: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}STEER\PYGZus{}LIMIT \PYGZdq{}steer\PYGZus{}limit: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}PRED\PYGZus{}LIMIT \PYGZdq{}pred\PYGZus{}limit: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}TIME\PYGZus{}CONSTANT \PYGZdq{}time\PYGZus{}constant: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}WARMUP\PYGZus{}DAYS \PYGZdq{}warmup\PYGZus{}days: \PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CSAC\PYGZus{}FILTER\PYGZus{}CONFIG\PYGZus{}ENTRIES 14}
+
+\PYG{c+cp}{\PYGZsh{}define ALARM\PYGZus{}FAST\PYGZus{}TIMING\PYGZus{}FILTER \PYGZdq{} [ ALARM ] Phase \PYGZgt{} Limit\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ALARM\PYGZus{}STEER\PYGZus{}TO\PYGZus{}BIG \PYGZdq{} [ ALARM ] Steer \PYGZgt{} limit!\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ALARM\PYGZus{}FREQ\PYGZus{}COR\PYGZus{}FILTER \PYGZdq{} [ ALARM ] Steer \PYGZgt{} predicted!\PYGZbs{}n\PYGZdq{}}
+
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n+nf}{mjd\PYGZus{}diff\PYGZus{}day}\PYG{p}{(}\PYG{k+kt}{double} \PYG{n}{mjd\PYGZus{}a}\PYG{p}{,}
+                          \PYG{k+kt}{double} \PYG{n}{mjd\PYGZus{}b}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{double} \PYG{n}{diff} \PYG{o}{=} \PYG{n}{mjd\PYGZus{}a} \PYG{o}{\PYGZhy{}} \PYG{n}{mjd\PYGZus{}b}\PYG{p}{;}
+    \PYG{k}{return} \PYG{n}{diff}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n+nf}{get\PYGZus{}mjdf}\PYG{p}{()}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{double} \PYG{n}{mjd\PYGZus{}today} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{const} \PYG{k+kt}{int} \PYG{n}{BUFFER\PYGZus{}LEN} \PYG{o}{=} \PYG{l+m+mi}{100}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{buffer}\PYG{p}{[}\PYG{n}{BUFFER\PYGZus{}LEN}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{n}{BUFFER\PYGZus{}LEN}\PYG{p}{);}
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{get\PYGZus{}today\PYGZus{}mjd}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}get\PYGZus{}mjdf(): Failed to calculate current MJD}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{mjd\PYGZus{}today}\PYG{p}{)} \PYG{o}{==} \PYG{n}{EOF}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+           \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}get\PYGZus{}mjdf(): Failed to cast MJD to float}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+           \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{return} \PYG{n}{mjd\PYGZus{}today}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n+nf}{load\PYGZus{}telemetry}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data}
+                          \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{telemetry}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{const} \PYG{k+kt}{int} \PYG{n}{BUFFER\PYGZus{}LEN} \PYG{o}{=} \PYG{l+m+mi}{100}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{buffer}\PYG{p}{[}\PYG{n}{BUFFER\PYGZus{}LEN}\PYG{p}{];}
+
+    \PYG{c+cm}{/* Checking discipline mode of the CSAC */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{l+m+mi}{13}\PYG{p}{,}\PYG{l+m+mi}{14}\PYG{p}{,}\PYG{l+s+sc}{\PYGZsq{},\PYGZsq{}}\PYG{p}{,}\PYG{n}{buffer}\PYG{p}{,}\PYG{l+m+mi}{100}\PYG{p}{,}
+                            \PYG{n}{telemetry}\PYG{p}{,}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{telemetry}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}Failed to extract DiscOK from CSAC data}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}d\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{discok}\PYG{p}{)} \PYG{o}{==} \PYG{n}{EOF}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+cm}{/* CSAC is in holdover or acquiring */}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{discok} \PYG{o}{==} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{p}{,}\PYG{l+m+mi}{13}\PYG{p}{,}\PYG{l+s+sc}{\PYGZsq{},\PYGZsq{}}\PYG{p}{,}\PYG{n}{buffer}\PYG{p}{,}\PYG{l+m+mi}{100}\PYG{p}{,}
+                            \PYG{n}{telemetry}\PYG{p}{,}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{telemetry}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}Failed to extract Phase from CSAC data}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf\PYGZdq{}}\PYG{p}{,}
+                  \PYG{o}{\PYGZam{}}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{phase\PYGZus{}current}\PYG{p}{)} \PYG{o}{==} \PYG{n}{EOF}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{substring\PYGZus{}extractor}\PYG{p}{(}\PYG{l+m+mi}{10}\PYG{p}{,}\PYG{l+m+mi}{11}\PYG{p}{,}\PYG{l+s+sc}{\PYGZsq{},\PYGZsq{}}\PYG{p}{,}\PYG{n}{buffer}\PYG{p}{,}\PYG{l+m+mi}{100}\PYG{p}{,}
+                            \PYG{n}{telemetry}\PYG{p}{,}\PYG{n}{strlen}\PYG{p}{(}\PYG{n}{telemetry}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}Failed to extract Steer from CSAC data}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{buffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf\PYGZdq{}}\PYG{p}{,}
+                  \PYG{o}{\PYGZam{}}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}current}\PYG{p}{)} \PYG{o}{==} \PYG{n}{EOF}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k+kt}{double} \PYG{n}{mjd\PYGZus{}today} \PYG{o}{=} \PYG{n}{get\PYGZus{}mjdf}\PYG{p}{();}
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{mjd\PYGZus{}today}\PYG{p}{)\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{mjd\PYGZus{}diff\PYGZus{}day}\PYG{p}{(}\PYG{n}{mjd\PYGZus{}today}\PYG{p}{,} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{today\PYGZus{}mjd}\PYG{p}{)} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{1}
+        \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}current} \PYG{o}{!=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{new\PYGZus{}day} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{today\PYGZus{}mjd} \PYG{o}{=} \PYG{n}{mjd\PYGZus{}today}\PYG{p}{;}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{days\PYGZus{}passed}\PYG{o}{++}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+c1}{// Initializing today\PYGZus{}mjd, only done once at startup}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{today\PYGZus{}mjd} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{today\PYGZus{}mjd} \PYG{o}{=} \PYG{n}{mjd\PYGZus{}today}\PYG{p}{;}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{days\PYGZus{}passed} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+c1}{// Updating running MJD}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}current} \PYG{o}{=} \PYG{n}{mjd\PYGZus{}today}\PYG{p}{;}
+    \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{calc\PYGZus{}smooth}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data}
+                        \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{double} \PYG{n}{W} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{time\PYGZus{}constant}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Setting previous values */}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}previous} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}current}\PYG{p}{;}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}previous} \PYG{o}{=}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}current}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Calculating t\PYGZus{}smooth\PYGZus{}current */}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}current} \PYG{o}{=} \PYG{p}{(((}\PYG{n}{W}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{o}{/}\PYG{n}{W}\PYG{p}{)} \PYG{o}{*}
+                             \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}previous}\PYG{p}{)} \PYG{o}{+} \PYG{p}{((}\PYG{l+m+mi}{1}\PYG{o}{/}\PYG{n}{W}\PYG{p}{)} \PYG{o}{*}
+                                     \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}current}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Calculating steer\PYGZus{}smooth\PYGZus{}current */}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}current} \PYG{o}{=} \PYG{p}{(((}\PYG{n}{W}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{o}{/}\PYG{n}{W}\PYG{p}{)} \PYG{o}{*}
+                                 \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}previous}\PYG{p}{)} \PYG{o}{+} \PYG{p}{((}\PYG{l+m+mi}{1}\PYG{o}{/}\PYG{n}{W}\PYG{p}{)} \PYG{o}{*}
+                                         \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}current}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Returns 1 if abs(phase\PYGZus{}current) is bigger}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{int} \PYG{n+nf}{fast\PYGZus{}timing\PYGZus{}filter}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{phase\PYGZus{}current}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{phase\PYGZus{}limit}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{abs}\PYG{p}{(}\PYG{n}{phase\PYGZus{}current}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{n}{phase\PYGZus{}limit}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Returns 1 if abs(cfd\PYGZhy{}\PYGZgt{}steer\PYGZus{}current \PYGZhy{} cfd\PYGZhy{}\PYGZgt{}steer\PYGZus{}prediction) is bigger}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{int} \PYG{n+nf}{freq\PYGZus{}cor\PYGZus{}filter}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data} \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(} \PYG{n}{abs}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}current} \PYG{o}{\PYGZhy{}}
+             \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}prediction}\PYG{p}{)} \PYG{o}{\PYGZgt{}}
+            \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{steer\PYGZus{}limit}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{update\PYGZus{}model}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data} \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* Updating t\PYGZus{}smooth */}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}yesterday} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}today}\PYG{p}{;}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}today} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}current}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Updating steer\PYGZus{}smooth */}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}yesterday} \PYG{o}{=}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}today}\PYG{p}{;}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}today} \PYG{o}{=}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}current}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Updating steer prediction, just for show */}
+    \PYG{n}{get\PYGZus{}steer\PYGZus{}predict}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{double} \PYG{n+nf}{get\PYGZus{}steer\PYGZus{}predict}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data} \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{days\PYGZus{}passed} \PYG{o}{\PYGZgt{}=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{warmup\PYGZus{}days}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}prediction} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}current} \PYG{o}{\PYGZhy{}} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}today}\PYG{p}{;}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}prediction} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}prediction} \PYG{o}{*}
+                                \PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}today} \PYG{o}{\PYGZhy{}}
+                                 \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}yesterday}\PYG{p}{);}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}prediction} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}prediction} \PYG{o}{/}
+                                \PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}today} \PYG{o}{\PYGZhy{}} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}yesterday}\PYG{p}{);}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}prediction} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}prediction}
+                                \PYG{o}{+}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}today}\PYG{p}{;}
+        \PYG{k}{return} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}prediction}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Making sure there are no 0 values about */}
+\PYG{k+kt}{int} \PYG{n+nf}{init\PYGZus{}csac\PYGZus{}model}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data} \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{,}
+                     \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{telemetry}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{load\PYGZus{}telemetry}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{,} \PYG{n}{telemetry}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Setting preliminary values, don\PYGZsq{}t want to divide by zero */}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}current} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}current}\PYG{p}{;}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}today} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}current}\PYG{p}{;}
+    \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}yesterday} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}smooth\PYGZus{}current}
+                              \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{0.1}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Setting values from config if preset */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{init\PYGZus{}cfd\PYGZus{}from\PYGZus{}file}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}current} \PYG{o}{=}
+            \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{init\PYGZus{}cfd\PYGZus{}ssc}\PYG{p}{;}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}today} \PYG{o}{=}
+            \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{init\PYGZus{}cfd\PYGZus{}sst}\PYG{p}{;}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}previous} \PYG{o}{=}
+            \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{init\PYGZus{}cfd\PYGZus{}ssp}\PYG{p}{;}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}yesterday} \PYG{o}{=}
+            \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{init\PYGZus{}cfd\PYGZus{}ssy}\PYG{p}{;}
+
+        \PYG{c+cm}{/* Setting preliminary values, don\PYGZsq{}t want to divide by zero */}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}current} \PYG{o}{=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}current}\PYG{p}{;}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}today} \PYG{o}{=}
+            \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}current}\PYG{p}{;}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}previous} \PYG{o}{=}
+            \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}smooth\PYGZus{}today}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{warmup\PYGZus{}days} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{new\PYGZus{}day} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Update the filter with new data */}
+\PYG{k+kt}{int} \PYG{n+nf}{update\PYGZus{}csac\PYGZus{}model}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data}
+                       \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{telemetry}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* Load new telemetry into the filter */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{load\PYGZus{}telemetry}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{,} \PYG{n}{telemetry}\PYG{p}{)} \PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{fprintf}\PYG{p}{(}\PYG{n}{stderr}\PYG{p}{,}\PYG{l+s}{\PYGZdq{}Telemetry failed to load}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Calculate smoothed values */}
+    \PYG{n}{calc\PYGZus{}smooth}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Updating prediction if 24 hours has passed since the last update */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{new\PYGZus{}day} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+
+        \PYG{c+cm}{/* Update prediction */}
+        \PYG{n}{update\PYGZus{}model}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{);}
+
+        \PYG{c+cm}{/* Updating fast timing filter status */}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ftf\PYGZus{}status} \PYG{o}{=} \PYG{n}{fast\PYGZus{}timing\PYGZus{}filter}\PYG{p}{(}
+                              \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{phase\PYGZus{}current}\PYG{p}{,} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{phase\PYGZus{}limit}\PYG{p}{);}
+
+        \PYG{c+cm}{/* Updating frequency correction filter status */}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{fqf\PYGZus{}status} \PYG{o}{=} \PYG{n}{freq\PYGZus{}cor\PYGZus{}filter}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{);}
+
+        \PYG{c+cm}{/* Clearing new day variable*/}
+        \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{new\PYGZus{}day} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+        \PYG{c+cm}{/* If logging is enabled, log steer predicted */}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{pred\PYGZus{}logging}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{char} \PYG{n}{log\PYGZus{}output}\PYG{p}{[}\PYG{l+m+mi}{200}\PYG{p}{];}
+            \PYG{n}{memset}\PYG{p}{(}\PYG{n}{log\PYGZus{}output}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{l+m+mi}{200}\PYG{p}{);}
+            \PYG{n}{snprintf}\PYG{p}{(}\PYG{n}{log\PYGZus{}output}\PYG{p}{,} \PYG{l+m+mi}{100}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+                     \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}prediction}\PYG{p}{);}
+            \PYG{n}{log\PYGZus{}to\PYGZus{}file}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{pred\PYGZus{}log\PYGZus{}path}\PYG{p}{,}
+                        \PYG{n}{log\PYGZus{}output}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Setting up the config structure specific for the server */}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{initialize\PYGZus{}config}\PYG{p}{(}\PYG{k}{struct}
+                              \PYG{n}{config\PYGZus{}map\PYGZus{}entry} \PYG{o}{*}\PYG{n}{conf\PYGZus{}map}\PYG{p}{,}
+                              \PYG{k}{struct} \PYG{n}{csac\PYGZus{}map\PYGZus{}config} \PYG{o}{*}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}   
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}CFD\PYGZus{}PATH}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}STRING}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cfd\PYGZus{}state\PYGZus{}path}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}INIT\PYGZus{}FROM\PYGZus{}FILE}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}INT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{init\PYGZus{}cfd\PYGZus{}from\PYGZus{}file}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}INIT\PYGZus{}SSC}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}DOUBLE}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{init\PYGZus{}cfd\PYGZus{}ssc}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}INIT\PYGZus{}SST}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}DOUBLE}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{init\PYGZus{}cfd\PYGZus{}sst}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}INIT\PYGZus{}SSP}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}DOUBLE}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{init\PYGZus{}cfd\PYGZus{}ssp}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}PHASE\PYGZus{}LIMIT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}DOUBLE}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{phase\PYGZus{}limit}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{6}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}STEER\PYGZus{}LIMIT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{6}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}DOUBLE}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{6}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}limit}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{7}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}TIME\PYGZus{}CONSTANT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{7}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}DOUBLE}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{7}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{time\PYGZus{}constant}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{8}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}WARMUP\PYGZus{}DAYS}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{8}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}INT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{8}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{warmup\PYGZus{}days}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{9}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}INIT\PYGZus{}SSY}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{9}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}DOUBLE}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{9}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{init\PYGZus{}cfd\PYGZus{}ssy}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{10}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}PRED\PYGZus{}LIMIT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{10}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}DOUBLE}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{10}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pred\PYGZus{}limit}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{11}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}TELEMETRY\PYGZus{}LOG}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{11}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}STRING}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{11}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{telemetry\PYGZus{}log\PYGZus{}path}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{12}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}LOG\PYGZus{}PREDICTION}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{12}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}INT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{12}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pred\PYGZus{}logging}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{13}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}LOG\PYGZus{}PRED\PYGZus{}PATH}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{13}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}STRING}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{13}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{cf\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pred\PYGZus{}log\PYGZus{}path}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{steer\PYGZus{}csac}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{prediction}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* Allocating buffer for run\PYGZus{}program() */}
+    \PYG{k+kt}{char} \PYG{n}{program\PYGZus{}buf}\PYG{p}{[}\PYG{l+m+mi}{200}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{n}{program\PYGZus{}buf}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{l+m+mi}{200}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Buffer for the prediction */}
+    \PYG{k+kt}{char} \PYG{n}{pred\PYGZus{}string}\PYG{p}{[}\PYG{l+m+mi}{200}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{n}{pred\PYGZus{}string}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{l+m+mi}{200}\PYG{p}{);}
+    \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{pred\PYGZus{}string}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}d\PYGZdq{}}\PYG{p}{,}\PYG{n}{prediction}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Buffer for the steer adjust command string */}
+    \PYG{k+kt}{char} \PYG{n}{steer\PYGZus{}com\PYGZus{}string}\PYG{p}{[}\PYG{l+m+mi}{200}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{n}{steer\PYGZus{}com\PYGZus{}string}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{l+m+mi}{200}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Building the string */}
+    \PYG{n}{strcat}\PYG{p}{(}\PYG{n}{steer\PYGZus{}com\PYGZus{}string}\PYG{p}{,}\PYG{l+s}{\PYGZdq{}python query\PYGZus{}csac.py FA\PYGZdq{}}\PYG{p}{);}
+    \PYG{n}{strcat}\PYG{p}{(}\PYG{n}{steer\PYGZus{}com\PYGZus{}string}\PYG{p}{,} \PYG{n}{pred\PYGZus{}string}\PYG{p}{);}
+
+
+    \PYG{c+cm}{/* Acquiring lock on CSAC serial*/}
+    \PYG{n}{sem\PYGZus{}wait}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}sem}\PYG{p}{));}
+
+    \PYG{c+cm}{/* Adjusting frequency according to the models prediction */}
+    \PYG{n}{run\PYGZus{}command}\PYG{p}{(}\PYG{n}{steer\PYGZus{}com\PYGZus{}string}\PYG{p}{,} \PYG{n}{program\PYGZus{}buf}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Releasing lock on CSAC serial*/}
+    \PYG{n}{sem\PYGZus{}post}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}sem}\PYG{p}{));}
+
+    \PYG{k+kt}{char} \PYG{n}{log\PYGZus{}buf}\PYG{p}{[}\PYG{l+m+mi}{200}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{n}{log\PYGZus{}buf}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{l+m+mi}{200}\PYG{p}{);}
+    \PYG{n}{strcat}\PYG{p}{(}\PYG{n}{log\PYGZus{}buf}\PYG{p}{,} \PYG{l+s}{\PYGZdq{} Steer: \PYGZdq{}}\PYG{p}{);}
+    \PYG{n}{strcat}\PYG{p}{(}\PYG{n}{log\PYGZus{}buf}\PYG{p}{,} \PYG{n}{pred\PYGZus{}string}\PYG{p}{);}
+    \PYG{n}{strcat}\PYG{p}{(}\PYG{n}{log\PYGZus{}buf}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}, response: \PYGZdq{}}\PYG{p}{);}
+    \PYG{n}{strcat}\PYG{p}{(}\PYG{n}{log\PYGZus{}buf}\PYG{p}{,} \PYG{n}{program\PYGZus{}buf}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Logging steer value */}
+    \PYG{n}{log\PYGZus{}to\PYGZus{}file}\PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{log\PYGZus{}path}\PYG{p}{,} \PYG{n}{log\PYGZus{}buf}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{disable\PYGZus{}csac\PYGZus{}disc}\PYG{p}{()}
+\PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* Allocating buffer for run\PYGZus{}program() */}
+    \PYG{k+kt}{char} \PYG{n}{program\PYGZus{}buf}\PYG{p}{[}\PYG{l+m+mi}{200}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{n}{program\PYGZus{}buf}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{l+m+mi}{200}\PYG{p}{);}
+    
+    \PYG{c+cm}{/* Acquiring lock on CSAC serial*/}
+    \PYG{n}{sem\PYGZus{}wait}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}sem}\PYG{p}{));}
+
+    \PYG{c+cm}{/* Disabling disciplining */}
+    \PYG{n}{run\PYGZus{}command}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}python query\PYGZus{}csac.py Md\PYGZdq{}}\PYG{p}{,}
+                \PYG{n}{program\PYGZus{}buf}\PYG{p}{);}
+
+    \PYG{n}{fprintf}\PYG{p}{(}\PYG{n}{stderr}\PYG{p}{,}\PYG{l+s}{\PYGZdq{}Disabling CSAC disciplining: \PYGZpc{}s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{program\PYGZus{}buf}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Releasing lock on CSAC serial*/}
+    \PYG{n}{sem\PYGZus{}post}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}sem}\PYG{p}{));}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{enable\PYGZus{}csac\PYGZus{}disc}\PYG{p}{()}
+\PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* Allocating buffer for run\PYGZus{}program() */}
+    \PYG{k+kt}{char} \PYG{n}{program\PYGZus{}buf}\PYG{p}{[}\PYG{l+m+mi}{200}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{n}{program\PYGZus{}buf}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{l+m+mi}{200}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Acquiring lock on CSAC serial*/}
+    \PYG{n}{sem\PYGZus{}wait}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}sem}\PYG{p}{));}
+
+    \PYG{c+cm}{/* Disabling disciplining */}
+    \PYG{n}{run\PYGZus{}command}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}python query\PYGZus{}csac.py MD\PYGZdq{}}\PYG{p}{,}
+                \PYG{n}{program\PYGZus{}buf}\PYG{p}{);}
+
+    \PYG{n}{fprintf}\PYG{p}{(}\PYG{n}{stderr}\PYG{p}{,}\PYG{l+s}{\PYGZdq{}Enabling CSAC disciplining: \PYGZpc{}s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{program\PYGZus{}buf}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Releasing lock on CSAC serial*/}
+    \PYG{n}{sem\PYGZus{}post}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}sem}\PYG{p}{));}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{check\PYGZus{}filters}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data} \PYG{o}{*}\PYG{n}{cmd}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{freq\PYGZus{}cor\PYGZus{}filter}\PYG{p}{(}\PYG{n}{cmd}\PYG{p}{))\PYGZob{}}
+        \PYG{n}{log\PYGZus{}to\PYGZus{}file}\PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{log\PYGZus{}path}\PYG{p}{,} \PYG{n}{ALARM\PYGZus{}FREQ\PYGZus{}COR\PYGZus{}FILTER}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* If current steer is bigger than the predicted limit */}
+    \PYG{k}{if}\PYG{p}{(} \PYG{n}{abs}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{steer\PYGZus{}current}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{pred\PYGZus{}limit} \PYG{p}{)\PYGZob{}}
+        \PYG{n}{log\PYGZus{}to\PYGZus{}file}\PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{log\PYGZus{}path}\PYG{p}{,} \PYG{n}{ALARM\PYGZus{}STEER\PYGZus{}TO\PYGZus{}BIG}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{fast\PYGZus{}timing\PYGZus{}filter}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{phase\PYGZus{}current}\PYG{p}{,} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{phase\PYGZus{}limit}\PYG{p}{))\PYGZob{}}
+        \PYG{n}{log\PYGZus{}to\PYGZus{}file}\PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{log\PYGZus{}path}\PYG{p}{,} \PYG{n}{ALARM\PYGZus{}FAST\PYGZus{}TIMING\PYGZus{}FILTER}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{start\PYGZus{}csac\PYGZus{}model}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data}
+                      \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}   
+    \PYG{k+kt}{int} \PYG{n}{raised\PYGZus{}alarm} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{csac\PYGZus{}disc} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Allocating buffer for run\PYGZus{}program() */}
+    \PYG{k+kt}{char} \PYG{n}{program\PYGZus{}buf}\PYG{p}{[}\PYG{l+m+mi}{200}\PYG{p}{];}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{n}{program\PYGZus{}buf}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{l+m+mi}{200}\PYG{p}{);}
+    \PYG{k+kt}{int} \PYG{n}{model\PYGZus{}init} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+    \PYG{c+cm}{/* csac\PYGZus{}filter config */}
+    \PYG{k}{struct} \PYG{n}{config\PYGZus{}map\PYGZus{}entry}
+        \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{n}{CSAC\PYGZus{}FILTER\PYGZus{}CONFIG\PYGZus{}ENTRIES}\PYG{p}{];}
+
+    \PYG{c+cm}{/* Initialize config map */}
+    \PYG{n}{initialize\PYGZus{}config}\PYG{p}{(}\PYG{n}{conf\PYGZus{}map}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Load the config */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{load\PYGZus{}config}\PYG{p}{(}\PYG{n}{conf\PYGZus{}map}\PYG{p}{,} \PYG{n}{CSAC\PYGZus{}FILTER\PYGZus{}CONFIG\PYGZus{}PATH}\PYG{p}{,}
+                \PYG{n}{CSAC\PYGZus{}FILTER\PYGZus{}CONFIG\PYGZus{}ENTRIES}\PYG{p}{))\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}CSAC model/filter: Failed to load config}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{done} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+        \PYG{k}{return} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Keep going as long as the server is running */}
+    \PYG{k}{while}\PYG{p}{(}\PYG{o}{!}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{done}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{c+cm}{/* Acquiring lock*/}
+        \PYG{n}{sem\PYGZus{}wait}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}sem}\PYG{p}{));}
+
+        \PYG{c+cm}{/* Querying CSAC */}
+        \PYG{n}{run\PYGZus{}command}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}python get\PYGZus{}telemetry.py\PYGZdq{}}\PYG{p}{,}
+                                \PYG{n}{program\PYGZus{}buf}\PYG{p}{);}
+
+        \PYG{c+cm}{/* Releasing lock */}
+        \PYG{n}{sem\PYGZus{}post}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}sem}\PYG{p}{));}
+
+        \PYG{c+cm}{/* Initialize model if not already initialized */}
+        \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{model\PYGZus{}init}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{model\PYGZus{}init} \PYG{o}{=} \PYG{n}{init\PYGZus{}csac\PYGZus{}model}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{,} \PYG{n}{program\PYGZus{}buf}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{c+cm}{/* checking alarm */}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{days\PYGZus{}passed} \PYG{o}{\PYGZgt{}=} \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{warmup\PYGZus{}days}\PYG{p}{)\PYGZob{}}
+            \PYG{n}{raised\PYGZus{}alarm} \PYG{o}{=} \PYG{n}{check\PYGZus{}filters}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+	
+        \PYG{c+cm}{/* If the alarm is raised */}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{raised\PYGZus{}alarm}\PYG{p}{)\PYGZob{}}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{csac\PYGZus{}disc}\PYG{p}{)\PYGZob{}}
+                \PYG{n}{disable\PYGZus{}csac\PYGZus{}disc}\PYG{p}{();}
+                \PYG{n}{csac\PYGZus{}disc} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{c+cm}{/* Get mjd to update filter */}
+            \PYG{k+kt}{double} \PYG{n}{mjd\PYGZus{}today} \PYG{o}{=} \PYG{n}{get\PYGZus{}mjdf}\PYG{p}{();}
+            
+            \PYG{c+cm}{/* Calculating MJD */}
+            \PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t\PYGZus{}current} \PYG{o}{=} \PYG{n}{mjd\PYGZus{}today}\PYG{p}{;}
+
+            \PYG{c+cm}{/* Calc steer predict */}
+            \PYG{k+kt}{int} \PYG{n}{steer\PYGZus{}pred} \PYG{o}{=} \PYG{p}{(}\PYG{k+kt}{int}\PYG{p}{)}\PYG{n}{get\PYGZus{}steer\PYGZus{}predict}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{);}
+            \PYG{n}{steer\PYGZus{}pred} \PYG{o}{=} \PYG{n}{steer\PYGZus{}pred} \PYG{o}{*} \PYG{l+m+mi}{1000}\PYG{p}{;}
+
+            \PYG{c+cm}{/* Steering CSAC */}
+            \PYG{n}{steer\PYGZus{}csac}\PYG{p}{(}\PYG{n}{steer\PYGZus{}pred}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{c+cm}{/* If the alarm is not raised */}
+        \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{raised\PYGZus{}alarm}\PYG{p}{)\PYGZob{}}
+            \PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{csac\PYGZus{}disc}\PYG{p}{)\PYGZob{}}
+                \PYG{n}{enable\PYGZus{}csac\PYGZus{}disc}\PYG{p}{();}
+                \PYG{n}{csac\PYGZus{}disc} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{update\PYGZus{}csac\PYGZus{}model}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{,} \PYG{n}{program\PYGZus{}buf}\PYG{p}{);} 
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{c+cm}{/* If logging enabled, log all data from the CSAC */}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}logging}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{log\PYGZus{}to\PYGZus{}file}\PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}log\PYGZus{}path}\PYG{p}{,} \PYG{n}{program\PYGZus{}buf}\PYG{p}{,}\PYG{l+m+mi}{1}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{c+cm}{/* Dump filter data for every iteration */}
+        \PYG{n}{dump\PYGZus{}cfd}\PYG{p}{(}\PYG{n}{cfd}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{cf\PYGZus{}conf}\PYG{p}{.}\PYG{n}{cfd\PYGZus{}state\PYGZus{}path}\PYG{p}{);}
+
+        \PYG{n}{sleep}\PYG{p}{(}\PYG{l+m+mf}{0.5}\PYG{p}{);}
+        \PYG{n}{memset}\PYG{p}{(}\PYG{n}{program\PYGZus{}buf}\PYG{p}{,} \PYG{l+s+sc}{\PYGZsq{}\PYGZbs{}0\PYGZsq{}}\PYG{p}{,} \PYG{l+m+mi}{200}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

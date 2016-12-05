@@ -1,0 +1,58 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/*}
+\PYG{c+cm}{\PYGZsh{}\PYGZsh{} CSAC Config \PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+\PYG{c+cm}{\PYGZsh{}}
+\PYG{c+cm}{\PYGZsh{} 57600}
+\PYG{c+cm}{\PYGZsh{} 8 bit}
+\PYG{c+cm}{\PYGZsh{} No parity}
+\PYG{c+cm}{\PYGZsh{}}
+\PYG{c+cm}{\PYGZsh{} While CSAC is off:}
+\PYG{c+cm}{\PYGZsh{}}
+\PYG{c+cm}{\PYGZsh{} sudo stty \PYGZhy{}F /dev/ttyS0 57600}
+\PYG{c+cm}{\PYGZsh{} cat /dev/ttyS0}
+\PYG{c+cm}{\PYGZsh{}}
+\PYG{c+cm}{\PYGZsh{} Turn the CSAC ON}
+\PYG{c+cm}{\PYGZsh{}}
+\PYG{c+cm}{\PYGZsh{} Symmetricom CSAC \PYGZlt{}\PYGZhy{} Output}
+\PYG{c+cm}{\PYGZsh{}}
+\PYG{c+cm}{\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+\PYG{c+cm}{*/}
+
+\PYG{c+cp}{\PYGZsh{}ifndef SERIAL\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define SERIAL\PYGZus{}H}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}errno.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}termios.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}unistd.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}string.h\PYGZgt{} /* memset */}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdio.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdlib.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}features.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}fcntl.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}signal.h\PYGZgt{}}
+
+\PYG{c+c1}{//Mine}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}utils.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}protocol.h\PYGZdq{}}
+
+\PYG{k}{typedef} \PYG{k}{enum} \PYG{n}{e\PYGZus{}serial\PYGZus{}device} \PYG{p}{\PYGZob{}}
+    \PYG{n}{GPS}\PYG{p}{,}
+    \PYG{n}{CSAC}
+\PYG{p}{\PYGZcb{}} \PYG{n}{serial\PYGZus{}device}\PYG{p}{;}
+
+\PYG{k+kt}{int} \PYG{n+nf}{open\PYGZus{}serial}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{portname}\PYG{p}{,} \PYG{n}{serial\PYGZus{}device} \PYG{n}{device}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Queries the CSAC with the command over serial connection}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* Sends a command to the CSAC and reads buf\PYGZus{}len bytes into}
+\PYG{c+cm}{* the buffer. Does not deal with formatting in any way.}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* @param file\PYGZus{}descriptor FD for the CSAC serial connection}
+\PYG{c+cm}{* @param query Command (query) to send to the CSAC.}
+\PYG{c+cm}{* @param buffer Buffer to store the response}
+\PYG{c+cm}{* @buf\PYGZus{}len buf\PYGZus{}len Length of buffer}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{int} \PYG{n+nf}{serial\PYGZus{}query}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{file\PYGZus{}descriptor}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{query}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{buffer}\PYG{p}{,} \PYG{k+kt}{int} \PYG{n}{buf\PYGZus{}len}\PYG{p}{);}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !SERIAL\PYGZus{}H */}
+\end{Verbatim}

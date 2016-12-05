@@ -1,0 +1,17 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * @file filters.h}
+\PYG{c+cm}{ * @author Aril Schultzen}
+\PYG{c+cm}{ * @date 13.04.2016}
+\PYG{c+cm}{ * @brief File containing function prototypes and includes for analyzer.h}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef ANALYZER\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define ANALYZER\PYGZus{}H}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}sensor\PYGZus{}server.h\PYGZdq{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{apply\PYGZus{}filters}\PYG{p}{();}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !ANALYZER\PYGZus{}H */}
+\end{Verbatim}

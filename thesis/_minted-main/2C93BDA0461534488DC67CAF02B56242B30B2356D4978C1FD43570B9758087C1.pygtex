@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{extern} \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{client\PYGZus{}list}\PYG{p}{;}
+    \PYG{k}{extern} \PYG{k}{struct} \PYG{n}{server\PYGZus{}data} \PYG{o}{*}\PYG{n}{s\PYGZus{}data}\PYG{p}{;}
+    \PYG{k}{extern} \PYG{k}{struct} \PYG{n}{server\PYGZus{}synchro} \PYG{o}{*}\PYG{n}{s\PYGZus{}synch}\PYG{p}{;}
+    \PYG{k}{extern} \PYG{k}{struct} \PYG{n}{server\PYGZus{}config} \PYG{o}{*}\PYG{n}{s\PYGZus{}conf}\PYG{p}{;}
+    \PYG{k}{extern} \PYG{k}{struct} \PYG{n}{csac\PYGZus{}filter\PYGZus{}data} \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{;}
+\end{Verbatim}

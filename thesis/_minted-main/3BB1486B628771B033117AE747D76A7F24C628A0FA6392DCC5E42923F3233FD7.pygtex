@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nl}{humanly\PYGZus{}readable\PYGZus{}dumpdata}\PYG{p}{:} \PYG{l+m+mi}{1}
+\PYG{n+nl}{max\PYGZus{}clients}\PYG{p}{:} \PYG{l+m+mi}{100}
+\PYG{n+nl}{warm\PYGZus{}up}\PYG{p}{:} \PYG{l+m+mi}{24000}
+\PYG{n+nl}{csac\PYGZus{}serial\PYGZus{}interface}\PYG{p}{:} \PYG{o}{/}\PYG{n}{dev}\PYG{o}{/}\PYG{n}{ttyUSB0}
+\PYG{n+nl}{logging}\PYG{p}{:} \PYG{l+m+mi}{1}
+\PYG{n+nl}{log\PYGZus{}path}\PYG{p}{:} \PYG{n}{server\PYGZus{}log}\PYG{p}{.}\PYG{n}{txt}
+\PYG{n+nl}{csac\PYGZus{}logging}\PYG{p}{:} \PYG{l+m+mi}{1}
+\PYG{n+nl}{csac\PYGZus{}log\PYGZus{}path}\PYG{p}{:} \PYG{n}{csac\PYGZus{}log}\PYG{p}{.}\PYG{n}{txt}
+\end{Verbatim}

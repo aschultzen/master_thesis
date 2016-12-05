@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nl}{serial\PYGZus{}interface}\PYG{p}{:} \PYG{o}{/}\PYG{n}{dev}\PYG{o}{/}\PYG{n}{ttyS0}
+\PYG{n+nl}{client\PYGZus{}id}\PYG{p}{:} \PYG{l+m+mi}{1}
+\PYG{n+nl}{log\PYGZus{}nmea}\PYG{p}{:} \PYG{l+m+mi}{1}
+\PYG{n+nl}{log\PYGZus{}file\PYGZus{}name}\PYG{p}{:} \PYG{n}{log\PYGZus{}sensor}
+\PYG{n+nl}{connection\PYGZus{}attempts\PYGZus{}max}\PYG{p}{:} \PYG{l+m+mi}{10}
+\end{Verbatim}

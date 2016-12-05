@@ -1,0 +1,134 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * @file sensor\PYGZus{}server\PYGZus{}common.h}
+\PYG{c+cm}{ * @author Aril Schultzen}
+\PYG{c+cm}{ * @date 13.04.2016}
+\PYG{c+cm}{ * @brief File containing structs and defines used by session.c, analyzer.c, sensors\PYGZus{}server.c and actions.c}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef SENSOR\PYGZus{}SERVER\PYGZus{}COMMON\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define SENSOR\PYGZus{}SERVER\PYGZus{}COMMON\PYGZus{}H}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}semaphore.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}net.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}colors.h\PYGZdq{}}
+
+\PYG{c+cm}{/* General */}
+\PYG{c+cp}{\PYGZsh{}define SERVER\PYGZus{}TABLE\PYGZus{}LABEL \PYGZdq{}SERVER DATA\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define HORIZONTAL\PYGZus{}BAR \PYGZdq{}================================================================================\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}NO\PYGZus{}CLIENT \PYGZdq{}ERROR: No such client\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}NO\PYGZus{}FILENAME \PYGZdq{}ERROR: No FILENAME specified\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define MAX\PYGZus{}FILENAME\PYGZus{}SIZE 30}
+\PYG{c+cp}{\PYGZsh{}define ID\PYGZus{}AS\PYGZus{}STRING\PYGZus{}MAX 10}
+
+\PYG{c+cm}{/* Errors */}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}CODE\PYGZus{}NO\PYGZus{}FILE \PYGZhy{}1}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}CODE\PYGZus{}READ\PYGZus{}FAILED \PYGZhy{}2}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}NO\PYGZus{}FILE \PYGZdq{}ERROR:No such file\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}READ\PYGZus{}FAILED \PYGZdq{}ERROR:Failed to read file\PYGZbs{}n\PYGZdq{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* command\PYGZus{}code struct is used by the parser}
+\PYG{c+cm}{* to convey an easy to compare command code, as well}
+\PYG{c+cm}{* as any parameter belonging to that command}
+\PYG{c+cm}{*/}
+\PYG{k}{struct} \PYG{n}{command\PYGZus{}code} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{code}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{parameter}\PYG{p}{[}\PYG{n}{MAX\PYGZus{}PARAMETER\PYGZus{}SIZE}\PYG{p}{];}
+    \PYG{k+kt}{int} \PYG{n}{id\PYGZus{}parameter}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cm}{/*!@struct*/}
+\PYG{c+cm}{/*!@brief Data used by the red\PYGZus{}dev\PYGZus{}filter.}
+\PYG{c+cm}{* Read from file.}
+\PYG{c+cm}{*/}
+\PYG{k}{struct} \PYG{n}{lsf\PYGZus{}data} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{double} \PYG{n}{alt\PYGZus{}ref}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{lon\PYGZus{}ref}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{lat\PYGZus{}ref}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{speed\PYGZus{}ref}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{alt\PYGZus{}dev}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{lon\PYGZus{}dev}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{lat\PYGZus{}dev}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{speed\PYGZus{}dev}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{k}{struct} \PYG{n}{disturbed\PYGZus{}values} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{lat\PYGZus{}disturbed}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{lon\PYGZus{}disturbed}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{alt\PYGZus{}disturbed}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{speed\PYGZus{}disturbed}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{k}{struct} \PYG{n}{lsf} \PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{lsf\PYGZus{}data} \PYG{n}{lsf\PYGZus{}d}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{moved}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{was\PYGZus{}moved}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{disturbed\PYGZus{}values} \PYG{n}{dv}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{k}{struct} \PYG{n}{filters} \PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{lsf} \PYG{n}{ls\PYGZus{}f}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* CLIENT TABLE STRUCT}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* list\PYGZus{}head list: The head in the list of clients}
+\PYG{c+cm}{* pid: Process ID for the client connection (See \PYGZdq{}fork\PYGZdq{})}
+\PYG{c+cm}{* session\PYGZus{}fd: The file descriptor for the session.}
+\PYG{c+cm}{* client\PYGZus{}id: The connected clients ID}
+\PYG{c+cm}{* iobuffer: A general purpose buffer for in and output}
+\PYG{c+cm}{* heartbeat\PYGZus{}timeout: Number of seconds of inactivity before disconnect}
+\PYG{c+cm}{* ip: Clients IP Address.}
+\PYG{c+cm}{* cm: Command code. Used for quick comparison after commands}
+\PYG{c+cm}{* are parsed by command parser.}
+\PYG{c+cm}{*/}
+
+\PYG{c+cm}{/*!@struct*/}
+\PYG{c+cm}{/*!@brief Contain information about every client that is connected.}
+\PYG{c+cm}{*/}
+\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{n}{list}\PYG{p}{;}              \PYG{c+cm}{/* The head of the client list */}
+    \PYG{k}{struct} \PYG{n}{transmission\PYGZus{}s} \PYG{n}{transmission}\PYG{p}{;} \PYG{c+cm}{/* Everything needed for socket com. */}
+    \PYG{k}{struct} \PYG{n}{timeval} \PYG{n}{timeout}\PYG{p}{;}             \PYG{c+cm}{/* Timeout in seconds if not active */}
+    \PYG{k}{struct} \PYG{n}{command\PYGZus{}code} \PYG{n}{cm}\PYG{p}{;}             \PYG{c+cm}{/* See command code */}
+    \PYG{k}{struct} \PYG{n}{nmea\PYGZus{}container} \PYG{n}{nmea}\PYG{p}{;}         \PYG{c+cm}{/* All NMEA data associated with the client */}
+    \PYG{k+kt}{pid\PYGZus{}t} \PYG{n}{pid}\PYG{p}{;}                          \PYG{c+cm}{/* The process ID */}
+    \PYG{k+kt}{time\PYGZus{}t} \PYG{n}{timestamp}\PYG{p}{;}                   \PYG{c+cm}{/* When last analyzed */}
+    \PYG{k+kt}{int} \PYG{n}{client\PYGZus{}id}\PYG{p}{;}                      \PYG{c+cm}{/* Clients ID */}
+    \PYG{k+kt}{int} \PYG{n}{client\PYGZus{}type}\PYG{p}{;}                    \PYG{c+cm}{/* Client type, SENSOR or MONITOR */}
+    \PYG{k+kt}{int} \PYG{n}{ready}\PYG{p}{;}	                        \PYG{c+cm}{/* Ready status */}
+    \PYG{k+kt}{int} \PYG{n}{marked\PYGZus{}for\PYGZus{}kick}\PYG{p}{;}                \PYG{c+cm}{/* Marked for kicked at next opportunity */}
+    \PYG{k+kt}{char} \PYG{n}{ip}\PYG{p}{[}\PYG{n}{INET\PYGZus{}ADDRSTRLEN}\PYG{p}{];}           \PYG{c+cm}{/* Clients IP address */}
+    \PYG{k}{struct} \PYG{n}{filters} \PYG{n}{fs}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cm}{/* Server info shared with processes */}
+\PYG{k}{struct} \PYG{n}{server\PYGZus{}data} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{number\PYGZus{}of\PYGZus{}clients}\PYG{p}{;}	\PYG{c+cm}{/* Number of clients currently connected */}
+    \PYG{k+kt}{int} \PYG{n}{number\PYGZus{}of\PYGZus{}sensors}\PYG{p}{;}	\PYG{c+cm}{/* Number of sensors, subset of clients */}
+    \PYG{k+kt}{time\PYGZus{}t} \PYG{n}{started}\PYG{p}{;}			\PYG{c+cm}{/* When the server was started */}
+    \PYG{k+kt}{pid\PYGZus{}t} \PYG{n}{pid}\PYG{p}{;}              \PYG{c+cm}{/* Servers PID */}
+    \PYG{k+kt}{char} \PYG{n}{version}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{];}        \PYG{c+cm}{/* Version of server software */}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cm}{/* Synchronization elements shared with processes */}
+\PYG{k}{struct} \PYG{n}{server\PYGZus{}synchro} \PYG{p}{\PYGZob{}}
+    \PYG{n}{sem\PYGZus{}t} \PYG{n}{ready\PYGZus{}sem}\PYG{p}{;}
+    \PYG{n}{sem\PYGZus{}t} \PYG{n}{csac\PYGZus{}sem}\PYG{p}{;}
+    \PYG{n}{sem\PYGZus{}t} \PYG{n}{client\PYGZus{}list\PYGZus{}sem}\PYG{p}{;}
+    \PYG{k}{volatile} \PYG{k+kt}{sig\PYGZus{}atomic\PYGZus{}t} \PYG{n}{done}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Roles of client, either SENSOR or MONITOR.}
+\PYG{c+cm}{* A monitor is only used to monitor the programs state.}
+\PYG{c+cm}{*/}
+\PYG{k}{enum} \PYG{n}{client\PYGZus{}type} \PYG{p}{\PYGZob{}}
+    \PYG{n}{SENSOR}\PYG{p}{,}
+    \PYG{n}{MONITOR}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !SENSOR\PYGZus{}SERVER\PYGZus{}COMMON\PYGZus{}H */}
+\end{Verbatim}

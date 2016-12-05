@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{struct} \PYG{n}{server\PYGZus{}synchro} \PYG{p}{\PYGZob{}}
+        \PYG{n}{sem\PYGZus{}t} \PYG{n}{ready\PYGZus{}mutex}\PYG{p}{;}
+        \PYG{n}{sem\PYGZus{}t} \PYG{n}{csac\PYGZus{}mutex}\PYG{p}{;}
+        \PYG{n}{sem\PYGZus{}t} \PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{;}
+        \PYG{k}{volatile} \PYG{k+kt}{int} \PYG{n}{ready\PYGZus{}counter}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{};}
+    \PYG{err}{\PYGZbs{}}\PYG{n}{label}\PYG{p}{\PYGZob{}}\PYG{n}{server\PYGZus{}data}\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

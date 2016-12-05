@@ -1,0 +1,30 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}ifndef SENSOR\PYGZus{}CLIENT\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define SENSOR\PYGZus{}CLIENT\PYGZus{}H}
+
+\PYG{c+c1}{// Mine}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}net.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}utils.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}protocol.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}nmea.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}utils.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}serial.h\PYGZdq{}}
+
+\PYG{k}{struct} \PYG{n}{config} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{char} \PYG{n}{serial\PYGZus{}interface}\PYG{p}{[}\PYG{l+m+mi}{100}\PYG{p}{];}
+    \PYG{k+kt}{int} \PYG{n}{client\PYGZus{}id}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{log\PYGZus{}name}\PYG{p}{[}\PYG{l+m+mi}{100}\PYG{p}{];}
+    \PYG{k+kt}{int} \PYG{n}{log\PYGZus{}nmea}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{con\PYGZus{}attempt\PYGZus{}max}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cm}{/* Used by the client */}
+\PYG{k}{struct} \PYG{n}{raw\PYGZus{}nmea\PYGZus{}container} \PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* Raw data */}
+    \PYG{k+kt}{char} \PYG{n}{raw\PYGZus{}gga}\PYG{p}{[}\PYG{n}{SENTENCE\PYGZus{}LENGTH}\PYG{p}{];}
+    \PYG{k+kt}{char} \PYG{n}{raw\PYGZus{}rmc}\PYG{p}{[}\PYG{n}{SENTENCE\PYGZus{}LENGTH}\PYG{p}{];}
+    \PYG{k+kt}{char} \PYG{n}{output}\PYG{p}{[}\PYG{n}{SENTENCE\PYGZus{}LENGTH} \PYG{o}{*} \PYG{l+m+mi}{2}\PYG{p}{];}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !SENSOR\PYGZus{}CLIENT\PYGZus{}H */}
+\end{Verbatim}

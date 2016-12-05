@@ -1,0 +1,79 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}ifndef PROTOCOL\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}H}
+
+\PYG{c+cm}{/* CONSTRAINS */}
+\PYG{c+cp}{\PYGZsh{}define MAX\PYGZus{}COMMAND\PYGZus{}SIZE 20}
+\PYG{c+cp}{\PYGZsh{}define MAX\PYGZus{}PARAMETER\PYGZus{}SIZE 2048}
+\PYG{c+cp}{\PYGZsh{}define ID\PYGZus{}MAX 1000}
+\PYG{c+cp}{\PYGZsh{}define MIN\PYGZus{}COMMAND\PYGZus{}SIZE 2}
+\PYG{c+cp}{\PYGZsh{}define MIN\PYGZus{}PARAMETER\PYGZus{}SIZE 0}
+
+\PYG{c+cm}{/* COMMANDS TO USE WHEN COMMUNICATING */}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}DISCONNECT \PYGZdq{}DISCONNECT\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}EXIT \PYGZdq{}EXIT\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}GET\PYGZus{}TIME \PYGZdq{}GETTIME\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}IDENTIFY \PYGZdq{}IDENTIFY\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}NMEA \PYGZdq{}NMEA\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}PRINTCLIENTS \PYGZdq{}PRINTCLIENTS\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}PRINTSERVER \PYGZdq{}PRINTSERVER\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}KICK \PYGZdq{}KICK\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}HELP \PYGZdq{}HELP\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}PRINT\PYGZus{}LOCATION \PYGZdq{}PRINTLOC\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}PRINTTIME \PYGZdq{}PRINTTIME\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}DUMPDATA \PYGZdq{}DUMPDATA\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}PRINTAVGDIFF \PYGZdq{}PRINTAVGDIFF\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}LISTDUMPS \PYGZdq{}LISTDATA\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}LOADDATA \PYGZdq{}LOADDATA\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}QUERYCSAC \PYGZdq{}QUERYCSAC\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}LOADRFDATA \PYGZdq{}LOADRFDATA\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}PRINTCFD \PYGZdq{}PRINTCFD\PYGZdq{}}
+
+\PYG{c+cm}{/* SHORT */}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}HELP\PYGZus{}SHORT \PYGZdq{}?\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}DISCONNECT\PYGZus{}SHORT \PYGZdq{}DC\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}DUMPDATA\PYGZus{}SHORT \PYGZdq{}DD\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}IDENTIFY\PYGZus{}SHORT \PYGZdq{}ID\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}PRINTCLIENTS\PYGZus{}SHORT \PYGZdq{}PC\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}PRINTSERVER\PYGZus{}SHORT \PYGZdq{}PS\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}PRINT\PYGZus{}LOCATION\PYGZus{}SHORT \PYGZdq{}PL\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}PRINTAVGDIFF\PYGZus{}SHORT \PYGZdq{}PAD\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}LISTDUMPS\PYGZus{}SHORT \PYGZdq{}LSD\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}LOADDATA\PYGZus{}SHORT \PYGZdq{}LD\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}QUERYCSAC\PYGZus{}SHORT \PYGZdq{}QC\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}LOADRFDATA\PYGZus{}SHORT \PYGZdq{}LRFD\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}PRINTCFD\PYGZus{}SHORT \PYGZdq{}PFD\PYGZdq{}}
+
+\PYG{c+cm}{/* RESPONSES */}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}GOODBYE \PYGZdq{}Goodbye!\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}OK \PYGZdq{}OK!\PYGZbs{}n\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define PROTOCOL\PYGZus{}WELCOME \PYGZdq{}Welcome to the Sensor Server!\PYGZbs{}n\PYGZdq{}}
+
+\PYG{c+cm}{/* COMMAND CODES */}
+\PYG{c+cm}{/* Used by respond() */}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}DISCONNECT 	1}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}GET\PYGZus{}TIME 		2}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}IDENTIFY 		3}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}STORE 			4}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}NMEA 			5}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}PRINTCLIENTS 	6}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}PRINTSERVER 	7}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}KICK 			8}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}HELP 			9}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}PRINT\PYGZus{}LOCATION 10}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}WARMUP 		11}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}PRINTTIME 		12}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}DUMPDATA		13}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}MOVED 			14}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}PRINTAVGDIFF	15}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}LISTDUMPS		17}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}LOADDATA		18}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}QUERYCSAC		19}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}LOADRFDATA		20}
+\PYG{c+cp}{\PYGZsh{}define CODE\PYGZus{}PRINTCFD		21}
+
+\PYG{c+cm}{/* SIZES */}
+\PYG{c+cp}{\PYGZsh{}define TIME\PYGZus{}SIZE 9 }\PYG{c+cm}{/* SIZE OF TIME AS CHARS eg.142546.00, FROM GNRMC */}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !PROTOCOL\PYGZus{}H */}
+\end{Verbatim}

@@ -1,0 +1,46 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * @file filters.h}
+\PYG{c+cm}{ * @author Aril Schultzen}
+\PYG{c+cm}{ * @date 13.04.2016}
+\PYG{c+cm}{ * @brief File containing function prototypes and includes for analyzer.h}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef ANALYZER\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define ANALYZER\PYGZus{}H}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}sensor\PYGZus{}server.h\PYGZdq{}}
+
+\PYG{c+cm}{/** @brief Checks for any \PYGZdq{}moving\PYGZdq{} SENSORS}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* Iterates through client\PYGZus{}list}
+\PYG{c+cm}{* and checks if anyone\PYGZsq{}s current position (LAT, LON, ALT, SPEED)}
+\PYG{c+cm}{* is within the ranges recorded during warm\PYGZhy{}up. If it is, the}
+\PYG{c+cm}{* dimension\PYGZsq{}s disturbed value is set to SAFE (no change),}
+\PYG{c+cm}{* LOW (lower then the lowest recorded) or HIGH (higher than recorded).}
+\PYG{c+cm}{* Unless SAFE, moved is set to 1. The moved variable is used by}
+\PYG{c+cm}{* min\PYGZus{}max\PYGZus{}result() to raise an alarm.}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* @return Void}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{void} \PYG{n+nf}{min\PYGZus{}max\PYGZus{}filter}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Checks for any \PYGZdq{}moving\PYGZdq{} SENSORS}
+\PYG{c+cm}{*}
+\PYG{c+cm}{* Similar to min\PYGZus{}max\PYGZus{}filter(), but uses values from}
+\PYG{c+cm}{* the config file.}
+\PYG{c+cm}{* @return Void}
+\PYG{c+cm}{*/}
+\PYG{k+kt}{void} \PYG{n+nf}{ref\PYGZus{}dev\PYGZus{}filter}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Checks if a sensor has been marked as moved}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Iterates through client\PYGZus{}list and checks for clients marked}
+\PYG{c+cm}{ * as moved. Raises alarm.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * @return Void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{raise\PYGZus{}alarm}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{);}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !ANALYZER\PYGZus{}H */}
+\end{Verbatim}

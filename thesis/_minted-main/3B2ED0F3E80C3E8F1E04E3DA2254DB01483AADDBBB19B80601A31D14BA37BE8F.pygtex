@@ -1,0 +1,121 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * @csac\PYGZus{}filter.h}
+\PYG{c+cm}{ * @author Aril Schultzen}
+\PYG{c+cm}{ * @date 05.09.2016}
+\PYG{c+cm}{ * @brief Filter module using CSAC for the sensor\PYGZus{}server}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef CSAC\PYGZus{}FILTER\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define CSAC\PYGZus{}FILTER\PYGZus{}H}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdio.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdlib.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}string.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdarg.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}errno.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}unistd.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}utils.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}serial.h\PYGZdq{}}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}sensor\PYGZus{}server.h\PYGZdq{}}
+
+\PYG{k}{struct} \PYG{n}{csac\PYGZus{}map\PYGZus{}config} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{pred\PYGZus{}logging}\PYG{p}{;}
+    \PYG{k+kt}{char} \PYG{n}{cfd\PYGZus{}state\PYGZus{}path}\PYG{p}{[}\PYG{n}{PATH\PYGZus{}LENGTH\PYGZus{}MAX}\PYG{p}{];}
+    \PYG{k+kt}{char} \PYG{n}{telemetry\PYGZus{}log\PYGZus{}path}\PYG{p}{[}\PYG{n}{PATH\PYGZus{}LENGTH\PYGZus{}MAX}\PYG{p}{];}
+    \PYG{k+kt}{char} \PYG{n}{pred\PYGZus{}log\PYGZus{}path}\PYG{p}{[}\PYG{n}{PATH\PYGZus{}LENGTH\PYGZus{}MAX}\PYG{p}{];}
+    \PYG{k+kt}{int} \PYG{n}{init\PYGZus{}cfd\PYGZus{}from\PYGZus{}file}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{init\PYGZus{}cfd\PYGZus{}ssc}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{init\PYGZus{}cfd\PYGZus{}sst}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{init\PYGZus{}cfd\PYGZus{}ssp}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{init\PYGZus{}cfd\PYGZus{}ssy}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{phase\PYGZus{}limit}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{steer\PYGZus{}limit}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{time\PYGZus{}constant}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{pred\PYGZus{}limit}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{warmup\PYGZus{}days}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data} \PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* Phase */}
+    \PYG{k+kt}{double} \PYG{n}{phase\PYGZus{}current}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Current */}
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}current}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{steer\PYGZus{}current}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{steer\PYGZus{}prediction}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Current smooth */}
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}smooth\PYGZus{}current}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{steer\PYGZus{}smooth\PYGZus{}current}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Previous */}
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}smooth\PYGZus{}previous}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{steer\PYGZus{}smooth\PYGZus{}previous}\PYG{p}{;}
+
+
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}smooth\PYGZus{}today}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{steer\PYGZus{}smooth\PYGZus{}today}\PYG{p}{;}
+
+
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}smooth\PYGZus{}yesterday}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{steer\PYGZus{}smooth\PYGZus{}yesterday}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Changes once a day */}
+    \PYG{k+kt}{double} \PYG{n}{today\PYGZus{}mjd}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Days passed since startup */}
+    \PYG{k+kt}{int} \PYG{n}{days\PYGZus{}passed}\PYG{p}{;}
+
+    \PYG{c+cm}{/* New day, 1 if yes, 0 if no */}
+    \PYG{k+kt}{int} \PYG{n}{new\PYGZus{}day}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Discipline mode */}
+    \PYG{k+kt}{int} \PYG{n}{discok}\PYG{p}{;}
+
+    \PYG{c+cm}{/* fast timing filter status */}
+    \PYG{k+kt}{int} \PYG{n}{ftf\PYGZus{}status}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Frequency correction filter status */}
+    \PYG{k+kt}{int} \PYG{n}{fqf\PYGZus{}status}\PYG{p}{;}
+
+    \PYG{c+cm}{/* Config */}
+    \PYG{k}{struct} \PYG{n}{csac\PYGZus{}map\PYGZus{}config} \PYG{n}{cf\PYGZus{}conf}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cm}{/** @brief Updates the state of the filter from data}
+\PYG{c+cm}{ *		   received from the CSAC}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *  @param cfd State of filter}
+\PYG{c+cm}{ *  @param telemetry String of telemetry from the CSAC}
+\PYG{c+cm}{ *	@return 0 if error, 1 if success.}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{update\PYGZus{}csac\PYGZus{}model}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data} \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{telemetry}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Initializes the state of the filter by using}
+\PYG{c+cm}{ *		   telemetry from the CSAC.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *  @param cfd State of filter}
+\PYG{c+cm}{ *  @param telemetry String of telemetry from the CSAC}
+\PYG{c+cm}{ *	@return 0 if error, 1 if success.}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{init\PYGZus{}csac\PYGZus{}model}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data} \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{telemetry}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Updates the state of the filter from data}
+\PYG{c+cm}{ *		   received from the CSAC}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *  @param cfd State of filter}
+\PYG{c+cm}{ *	@return The predicted steer value as double.}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{double} \PYG{n+nf}{get\PYGZus{}steer\PYGZus{}predict}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data} \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{);}
+
+\PYG{c+cm}{/** @brief Starts the csac\PYGZus{}filter}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *  @param cfd State of filter}
+\PYG{c+cm}{ *  @return 1 if filter started successfully, 0 if not.}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{start\PYGZus{}csac\PYGZus{}model}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}model\PYGZus{}data} \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{);}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* !CSAC\PYGZus{}FILTER\PYGZus{}H */}
+\end{Verbatim}

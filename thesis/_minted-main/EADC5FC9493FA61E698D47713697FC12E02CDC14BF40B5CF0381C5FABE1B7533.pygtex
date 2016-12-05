@@ -1,0 +1,469 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}sensor\PYGZus{}server.h\PYGZdq{}}
+
+\PYG{c+cm}{/* VERSION */}
+\PYG{c+cp}{\PYGZsh{}define PROGRAM\PYGZus{}VERSION \PYGZdq{}0.8c\PYGZdq{}}
+
+\PYG{c+cm}{/* ERRORS */}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}MAX\PYGZus{}CLIENTS\PYGZus{}REACHED \PYGZdq{}CONNECTION REJECTED: MAXIMUM NUMBER OF CLIENTS REACHED\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}CONFIG\PYGZus{}LOAD\PYGZus{}FAILED \PYGZdq{}CONFIG LOAD FAILED: CONFIG FILE CORRUPTED\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}SEMAPHORE\PYGZus{}CREATION\PYGZus{}FAILED \PYGZdq{}SEMAPHORE CREATION FAILED\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}SOCKET\PYGZus{}OPEN\PYGZus{}FAILED \PYGZdq{}ERROR: FAILED TO OPEN SOCKET\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}SOCKET\PYGZus{}BINDING \PYGZdq{}ERROR: FAILED TO BIND ON \PYGZpc{}d\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}CONNECTION\PYGZus{}ACCEPT \PYGZdq{}ERROR: FAILED TO ACCEPT CONNECTION (\PYGZpc{}d)\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}FAILED\PYGZus{}FORK \PYGZdq{}ERROR: FORK FAILED (\PYGZpc{}d)\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define ERROR\PYGZus{}MISSING\PYGZus{}PARAMS \PYGZdq{}MISSING PARAMETERS!\PYGZbs{}n\PYGZdq{}}
+
+\PYG{c+cm}{/* GENERAL STRINGS */}
+\PYG{c+cp}{\PYGZsh{}define PROCESS\PYGZus{}REAPED \PYGZdq{}Process \PYGZpc{}d reaped. Status: \PYGZpc{}d Signum: \PYGZpc{}d\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define SIGTERM\PYGZus{}RECEIVED \PYGZdq{}[\PYGZpc{}d] SIGTERM received!\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define SIGINT\PYGZus{}RECEIVED \PYGZdq{}[\PYGZpc{}d] SIGINT received!\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define STOPPING\PYGZus{}SERVER \PYGZdq{}Stopping server...\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}LOADED \PYGZdq{}Config loaded!\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define SERVER\PYGZus{}RUNNING \PYGZdq{}Server is running. Accepting connections.\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define WAITING\PYGZus{}FOR\PYGZus{}CONNECTIONS \PYGZdq{}Waiting for connections...\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CON\PYGZus{}ACCEPTED \PYGZdq{}Connection accepted\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CLIENT\PYGZus{}DISCONNECTED \PYGZdq{}[\PYGZpc{}d] Disconnected\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define SERVER\PYGZus{}STOPPED \PYGZdq{}Server STOPPED!\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define SERVER\PYGZus{}STARTING \PYGZdq{}Sensor server starting...\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CLIENT\PYGZus{}KICKED \PYGZdq{}Client was kicked\PYGZbs{}n\PYGZdq{}}
+
+\PYG{c+cm}{/* USAGE() STRINGS */}
+\PYG{c+cp}{\PYGZsh{}define USAGE\PYGZus{}DESCRIPTION \PYGZdq{}Required argument:\PYGZbs{}n\PYGZbs{}t \PYGZhy{}p \PYGZlt{}PORT NUMBER\PYGZgt{}\PYGZbs{}n\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define USAGE\PYGZus{}PROGRAM\PYGZus{}INTRO \PYGZdq{}Sensor\PYGZus{}server: Server part of GPS Jamming/Spoofing system\PYGZbs{}n\PYGZbs{}n\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define USAGE\PYGZus{}USAGE \PYGZdq{}Usage: \PYGZpc{}s [ARGS]\PYGZbs{}n\PYGZbs{}n\PYGZdq{}}
+
+\PYG{c+cm}{/* CONFIG CONSTANTS*/}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}FILE\PYGZus{}PATH \PYGZdq{}config.ini\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}SERVER\PYGZus{}MAX\PYGZus{}CONNECTIONS \PYGZdq{}max\PYGZus{}clients:\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}SERVER\PYGZus{}WARM\PYGZus{}UP \PYGZdq{}warm\PYGZus{}up:\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}SERVER\PYGZus{}HUMANLY\PYGZus{}READABLE \PYGZdq{}humanly\PYGZus{}readable\PYGZus{}dumpdata:\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}CSAC\PYGZus{}PATH \PYGZdq{}csac\PYGZus{}serial\PYGZus{}interface:\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}LOGGING \PYGZdq{}logging:\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}LOG\PYGZus{}PATH \PYGZdq{}log\PYGZus{}path:\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}CSAC\PYGZus{}LOG\PYGZus{}PATH \PYGZdq{}csac\PYGZus{}log\PYGZus{}path:\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define CONFIG\PYGZus{}CSAC\PYGZus{}LOGGING \PYGZdq{}csac\PYGZus{}logging:\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}define SERVER\PYGZus{}CONFIG\PYGZus{}ENTRIES 8}
+
+\PYG{c+cm}{/* Server data and stats */}
+\PYG{k}{struct} \PYG{n}{server\PYGZus{}data} \PYG{o}{*}\PYG{n}{s\PYGZus{}data}\PYG{p}{;}
+
+\PYG{c+cm}{/* Shared synchro elements */}
+\PYG{k}{struct} \PYG{n}{server\PYGZus{}synchro} \PYG{o}{*}\PYG{n}{s\PYGZus{}synch}\PYG{p}{;}
+
+\PYG{c+cm}{/* Used by sig handlers */}
+\PYG{k}{volatile} \PYG{k+kt}{sig\PYGZus{}atomic\PYGZus{}t} \PYG{n}{done}\PYG{p}{;}
+
+\PYG{c+cm}{/* Pointer to shared memory containing the client list */}
+\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{client\PYGZus{}list}\PYG{p}{;}
+
+\PYG{c+cm}{/* Pointer to shared memory containing config */}
+\PYG{k}{struct} \PYG{n}{server\PYGZus{}config} \PYG{o}{*}\PYG{n}{s\PYGZus{}conf}\PYG{p}{;}
+
+\PYG{c+cm}{/* Pointer to shared CSAC\PYGZus{}filter data */}
+\PYG{k}{struct} \PYG{n}{csac\PYGZus{}filter\PYGZus{}data} \PYG{o}{*}\PYG{n}{cfd}\PYG{p}{;}
+
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{remove\PYGZus{}client\PYGZus{}by\PYGZus{}pid}\PYG{p}{(}\PYG{k+kt}{pid\PYGZus{}t} \PYG{n}{pid}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{remove\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{id}\PYG{p}{);}
+\PYG{k}{static} \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n+nf}{create\PYGZus{}client}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{ptr}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{handle\PYGZus{}sigchld}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{signum}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{handle\PYGZus{}sig}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{signum}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{initialize\PYGZus{}config}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{config\PYGZus{}map\PYGZus{}entry} \PYG{o}{*}\PYG{n}{conf\PYGZus{}map}\PYG{p}{,}
+                              \PYG{k}{struct} \PYG{n}{server\PYGZus{}config} \PYG{o}{*}\PYG{n}{s\PYGZus{}conf}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{start\PYGZus{}server}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{port\PYGZus{}number}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n+nf}{usage}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{argv}\PYG{p}{[]);}
+
+\PYG{c+cm}{/* Prints a formatted string containing server info to monitor */}
+\PYG{k+kt}{void} \PYG{n+nf}{print\PYGZus{}server\PYGZus{}data}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{monitor}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{char} \PYG{n}{buffer} \PYG{p}{[}\PYG{l+m+mi}{1000}\PYG{p}{];}
+    \PYG{k+kt}{int} \PYG{n}{snprintf\PYGZus{}status} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{tm} \PYG{o}{*}\PYG{n}{loctime\PYGZus{}started}\PYG{p}{;}
+    \PYG{n}{loctime\PYGZus{}started} \PYG{o}{=} \PYG{n}{localtime} \PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{started}\PYG{p}{);}
+
+    \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{monitor}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{SERVER\PYGZus{}TABLE\PYGZus{}LABEL}\PYG{p}{,}
+            \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{SERVER\PYGZus{}TABLE\PYGZus{}LABEL}\PYG{p}{));}
+    \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{monitor}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{HORIZONTAL\PYGZus{}BAR}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{HORIZONTAL\PYGZus{}BAR}\PYG{p}{));}
+
+    \PYG{n}{snprintf\PYGZus{}status} \PYG{o}{=} \PYG{n}{snprintf}\PYG{p}{(} \PYG{n}{buffer}\PYG{p}{,} \PYG{l+m+mi}{1000}\PYG{p}{,}
+                                \PYG{l+s}{\PYGZdq{}PID: \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}} \PYGZbs{}
+                                \PYG{l+s}{\PYGZdq{}Number of clients: \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}} \PYGZbs{}
+                                \PYG{l+s}{\PYGZdq{}Number of sensors: \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}} \PYGZbs{}
+                                \PYG{l+s}{\PYGZdq{}Max clients: \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}} \PYGZbs{}
+                                \PYG{l+s}{\PYGZdq{}Sensor Warm\PYGZhy{}up time: \PYGZpc{}ds}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}} \PYGZbs{}
+                                \PYG{l+s}{\PYGZdq{}Dump humanly readable data: \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}} \PYGZbs{}
+                                \PYG{l+s}{\PYGZdq{}Started: \PYGZpc{}s\PYGZdq{}} \PYGZbs{}
+                                \PYG{l+s}{\PYGZdq{}Version: \PYGZpc{}s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+                                \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pid}\PYG{p}{,}
+                                \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{number\PYGZus{}of\PYGZus{}clients}\PYG{p}{,}
+                                \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{number\PYGZus{}of\PYGZus{}sensors}\PYG{p}{,}
+                                \PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{max\PYGZus{}clients}\PYG{p}{,}
+                                \PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{warm\PYGZus{}up\PYGZus{}seconds}\PYG{p}{,}
+                                \PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{human\PYGZus{}readable\PYGZus{}dumpdata}\PYG{p}{,}
+                                \PYG{n}{asctime} \PYG{p}{(}\PYG{n}{loctime\PYGZus{}started}\PYG{p}{),}
+                                \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{version}\PYG{p}{);}
+
+    \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{monitor}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{buffer}\PYG{p}{,} \PYG{n}{snprintf\PYGZus{}status}\PYG{p}{);}
+    \PYG{n}{s\PYGZus{}write}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{monitor}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{transmission}\PYG{p}{),} \PYG{n}{HORIZONTAL\PYGZus{}BAR}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{HORIZONTAL\PYGZus{}BAR}\PYG{p}{));}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n+nf}{get\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{id}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{temp}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{found} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+    \PYG{n}{sem\PYGZus{}wait}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+    \PYG{n}{list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{p}{,} \PYG{n}{temp}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{,} \PYG{n}{list}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id} \PYG{o}{==} \PYG{n}{id}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{found} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{k}{break}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{n}{sem\PYGZus{}post}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{found}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{n+nb}{NULL}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Removes a client with the given PID */}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{remove\PYGZus{}client\PYGZus{}by\PYGZus{}pid}\PYG{p}{(}\PYG{k+kt}{pid\PYGZus{}t} \PYG{n}{pid}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{temp\PYGZus{}remove}\PYG{p}{;}
+
+    \PYG{n}{sem\PYGZus{}wait}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+    \PYG{n}{list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{p}{,} \PYG{n}{temp\PYGZus{}remove}\PYG{p}{,}\PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{,}
+                             \PYG{n}{list}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pid} \PYG{o}{==} \PYG{n}{pid}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{number\PYGZus{}of\PYGZus{}sensors}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{list\PYGZus{}del}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{number\PYGZus{}of\PYGZus{}clients}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+    \PYG{n}{sem\PYGZus{}post}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Removes a client with the given ID */}
+\PYG{k+kt}{void} \PYG{n+nf}{remove\PYGZus{}client\PYGZus{}by\PYGZus{}id}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{id}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{temp\PYGZus{}remove}\PYG{p}{;}
+
+    \PYG{n}{sem\PYGZus{}wait}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+    \PYG{n}{list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{p}{,} \PYG{n}{temp\PYGZus{}remove}\PYG{p}{,}\PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{,}
+                             \PYG{n}{list}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}id} \PYG{o}{==} \PYG{n}{id}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{list\PYGZus{}del}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list\PYGZus{}iterate}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{number\PYGZus{}of\PYGZus{}clients}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+    \PYG{n}{sem\PYGZus{}post}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Creates an entry in the client list structure and returns a pointer to it*/}
+\PYG{k}{static} \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n+nf}{create\PYGZus{}client}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{ptr}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{sem\PYGZus{}wait}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+    \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{number\PYGZus{}of\PYGZus{}clients}\PYG{o}{++}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{o}{*} \PYG{n}{tmp}\PYG{p}{;}
+    \PYG{n}{tmp} \PYG{o}{=} \PYG{p}{(}\PYG{n}{client\PYGZus{}list} \PYG{o}{+} \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{number\PYGZus{}of\PYGZus{}clients}\PYG{p}{);}
+    \PYG{n}{list\PYGZus{}add\PYGZus{}tail}\PYG{p}{(} \PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{tmp}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{),} \PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{ptr}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{)} \PYG{p}{);}
+    \PYG{n}{sem\PYGZus{}post}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+
+    \PYG{k}{return} \PYG{n}{tmp}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* SIGCHLD Handler */}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{handle\PYGZus{}sigchld}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{signum}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{pid\PYGZus{}t} \PYG{n}{pid}\PYG{p}{;}
+    \PYG{k+kt}{int}   \PYG{n}{status}\PYG{p}{;}
+    \PYG{k}{while} \PYG{p}{((}\PYG{n}{pid} \PYG{o}{=} \PYG{n}{waitpid}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{status}\PYG{p}{,} \PYG{n}{WNOHANG}\PYG{p}{))} \PYG{o}{!=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{pid} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{break}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{pid} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{remove\PYGZus{}client\PYGZus{}by\PYGZus{}pid}\PYG{p}{(}\PYG{n}{pid}\PYG{p}{);}
+            \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{PROCESS\PYGZus{}REAPED}\PYG{p}{,} \PYG{n}{pid}\PYG{p}{,} \PYG{n}{status}\PYG{p}{,} \PYG{n}{signum}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* SIGTERM/INT Handler */}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{handle\PYGZus{}sig}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{signum}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{signum} \PYG{o}{==} \PYG{l+m+mi}{15}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{SIGTERM\PYGZus{}RECEIVED}\PYG{p}{,} \PYG{n}{getpid}\PYG{p}{());}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{signum} \PYG{o}{==} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{SIGINT\PYGZus{}RECEIVED}\PYG{p}{,} \PYG{n}{getpid}\PYG{p}{());}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{STOPPING\PYGZus{}SERVER}\PYG{p}{,} \PYG{n}{getpid}\PYG{p}{());}
+    \PYG{n}{done} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Setting up the config structure specific for the server */}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{initialize\PYGZus{}config}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{config\PYGZus{}map\PYGZus{}entry} \PYG{o}{*}\PYG{n}{conf\PYGZus{}map}\PYG{p}{,}
+                              \PYG{k}{struct} \PYG{n}{server\PYGZus{}config} \PYG{o}{*}\PYG{n}{s\PYGZus{}conf}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}SERVER\PYGZus{}MAX\PYGZus{}CONNECTIONS}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}INT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{max\PYGZus{}clients}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}SERVER\PYGZus{}WARM\PYGZus{}UP}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}INT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{warm\PYGZus{}up\PYGZus{}seconds}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}SERVER\PYGZus{}HUMANLY\PYGZus{}READABLE}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}INT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{human\PYGZus{}readable\PYGZus{}dumpdata}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}CSAC\PYGZus{}PATH}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}STRING}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}path}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}LOGGING}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}INT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{logging}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}LOG\PYGZus{}PATH}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}STRING}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{log\PYGZus{}path}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{6}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}CSAC\PYGZus{}LOG\PYGZus{}PATH}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{6}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}STRING}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{6}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}log\PYGZus{}path}\PYG{p}{;}
+
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{7}\PYG{p}{].}\PYG{n}{entry\PYGZus{}name} \PYG{o}{=} \PYG{n}{CONFIG\PYGZus{}CSAC\PYGZus{}LOGGING}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{7}\PYG{p}{].}\PYG{n}{modifier} \PYG{o}{=} \PYG{n}{FORMAT\PYGZus{}INT}\PYG{p}{;}
+    \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{l+m+mi}{7}\PYG{p}{].}\PYG{n}{destination} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}logging}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{* Main loop for the server.}
+\PYG{c+cm}{* Forks everytime a client connects and calls setup\PYGZus{}session()}
+\PYG{c+cm}{*/}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{start\PYGZus{}server}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{port\PYGZus{}number}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* Initializing variables */}
+    \PYG{k+kt}{int} \PYG{n}{server\PYGZus{}sockfd}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{sockaddr\PYGZus{}in} \PYG{n}{serv\PYGZus{}addr}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{config\PYGZus{}map\PYGZus{}entry} \PYG{n}{conf\PYGZus{}map}\PYG{p}{[}\PYG{n}{SERVER\PYGZus{}CONFIG\PYGZus{}ENTRIES}\PYG{p}{];}
+
+    \PYG{c+cm}{/* Initializing config structure */}
+    \PYG{n}{s\PYGZus{}conf} \PYG{o}{=} \PYG{n}{mmap}\PYG{p}{(}\PYG{n+nb}{NULL}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{server\PYGZus{}config}\PYG{p}{),} \PYG{n}{PROT\PYGZus{}READ} \PYG{o}{|} \PYG{n}{PROT\PYGZus{}WRITE}\PYG{p}{,}
+                  \PYG{n}{MAP\PYGZus{}SHARED} \PYG{o}{|} \PYG{n}{MAP\PYGZus{}ANONYMOUS}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+    \PYG{n}{initialize\PYGZus{}config}\PYG{p}{(}\PYG{n}{conf\PYGZus{}map}\PYG{p}{,} \PYG{n}{s\PYGZus{}conf}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Loading config */}
+    \PYG{k+kt}{int} \PYG{n}{load\PYGZus{}config\PYGZus{}status} \PYG{o}{=} \PYG{n}{load\PYGZus{}config}\PYG{p}{(}\PYG{n}{conf\PYGZus{}map}\PYG{p}{,} \PYG{n}{CONFIG\PYGZus{}FILE\PYGZus{}PATH}\PYG{p}{,}
+                                         \PYG{n}{SERVER\PYGZus{}CONFIG\PYGZus{}ENTRIES}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Falling back to default if load\PYGZus{}config fails */}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{load\PYGZus{}config\PYGZus{}status}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{CONFIG\PYGZus{}LOADED}\PYG{p}{);}
+        \PYG{n}{client\PYGZus{}list} \PYG{o}{=} \PYG{n}{mmap}\PYG{p}{(}\PYG{n+nb}{NULL}\PYG{p}{,}
+                           \PYG{p}{(}\PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{max\PYGZus{}clients} \PYG{o}{*} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{p}{)),}
+                           \PYG{n}{PROT\PYGZus{}READ} \PYG{o}{|} \PYG{n}{PROT\PYGZus{}WRITE}\PYG{p}{,} \PYG{n}{MAP\PYGZus{}SHARED} \PYG{o}{|} \PYG{n}{MAP\PYGZus{}ANONYMOUS}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}CONFIG\PYGZus{}LOAD\PYGZus{}FAILED}\PYG{p}{);}
+        \PYG{n}{exit}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{n}{INIT\PYGZus{}LIST\PYGZus{}HEAD}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{client\PYGZus{}list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{list}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Create and initialize shared memory for server data */}
+    \PYG{n}{s\PYGZus{}data} \PYG{o}{=} \PYG{n}{mmap}\PYG{p}{(}\PYG{n+nb}{NULL}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{server\PYGZus{}data}\PYG{p}{),} \PYG{n}{PROT\PYGZus{}READ} \PYG{o}{|} \PYG{n}{PROT\PYGZus{}WRITE}\PYG{p}{,}
+                  \PYG{n}{MAP\PYGZus{}SHARED} \PYG{o}{|} \PYG{n}{MAP\PYGZus{}ANONYMOUS}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+    \PYG{n}{bcopy}\PYG{p}{(}\PYG{n}{PROGRAM\PYGZus{}VERSION}\PYG{p}{,} \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{version}\PYG{p}{,}\PYG{l+m+mi}{4}\PYG{p}{);}
+    \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pid} \PYG{o}{=} \PYG{n}{getpid}\PYG{p}{();}
+    \PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{started} \PYG{o}{=} \PYG{n}{time}\PYG{p}{(}\PYG{n+nb}{NULL}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Init shared semaphores and sync elements */}
+    \PYG{n}{s\PYGZus{}synch} \PYG{o}{=} \PYG{n}{mmap}\PYG{p}{(}\PYG{n+nb}{NULL}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{server\PYGZus{}synchro}\PYG{p}{),} \PYG{n}{PROT\PYGZus{}READ} \PYG{o}{|} \PYG{n}{PROT\PYGZus{}WRITE}\PYG{p}{,}
+                   \PYG{n}{MAP\PYGZus{}SHARED} \PYG{o}{|} \PYG{n}{MAP\PYGZus{}ANONYMOUS}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+    \PYG{n}{sem\PYGZus{}init}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ready\PYGZus{}mutex}\PYG{p}{),} \PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{);}
+    \PYG{n}{sem\PYGZus{}init}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{),} \PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{);}
+    \PYG{n}{sem\PYGZus{}init}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}mutex}\PYG{p}{),} \PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{);}
+
+    \PYG{c+cm}{/* Init pointer to shared CSAC\PYGZus{}filter data */}
+    \PYG{n}{cfd} \PYG{o}{=} \PYG{n}{mmap}\PYG{p}{(}\PYG{n+nb}{NULL}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}filter\PYGZus{}data}\PYG{p}{),} \PYG{n}{PROT\PYGZus{}READ} \PYG{o}{|} \PYG{n}{PROT\PYGZus{}WRITE}\PYG{p}{,}
+               \PYG{n}{MAP\PYGZus{}SHARED} \PYG{o}{|} \PYG{n}{MAP\PYGZus{}ANONYMOUS}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+
+    \PYG{k}{if}\PYG{p}{(} \PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ready\PYGZus{}mutex}\PYG{p}{)} \PYG{o}{==} \PYG{n}{SEM\PYGZus{}FAILED}
+            \PYG{o}{||} \PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{)} \PYG{o}{==} \PYG{n}{SEM\PYGZus{}FAILED}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}SEMAPHORE\PYGZus{}CREATION\PYGZus{}FAILED}\PYG{p}{);}
+        \PYG{n}{sem\PYGZus{}close}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ready\PYGZus{}mutex}\PYG{p}{));}
+        \PYG{n}{sem\PYGZus{}close}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+        \PYG{n}{exit}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+
+    \PYG{k+kt}{pid\PYGZus{}t} \PYG{n}{f\PYGZus{}pid}\PYG{p}{;}
+    \PYG{n}{f\PYGZus{}pid} \PYG{o}{=} \PYG{n}{fork}\PYG{p}{();}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{f\PYGZus{}pid} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}Forked out CSAC filter [\PYGZpc{}d]}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{getpid}\PYG{p}{());}
+        \PYG{n}{start\PYGZus{}csac\PYGZus{}filter}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{);}
+        \PYG{n}{\PYGZus{}exit}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Registering the SIGINT handler */}
+    \PYG{k}{struct} \PYG{n}{sigaction} \PYG{n}{sigint\PYGZus{}action}\PYG{p}{;}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{sigint\PYGZus{}action}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{sigaction}\PYG{p}{));}
+    \PYG{n}{sigint\PYGZus{}action}\PYG{p}{.}\PYG{n}{sa\PYGZus{}handler} \PYG{o}{=} \PYG{n}{handle\PYGZus{}sig}\PYG{p}{;}
+    \PYG{n}{sigaction}\PYG{p}{(}\PYG{n}{SIGINT}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{sigint\PYGZus{}action}\PYG{p}{,} \PYG{n+nb}{NULL}\PYG{p}{);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{sigaction}\PYG{p}{(}\PYG{n}{SIGCHLD}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{sigint\PYGZus{}action}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{==} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{perror}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+        \PYG{n}{exit}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Registering the SIGTERM handler */}
+    \PYG{k}{struct} \PYG{n}{sigaction} \PYG{n}{sigterm\PYGZus{}action}\PYG{p}{;}
+    \PYG{n}{memset}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{sigterm\PYGZus{}action}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{sigaction}\PYG{p}{));}
+    \PYG{n}{sigterm\PYGZus{}action}\PYG{p}{.}\PYG{n}{sa\PYGZus{}handler} \PYG{o}{=} \PYG{n}{handle\PYGZus{}sig}\PYG{p}{;}
+    \PYG{n}{sigaction}\PYG{p}{(}\PYG{n}{SIGTERM}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{sigterm\PYGZus{}action}\PYG{p}{,} \PYG{n+nb}{NULL}\PYG{p}{);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{sigaction}\PYG{p}{(}\PYG{n}{SIGCHLD}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{sigterm\PYGZus{}action}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{==} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{perror}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+        \PYG{n}{exit}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Registering the SIGCHLD handler */}
+    \PYG{k}{struct} \PYG{n}{sigaction} \PYG{n}{child\PYGZus{}action}\PYG{p}{;}
+    \PYG{n}{child\PYGZus{}action}\PYG{p}{.}\PYG{n}{sa\PYGZus{}handler} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{handle\PYGZus{}sigchld}\PYG{p}{;}
+    \PYG{n}{sigemptyset}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{child\PYGZus{}action}\PYG{p}{.}\PYG{n}{sa\PYGZus{}mask}\PYG{p}{);}
+    \PYG{n}{child\PYGZus{}action}\PYG{p}{.}\PYG{n}{sa\PYGZus{}flags} \PYG{o}{=} \PYG{n}{SA\PYGZus{}RESTART} \PYG{o}{|} \PYG{n}{SA\PYGZus{}NOCLDSTOP}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{sigaction}\PYG{p}{(}\PYG{n}{SIGCHLD}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{child\PYGZus{}action}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{==} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{perror}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+        \PYG{n}{exit}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Initialize socket */}
+    \PYG{n}{server\PYGZus{}sockfd} \PYG{o}{=} \PYG{n}{socket}\PYG{p}{(}\PYG{n}{AF\PYGZus{}INET}\PYG{p}{,} \PYG{n}{SOCK\PYGZus{}STREAM}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{server\PYGZus{}sockfd} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{die}\PYG{p}{(}\PYG{l+m+mi}{62}\PYG{p}{,}\PYG{n}{ERROR\PYGZus{}SOCKET\PYGZus{}OPEN\PYGZus{}FAILED}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/*}
+\PYG{c+cm}{    * Initializing the server address struct:}
+\PYG{c+cm}{    * AF\PYGZus{}INET = IPV4 Internet protocol}
+\PYG{c+cm}{    * INADDR\PYGZus{}ANY = Accept connections to all IPs of the machine}
+\PYG{c+cm}{    * htons(port\PYGZus{}number) = Endianess: network to host long(port number).}
+\PYG{c+cm}{    */}
+    \PYG{n}{bzero}\PYG{p}{((}\PYG{k+kt}{char} \PYG{o}{*}\PYG{p}{)} \PYG{o}{\PYGZam{}}\PYG{n}{serv\PYGZus{}addr}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{serv\PYGZus{}addr}\PYG{p}{));}
+    \PYG{n}{serv\PYGZus{}addr}\PYG{p}{.}\PYG{n}{sin\PYGZus{}family} \PYG{o}{=} \PYG{n}{AF\PYGZus{}INET}\PYG{p}{;}
+    \PYG{n}{serv\PYGZus{}addr}\PYG{p}{.}\PYG{n}{sin\PYGZus{}addr}\PYG{p}{.}\PYG{n}{s\PYGZus{}addr} \PYG{o}{=} \PYG{n}{INADDR\PYGZus{}ANY}\PYG{p}{;}
+    \PYG{n}{serv\PYGZus{}addr}\PYG{p}{.}\PYG{n}{sin\PYGZus{}port} \PYG{o}{=} \PYG{n}{htons}\PYG{p}{(}\PYG{n}{port\PYGZus{}number}\PYG{p}{);}
+
+    \PYG{c+cm}{/*}
+\PYG{c+cm}{    * Assigns the address (serv\PYGZus{}addr) to the socket}
+\PYG{c+cm}{    * referred to by server\PYGZus{}sockfd.}
+\PYG{c+cm}{    */}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{bind}\PYG{p}{(}\PYG{n}{server\PYGZus{}sockfd}\PYG{p}{,} \PYG{p}{(}\PYG{k}{struct} \PYG{n}{sockaddr} \PYG{o}{*}\PYG{p}{)} \PYG{o}{\PYGZam{}}\PYG{n}{serv\PYGZus{}addr}\PYG{p}{,}
+             \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{serv\PYGZus{}addr}\PYG{p}{))} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}SOCKET\PYGZus{}BINDING}\PYG{p}{,} \PYG{n}{port\PYGZus{}number}\PYG{p}{);}
+        \PYG{n}{exit}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Marking the connection for listening*/}
+    \PYG{n}{listen}\PYG{p}{(}\PYG{n}{server\PYGZus{}sockfd}\PYG{p}{,}\PYG{n}{SOMAXCONN}\PYG{p}{);}
+
+    \PYG{k+kt}{int} \PYG{n}{session\PYGZus{}fd} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{SERVER\PYGZus{}RUNNING}\PYG{p}{);}
+    \PYG{k}{while} \PYG{p}{(}\PYG{o}{!}\PYG{n}{done}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{WAITING\PYGZus{}FOR\PYGZus{}CONNECTIONS}\PYG{p}{);}
+        \PYG{n}{session\PYGZus{}fd} \PYG{o}{=} \PYG{n}{accept}\PYG{p}{(}\PYG{n}{server\PYGZus{}sockfd}\PYG{p}{,}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{l+m+mi}{0}\PYG{p}{);}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{o}{==\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{errno}\PYG{o}{==}\PYG{n}{EINTR}\PYG{p}{)} \PYG{k}{continue}\PYG{p}{;}
+            \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}CONNECTION\PYGZus{}ACCEPT}\PYG{p}{,}\PYG{n}{errno}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{s\PYGZus{}data}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{number\PYGZus{}of\PYGZus{}clients} \PYG{o}{==} \PYG{n}{s\PYGZus{}conf}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{max\PYGZus{}clients}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{write}\PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{p}{,} \PYG{n}{ERROR\PYGZus{}MAX\PYGZus{}CLIENTS\PYGZus{}REACHED}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}MAX\PYGZus{}CLIENTS\PYGZus{}REACHED}\PYG{p}{));}
+            \PYG{n}{close}\PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{o}{*}\PYG{n}{new\PYGZus{}client} \PYG{o}{=} \PYG{n}{create\PYGZus{}client}\PYG{p}{(}\PYG{n}{client\PYGZus{}list}\PYG{p}{);}
+            \PYG{k+kt}{pid\PYGZus{}t} \PYG{n}{pid}\PYG{o}{=}\PYG{n}{fork}\PYG{p}{();}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{pid}\PYG{o}{==\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}FAILED\PYGZus{}FORK}\PYG{p}{,} \PYG{n}{errno}\PYG{p}{);}
+                \PYG{c+cm}{/* WHAT HAPPENS WITH THE LIST WHEN FORK FAILS? DEAL WITH IT.*/}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{pid}\PYG{o}{==}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{close}\PYG{p}{(}\PYG{n}{server\PYGZus{}sockfd}\PYG{p}{);}
+                \PYG{n}{setup\PYGZus{}session}\PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{p}{,} \PYG{n}{new\PYGZus{}client}\PYG{p}{);}
+                \PYG{n}{close}\PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{p}{);}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{new\PYGZus{}client}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{marked\PYGZus{}for\PYGZus{}kick}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{CLIENT\PYGZus{}KICKED}\PYG{p}{,} \PYG{n}{getpid}\PYG{p}{());}
+                \PYG{p}{\PYGZcb{}}
+                \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{CLIENT\PYGZus{}DISCONNECTED}\PYG{p}{,} \PYG{n}{getpid}\PYG{p}{());}
+                \PYG{n}{\PYGZus{}exit}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{CON\PYGZus{}ACCEPTED}\PYG{p}{);}
+                \PYG{n}{close}\PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Destroying semaphores */}
+    \PYG{n}{sem\PYGZus{}destroy}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{csac\PYGZus{}mutex}\PYG{p}{));}
+    \PYG{n}{sem\PYGZus{}destroy}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ready\PYGZus{}mutex}\PYG{p}{));}
+    \PYG{n}{sem\PYGZus{}destroy}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{client\PYGZus{}list\PYGZus{}mutex}\PYG{p}{));}
+
+    \PYG{c+cm}{/* Freeing */}
+    \PYG{n}{munmap}\PYG{p}{(}\PYG{n}{client\PYGZus{}list}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry}\PYG{p}{));}
+    \PYG{n}{munmap}\PYG{p}{(}\PYG{n}{s\PYGZus{}data}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{server\PYGZus{}data}\PYG{p}{));}
+    \PYG{n}{munmap}\PYG{p}{(}\PYG{n}{cfd}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{csac\PYGZus{}filter\PYGZus{}data}\PYG{p}{));}
+    \PYG{n}{munmap}\PYG{p}{(}\PYG{n}{s\PYGZus{}synch}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{server\PYGZus{}synchro}\PYG{p}{));}
+
+    \PYG{c+cm}{/* Closing server FD */}
+    \PYG{n}{close}\PYG{p}{(}\PYG{n}{server\PYGZus{}sockfd}\PYG{p}{);}
+    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{SERVER\PYGZus{}STOPPED}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n+nf}{usage}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{argv}\PYG{p}{[])}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{printf}\PYG{p}{(}\PYG{n}{USAGE\PYGZus{}USAGE}\PYG{p}{,} \PYG{n}{argv}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]);}
+    \PYG{n}{printf}\PYG{p}{(}\PYG{n}{USAGE\PYGZus{}PROGRAM\PYGZus{}INTRO}\PYG{p}{);}
+    \PYG{n}{printf}\PYG{p}{(}\PYG{n}{USAGE\PYGZus{}DESCRIPTION}\PYG{p}{);}
+    \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{main}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{argc}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{argv}\PYG{p}{[])}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{port\PYGZus{}number} \PYG{o}{=} \PYG{n+nb}{NULL}\PYG{p}{;}
+
+    \PYG{c+cm}{/* getopt silent mode set */}
+    \PYG{n}{opterr} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{argc} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{usage}\PYG{p}{(}\PYG{n}{argv}\PYG{p}{);}
+        \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{while} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{char} \PYG{n}{c}\PYG{p}{;}
+
+        \PYG{n}{c} \PYG{o}{=} \PYG{n}{getopt} \PYG{p}{(}\PYG{n}{argc}\PYG{p}{,} \PYG{n}{argv}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}p:\PYGZdq{}}\PYG{p}{);}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{c} \PYG{o}{==} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{break}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{switch} \PYG{p}{(}\PYG{n}{c}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{case} \PYG{l+s+sc}{\PYGZsq{}p\PYGZsq{}}\PYG{o}{:}
+            \PYG{n}{port\PYGZus{}number} \PYG{o}{=} \PYG{n}{optarg}\PYG{p}{;}
+            \PYG{k}{break}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{port\PYGZus{}number} \PYG{o}{==} \PYG{n+nb}{NULL}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{printf}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}MISSING\PYGZus{}PARAMS}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{SERVER\PYGZus{}STARTING}\PYG{p}{);}
+    \PYG{n}{start\PYGZus{}server}\PYG{p}{(}\PYG{n}{atoi}\PYG{p}{(}\PYG{n}{port\PYGZus{}number}\PYG{p}{));}
+    \PYG{n}{exit}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

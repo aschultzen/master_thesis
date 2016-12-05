@@ -1,0 +1,18 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{struct} \PYG{n}{client\PYGZus{}table\PYGZus{}entry} \PYG{p}{\PYGZob{}}
+        \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{n}{list}\PYG{p}{;}
+        \PYG{k}{struct} \PYG{n}{transmission\PYGZus{}s} \PYG{n}{transmission}\PYG{p}{;}
+        \PYG{k}{struct} \PYG{n}{timeval} \PYG{n}{heartbeat\PYGZus{}timeout}\PYG{p}{;}
+        \PYG{k}{struct} \PYG{n}{command\PYGZus{}code} \PYG{n}{cm}\PYG{p}{;}
+        \PYG{k}{struct} \PYG{n}{nmea\PYGZus{}container} \PYG{n}{nmea}\PYG{p}{;}
+        \PYG{k+kt}{pid\PYGZus{}t} \PYG{n}{pid}\PYG{p}{;}
+        \PYG{k+kt}{time\PYGZus{}t} \PYG{n}{timestamp}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{client\PYGZus{}id}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{client\PYGZus{}type}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{ready}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{marked\PYGZus{}for\PYGZus{}kick}\PYG{p}{;}
+        \PYG{k+kt}{char} \PYG{n}{ip}\PYG{p}{[}\PYG{n}{INET\PYGZus{}ADDRSTRLEN}\PYG{p}{];}
+        \PYG{k}{struct} \PYG{n}{filters} \PYG{n}{fs}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{};}
+    \PYG{err}{\PYGZbs{}}\PYG{n}{label}\PYG{p}{\PYGZob{}}\PYG{n}{struct\PYGZus{}client\PYGZus{}table}\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

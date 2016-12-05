@@ -1,0 +1,26 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{n}{listen}\PYG{p}{(}\PYG{n}{server\PYGZus{}sockfd}\PYG{p}{,}\PYG{n}{SOMAXCONN}\PYG{p}{);}
+    \PYG{k+kt}{int} \PYG{n}{session\PYGZus{}fd} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{while} \PYG{p}{(}\PYG{o}{!}\PYG{n}{done}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{session\PYGZus{}fd} \PYG{o}{=} \PYG{n}{accept}\PYG{p}{(}\PYG{n}{server\PYGZus{}sockfd}\PYG{p}{,}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{l+m+mi}{0}\PYG{p}{);}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{o}{==\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{errno}\PYG{o}{==}\PYG{n}{EINTR}\PYG{p}{)} \PYG{k}{continue}\PYG{p}{;}
+            \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}CONNECTION\PYGZus{}ACCEPT}\PYG{p}{,}\PYG{n}{errno}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{number\PYGZus{}of\PYGZus{}clients} \PYG{o}{==} \PYG{n}{max\PYGZus{}clients}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{close}\PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{pid\PYGZus{}t} \PYG{n}{pid}\PYG{o}{=}\PYG{n}{fork}\PYG{p}{();}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{pid}\PYG{o}{==\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{printf}\PYG{p}{(}\PYG{n}{ERROR\PYGZus{}FAILED\PYGZus{}FORK}\PYG{p}{,} \PYG{n}{errno}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{pid}\PYG{o}{==}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{close}\PYG{p}{(}\PYG{n}{server\PYGZus{}sockfd}\PYG{p}{);}
+                \PYG{n}{setup\PYGZus{}session}\PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{p}{,} \PYG{n}{new\PYGZus{}client}\PYG{p}{);}
+                \PYG{n}{close}\PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{p}{);}
+                \PYG{n}{\PYGZus{}exit}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{n}{close}\PYG{p}{(}\PYG{n}{session\PYGZus{}fd}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+\end{Verbatim}

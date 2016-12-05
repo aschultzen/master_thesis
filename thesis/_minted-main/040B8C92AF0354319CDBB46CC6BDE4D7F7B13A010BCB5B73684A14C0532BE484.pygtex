@@ -1,0 +1,528 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * @author kazutomo@mcs.anl.gov}
+\PYG{c+cm}{ * @file list.h}
+\PYG{c+cm}{ * @brief Linked list implementation from linux kernel source code.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * This code was lifted from http://www.mcs.anl.gov/\PYGZti{}kazutomo/list/.}
+\PYG{c+cm}{ * I stumbled upon when writing when writing a Linux clone autumn 15\PYGZsq{},}
+\PYG{c+cm}{ * and tested it in this project. It was planned to be replaced by something}
+\PYG{c+cm}{ * smaller.}
+\PYG{c+cm}{ * Kazutomo\PYGZsq{}s description:}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * I grub it from linux kernel source code and fix it for user space}
+\PYG{c+cm}{ * program. Of course, this is a GPL licensed header file.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Here is a recipe to cook list.h for user space program}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * 1. copy list.h from linux/include/list.h}
+\PYG{c+cm}{ * 2. remove}
+\PYG{c+cm}{ *     \PYGZhy{} \PYGZsh{}ifdef \PYGZus{}\PYGZus{}KERNE\PYGZus{}\PYGZus{} and its \PYGZsh{}endif}
+\PYG{c+cm}{ *     \PYGZhy{} all \PYGZsh{}include line}
+\PYG{c+cm}{ *     \PYGZhy{} prefetch() and rcu related functions}
+\PYG{c+cm}{ * 3. add macro offsetof() and container\PYGZus{}of}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * \PYGZhy{} kazutomo@mcs.anl.gov}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef \PYGZus{}LINUX\PYGZus{}LIST\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define \PYGZus{}LINUX\PYGZus{}LIST\PYGZus{}H}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * @name from other kernel headers}
+\PYG{c+cm}{ */}
+\PYG{c+cm}{/*@\PYGZob{}*/}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * Get offset of a member}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define offsetof(TYPE, MEMBER) ((size\PYGZus{}t) \PYGZam{}((TYPE *)0)\PYGZhy{}\PYGZgt{}MEMBER)}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * Casts a member of a structure out to the containing structure}
+\PYG{c+cm}{ * @param ptr        the pointer to the member.}
+\PYG{c+cm}{ * @param type       the type of the container struct this is embedded in.}
+\PYG{c+cm}{ * @param member     the name of the member within the struct.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define container\PYGZus{}of(ptr, type, member) \PYGZus{}\PYGZus{}extension\PYGZus{}\PYGZus{}(\PYGZob{}                      \PYGZbs{}}
+\PYG{c+cp}{        const typeof( ((type *)0)\PYGZhy{}\PYGZgt{}member ) *\PYGZus{}\PYGZus{}mptr = (ptr);    \PYGZbs{}}
+\PYG{c+cp}{        (type *)( (char *)\PYGZus{}\PYGZus{}mptr \PYGZhy{} offsetof(type,member) );\PYGZcb{})}
+\PYG{c+cm}{/*@\PYGZcb{}*/}
+
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * These are non\PYGZhy{}NULL pointers that will result in page faults}
+\PYG{c+cm}{ * under normal circumstances, used to verify that nobody uses}
+\PYG{c+cm}{ * non\PYGZhy{}initialized list entries.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define LIST\PYGZus{}POISON1  ((void *) 0x00100100)}
+\PYG{c+cp}{\PYGZsh{}define LIST\PYGZus{}POISON2  ((void *) 0x00200200)}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * Simple doubly linked list implementation.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Some of the internal functions (\PYGZdq{}\PYGZus{}\PYGZus{}xxx\PYGZdq{}) are useful when}
+\PYG{c+cm}{ * manipulating whole lists rather than single entries, as}
+\PYG{c+cm}{ * sometimes we already know the next/prev entries and we can}
+\PYG{c+cm}{ * generate better code by using them directly rather than}
+\PYG{c+cm}{ * using the generic single\PYGZhy{}entry routines.}
+\PYG{c+cm}{ */}
+\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{next}\PYG{p}{,} \PYG{o}{*}\PYG{n}{prev}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cp}{\PYGZsh{}define LIST\PYGZus{}HEAD\PYGZus{}INIT(name) \PYGZob{} \PYGZam{}(name), \PYGZam{}(name) \PYGZcb{}}
+
+\PYG{c+cp}{\PYGZsh{}define LIST\PYGZus{}HEAD(name) \PYGZbs{}}
+\PYG{c+cp}{	struct list\PYGZus{}head name = LIST\PYGZus{}HEAD\PYGZus{}INIT(name)}
+
+\PYG{c+cp}{\PYGZsh{}define INIT\PYGZus{}LIST\PYGZus{}HEAD(ptr) do \PYGZob{} \PYGZbs{}}
+\PYG{c+cp}{	(ptr)\PYGZhy{}\PYGZgt{}next = (ptr); (ptr)\PYGZhy{}\PYGZgt{}prev = (ptr); \PYGZbs{}}
+\PYG{c+cp}{\PYGZcb{} while (0)}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * Insert a new entry between two known consecutive entries.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * This is only for internal list manipulation where we know}
+\PYG{c+cm}{ * the prev/next entries already!}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{\PYGZus{}\PYGZus{}list\PYGZus{}add}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{new}\PYG{p}{,}
+                              \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{prev}\PYG{p}{,}
+                              \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{next}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{next}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{prev} \PYG{o}{=} \PYG{n}{new}\PYG{p}{;}
+    \PYG{n}{new}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next} \PYG{o}{=} \PYG{n}{next}\PYG{p}{;}
+    \PYG{n}{new}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{prev} \PYG{o}{=} \PYG{n}{prev}\PYG{p}{;}
+    \PYG{n}{prev}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next} \PYG{o}{=} \PYG{n}{new}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}add \PYGZhy{} add a new entry}
+\PYG{c+cm}{ * @new: new entry to be added}
+\PYG{c+cm}{ * @head: list head to add it after}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Insert a new entry after the specified head.}
+\PYG{c+cm}{ * This is good for implementing stacks.}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{list\PYGZus{}add}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{new}\PYG{p}{,} \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{head}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{\PYGZus{}\PYGZus{}list\PYGZus{}add}\PYG{p}{(}\PYG{n}{new}\PYG{p}{,} \PYG{n}{head}\PYG{p}{,} \PYG{n}{head}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}add\PYGZus{}tail \PYGZhy{} add a new entry}
+\PYG{c+cm}{ * @new: new entry to be added}
+\PYG{c+cm}{ * @head: list head to add it before}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Insert a new entry before the specified head.}
+\PYG{c+cm}{ * This is useful for implementing queues.}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{list\PYGZus{}add\PYGZus{}tail}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{new}\PYG{p}{,} \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{head}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{\PYGZus{}\PYGZus{}list\PYGZus{}add}\PYG{p}{(}\PYG{n}{new}\PYG{p}{,} \PYG{n}{head}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{prev}\PYG{p}{,} \PYG{n}{head}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * Delete a list entry by making the prev/next entries}
+\PYG{c+cm}{ * point to each other.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * This is only for internal list manipulation where we know}
+\PYG{c+cm}{ * the prev/next entries already!}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{\PYGZus{}\PYGZus{}list\PYGZus{}del}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*} \PYG{n}{prev}\PYG{p}{,} \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*} \PYG{n}{next}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{next}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{prev} \PYG{o}{=} \PYG{n}{prev}\PYG{p}{;}
+    \PYG{n}{prev}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next} \PYG{o}{=} \PYG{n}{next}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}del \PYGZhy{} deletes entry from list.}
+\PYG{c+cm}{ * @entry: the element to delete from the list.}
+\PYG{c+cm}{ * Note: list\PYGZus{}empty on entry does not return true after this, the entry is}
+\PYG{c+cm}{ * in an undefined state.}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{list\PYGZus{}del}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{entry}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{\PYGZus{}\PYGZus{}list\PYGZus{}del}\PYG{p}{(}\PYG{n}{entry}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{prev}\PYG{p}{,} \PYG{n}{entry}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{);}
+    \PYG{c+c1}{//entry\PYGZhy{}\PYGZgt{}next = LIST\PYGZus{}POISON1;}
+    \PYG{c+c1}{//entry\PYGZhy{}\PYGZgt{}prev = LIST\PYGZus{}POISON2;}
+\PYG{p}{\PYGZcb{}}
+
+
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}del\PYGZus{}init \PYGZhy{} deletes entry from list and reinitialize it.}
+\PYG{c+cm}{ * @entry: the element to delete from the list.}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{list\PYGZus{}del\PYGZus{}init}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{entry}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{\PYGZus{}\PYGZus{}list\PYGZus{}del}\PYG{p}{(}\PYG{n}{entry}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{prev}\PYG{p}{,} \PYG{n}{entry}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{);}
+    \PYG{n}{INIT\PYGZus{}LIST\PYGZus{}HEAD}\PYG{p}{(}\PYG{n}{entry}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}move \PYGZhy{} delete from one list and add as another\PYGZsq{}s head}
+\PYG{c+cm}{ * @list: the entry to move}
+\PYG{c+cm}{ * @head: the head that will precede our entry}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{list\PYGZus{}move}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{list}\PYG{p}{,} \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{head}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{\PYGZus{}\PYGZus{}list\PYGZus{}del}\PYG{p}{(}\PYG{n}{list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{prev}\PYG{p}{,} \PYG{n}{list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{);}
+    \PYG{n}{list\PYGZus{}add}\PYG{p}{(}\PYG{n}{list}\PYG{p}{,} \PYG{n}{head}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}move\PYGZus{}tail \PYGZhy{} delete from one list and add as another\PYGZsq{}s tail}
+\PYG{c+cm}{ * @list: the entry to move}
+\PYG{c+cm}{ * @head: the head that will follow our entry}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{list\PYGZus{}move\PYGZus{}tail}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{list}\PYG{p}{,}
+                                  \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{head}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{\PYGZus{}\PYGZus{}list\PYGZus{}del}\PYG{p}{(}\PYG{n}{list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{prev}\PYG{p}{,} \PYG{n}{list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{);}
+    \PYG{n}{list\PYGZus{}add\PYGZus{}tail}\PYG{p}{(}\PYG{n}{list}\PYG{p}{,} \PYG{n}{head}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}empty \PYGZhy{} tests whether a list is empty}
+\PYG{c+cm}{ * @head: the list to test.}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{int} \PYG{n+nf}{list\PYGZus{}empty}\PYG{p}{(}\PYG{k}{const} \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{head}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{n}{head}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next} \PYG{o}{==} \PYG{n}{head}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{\PYGZus{}\PYGZus{}list\PYGZus{}splice}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{list}\PYG{p}{,}
+                                 \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{head}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{first} \PYG{o}{=} \PYG{n}{list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{last} \PYG{o}{=} \PYG{n}{list}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{prev}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{at} \PYG{o}{=} \PYG{n}{head}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{;}
+
+    \PYG{n}{first}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{prev} \PYG{o}{=} \PYG{n}{head}\PYG{p}{;}
+    \PYG{n}{head}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next} \PYG{o}{=} \PYG{n}{first}\PYG{p}{;}
+
+    \PYG{n}{last}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next} \PYG{o}{=} \PYG{n}{at}\PYG{p}{;}
+    \PYG{n}{at}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{prev} \PYG{o}{=} \PYG{n}{last}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}splice \PYGZhy{} join two lists}
+\PYG{c+cm}{ * @list: the new list to add.}
+\PYG{c+cm}{ * @head: the place to add it in the first list.}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{list\PYGZus{}splice}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{list}\PYG{p}{,} \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{head}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n}{list\PYGZus{}empty}\PYG{p}{(}\PYG{n}{list}\PYG{p}{))}
+        \PYG{n}{\PYGZus{}\PYGZus{}list\PYGZus{}splice}\PYG{p}{(}\PYG{n}{list}\PYG{p}{,} \PYG{n}{head}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}splice\PYGZus{}init \PYGZhy{} join two lists and reinitialise the emptied list.}
+\PYG{c+cm}{ * @list: the new list to add.}
+\PYG{c+cm}{ * @head: the place to add it in the first list.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * The list at @list is reinitialised}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{list\PYGZus{}splice\PYGZus{}init}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{list}\PYG{p}{,}
+                                    \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{head}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n}{list\PYGZus{}empty}\PYG{p}{(}\PYG{n}{list}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n}{\PYGZus{}\PYGZus{}list\PYGZus{}splice}\PYG{p}{(}\PYG{n}{list}\PYG{p}{,} \PYG{n}{head}\PYG{p}{);}
+        \PYG{n}{INIT\PYGZus{}LIST\PYGZus{}HEAD}\PYG{p}{(}\PYG{n}{list}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}entry \PYGZhy{} get the struct for this entry}
+\PYG{c+cm}{ * @ptr:	the \PYGZam{}struct list\PYGZus{}head pointer.}
+\PYG{c+cm}{ * @type:	the type of the struct this is embedded in.}
+\PYG{c+cm}{ * @member:	the name of the list\PYGZus{}struct within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define list\PYGZus{}entry(ptr, type, member) \PYGZbs{}}
+\PYG{c+cp}{	container\PYGZus{}of(ptr, type, member)}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}for\PYGZus{}each	\PYGZhy{}	iterate over a list}
+\PYG{c+cm}{ * @pos:	the \PYGZam{}struct list\PYGZus{}head to use as a loop counter.}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}define list\PYGZus{}for\PYGZus{}each(pos, head) \PYGZbs{}}
+\PYG{c+cp}{  for (pos = (head)\PYGZhy{}\PYGZgt{}next; pos != (head);	\PYGZbs{}}
+\PYG{c+cp}{       pos = pos\PYGZhy{}\PYGZgt{}next)}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * \PYGZus{}\PYGZus{}list\PYGZus{}for\PYGZus{}each	\PYGZhy{}	iterate over a list}
+\PYG{c+cm}{ * @pos:	the \PYGZam{}struct list\PYGZus{}head to use as a loop counter.}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * This variant differs from list\PYGZus{}for\PYGZus{}each() in that it\PYGZsq{}s the}
+\PYG{c+cm}{ * simplest possible list iteration code, no prefetching is done.}
+\PYG{c+cm}{ * Use this for code that knows the list to be very short (empty}
+\PYG{c+cm}{ * or 1 entry) most of the time.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define \PYGZus{}\PYGZus{}list\PYGZus{}for\PYGZus{}each(pos, head) \PYGZbs{}}
+\PYG{c+cp}{	for (pos = (head)\PYGZhy{}\PYGZgt{}next; pos != (head); pos = pos\PYGZhy{}\PYGZgt{}next)}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}for\PYGZus{}each\PYGZus{}prev	\PYGZhy{}	iterate over a list backwards}
+\PYG{c+cm}{ * @pos:	the \PYGZam{}struct list\PYGZus{}head to use as a loop counter.}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define list\PYGZus{}for\PYGZus{}each\PYGZus{}prev(pos, head) \PYGZbs{}}
+\PYG{c+cp}{	for (pos = (head)\PYGZhy{}\PYGZgt{}prev; prefetch(pos\PYGZhy{}\PYGZgt{}prev), pos != (head); \PYGZbs{}}
+\PYG{c+cp}{        	pos = pos\PYGZhy{}\PYGZgt{}prev)}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}for\PYGZus{}each\PYGZus{}safe	\PYGZhy{}	iterate over a list safe against removal of list entry}
+\PYG{c+cm}{ * @pos:	the \PYGZam{}struct list\PYGZus{}head to use as a loop counter.}
+\PYG{c+cm}{ * @n:		another \PYGZam{}struct list\PYGZus{}head to use as temporary storage}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define list\PYGZus{}for\PYGZus{}each\PYGZus{}safe(pos, n, head) \PYGZbs{}}
+\PYG{c+cp}{	for (pos = (head)\PYGZhy{}\PYGZgt{}next, n = pos\PYGZhy{}\PYGZgt{}next; pos != (head); \PYGZbs{}}
+\PYG{c+cp}{		pos = n, n = pos\PYGZhy{}\PYGZgt{}next)}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}for\PYGZus{}each\PYGZus{}entry	\PYGZhy{}	iterate over list of given type}
+\PYG{c+cm}{ * @pos:	the type * to use as a loop counter.}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ * @member:	the name of the list\PYGZus{}struct within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define list\PYGZus{}for\PYGZus{}each\PYGZus{}entry(pos, head, member)				\PYGZbs{}}
+\PYG{c+cp}{	for (pos = list\PYGZus{}entry((head)\PYGZhy{}\PYGZgt{}next, typeof(*pos), member);	\PYGZbs{}}
+\PYG{c+cp}{	     \PYGZam{}pos\PYGZhy{}\PYGZgt{}member != (head);					\PYGZbs{}}
+\PYG{c+cp}{	     pos = list\PYGZus{}entry(pos\PYGZhy{}\PYGZgt{}member.next, typeof(*pos), member))}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}reverse \PYGZhy{} iterate backwards over list of given type.}
+\PYG{c+cm}{ * @pos:	the type * to use as a loop counter.}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ * @member:	the name of the list\PYGZus{}struct within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}reverse(pos, head, member)			\PYGZbs{}}
+\PYG{c+cp}{	for (pos = list\PYGZus{}entry((head)\PYGZhy{}\PYGZgt{}prev, typeof(*pos), member);	\PYGZbs{}}
+\PYG{c+cp}{	     \PYGZam{}pos\PYGZhy{}\PYGZgt{}member != (head); 	\PYGZbs{}}
+\PYG{c+cp}{	     pos = list\PYGZus{}entry(pos\PYGZhy{}\PYGZgt{}member.prev, typeof(*pos), member))}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}prepare\PYGZus{}entry \PYGZhy{} prepare a pos entry for use as a start point in}
+\PYG{c+cm}{ *			list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}continue}
+\PYG{c+cm}{ * @pos:	the type * to use as a start point}
+\PYG{c+cm}{ * @head:	the head of the list}
+\PYG{c+cm}{ * @member:	the name of the list\PYGZus{}struct within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define list\PYGZus{}prepare\PYGZus{}entry(pos, head, member) \PYGZbs{}}
+\PYG{c+cp}{	((pos) ? : list\PYGZus{}entry(head, typeof(*pos), member))}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}continue \PYGZhy{}	iterate over list of given type}
+\PYG{c+cm}{ *			continuing after existing point}
+\PYG{c+cm}{ * @pos:	the type * to use as a loop counter.}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ * @member:	the name of the list\PYGZus{}struct within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}continue(pos, head, member) 		\PYGZbs{}}
+\PYG{c+cp}{	for (pos = list\PYGZus{}entry(pos\PYGZhy{}\PYGZgt{}member.next, typeof(*pos), member);	\PYGZbs{}}
+\PYG{c+cp}{	     \PYGZam{}pos\PYGZhy{}\PYGZgt{}member != (head);	\PYGZbs{}}
+\PYG{c+cp}{	     pos = list\PYGZus{}entry(pos\PYGZhy{}\PYGZgt{}member.next, typeof(*pos), member))}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe \PYGZhy{} iterate over list of given type safe against removal of list entry}
+\PYG{c+cm}{ * @pos:	the type * to use as a loop counter.}
+\PYG{c+cm}{ * @n:		another type * to use as temporary storage}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ * @member:	the name of the list\PYGZus{}struct within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe(pos, n, head, member)			\PYGZbs{}}
+\PYG{c+cp}{	for (pos = list\PYGZus{}entry((head)\PYGZhy{}\PYGZgt{}next, typeof(*pos), member),	\PYGZbs{}}
+\PYG{c+cp}{		n = list\PYGZus{}entry(pos\PYGZhy{}\PYGZgt{}member.next, typeof(*pos), member);	\PYGZbs{}}
+\PYG{c+cp}{	     \PYGZam{}pos\PYGZhy{}\PYGZgt{}member != (head); 					\PYGZbs{}}
+\PYG{c+cp}{	     pos = n, n = list\PYGZus{}entry(n\PYGZhy{}\PYGZgt{}member.next, typeof(*n), member))}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe\PYGZus{}continue \PYGZhy{}	iterate over list of given type}
+\PYG{c+cm}{ *			continuing after existing point safe against removal of list entry}
+\PYG{c+cm}{ * @pos:	the type * to use as a loop counter.}
+\PYG{c+cm}{ * @n:		another type * to use as temporary storage}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ * @member:	the name of the list\PYGZus{}struct within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe\PYGZus{}continue(pos, n, head, member) 		\PYGZbs{}}
+\PYG{c+cp}{	for (pos = list\PYGZus{}entry(pos\PYGZhy{}\PYGZgt{}member.next, typeof(*pos), member), 		\PYGZbs{}}
+\PYG{c+cp}{		n = list\PYGZus{}entry(pos\PYGZhy{}\PYGZgt{}member.next, typeof(*pos), member);		\PYGZbs{}}
+\PYG{c+cp}{	     \PYGZam{}pos\PYGZhy{}\PYGZgt{}member != (head);						\PYGZbs{}}
+\PYG{c+cp}{	     pos = n, n = list\PYGZus{}entry(n\PYGZhy{}\PYGZgt{}member.next, typeof(*n), member))}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe\PYGZus{}reverse \PYGZhy{} iterate backwards over list of given type safe against}
+\PYG{c+cm}{ *				      removal of list entry}
+\PYG{c+cm}{ * @pos:	the type * to use as a loop counter.}
+\PYG{c+cm}{ * @n:		another type * to use as temporary storage}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ * @member:	the name of the list\PYGZus{}struct within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define list\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe\PYGZus{}reverse(pos, n, head, member)		\PYGZbs{}}
+\PYG{c+cp}{	for (pos = list\PYGZus{}entry((head)\PYGZhy{}\PYGZgt{}prev, typeof(*pos), member),	\PYGZbs{}}
+\PYG{c+cp}{		n = list\PYGZus{}entry(pos\PYGZhy{}\PYGZgt{}member.prev, typeof(*pos), member);	\PYGZbs{}}
+\PYG{c+cp}{	     \PYGZam{}pos\PYGZhy{}\PYGZgt{}member != (head); 					\PYGZbs{}}
+\PYG{c+cp}{	     pos = n, n = list\PYGZus{}entry(n\PYGZhy{}\PYGZgt{}member.prev, typeof(*n), member))}
+
+
+
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * Double linked lists with a single pointer list head.}
+\PYG{c+cm}{ * Mostly useful for hash tables where the two pointer list head is}
+\PYG{c+cm}{ * too wasteful.}
+\PYG{c+cm}{ * You lose the ability to access the tail in O(1).}
+\PYG{c+cm}{ */}
+
+\PYG{k}{struct} \PYG{n}{hlist\PYGZus{}head} \PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{first}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{next}\PYG{p}{,} \PYG{o}{**}\PYG{n}{pprev}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{c+cp}{\PYGZsh{}define HLIST\PYGZus{}HEAD\PYGZus{}INIT \PYGZob{} .first = NULL \PYGZcb{}}
+\PYG{c+cp}{\PYGZsh{}define HLIST\PYGZus{}HEAD(name) struct hlist\PYGZus{}head name = \PYGZob{}  .first = NULL \PYGZcb{}}
+\PYG{c+cp}{\PYGZsh{}define INIT\PYGZus{}HLIST\PYGZus{}HEAD(ptr) ((ptr)\PYGZhy{}\PYGZgt{}first = NULL)}
+\PYG{c+cp}{\PYGZsh{}define INIT\PYGZus{}HLIST\PYGZus{}NODE(ptr) ((ptr)\PYGZhy{}\PYGZgt{}next = NULL, (ptr)\PYGZhy{}\PYGZgt{}pprev = NULL)}
+
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{int} \PYG{n+nf}{hlist\PYGZus{}unhashed}\PYG{p}{(}\PYG{k}{const} \PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{h}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{o}{!}\PYG{n}{h}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{int} \PYG{n+nf}{hlist\PYGZus{}empty}\PYG{p}{(}\PYG{k}{const} \PYG{k}{struct} \PYG{n}{hlist\PYGZus{}head} \PYG{o}{*}\PYG{n}{h}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{o}{!}\PYG{n}{h}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{first}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{\PYGZus{}\PYGZus{}hlist\PYGZus{}del}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{n}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{next} \PYG{o}{=} \PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{;}
+    \PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{**}\PYG{n}{pprev} \PYG{o}{=} \PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev}\PYG{p}{;}
+    \PYG{o}{*}\PYG{n}{pprev} \PYG{o}{=} \PYG{n}{next}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{next}\PYG{p}{)}
+        \PYG{n}{next}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev} \PYG{o}{=} \PYG{n}{pprev}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{hlist\PYGZus{}del}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{n}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{\PYGZus{}\PYGZus{}hlist\PYGZus{}del}\PYG{p}{(}\PYG{n}{n}\PYG{p}{);}
+    \PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next} \PYG{o}{=} \PYG{n}{LIST\PYGZus{}POISON1}\PYG{p}{;}
+    \PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev} \PYG{o}{=} \PYG{n}{LIST\PYGZus{}POISON2}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{hlist\PYGZus{}del\PYGZus{}init}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{n}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev}\PYG{p}{)}  \PYG{p}{\PYGZob{}}
+        \PYG{n}{\PYGZus{}\PYGZus{}hlist\PYGZus{}del}\PYG{p}{(}\PYG{n}{n}\PYG{p}{);}
+        \PYG{n}{INIT\PYGZus{}HLIST\PYGZus{}NODE}\PYG{p}{(}\PYG{n}{n}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{hlist\PYGZus{}add\PYGZus{}head}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{n}\PYG{p}{,} \PYG{k}{struct} \PYG{n}{hlist\PYGZus{}head} \PYG{o}{*}\PYG{n}{h}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{first} \PYG{o}{=} \PYG{n}{h}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{first}\PYG{p}{;}
+    \PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next} \PYG{o}{=} \PYG{n}{first}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{first}\PYG{p}{)}
+        \PYG{n}{first}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{;}
+    \PYG{n}{h}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{first} \PYG{o}{=} \PYG{n}{n}\PYG{p}{;}
+    \PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{h}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{first}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+
+
+\PYG{c+cm}{/* next must be != NULL */}
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{hlist\PYGZus{}add\PYGZus{}before}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{n}\PYG{p}{,}
+                                    \PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{next}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev} \PYG{o}{=} \PYG{n}{next}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev}\PYG{p}{;}
+    \PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next} \PYG{o}{=} \PYG{n}{next}\PYG{p}{;}
+    \PYG{n}{next}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{;}
+    \PYG{o}{*}\PYG{p}{(}\PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev}\PYG{p}{)} \PYG{o}{=} \PYG{n}{n}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kr}{inline} \PYG{k+kt}{void} \PYG{n+nf}{hlist\PYGZus{}add\PYGZus{}after}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{n}\PYG{p}{,}
+                                   \PYG{k}{struct} \PYG{n}{hlist\PYGZus{}node} \PYG{o}{*}\PYG{n}{next}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{next}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next} \PYG{o}{=} \PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{;}
+    \PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next} \PYG{o}{=} \PYG{n}{next}\PYG{p}{;}
+    \PYG{n}{next}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev} \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{n}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{;}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{next}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{)}
+        \PYG{n}{next}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{pprev}  \PYG{o}{=} \PYG{o}{\PYGZam{}}\PYG{n}{next}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{next}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+
+
+\PYG{c+cp}{\PYGZsh{}define hlist\PYGZus{}entry(ptr, type, member) container\PYGZus{}of(ptr,type,member)}
+
+\PYG{c+cp}{\PYGZsh{}define hlist\PYGZus{}for\PYGZus{}each(pos, head) \PYGZbs{}}
+\PYG{c+cp}{	for (pos = (head)\PYGZhy{}\PYGZgt{}first; pos \PYGZam{}\PYGZam{} (\PYGZob{} prefetch(pos\PYGZhy{}\PYGZgt{}next); 1; \PYGZcb{}); \PYGZbs{}}
+\PYG{c+cp}{	     pos = pos\PYGZhy{}\PYGZgt{}next)}
+
+\PYG{c+cp}{\PYGZsh{}define hlist\PYGZus{}for\PYGZus{}each\PYGZus{}safe(pos, n, head) \PYGZbs{}}
+\PYG{c+cp}{	for (pos = (head)\PYGZhy{}\PYGZgt{}first; pos \PYGZam{}\PYGZam{} (\PYGZob{} n = pos\PYGZhy{}\PYGZgt{}next; 1; \PYGZcb{}); \PYGZbs{}}
+\PYG{c+cp}{	     pos = n)}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * hlist\PYGZus{}for\PYGZus{}each\PYGZus{}entry	\PYGZhy{} iterate over list of given type}
+\PYG{c+cm}{ * @tpos:	the type * to use as a loop counter.}
+\PYG{c+cm}{ * @pos:	the \PYGZam{}struct hlist\PYGZus{}node to use as a loop counter.}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ * @member:	the name of the hlist\PYGZus{}node within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define hlist\PYGZus{}for\PYGZus{}each\PYGZus{}entry(tpos, pos, head, member)			 \PYGZbs{}}
+\PYG{c+cp}{	for (pos = (head)\PYGZhy{}\PYGZgt{}first;					 \PYGZbs{}}
+\PYG{c+cp}{	     pos \PYGZam{}\PYGZam{} (\PYGZob{} prefetch(pos\PYGZhy{}\PYGZgt{}next); 1;\PYGZcb{}) \PYGZam{}\PYGZam{}			 \PYGZbs{}}
+\PYG{c+cp}{		(\PYGZob{} tpos = hlist\PYGZus{}entry(pos, typeof(*tpos), member); 1;\PYGZcb{}); \PYGZbs{}}
+\PYG{c+cp}{	     pos = pos\PYGZhy{}\PYGZgt{}next)}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * hlist\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}continue \PYGZhy{} iterate over a hlist continuing after existing point}
+\PYG{c+cm}{ * @tpos:	the type * to use as a loop counter.}
+\PYG{c+cm}{ * @pos:	the \PYGZam{}struct hlist\PYGZus{}node to use as a loop counter.}
+\PYG{c+cm}{ * @member:	the name of the hlist\PYGZus{}node within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define hlist\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}continue(tpos, pos, member)		 \PYGZbs{}}
+\PYG{c+cp}{	for (pos = (pos)\PYGZhy{}\PYGZgt{}next;						 \PYGZbs{}}
+\PYG{c+cp}{	     pos \PYGZam{}\PYGZam{} (\PYGZob{} prefetch(pos\PYGZhy{}\PYGZgt{}next); 1;\PYGZcb{}) \PYGZam{}\PYGZam{}			 \PYGZbs{}}
+\PYG{c+cp}{		(\PYGZob{} tpos = hlist\PYGZus{}entry(pos, typeof(*tpos), member); 1;\PYGZcb{}); \PYGZbs{}}
+\PYG{c+cp}{	     pos = pos\PYGZhy{}\PYGZgt{}next)}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * hlist\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}from \PYGZhy{} iterate over a hlist continuing from existing point}
+\PYG{c+cm}{ * @tpos:	the type * to use as a loop counter.}
+\PYG{c+cm}{ * @pos:	the \PYGZam{}struct hlist\PYGZus{}node to use as a loop counter.}
+\PYG{c+cm}{ * @member:	the name of the hlist\PYGZus{}node within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define hlist\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}from(tpos, pos, member)			 \PYGZbs{}}
+\PYG{c+cp}{	for (; pos \PYGZam{}\PYGZam{} (\PYGZob{} prefetch(pos\PYGZhy{}\PYGZgt{}next); 1;\PYGZcb{}) \PYGZam{}\PYGZam{}			 \PYGZbs{}}
+\PYG{c+cp}{		(\PYGZob{} tpos = hlist\PYGZus{}entry(pos, typeof(*tpos), member); 1;\PYGZcb{}); \PYGZbs{}}
+\PYG{c+cp}{	     pos = pos\PYGZhy{}\PYGZgt{}next)}
+
+\PYG{c+cm}{/**}
+\PYG{c+cm}{ * hlist\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe \PYGZhy{} iterate over list of given type safe against removal of list entry}
+\PYG{c+cm}{ * @tpos:	the type * to use as a loop counter.}
+\PYG{c+cm}{ * @pos:	the \PYGZam{}struct hlist\PYGZus{}node to use as a loop counter.}
+\PYG{c+cm}{ * @n:		another \PYGZam{}struct hlist\PYGZus{}node to use as temporary storage}
+\PYG{c+cm}{ * @head:	the head for your list.}
+\PYG{c+cm}{ * @member:	the name of the hlist\PYGZus{}node within the struct.}
+\PYG{c+cm}{ */}
+\PYG{c+cp}{\PYGZsh{}define hlist\PYGZus{}for\PYGZus{}each\PYGZus{}entry\PYGZus{}safe(tpos, pos, n, head, member) 		 \PYGZbs{}}
+\PYG{c+cp}{	for (pos = (head)\PYGZhy{}\PYGZgt{}first;					 \PYGZbs{}}
+\PYG{c+cp}{	     pos \PYGZam{}\PYGZam{} (\PYGZob{} n = pos\PYGZhy{}\PYGZgt{}next; 1; \PYGZcb{}) \PYGZam{}\PYGZam{} 				 \PYGZbs{}}
+\PYG{c+cp}{		(\PYGZob{} tpos = hlist\PYGZus{}entry(pos, typeof(*tpos), member); 1;\PYGZcb{}); \PYGZbs{}}
+\PYG{c+cp}{	     pos = n)}
+
+
+\PYG{c+cp}{\PYGZsh{}endif}
+\end{Verbatim}

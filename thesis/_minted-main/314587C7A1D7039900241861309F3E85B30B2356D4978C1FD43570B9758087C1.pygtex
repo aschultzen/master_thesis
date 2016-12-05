@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{struct} \PYG{n}{command\PYGZus{}code} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{code}\PYG{p}{;}
+        \PYG{k+kt}{char} \PYG{n}{parameter}\PYG{p}{[}\PYG{n}{MAX\PYGZus{}PARAMETER\PYGZus{}SIZE}\PYG{p}{];}
+        \PYG{k+kt}{int} \PYG{n}{id\PYGZus{}parameter}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{};}
+    \PYG{err}{\PYGZbs{}}\PYG{n}{label}\PYG{p}{\PYGZob{}}\PYG{n}{command\PYGZus{}code}\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

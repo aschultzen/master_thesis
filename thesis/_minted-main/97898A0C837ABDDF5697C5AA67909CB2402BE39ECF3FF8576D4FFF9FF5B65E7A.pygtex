@@ -1,0 +1,51 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}serial.h\PYGZdq{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{configure\PYGZus{}gps\PYGZus{}serial}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{fd}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{termios} \PYG{n}{tty}\PYG{p}{;}
+    \PYG{n}{memset} \PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{tty}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{k}{sizeof} \PYG{n}{tty}\PYG{p}{);}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{tcgetattr} \PYG{p}{(}\PYG{n}{fd}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{tty}\PYG{p}{)} \PYG{o}{!=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{printf} \PYG{p}{(}\PYG{l+s}{\PYGZdq{}error \PYGZpc{}d from tcgetattr\PYGZdq{}}\PYG{p}{,} \PYG{n}{errno}\PYG{p}{);}
+        \PYG{n}{exit}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{n}{cfsetospeed} \PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{tty}\PYG{p}{,} \PYG{n}{B9600}\PYG{p}{);}
+    \PYG{n}{cfsetispeed} \PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{tty}\PYG{p}{,} \PYG{n}{B9600}\PYG{p}{);}
+
+    \PYG{n}{tty}\PYG{p}{.}\PYG{n}{c\PYGZus{}cflag} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{n}{PARENB}\PYG{p}{;}
+    \PYG{n}{tty}\PYG{p}{.}\PYG{n}{c\PYGZus{}cflag} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{n}{CSTOPB}\PYG{p}{;}
+    \PYG{n}{tty}\PYG{p}{.}\PYG{n}{c\PYGZus{}cflag} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{n}{CSIZE}\PYG{p}{;}
+    \PYG{n}{tty}\PYG{p}{.}\PYG{n}{c\PYGZus{}cflag} \PYG{o}{|=} \PYG{n}{CS8}\PYG{p}{;}
+    \PYG{n}{tty}\PYG{p}{.}\PYG{n}{c\PYGZus{}cflag} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{n}{CRTSCTS}\PYG{p}{;}
+    \PYG{n}{tty}\PYG{p}{.}\PYG{n}{c\PYGZus{}cflag} \PYG{o}{|=} \PYG{n}{CREAD} \PYG{o}{|} \PYG{n}{CLOCAL}\PYG{p}{;}
+    \PYG{n}{tty}\PYG{p}{.}\PYG{n}{c\PYGZus{}iflag} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{n}{IXON} \PYG{o}{|} \PYG{n}{IXOFF} \PYG{o}{|} \PYG{n}{IXANY}\PYG{p}{);}
+    \PYG{n}{tty}\PYG{p}{.}\PYG{n}{c\PYGZus{}iflag} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{n}{ICANON} \PYG{o}{|} \PYG{n}{ECHO} \PYG{o}{|} \PYG{n}{ECHOE} \PYG{o}{|} \PYG{n}{ISIG}\PYG{p}{);}
+    \PYG{n}{tty}\PYG{p}{.}\PYG{n}{c\PYGZus{}oflag} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{n}{OPOST}\PYG{p}{;}
+    \PYG{n}{tty}\PYG{p}{.}\PYG{n}{c\PYGZus{}cc}\PYG{p}{[}\PYG{n}{VMIN}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{n}{tty}\PYG{p}{.}\PYG{n}{c\PYGZus{}cc}\PYG{p}{[}\PYG{n}{VTIME}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{tcsetattr} \PYG{p}{(}\PYG{n}{fd}\PYG{p}{,} \PYG{n}{TCSANOW}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{tty}\PYG{p}{)} \PYG{o}{!=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{printf} \PYG{p}{(}\PYG{l+s}{\PYGZdq{}error \PYGZpc{}d setting term attributes\PYGZdq{}}\PYG{p}{,} \PYG{n}{errno}\PYG{p}{);}
+        \PYG{k}{return} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{open\PYGZus{}serial}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{portname}\PYG{p}{,} \PYG{n}{serial\PYGZus{}device} \PYG{n}{device}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{fd} \PYG{o}{=} \PYG{n}{open} \PYG{p}{(}\PYG{n}{portname}\PYG{p}{,} \PYG{n}{O\PYGZus{}RDWR} \PYG{o}{|} \PYG{n}{O\PYGZus{}NOCTTY}\PYG{p}{);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{fd} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{t\PYGZus{}print} \PYG{p}{(}\PYG{l+s}{\PYGZdq{}Error \PYGZpc{}d opening \PYGZpc{}s: \PYGZpc{}s}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{errno}\PYG{p}{,} \PYG{n}{portname}\PYG{p}{,} \PYG{n}{strerror} \PYG{p}{(}\PYG{n}{errno}\PYG{p}{));}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{device} \PYG{o}{==} \PYG{n}{GPS}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{configure\PYGZus{}gps\PYGZus{}serial}\PYG{p}{(}\PYG{n}{fd}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{exit}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{n}{fd}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

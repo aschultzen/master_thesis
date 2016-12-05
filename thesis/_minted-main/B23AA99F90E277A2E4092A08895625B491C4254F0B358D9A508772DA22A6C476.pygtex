@@ -1,0 +1,153 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{:Author: Aril Schultzen}
+\PYG{l+s+sd}{:Email: aschultzen@gmail.com }
+\PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{GPS Logger requires:}
+\PYG{l+s+sd}{\PYGZhy{} Python v.2.7}
+\PYG{l+s+sd}{\PYGZhy{} python\PYGZhy{}mysqldb}
+
+\PYG{l+s+sd}{EXPECTED TABLE}
+\PYG{l+s+sd}{\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+
+\PYG{l+s+sd}{create table gprmc (}
+\PYG{l+s+sd}{	id INT NOT NULL AUTO\PYGZus{}INCREMENT,}
+\PYG{l+s+sd}{	sensorID INT ,}
+\PYG{l+s+sd}{	fix\PYGZus{}time TIME,}
+\PYG{l+s+sd}{	recv\PYGZus{}warn VARCHAR(5),}
+\PYG{l+s+sd}{	latitude DECIMAL(10,5),}
+\PYG{l+s+sd}{	la\PYGZus{}dir VARCHAR(5),}
+\PYG{l+s+sd}{	longitude DECIMAL(10,5),}
+\PYG{l+s+sd}{	lo\PYGZus{}dir VARCHAR(5),}
+\PYG{l+s+sd}{	speed DECIMAL(10,5),}
+\PYG{l+s+sd}{	course DECIMAL(5,2),}
+\PYG{l+s+sd}{	fix\PYGZus{}date DATE,}
+\PYG{l+s+sd}{	variation DECIMAL(5,2),}
+\PYG{l+s+sd}{	var\PYGZus{}dir VARCHAR(5),}
+\PYG{l+s+sd}{	faa VARCHAR(5),}
+\PYG{l+s+sd}{	checksum VARCHAR(5),}
+\PYG{l+s+sd}{	mjd VARCHAR(50),}
+\PYG{l+s+sd}{	alt DECIMAL(5,2),}
+\PYG{l+s+sd}{	PRIMARY KEY (id) );}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+\PYG{k+kn}{import} \PYG{n+nn}{ctypes}
+\PYG{k+kn}{import} \PYG{n+nn}{MySQLdb} \PYG{k+kn}{as} \PYG{n+nn}{mdb}
+\PYG{k+kn}{import} \PYG{n+nn}{ConfigParser}
+\PYG{k+kn}{import} \PYG{n+nn}{fileinput}
+\PYG{k+kn}{import} \PYG{n+nn}{sys}
+\PYG{k+kn}{import} \PYG{n+nn}{datetime}
+\PYG{k+kn}{import} \PYG{n+nn}{time}
+\PYG{k+kn}{import} \PYG{n+nn}{io}
+\PYG{k+kn}{import} \PYG{n+nn}{os}
+\PYG{k+kn}{import} \PYG{n+nn}{serial}
+\PYG{k+kn}{import} \PYG{n+nn}{jdutil}
+\PYG{k+kn}{from} \PYG{n+nn}{subprocess} \PYG{k+kn}{import} \PYG{n}{call}
+
+\PYG{n}{config} \PYG{o}{=} \PYG{n}{ConfigParser}\PYG{o}{.}\PYG{n}{ConfigParser}\PYG{p}{()} 
+
+
+\PYG{k}{def} \PYG{n+nf}{dbConnect}\PYG{p}{():}
+    \PYG{n}{con} \PYG{o}{=} \PYG{n}{mdb}\PYG{o}{.}\PYG{n}{connect}\PYG{p}{(}\PYG{n}{config}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}db\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}ip\PYGZsq{}}\PYG{p}{),} \PYG{n}{config}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}db\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}user\PYGZsq{}}\PYG{p}{),}
+                      \PYG{n}{config}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}db\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}password\PYGZsq{}}\PYG{p}{),} \PYG{n}{config}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}db\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}database\PYGZsq{}}\PYG{p}{))}
+    \PYG{k}{return} \PYG{n}{con}
+
+
+\PYG{k}{def} \PYG{n+nf}{dbClose}\PYG{p}{(}\PYG{n}{dbConnection}\PYG{p}{):}
+    \PYG{n}{dbConnection}\PYG{o}{.}\PYG{n}{close}\PYG{p}{()}
+    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Connection to database closed\PYGZdq{}}\PYG{p}{)}
+
+
+\PYG{k}{def} \PYG{n+nf}{initConfig}\PYG{p}{():}
+    \PYG{n}{configFile} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}config.ini\PYGZdq{}}
+    \PYG{n}{config}\PYG{o}{.}\PYG{n}{read}\PYG{p}{(}\PYG{n}{configFile}\PYG{p}{)}
+
+
+\PYG{k}{def} \PYG{n+nf}{t\PYGZus{}print}\PYG{p}{(}\PYG{n}{message}\PYG{p}{):}
+    \PYG{n}{current\PYGZus{}time} \PYG{o}{=} \PYG{n}{datetime}\PYG{o}{.}\PYG{n}{datetime}\PYG{o}{.}\PYG{n}{now}\PYG{p}{()}\PYG{o}{.}\PYG{n}{time}\PYG{p}{()}
+    \PYG{n}{complete\PYGZus{}message} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}[\PYGZdq{}} \PYG{o}{+} \PYG{n+nb}{str}\PYG{p}{(}
+        \PYG{n}{current\PYGZus{}time}\PYG{o}{.}\PYG{n}{isoformat}\PYG{p}{(}
+        \PYG{p}{))} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}] \PYGZdq{}} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}[\PYGZdq{}} \PYG{o}{+} \PYG{n}{message} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}]\PYGZdq{}}
+    \PYG{k}{print}\PYG{p}{(}\PYG{n}{complete\PYGZus{}message}\PYG{p}{)}
+
+
+\PYG{k}{def} \PYG{n+nf}{format\PYGZus{}date\PYGZus{}string}\PYG{p}{(}\PYG{n}{date\PYGZus{}s}\PYG{p}{):}
+    \PYG{n}{split} \PYG{o}{=} \PYG{n}{date\PYGZus{}s}\PYG{o}{.}\PYG{n}{split}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}.\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{split} \PYG{o}{=} \PYG{n}{split}\PYG{p}{[::}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]}
+    \PYG{n}{split} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{o}{.}\PYG{n}{join}\PYG{p}{(}\PYG{n}{split}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{split}
+
+
+\PYG{k}{def} \PYG{n+nf}{insert}\PYG{p}{(}\PYG{n}{con}\PYG{p}{,} \PYG{n}{data}\PYG{p}{):}
+    \PYG{n}{st} \PYG{o}{=} \PYG{n}{data}
+    \PYG{n}{temp} \PYG{o}{=} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{12}\PYG{p}{]}
+    \PYG{n}{checksum} \PYG{o}{=} \PYG{n}{temp}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{+} \PYG{n}{temp}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{+} \PYG{n}{temp}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{]}
+    \PYG{n}{faa} \PYG{o}{=} \PYG{n}{temp}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{n}{x} \PYG{o}{=} \PYG{n}{con}\PYG{o}{.}\PYG{n}{cursor}\PYG{p}{()}
+    \PYG{n}{date} \PYG{o}{=} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{9}\PYG{p}{][}\PYG{l+m+mi}{4}\PYG{p}{:}\PYG{l+m+mi}{6}\PYG{p}{]} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{9}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{:}\PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{9}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{:}\PYG{l+m+mi}{2}\PYG{p}{]}
+    \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{9}\PYG{p}{]} \PYG{o}{=} \PYG{n}{date}
+
+    \PYG{k}{try}\PYG{p}{:}
+        \PYG{n}{query} \PYG{o}{=} \PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}INSERT INTO \PYGZdq{}} \PYG{o}{+} \PYG{n}{config}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}db\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}table\PYGZsq{}}\PYG{p}{)} \PYG{o}{+}
+        \PYG{l+s+s2}{\PYGZdq{} (sensorID, fix\PYGZus{}time, recv\PYGZus{}warn, latitude, la\PYGZus{}dir, longitude, lo\PYGZus{}dir, ) \PYGZdq{}} \PYG{o}{+}
+		\PYG{l+s+s2}{\PYGZdq{}(speed, course, fix\PYGZus{}date, variation, var\PYGZus{}dir, faa, checksum, mjd, alt) VALUES \PYGZdq{}} \PYG{o}{+}
+        \PYG{l+s+s2}{\PYGZdq{}(\PYGZdq{}} \PYG{o}{+} \PYG{n}{config}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}general\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}sensorID\PYGZsq{}}\PYG{p}{)} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{},\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{},\PYGZsq{}\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{+} 
+		\PYG{l+s+s2}{\PYGZdq{}\PYGZsq{},\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{]} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{},\PYGZsq{}\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}\PYGZsq{},\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{]} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{},\PYGZsq{}\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{6}\PYG{p}{]} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}\PYGZsq{},\PYGZsq{}\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{7}\PYG{p}{]} \PYG{o}{+} 
+		\PYG{l+s+s2}{\PYGZdq{}\PYGZsq{},\PYGZsq{}\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{8}\PYG{p}{]} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}\PYGZsq{},\PYGZsq{}\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{9}\PYG{p}{]} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}\PYGZsq{},\PYGZsq{}\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{10}\PYG{p}{]} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}\PYGZsq{},\PYGZsq{}\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{11}\PYG{p}{]} \PYG{o}{+} 
+		\PYG{l+s+s2}{\PYGZdq{}\PYGZsq{},\PYGZsq{}\PYGZdq{}} \PYG{o}{+} \PYG{n}{faa} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}\PYGZsq{},\PYGZsq{}\PYGZdq{}} \PYG{o}{+} \PYG{n}{checksum} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}\PYGZsq{},\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{14}\PYG{p}{]} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{},\PYGZsq{}\PYGZdq{}} \PYG{o}{+} \PYG{n}{st}\PYG{p}{[}\PYG{l+m+mi}{13}\PYG{p}{]} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{}\PYGZsq{});\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{x}\PYG{o}{.}\PYG{n}{execute}\PYG{p}{(}\PYG{n}{query}\PYG{p}{)}
+        \PYG{n}{con}\PYG{o}{.}\PYG{n}{commit}\PYG{p}{()}
+    \PYG{k}{except}\PYG{p}{:}
+        \PYG{n}{con}\PYG{o}{.}\PYG{n}{rollback}\PYG{p}{()}
+
+\PYG{c+c1}{\PYGZsh{} Function used to reset the serial configuration}
+\PYG{c+c1}{\PYGZsh{} in Linux in case its mangled by something\PYGZsq{}}
+
+
+\PYG{k}{def} \PYG{n+nf}{reset\PYGZus{}serial}\PYG{p}{():}
+    \PYG{n}{call}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}stty \PYGZhy{}F \PYGZdq{}} \PYG{o}{+} \PYG{n}{config}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}gps\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}port\PYGZsq{}}\PYG{p}{)} \PYG{o}{+} \PYG{l+s+s2}{\PYGZdq{} icanon\PYGZdq{}}\PYG{p}{,} \PYG{n}{shell}\PYG{o}{=}\PYG{n+nb+bp}{True}\PYG{p}{)}
+
+
+\PYG{k}{def} \PYG{n+nf}{get\PYGZus{}today\PYGZus{}mjd}\PYG{p}{():}
+    \PYG{n}{today} \PYG{o}{=} \PYG{n}{datetime}\PYG{o}{.}\PYG{n}{datetime}\PYG{o}{.}\PYG{n}{utcnow}\PYG{p}{()}
+    \PYG{k}{return} \PYG{n}{jdutil}\PYG{o}{.}\PYG{n}{jd\PYGZus{}to\PYGZus{}mjd}\PYG{p}{(}\PYG{n}{jdutil}\PYG{o}{.}\PYG{n}{datetime\PYGZus{}to\PYGZus{}jd}\PYG{p}{(}\PYG{n}{today}\PYG{p}{))}
+
+
+\PYG{k}{def} \PYG{n+nf}{main\PYGZus{}routine}\PYG{p}{():}
+    \PYG{n}{initConfig}\PYG{p}{()}
+    \PYG{n}{t\PYGZus{}print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}GPS logger started!\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{reset\PYGZus{}serial}\PYG{p}{()}
+    \PYG{n}{con} \PYG{o}{=} \PYG{n}{dbConnect}\PYG{p}{()}
+    \PYG{n}{counter} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{data} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}\PYGZdq{}}
+
+    \PYG{k}{while}\PYG{p}{(}\PYG{n+nb+bp}{True}\PYG{p}{):}
+        \PYG{n}{ser} \PYG{o}{=} \PYG{n}{serial}\PYG{o}{.}\PYG{n}{Serial}\PYG{p}{(}
+            \PYG{n}{config}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}gps\PYGZsq{}}\PYG{p}{,}
+                       \PYG{l+s+s1}{\PYGZsq{}port\PYGZsq{}}\PYG{p}{),}
+            \PYG{n}{config}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}gps\PYGZsq{}}\PYG{p}{,}
+                       \PYG{l+s+s1}{\PYGZsq{}baud\PYGZsq{}}\PYG{p}{),}
+            \PYG{n}{timeout}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{)}
+        \PYG{n}{sio} \PYG{o}{=} \PYG{n}{io}\PYG{o}{.}\PYG{n}{TextIOWrapper}\PYG{p}{(}\PYG{n}{io}\PYG{o}{.}\PYG{n}{BufferedRWPair}\PYG{p}{(}\PYG{n}{ser}\PYG{p}{,} \PYG{n}{ser}\PYG{p}{),} \PYG{n}{newline}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+se}{\PYGZbs{}r}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{time}\PYG{o}{.}\PYG{n}{sleep}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}
+        \PYG{k}{while} \PYG{n+nb+bp}{True}\PYG{p}{:}
+            \PYG{n}{temp} \PYG{o}{=} \PYG{n}{sio}\PYG{o}{.}\PYG{n}{readline}\PYG{p}{()}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{temp}\PYG{o}{.}\PYG{n}{find}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}GNRMC\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{):}
+                \PYG{n}{data} \PYG{o}{=} \PYG{n}{temp}
+                \PYG{n}{data} \PYG{o}{=} \PYG{n}{data}\PYG{o}{.}\PYG{n}{split}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{},\PYGZdq{}}\PYG{p}{)}
+                \PYG{n}{sio}\PYG{o}{.}\PYG{n}{readline}\PYG{p}{()}  \PYG{c+c1}{\PYGZsh{} Reading forward manually}
+                \PYG{n}{temp} \PYG{o}{=} \PYG{n}{sio}\PYG{o}{.}\PYG{n}{readline}\PYG{p}{()}
+                \PYG{n}{temp} \PYG{o}{=} \PYG{n}{temp}\PYG{o}{.}\PYG{n}{split}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{},\PYGZdq{}}\PYG{p}{)}
+                \PYG{n}{data}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n+nb}{str}\PYG{p}{(}\PYG{n}{temp}\PYG{p}{[}\PYG{l+m+mi}{9}\PYG{p}{]))}
+                \PYG{n}{data}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n+nb}{str}\PYG{p}{(}\PYG{n}{get\PYGZus{}today\PYGZus{}mjd}\PYG{p}{()))}
+                \PYG{n}{counter} \PYG{o}{=} \PYG{n}{counter} \PYG{o}{+} \PYG{l+m+mi}{1}
+                \PYG{k}{if}\PYG{p}{(}\PYG{n}{counter} \PYG{o}{==} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{config}\PYG{o}{.}\PYG{n}{get}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}general\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}discard\PYGZus{}interval\PYGZsq{}}\PYG{p}{))):}
+                    \PYG{n}{insert}\PYG{p}{(}\PYG{n}{con}\PYG{p}{,} \PYG{n}{data}\PYG{p}{)}
+                    \PYG{n}{counter} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{dbClose}\PYG{p}{(}\PYG{n}{con}\PYG{p}{)}
+
+\PYG{k}{if} \PYG{n}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}\PYGZsq{}}\PYG{p}{:}
+    \PYG{n}{main\PYGZus{}routine}\PYG{p}{()}
+\end{Verbatim}

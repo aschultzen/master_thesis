@@ -1,0 +1,54 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nv}{SERVER\PYGZus{}OBJS} \PYG{o}{=} sensor\PYGZus{}server.o net.o utils.o session.o filters.o actions.o csac\PYGZus{}filter.o
+\PYG{n+nv}{CLIENT\PYGZus{}OBJS} \PYG{o}{=} sensor\PYGZus{}client.o net.o utils.o gps\PYGZus{}serial.o
+
+\PYG{n+nv}{CC} \PYG{o}{=} gcc
+\PYG{n+nv}{DEBUG} \PYG{o}{=} \PYGZhy{}g
+
+\PYG{n+nv}{CFLAGS} \PYG{o}{=} \PYGZhy{}Wall \PYGZhy{}Wextra \PYGZhy{}c \PYGZhy{}std\PYG{o}{=}gnu99 \PYGZhy{}pedantic \PYGZhy{}O3
+
+\PYG{n+nv}{cpu} \PYG{o}{:=} \PYG{k}{\PYGZdl{}(}shell uname \PYGZhy{}m\PYG{k}{)}
+
+\PYG{c+cp}{ifeq (\PYGZdl{}(cpu),armv7l)}
+	\PYG{n+nv}{CFLAGS} \PYG{o}{=} \PYGZhy{}Wall \PYGZhy{}Wextra \PYGZhy{}c \PYGZhy{}std\PYG{o}{=}gnu99 \PYGZhy{}pedantic \PYGZhy{}O3
+	 		 \PYGZhy{}march\PYG{o}{=}armv7\PYGZhy{}a \PYGZhy{}mtune\PYG{o}{=}arm7 \PYGZhy{}fsigned\PYGZhy{}char
+\PYG{c+cp}{endif}
+
+\PYG{n+nv}{LFLAGS} \PYG{o}{=} \PYGZhy{}Wall \PYG{k}{\PYGZdl{}(}DEBUG\PYG{k}{)}
+
+\PYG{n+nf}{server }\PYG{o}{:} \PYG{k}{\PYGZdl{}(}\PYG{n+nv}{SERVER\PYGZus{}OBJS}\PYG{k}{)}
+	\PYG{k}{\PYGZdl{}(}CC\PYG{k}{)} \PYG{k}{\PYGZdl{}(}LFLAGS\PYG{k}{)} \PYG{k}{\PYGZdl{}(}SERVER\PYGZus{}OBJS\PYG{k}{)} \PYGZhy{}o server \PYGZhy{}lpthread
+
+\PYG{n+nf}{client }\PYG{o}{:} \PYG{k}{\PYGZdl{}(}\PYG{n+nv}{CLIENT\PYGZus{}OBJS}\PYG{k}{)}
+	\PYG{k}{\PYGZdl{}(}CC\PYG{k}{)} \PYG{k}{\PYGZdl{}(}LFLAGS\PYG{k}{)} \PYG{k}{\PYGZdl{}(}CLIENT\PYGZus{}OBJS\PYG{k}{)} \PYGZhy{}o client
+
+\PYG{n+nf}{sensor\PYGZus{}server.o }\PYG{o}{:} \PYG{n}{sensor\PYGZus{}server}.\PYG{n}{h} \PYG{n}{net}.\PYG{n}{h} \PYG{n}{sensor\PYGZus{}server}.\PYG{n}{c}
+	\PYG{k}{\PYGZdl{}(}CC\PYG{k}{)} \PYG{k}{\PYGZdl{}(}CFLAGS\PYG{k}{)} sensor\PYGZus{}server.c 
+
+\PYG{n+nf}{sensor\PYGZus{}client.o }\PYG{o}{:} \PYG{n}{sensor\PYGZus{}client}.\PYG{n}{h} \PYG{n}{sensor\PYGZus{}client}.\PYG{n}{c}
+	\PYG{k}{\PYGZdl{}(}CC\PYG{k}{)} \PYG{k}{\PYGZdl{}(}CFLAGS\PYG{k}{)} sensor\PYGZus{}client.c
+
+\PYG{n+nf}{csac\PYGZus{}filter.o }\PYG{o}{:} \PYG{n}{csac\PYGZus{}filter}.\PYG{n}{h} \PYG{n}{csac\PYGZus{}filter}.\PYG{n}{c} \PYG{n}{utils}.\PYG{n}{h} \PYG{n}{sensor\PYGZus{}server}.\PYG{n}{h}
+	\PYG{k}{\PYGZdl{}(}CC\PYG{k}{)} \PYG{k}{\PYGZdl{}(}CFLAGS\PYG{k}{)} csac\PYGZus{}filter.c 
+
+\PYG{n+nf}{net.o }\PYG{o}{:} \PYG{n}{net}.\PYG{n}{h} \PYG{n}{utils}.\PYG{n}{h} \PYG{n}{net}.\PYG{n}{c} 
+	\PYG{k}{\PYGZdl{}(}CC\PYG{k}{)} \PYG{k}{\PYGZdl{}(}CFLAGS\PYG{k}{)} net.c
+
+\PYG{n+nf}{utils.o }\PYG{o}{:} \PYG{n}{utils}.\PYG{n}{h} \PYG{n}{list}.\PYG{n}{h} \PYG{n}{utils}.\PYG{n}{c} \PYG{n}{config}.\PYG{n}{h}
+	\PYG{k}{\PYGZdl{}(}CC\PYG{k}{)} \PYG{k}{\PYGZdl{}(}CFLAGS\PYG{k}{)} utils.c
+	
+\PYG{n+nf}{gps\PYGZus{}serial.o }\PYG{o}{:} \PYG{n}{serial}.\PYG{n}{h} \PYG{n}{gps\PYGZus{}serial}.\PYG{n}{c}
+	\PYG{k}{\PYGZdl{}(}CC\PYG{k}{)} \PYG{k}{\PYGZdl{}(}CFLAGS\PYG{k}{)} gps\PYGZus{}serial.c
+
+\PYG{n+nf}{session.o }\PYG{o}{:} \PYG{n}{session}.\PYG{n}{h} \PYG{n}{session}.\PYG{n}{c} \PYG{n}{sensor\PYGZus{}server}.\PYG{n}{h}
+	\PYG{k}{\PYGZdl{}(}CC\PYG{k}{)} \PYG{k}{\PYGZdl{}(}CFLAGS\PYG{k}{)} session.c 
+
+\PYG{n+nf}{filters.o }\PYG{o}{:} \PYG{n}{filters}.\PYG{n}{h} \PYG{n}{filters}.\PYG{n}{c} \PYG{n}{sensor\PYGZus{}server}.\PYG{n}{h}
+	\PYG{k}{\PYGZdl{}(}CC\PYG{k}{)} \PYG{k}{\PYGZdl{}(}CFLAGS\PYG{k}{)} filters.c
+
+\PYG{n+nf}{actions.o }\PYG{o}{:} \PYG{n}{actions}.\PYG{n}{h} \PYG{n}{actions}.\PYG{n}{c} \PYG{n}{sensor\PYGZus{}server}.\PYG{n}{h}
+	\PYG{k}{\PYGZdl{}(}CC\PYG{k}{)} \PYG{k}{\PYGZdl{}(}CFLAGS\PYG{k}{)} actions.c 
+
+\PYG{n+nf}{clean}\PYG{o}{:}
+	\PYG{l+s+se}{\PYGZbs{}r}m *.o
+\end{Verbatim}

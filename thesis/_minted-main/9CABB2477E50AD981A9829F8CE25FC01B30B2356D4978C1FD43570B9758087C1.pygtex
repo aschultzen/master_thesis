@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{p}{\PYGZob{}}
+      \PYG{k}{struct} \PYG{n}{list\PYGZus{}head} \PYG{o}{*}\PYG{n}{next}\PYG{p}{,} \PYG{o}{*}\PYG{n}{prev}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{};}
+\end{Verbatim}

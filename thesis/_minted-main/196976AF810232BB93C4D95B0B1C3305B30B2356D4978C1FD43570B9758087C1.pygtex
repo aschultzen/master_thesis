@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{latitude\PYGZus{}current} \PYG{o}{\PYGZgt{}} \PYG{n}{latitude\PYGZus{}reference} \PYG{o}{+} \PYG{n}{latitude\PYGZus{}deviation}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{lat\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{HIGH}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{latitude\PYGZus{}current} \PYG{o}{\PYGZlt{}} \PYG{n}{latitude\PYGZus{}ref} \PYG{o}{\PYGZhy{}} \PYG{n}{latitude\PYGZus{}dev}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{moved} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{latitude\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{LOW}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{latitude\PYGZus{}disturbed} \PYG{o}{=} \PYG{n}{SAFE}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+\end{Verbatim}
