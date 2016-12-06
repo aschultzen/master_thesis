@@ -6,6 +6,8 @@
 \usepackage{wrapfig}
 \usepackage{tikz}  
 \usepackage[norsk]{babel}
+\usepackage{caption}
+\captionsetup{font=scriptsize,labelfont=scriptsize}
 
 \usepackage[
     backend=biber,
@@ -54,20 +56,28 @@
 \begin{frame}
 \frametitle{GPS timing}
   \begin{columns}
-    \column{0.5\textwidth}
-        \begin{figure}
+    \column{0.3\textwidth}
+          \hspace{-50pt}
+      \begin{figure}
         \includegraphics[scale=0.045]{thesis/graphics/Cell-Tower.jpg}
         \caption{Mobilmast \cite{CELLTOWER}}
+      \end{figure}
+
+    \column{0.3\textwidth}
+              \hspace{-50pt}
+      \begin{figure}
+        \includegraphics[scale=0.1]{thesis/graphics/pmu.png}
+        \caption{PMU}
       \end{figure}
     %\begin{itemize}
     %    \item Tidsstempling 
     %    \item Fasemålinger i kraftnett.
     %    \item Telekommunikasjon.
     %\end{itemize}
-    \column{0.5\textwidth}
-      \vspace{-30pt}
+    \column{0.3\textwidth}
+              \hspace{-100pt}
     \begin{figure}
-        \includegraphics[scale=0.030]{thesis/graphics/New_York_Stock_Exchange,_Wall_Street.jpg}
+        \includegraphics[scale=0.025]{thesis/graphics/New_York_Stock_Exchange,_Wall_Street.jpg}
         \caption{Wall Street \cite{NEWYORK}}
       \end{figure}
   \end{columns}
