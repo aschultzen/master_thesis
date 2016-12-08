@@ -37,9 +37,14 @@
 \frame{\titlepage}
 
 \section{Introduksjon}
-  \frametitle{Introduksjon}
 \begin{frame}
-  Laget et rammeverk for å teste forskjellige spoofing deteksjonsalgoritmer. Ikke gjort før.
+  \frametitle{Introduksjon}
+  \begin{itemize}
+    \setlength\itemsep{2em}
+    \item Lage rammeverk
+    \item Deteksjon
+    \item Styring
+\end{itemize}
 \end{frame}
 
 \subsection{GPS timing}
@@ -54,7 +59,8 @@
 
 \subsection{Anvendelse}
 \begin{frame}
-\frametitle{GPS timing}
+\frametitle{GPS timing: Anvendelse}
+\pause
   \begin{columns}
     \column{0.3\textwidth}
           \hspace{-50pt}
@@ -86,6 +92,7 @@
 \subsection{Utfordringer og trusler}
 \begin{frame}
 \frametitle{Utfordringer og trusler}
+\pause
       \begin{figure}
         \includegraphics[scale=0.15]{thesis/graphics/montage.pdf}
       \end{figure}
@@ -113,6 +120,7 @@
 \subsubsection{Referansetrusselen}
 \begin{frame}
   \frametitle{"The Civil GPS Spoofer"}
+  \pause
   \begin{figure}
     \includegraphics[scale=0.2]{thesis/graphics/spoof.jpg}
     \caption{Civil GPS Spoofer \cite{EVPMUGA}}
@@ -137,7 +145,9 @@
 \section{Deteksjon og mottiltak}
 \begin{frame}
 \frametitle{Deteksjon og mottiltak}
+\pause
   \begin{itemize}
+        \setlength\itemsep{2em}
       \item Bruke flere GPS mottakere med kjent posisjon og hastighet.
       \item Gode klokker -- Små korreksjoner.
     \end{itemize}
@@ -147,7 +157,7 @@
 \begin{frame} 
   \frametitle{Flere GPS mottakere og kjent posisjon}
   \begin{figure}
-    \includegraphics[scale=0.2]{thesis/graphics/toantenner.pdf}
+    \includegraphics[scale=0.23]{thesis/graphics/toantenner.pdf}
     \caption{Spoofing deteksjon med to antenner}
   \end{figure}
 \end{frame}
@@ -155,7 +165,7 @@
 \begin{frame} 
   \frametitle{Flere GPS mottakere og kjent posisjon}
   \begin{figure}
-    \includegraphics[scale=0.2]{thesis/graphics/toantenner_2.pdf}
+    \includegraphics[scale=0.23]{thesis/graphics/toantenner_2.pdf}
     \caption{Spoofing deteksjon med to antenner}
   \end{figure}
 \end{frame}
@@ -166,6 +176,7 @@
   \begin{columns}
     \column{0.5\textwidth}
     \begin{itemize}
+          \setlength\itemsep{2em}
       \item Trenger får korreksjoner
       \item Lite påvirket av temperatur
       \item Intern frekvensteller og styringsalgoritme
@@ -190,6 +201,7 @@
 \subsection{Ønsket funksjonalitet}
 \begin{frame}
   \frametitle{Ønsket funksjonalitet}
+  \pause
   \begin{itemize}
     \item Detektere angrep:
       \begin{itemize}
@@ -222,20 +234,36 @@
 \end{frame}
 
 \begin{frame}
+  \frametitle{Sensor server arkitektur}
+    \begin{figure}
+      \includegraphics[scale=0.25]{thesis/graphics/csac_core_simplified.pdf}
+    \end{figure}
+    %\item 3000+ linjer med C99 kode
+    %\item Håndterer av/pålogging av klienter
+    %\item Håndtere mottak og formatering av GPS data
+    %\item En prosess per pålogging
+    %\item Delt minne mellom prosesser (anonym MMAP)
+    %  \begin{itemize}
+    %    \item Semaforer og barrierer for beskyttelse
+    %  \end{itemize}
+    %\item Mulighet for brukere å koble på og gi kommandoer, f.eks:
+    %  \begin{itemize}
+    %    \item Rapporterer lokasjon og tid
+    %    \item Rapportere server status
+    %    \item Rapportere filterstatus
+    %    \item Lagre og gjenopprette tilstand i sensorer
+    %    \item Laste inn nye lokasjonsdata
+    %    \item Avslutte egen og andres tilkobling
+    %    \item Sende kommandoer til atomklokka 
+    %  \end{itemize}
+  %\end{itemize}
+\end{frame}
+
+\begin{frame}
   \frametitle{Kommunikasjon: Roller}
     \begin{figure}
       \includegraphics[scale=0.3]{thesis/graphics/server_explain.pdf}
     \end{figure}
-  %\begin{itemize}
-  %  \item Mottaker + Raspberry PI = Sensor
-  %  \item Eliminerer behovet for lange signalkabler, bruke nettverk:
-  %  \begin{itemize}
-  %    \item Fiber
-  %    \item Mobilnett (3G og 4G)
-  %    \item WiFi
-  %  \end{itemize}
-  %  \item Antall mottakere begrenset av serverens maskinvare.
-  %\end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -243,16 +271,6 @@
     \begin{figure}
       \includegraphics[scale=0.25]{thesis/graphics/sensor_nmea.pdf}
     \end{figure}
-  %\begin{itemize}
-  %  \item Mottaker + Raspberry PI = Sensor
-  %  \item Eliminerer behovet for lange signalkabler, bruke nettverk:
-  %  \begin{itemize}
-  %    \item Fiber
-  %    \item Mobilnett (3G og 4G)
-  %    \item WiFi
-  %  \end{itemize}
-  %  \item Antall mottakere begrenset av serverens maskinvare.
-  %\end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -260,45 +278,12 @@
     \begin{figure}
       \includegraphics[scale=0.3]{thesis/graphics/monitor_csac_request.pdf}
     \end{figure}
-  %\begin{itemize}
-  %  \item Mottaker + Raspberry PI = Sensor
-  %  \item Eliminerer behovet for lange signalkabler, bruke nettverk:
-  %  \begin{itemize}
-  %    \item Fiber
-  %    \item Mobilnett (3G og 4G)
-  %    \item WiFi
-  %  \end{itemize}
-  %  \item Antall mottakere begrenset av serverens maskinvare.
-  %\end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Sensor server arkitektur}
-  \begin{itemize}
-    \item 3000+ linjer med C99 kode
-    \item Håndterer av/pålogging av klienter
-    \item Håndtere mottak og formatering av GPS data
-    \item En prosess per pålogging
-    \item Delt minne mellom prosesser (anonym MMAP)
-      \begin{itemize}
-        \item Semaforer og barrierer for beskyttelse
-      \end{itemize}
-    \item Mulighet for brukere å koble på og gi kommandoer, f.eks:
-      \begin{itemize}
-        \item Rapporterer lokasjon og tid
-        \item Rapportere server status
-        \item Rapportere filterstatus
-        \item Lagre og gjenopprette tilstand i sensorer
-        \item Laste inn nye lokasjonsdata
-        \item Avslutte egen og andres tilkobling
-        \item Sende kommandoer til atomklokka 
-      \end{itemize}
-  \end{itemize}
 \end{frame}
 
 \subsubsection{Klokkemodell}
 \begin{frame}
   \frametitle{Klokkemodell}
+  \pause
   \begin{itemize}
     \item Utviklet av Harald Hauglin
     \item Bruker klokkedata (telemetri)
@@ -323,6 +308,7 @@
 \begin{frame}
   \frametitle{Filtre}
   \begin{itemize}
+        \setlength\itemsep{2em}
     \item Lokasjon og hastighet
                   %\begin{itemize}
                   %  \item Data fra sensorene blir samlet formatert.
@@ -377,6 +363,7 @@
 \begin{frame}
 \frametitle{Utførelse}
       \begin{itemize}
+            \setlength\itemsep{2em}
         \item Flyttet antenne 1 mot antenne 2
         \item Flyttet antenne 2 mot antenne 1
         \item Viftet antenne 1 rundt i en halvsirkel
@@ -387,6 +374,7 @@
 
 \begin{frame}
 \frametitle{Utførelse}
+\pause
 \begin{center}
 \begin{tikzpicture}
   \node (img1) {\includegraphics[height=5cm]{thesis/graphics/antenna_foil_over_hacked.jpg}};
@@ -398,6 +386,7 @@
 \begin{frame}
 \frametitle{Observasjon}
       \begin{itemize}
+            \setlength\itemsep{2em}
         \item Ingen falske positive
         \item GPS log korrelerer
         \item Server log korrelerer
@@ -417,6 +406,7 @@
 \begin{frame}
 \frametitle{Oppsett}
   \begin{itemize}
+        \setlength\itemsep{2em}
     \item Testet klokkemodellen og styring.
     \item Tok bare med en sensor da fokus var på klokkemodell.
     \item Justerte grenseverdier
@@ -426,6 +416,7 @@
 \begin{frame}
 \frametitle{Utførelse}
       \begin{itemize}
+            \setlength\itemsep{2em}
         \item Flyttet antenne 
         \item Viftet antenne rundt i en halvsirkel
         \item Aktiverte disiplinering av klokka manuelt
@@ -436,6 +427,7 @@
 \subsection{Observasjon}
 \frametitle{Observasjon}
       \begin{itemize}
+            \setlength\itemsep{2em}
         \item Ingen falske positive
         \item GPS log korrelerer
         \item Server log korrelerer
@@ -454,6 +446,7 @@
 \begin{frame}
 \section{Observasjon: Utilsiktet}
 \frametitle{Observasjon: Utilsiktet}
+\pause
       \begin{figure}
         \includegraphics[scale=0.70]{thesis/graphics/disturbance57667-csac-telemetry-phase-steer-combined-zoom-in-2-1.png}
         \caption{Måleserie gjort under utilsiktet forstyrrelse}
@@ -463,6 +456,7 @@
 \section{Konklusjon}
 \begin{frame}
   \frametitle{Konklusjon}
+  \pause
   Vi har demonstrert:
   \begin{itemize}
     \item At en fullt fungerende \textit{"spoof proof atomic clock controller"} ville ha vært i stand til å stå imot et angrep utført med en sofistikert GPS spoofer slik som \textit{"The Civil GPS spoofer"}.
@@ -476,11 +470,11 @@
   \end{itemize}
 \end{frame}
 
-\section{Etter innlevering}
+\section{Videre arbeid}
 \begin{frame}
   \begin{itemize}
   \item Kommunikasjon med atomklokke
-    \frametitle{Ikke løste problemer}
+    \frametitle{Videre arbeid}
     \begin{itemize}
       \item Antatt å ha vært et problem med konfigurasjonen av serialport.
       \item Systematisk feilsøkt etter innlevering. Forsøkt:
