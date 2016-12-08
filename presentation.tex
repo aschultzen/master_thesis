@@ -124,15 +124,15 @@
   %\end{itemize}
 \end{frame}
 
-\begin{frame}
-  \frametitle{"The Civil GPS Spoofer"}
-  Nøkkelfunksjoner:
-  \begin{itemize}
-    \item Sømløs narring, offeret låser på en kopi av det autentiske signalet. Ingen forandring i løsning.
-    \item Angriper manipulerer signalet.
-    \item Angriperen har gjerne et stort spillerom under angrepet da oscillatoren i mottakeren ofte er av lav kvalitet.
-  \end{itemize}
-\end{frame}
+%\begin{frame}
+%  \frametitle{"The Civil GPS Spoofer"}
+%  Nøkkelfunksjoner:
+%  \begin{itemize}
+%    \item Sømløs narring, offeret låser på en kopi av det autentiske signalet. Ingen forandring i løsning.
+%    \item Angriper manipulerer signalet.
+%    \item Angriperen har gjerne et stort spillerom under angrepet da oscillatoren i mottakeren ofte er av lav kvalitet.
+%  \end{itemize}
+%\end{frame}
 
 \section{Deteksjon og mottiltak}
 \begin{frame}
@@ -163,34 +163,27 @@
 \subsection{Referanseklokke}
 \begin{frame}
   \frametitle{Referanseklokke}
-  Med en stabil og pålitelig klokke, har en muligheter til å:
-  \begin{itemize}
-    \item Verifisere GPS løsning.
-    \item Realisere nøyaktig timing selv når GPS disiplinering ikke er mulig.
-  \end{itemize}
   \begin{columns}
     \column{0.5\textwidth}
-      \begin{figure}
-        \includegraphics[scale=0.2]{pics/5071A.jpg}
-        \caption{Symmetricom 5071A Cesium Primary Frequency Standard (500 000 NOK)}
-      \end{figure}
+    \begin{itemize}
+      \item Trenger får korreksjoner
+      \item Lite påvirket av temperatur
+      \item Intern frekvensteller og styringsalgoritme
+    \end{itemize}
     \column{0.5\textwidth}
       \begin{figure}
         \includegraphics[scale=0.2]{thesis/graphics/csac.jpg}
-      \caption{Symmetricom SA.45s CSAC (5000 NOK)}
+      \caption{Symmetricom SA.45s CSAC}
     \end{figure}
   \end{columns}
 \end{frame}
 
 \begin{frame}
   \frametitle{Referanseklokke}
-  Vi valgte Symmetricom SA.45s. 
-  \begin{itemize}
-    \item Lav vekt og størrelse
-    \item Kortidsstabilitet på rundt $10^{-11}$ sekunder.
-    \item Intern frekvensteller og styringsalgoritme
-    \item Kommuniserer telemetri over RS-232
-  \end{itemize}
+      \begin{figure}
+        \includegraphics[scale=0.35]{thesis/graphics/csac_schematic.pdf}
+      \caption{CSAC blokkdiagram}
+    \end{figure}
 \end{frame}
 
 \section{Implementasjon}
