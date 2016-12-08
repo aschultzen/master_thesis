@@ -248,6 +248,10 @@
 \subsubsection{Klokkemodell}
 \begin{frame}
   \frametitle{Klokkemodell}
+  \begin{itemize}
+    \item Utviklet av Harald Hauglin
+    \item Bruker klokkedata (telemetri)
+  \end{itemize}
     \begin{figure}
         \includegraphics[scale=0.8]{thesis/graphics/csac_modelling_prediction.pdf}
       \caption{CSAC styringskorreksjon, fra klokke og predikert.}
@@ -267,28 +271,22 @@
 \subsubsection{Filtre}
 \begin{frame}
   \frametitle{Filtre}
-  Filtrene brukes til å detektere avvik. Enten:
-        \begin{itemize}
-          \item GPS-basert
-          \item Klokkemodell-basert
-        \end{itemize}
-  For øyeblikket kun implementert tre filtre:
   \begin{itemize}
-    \item Lokasjon og hastighetsfilter
-                  \begin{itemize}
-                    \item Data fra sensorene blir samlet formatert.
-                    \item Sjekker løst posisjon og hastighet mot referanseverdier
-                  \end{itemize}
-    \item Fasehoppfilter
-                    \begin{itemize}
-                      \item Sammenlikner nåværende fase med pre-konfigurert grense.
-                    \end{itemize}
-    \item Frekvenskorreksjonsfilter
-                    \begin{itemize}
-                      \item Sammenlikner nåværende styringsverdi med en forventet styringsverdi
-                    \end{itemize}
+    \item Lokasjon og hastighet
+                  %\begin{itemize}
+                  %  \item Data fra sensorene blir samlet formatert.
+                  %  \item Sjekker løst posisjon og hastighet mot referanseverdier
+                  %\end{itemize}
+    \item Fasehopp
+                   % \begin{itemize}
+                   %   \item Sammenlikner nåværende fase med pre-konfigurert grense.
+                   % \end{itemize}
+    \item Frekvenskorreksjon
+                   % \begin{itemize}
+                   %   \item Sammenlikner nåværende styringsverdi med en forventet styringsverdi
+                   % \end{itemize}
   \end{itemize}
-  Pre-konfigurerte referanseverdier er basert på et gjennomsnitt kalkulert fra en lengre måleserie.
+  %Pre-konfigurerte referanseverdier er basert på et gjennomsnitt kalkulert fra en lengre måleserie.
 \end{frame}
 
 \section{Test av lokasjon- og hastighetsfilter}
@@ -376,6 +374,7 @@
 \end{frame}
 
 \begin{frame}
+\subsection{Observasjon}
 \frametitle{Observasjon}
       \begin{itemize}
         \item Ingen falske positive
@@ -386,11 +385,19 @@
 \end{frame}
 
 \begin{frame}
-\subsection{Observasjon}
 \frametitle{Observasjon}
       \begin{figure}
         \includegraphics[scale=0.70]{thesis/graphics/20161024-test2-telemetry-and-cnt91-combined-1-2.png}
         \caption{Måleserie gjort under klokkemodell test}
+      \end{figure}
+\end{frame}
+
+\begin{frame}
+\section{Observasjon: Utilsiktet}
+\frametitle{Observasjon: Utilsiktet}
+      \begin{figure}
+        \includegraphics[scale=0.70]{thesis/graphics/disturbance57667-csac-telemetry-phase-steer-combined-zoom-in-2-1.png}
+        \caption{Måleserie gjort under utilsiktet forstyrrelse}
       \end{figure}
 \end{frame}
 
