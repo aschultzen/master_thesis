@@ -191,10 +191,13 @@
 \begin{frame}
   \frametitle{Ønsket funksjonalitet}
   \begin{itemize}
-    \item Detektere angrep hurtig
-    \item Mulighet for å logge data
-    \item Rask og enkel tilgang til innsamlet data
-    \item Enkelt koble til flere GPS mottakere
+    \item Detektere angrep:
+      \begin{itemize}
+        \item GPS
+        \item Klokke
+      \end{itemize}
+    \item Logging
+    \item Enkel utbygging
     \item Administreres over nettverk
     \item Konfigurerbar 
   \end{itemize}
@@ -245,16 +248,20 @@
 \subsubsection{Klokkemodell}
 \begin{frame}
   \frametitle{Klokkemodell}
-    Klokkemodellen brukt i oppgaven er designet av Harald Hauglin. Brukes til:
-    \begin{itemize}
-      \item Referanse for frekvensavvik og klokkedrift 
-      \item Generere brukbare styringsparameter i tilfelle GPS løsning ikke lenger er til å stole på.
-    \end{itemize}
-    Modellen er logisk en del av serveren og kjører i en egen prosess.
-    \begin{itemize}
-      \item Kommuniserer med atomklokka
-      \item Moden etter to dager (konfigurerbart).
-    \end{itemize}
+    \begin{figure}
+        \includegraphics[scale=0.8]{thesis/graphics/csac_modelling_prediction.pdf}
+      \caption{CSAC styringskorreksjon, fra klokke og predikert.}
+    \end{figure}
+    %Klokkemodellen brukt i oppgaven er designet av Harald Hauglin. Brukes til:
+    %\begin{itemize}
+    %  \item Referanse for frekvensavvik og klokkedrift 
+    %  \item Generere brukbare styringsparameter i tilfelle GPS løsning ikke lenger er til å stole på.
+    %\end{itemize}
+    %Modellen er logisk en del av serveren og kjører i en egen prosess.
+    %\begin{itemize}
+    %  \item Kommuniserer med atomklokka
+    %  \item Moden etter to dager (konfigurerbart).
+    %\end{itemize}
 \end{frame}
 
 \subsubsection{Filtre}
