@@ -205,9 +205,43 @@
 
 \subsection{Sensor server arkitektur}
 \begin{frame}
-  \frametitle{Sensor server arkitektur}
+  \frametitle{Sensor server arkitektur ide}
     \begin{figure}
       \includegraphics[scale=0.2]{thesis/graphics/raspi_gps.pdf}
+    \end{figure}
+  %\begin{itemize}
+  %  \item Mottaker + Raspberry PI = Sensor
+  %  \item Eliminerer behovet for lange signalkabler, bruke nettverk:
+  %  \begin{itemize}
+  %    \item Fiber
+  %    \item Mobilnett (3G og 4G)
+  %    \item WiFi
+  %  \end{itemize}
+  %  \item Antall mottakere begrenset av serverens maskinvare.
+  %\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Kommunikasjon: roller}
+    \begin{figure}
+      \includegraphics[scale=0.3]{thesis/graphics/server_explain.pdf}
+    \end{figure}
+  %\begin{itemize}
+  %  \item Mottaker + Raspberry PI = Sensor
+  %  \item Eliminerer behovet for lange signalkabler, bruke nettverk:
+  %  \begin{itemize}
+  %    \item Fiber
+  %    \item Mobilnett (3G og 4G)
+  %    \item WiFi
+  %  \end{itemize}
+  %  \item Antall mottakere begrenset av serverens maskinvare.
+  %\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Kommunikasjon: GPS data}
+    \begin{figure}
+      \includegraphics[scale=0.25]{thesis/graphics/sensor_nmea.pdf}
     \end{figure}
   %\begin{itemize}
   %  \item Mottaker + Raspberry PI = Sensor
@@ -303,6 +337,14 @@
 \frametitle{Oppsett}
       \begin{figure}
         \includegraphics[scale=0.25]{thesis/graphics/measure_setup.pdf}
+        \caption{Oppsett av måleutstyr}
+      \end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Oppsett}
+      \begin{figure}
+        \includegraphics[scale=0.08]{thesis/graphics/lab_setup_cropped.jpg}
         \caption{Oppsett av måleutstyr}
       \end{figure}
 \end{frame}
