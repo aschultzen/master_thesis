@@ -60,7 +60,6 @@
 \subsection{Anvendelse}
 \begin{frame}
 \frametitle{GPS timing: Anvendelse}
-\pause
   \begin{columns}
     \column{0.3\textwidth}
           \hspace{-50pt}
@@ -92,7 +91,6 @@
 \subsection{Utfordringer og trusler}
 \begin{frame}
 \frametitle{Utfordringer og trusler}
-\pause
       \begin{figure}
         \includegraphics[scale=0.15]{thesis/graphics/montage.pdf}
       \end{figure}
@@ -119,17 +117,17 @@
 
 \subsubsection{Referansetrusselen}
 \begin{frame}
-  \frametitle{"The Civil GPS Spoofer"}
-  \pause
+  \frametitle{Referansetrusselen}
   \begin{figure}
-    \includegraphics[scale=0.2]{thesis/graphics/spoof.jpg}
+    \includegraphics[scale=0.2]{thesis/graphics/spoofer_diagram.pdf}
     \caption{Civil GPS Spoofer \cite{EVPMUGA}}
   \end{figure}
-  %\begin{itemize}
-  %  \item Laget et av et team fra \textit{The University of Texas at Austin} i 2012 \cite{EVPMUGA}
-  %  \item Implementert i "SDR"
-  %  \item Simulere opptil 14 "falske" satellitter.
-  %\end{itemize}
+  \begin{itemize}
+  \item Laget et av et team fra \textit{The University of Texas at Austin} i 2012
+  \item Software-definert radio
+  \item 14 «falske» satellitter
+  \item Sømløs narring
+  \end{itemize}
 \end{frame}
 
 %\begin{frame}
@@ -145,7 +143,6 @@
 \section{Deteksjon og mottiltak}
 \begin{frame}
 \frametitle{Deteksjon og mottiltak}
-\pause
   \begin{itemize}
         \setlength\itemsep{2em}
       \item Bruke flere GPS mottakere med kjent posisjon og hastighet.
@@ -201,13 +198,8 @@
 \subsection{Ønsket funksjonalitet}
 \begin{frame}
   \frametitle{Ønsket funksjonalitet}
-  \pause
   \begin{itemize}
-    \item Detektere angrep:
-      \begin{itemize}
-        \item GPS
-        \item Klokke
-      \end{itemize}
+    \item Detektere angrep
     \item Logging
     \item Enkel utbygging
     \item Administreres over nettverk
@@ -283,13 +275,13 @@
 \subsubsection{Klokkemodell}
 \begin{frame}
   \frametitle{Klokkemodell}
-  \pause
   \begin{itemize}
     \item Utviklet av Harald Hauglin
     \item Bruker klokkedata (telemetri)
+    \item $10^{-11}$ relativ frekvensfeil tilsvarer 1 mikrosekund/døgn
   \end{itemize}
     \begin{figure}
-        \includegraphics[scale=0.8]{thesis/graphics/csac_modelling_prediction.pdf}
+        \includegraphics[scale=0.6]{thesis/graphics/csac_modelling_prediction.pdf}
       \caption{CSAC styringskorreksjon, fra klokke og predikert.}
     \end{figure}
     %Klokkemodellen brukt i oppgaven er designet av Harald Hauglin. Brukes til:
@@ -374,7 +366,6 @@
 
 \begin{frame}
 \frametitle{Utførelse}
-\pause
 \begin{center}
 \begin{tikzpicture}
   \node (img1) {\includegraphics[height=5cm]{thesis/graphics/antenna_foil_over_hacked.jpg}};
@@ -386,7 +377,7 @@
 \begin{frame}
 \frametitle{Observasjon}
       \begin{itemize}
-            \setlength\itemsep{2em}
+       \setlength\itemsep{2em}
         \item Ingen falske positive
         \item GPS log korrelerer
         \item Server log korrelerer
@@ -408,8 +399,7 @@
   \begin{itemize}
         \setlength\itemsep{2em}
     \item Testet klokkemodellen og styring.
-    \item Tok bare med en sensor da fokus var på klokkemodell.
-    \item Justerte grenseverdier
+    \item Tok bare med en Sensor da fokus var på klokkemodell.
   \end{itemize}
 \end{frame}
 
@@ -419,7 +409,6 @@
             \setlength\itemsep{2em}
         \item Flyttet antenne 
         \item Viftet antenne rundt i en halvsirkel
-        \item Aktiverte disiplinering av klokka manuelt
       \end{itemize}
 \end{frame}
 
@@ -444,9 +433,8 @@
 \end{frame}
 
 \begin{frame}
-\section{Observasjon: Utilsiktet}
+\section{Observasjon: Utilsiktet forstyrrelse}
 \frametitle{Observasjon: Utilsiktet}
-\pause
       \begin{figure}
         \includegraphics[scale=0.70]{thesis/graphics/disturbance57667-csac-telemetry-phase-steer-combined-zoom-in-2-1.png}
         \caption{Måleserie gjort under utilsiktet forstyrrelse}
@@ -456,7 +444,6 @@
 \section{Konklusjon}
 \begin{frame}
   \frametitle{Konklusjon}
-  \pause
   Vi har demonstrert:
   \begin{itemize}
     \item At en fullt fungerende \textit{"spoof proof atomic clock controller"} ville ha vært i stand til å stå imot et angrep utført med en sofistikert GPS spoofer slik som \textit{"The Civil GPS spoofer"}.
@@ -472,20 +459,13 @@
 
 \section{Videre arbeid}
 \begin{frame}
+    \frametitle{Videre arbeid}
   \begin{itemize}
   \item Kommunikasjon med atomklokke
-    \frametitle{Videre arbeid}
     \begin{itemize}
-      \item Antatt å ha vært et problem med konfigurasjonen av serialport.
-      \item Systematisk feilsøkt etter innlevering. Forsøkt:
-      \begin{itemize}
-        \item Forskjellige kabler
-        \item Forskjellige datamaskiner
-        \item Verifisert med "serial port sniffer", riktig kommando sendes.
-      \end{itemize}
-      \item Kan være et fastvare problem
+      \item Fastvare problem?
     \end{itemize}
-  \item GPS filter ikke ferdig integrert.
+  \item Integrasjon av filtre
   \end{itemize}
 \end{frame}
 
