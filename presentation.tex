@@ -9,6 +9,9 @@
 \usepackage{caption}
 \captionsetup{font=scriptsize,labelfont=scriptsize}
 
+\setbeamertemplate{footline}{%
+\insertframenumber{}/\inserttotalframenumber}
+
 \usepackage[
     backend=biber,
     style=numeric,
@@ -41,9 +44,9 @@
   \frametitle{Introduksjon}
   \begin{itemize}
     \setlength\itemsep{2em}
-    \item Lage rammeverk
-    \item Deteksjon
-    \item Styring
+    \item GPS-mottakere er naive, enkle å narre
+    \item Enkle tiltak
+    \item Laget system for å teste deteksjon og mottiltak
 \end{itemize}
 \end{frame}
 
@@ -52,8 +55,9 @@
 \frametitle{GPS timing} 
   \begin{figure}
   \vspace{-30pt}
-      \includegraphics[scale=0.17]{thesis/graphics/trilaterate.pdf}
+      \includegraphics[scale=0.15]{thesis/graphics/trilaterate.pdf}
       \caption{Trilaterasjon}
+      1 millisekund feil i klokka = 300 km feil i posisjon.
     \end{figure}
 \end{frame}
 
@@ -91,21 +95,25 @@
 \subsection{Utfordringer og trusler}
 \begin{frame}
 \frametitle{Utfordringer og trusler}
+  Utfordringer:
+  \begin{itemize}
+    \item Avhengig av å ha en antenne med fri sikt.
+    \item Kjent kodestruktur.
+    \item Naive mottakere.
+  \end{itemize}
+  Trusler:
+  \begin{itemize}
+    \item Jamming.
+    \item Spoofing
+    \item Feil i utstyr.
+  \end{itemize} 
+\end{frame}
+
+\begin{frame}
+\frametitle{Utfordringer og trusler}
       \begin{figure}
         \includegraphics[scale=0.15]{thesis/graphics/montage.pdf}
-      \end{figure}
-%Utfordringer:
-%  \begin{itemize}
-%    \item Avhengig av å ha en antenne med fri sikt.
-%    \item Kjent kodestruktur.
-%    \item Naive mottakere.
-%  \end{itemize}
-%  Terror, sabotasje mulig motiv for:
-%  \begin{itemize}
-%    \item Jamming.
-%    \item Spoofing.
-%    \item Feil i utstyr.
-%  \end{itemize}  
+      \end{figure} 
 \end{frame}
 
 \begin{frame}
