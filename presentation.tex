@@ -219,6 +219,52 @@
   \end{itemize}
 \end{frame}
 
+\subsubsection{Klokkemodell}
+\begin{frame}
+  \frametitle{Klokkemodell}
+  \begin{itemize}
+    \item Utviklet av Harald Hauglin
+    \item Bruker klokkedata (telemetri)
+    \item $10^{-11}$ relativ frekvensfeil tilsvarer 1 mikrosekund/døgn
+  \end{itemize}
+    \begin{figure}
+        \includegraphics[scale=0.5]{thesis/graphics/csac_modelling_prediction.pdf}
+      \caption{CSAC styringskorreksjon, fra klokke og predikert.}
+    \end{figure}
+    %Klokkemodellen brukt i oppgaven er designet av Harald Hauglin. Brukes til:
+    %\begin{itemize}
+    %  \item Referanse for frekvensavvik og klokkedrift 
+    %  \item Generere brukbare styringsparameter i tilfelle GPS løsning ikke lenger er til å stole på.
+    %\end{itemize}
+    %Modellen er logisk en del av serveren og kjører i en egen prosess.
+    %\begin{itemize}
+    %  \item Kommuniserer med atomklokka
+    %  \item Moden etter to dager (konfigurerbart).
+    %\end{itemize}
+\end{frame}
+
+\subsubsection{Filtre}
+\begin{frame}
+  \frametitle{Filtre}
+  \begin{itemize}
+        \setlength\itemsep{2em}
+    \item Lokasjon og hastighet
+                  %\begin{itemize}
+                  %  \item Data fra sensorene blir samlet formatert.
+                  %  \item Sjekker løst posisjon og hastighet mot referanseverdier
+                  %\end{itemize}
+    \item Fasehopp
+                   % \begin{itemize}
+                   %   \item Sammenlikner nåværende fase med pre-konfigurert grense.
+                   % \end{itemize}
+    \item Frekvenskorreksjon
+                   % \begin{itemize}
+                   %   \item Sammenlikner nåværende styringsverdi med en forventet styringsverdi
+                   % \end{itemize}
+  \end{itemize}
+  %Pre-konfigurerte referanseverdier er basert på et gjennomsnitt kalkulert fra en lengre måleserie.
+\end{frame}
+
 \subsection{Sensor server}
 \begin{frame}
   \frametitle{Sensor server: Idé}
@@ -282,52 +328,6 @@
     \begin{figure}
       \includegraphics[scale=0.3]{thesis/graphics/monitor_csac_request.pdf}
     \end{figure}
-\end{frame}
-
-\subsubsection{Klokkemodell}
-\begin{frame}
-  \frametitle{Klokkemodell}
-  \begin{itemize}
-    \item Utviklet av Harald Hauglin
-    \item Bruker klokkedata (telemetri)
-    \item $10^{-11}$ relativ frekvensfeil tilsvarer 1 mikrosekund/døgn
-  \end{itemize}
-    \begin{figure}
-        \includegraphics[scale=0.6]{thesis/graphics/csac_modelling_prediction.pdf}
-      \caption{CSAC styringskorreksjon, fra klokke og predikert.}
-    \end{figure}
-    %Klokkemodellen brukt i oppgaven er designet av Harald Hauglin. Brukes til:
-    %\begin{itemize}
-    %  \item Referanse for frekvensavvik og klokkedrift 
-    %  \item Generere brukbare styringsparameter i tilfelle GPS løsning ikke lenger er til å stole på.
-    %\end{itemize}
-    %Modellen er logisk en del av serveren og kjører i en egen prosess.
-    %\begin{itemize}
-    %  \item Kommuniserer med atomklokka
-    %  \item Moden etter to dager (konfigurerbart).
-    %\end{itemize}
-\end{frame}
-
-\subsubsection{Filtre}
-\begin{frame}
-  \frametitle{Filtre}
-  \begin{itemize}
-        \setlength\itemsep{2em}
-    \item Lokasjon og hastighet
-                  %\begin{itemize}
-                  %  \item Data fra sensorene blir samlet formatert.
-                  %  \item Sjekker løst posisjon og hastighet mot referanseverdier
-                  %\end{itemize}
-    \item Fasehopp
-                   % \begin{itemize}
-                   %   \item Sammenlikner nåværende fase med pre-konfigurert grense.
-                   % \end{itemize}
-    \item Frekvenskorreksjon
-                   % \begin{itemize}
-                   %   \item Sammenlikner nåværende styringsverdi med en forventet styringsverdi
-                   % \end{itemize}
-  \end{itemize}
-  %Pre-konfigurerte referanseverdier er basert på et gjennomsnitt kalkulert fra en lengre måleserie.
 \end{frame}
 
 \section{Test av lokasjon- og hastighetsfilter}
