@@ -40,12 +40,51 @@
 ## Slide 6
 - I media er GPS spoofing ofte nevnt i kontekst med droner.
 - Droner som bruker GPS for navigasjon kan bli spoofet til å lande på feil sted.
-- Det er ikke like tabloidvennlig, men en klokke korrigert av en spoofet GPS-mottaker vil kunne lures til å la seg korrigere ukorrekt.
+- Det er ikke like tabloidvennlig, men en klokke korrigert av en spoofet GPS-mottaker er også kapret!
 
 ## Slide 7
 - GPS-timing kan vurderes som en ukryptert og fysisk usikret port inn i industrielle kontroll systemer.
 
 ## Slide 8
+- The Apex Predator, en kan kjøpe billige GPS spoofere på ebay eller kan bruke en slik.
+- Civil GPS Spoofer ble laget av et team fra University of Texas at Austin i 2012.
+- Den er implementert i software definert radio og kan lage 14 falske satelittsignaler.
+- Det spennende er at den bruker et autentisk signal som kilde. Når en GPS-mottakere er låst på signalet, kan signalet manipuleres i sanntid. 
+- Poenget er at den skal være så skånsom og forsiktig som mulig. 
+- Brukes for å manipulere tid og da spesielt i kontekst med PMUer.
+- Dette er trusselen vi hadde i tankene da vi planla våres system og mottiltak.
+
+## Slide 9
+- Er alt håp ute? Bare å gi opp? Nei.
+- Enkle måter å detektere og mulige mottiltak
+
+## Slide 10 -> Du bør ha brukt 10-11 minutter nå!
+- Spoofer med signalkilde og en transmitter
+
+## Slide 11
+- Spooferen skrus på
+- Mottakerne vil løse samme posisjon som signalkilden.
+- Vanskelig å gjennomføre spoofing av flere antenner uten at de forandrer posisjon.
+
+## Slide 12
+- Når jeg prater om en god klokke, så tenker jeg på en klokke som trenger få korreksjoner sjeldent.
+- SA.45s er en Chip scale atomic clock fra Symmetricom og er et eksempel på en slik klokke. Den er også svært rimelig (5000 nok)
+- Har også en intern frekvensteller og styringsalgoritme.
+
+## Slide 13
+- Dette er en ganske typisk oppbygning for atomklokker.
+- Hvordan atomklokker fungerer er utenfor skopet av denne oppgaven, men grunnen til at figuren vises, er at klokka har et løkkefilter implementert på en mikrokontroller. Denne mikrokontrolleren kan en kommunisere med over RS-232 og informasjon kan hentes ut. Denne informasjonen er viktig da den gir oss viktige parametre for klokka.
+
+## Slide 14
+- Bare les krava.
+
+## Slide 15
+- Siden administrering over nettverk, logging og utbyggbarhet var blant kravene, var det naturlig å også få GPS-mottakerne over på et nettverk.
+- Enkeltbrettsdatamaskiner svært rimelig og en enkel måte å få en GPS-mottaker med nettverkskort
+- Jeg har ikke gått på Westerdals, så jeg er komfortabel med å kalle dette en Sensor.
+
+
+
 
 
 
