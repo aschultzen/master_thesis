@@ -80,6 +80,7 @@
 - Bare les krava.
 
 ## Slide 15
+- Skrivefeil! Skal stå 10^-12
 - Designet av Harald Hauglin, implementert av meg i C.
 - Bruker data fra klokka for å bygge seg opp. Vi har satt 2 dager som tid som trengs for å gjøre den moden.
 - Forklar grafen. Bakgrunnen har vi frekvensstyring som klokka har lagt på. Den svarte tynne er den midlede. Stiplede er predikert verdi fra modellen.
@@ -102,6 +103,42 @@
 - Klientprogramvare på Sensor.
 - Skrevet i C99
 - Dataene hentet ut fra GPS-mottakeren er i NMEA format
+
+## Slide 19
+
+## Slide 20
+- Overordnet ide med roller
+
+## Slide 21 - Slide 25
+- Ta deg tid til å beskrive figurene
+
+## Slide 26
+- Plassert på taket på JV
+- Ca. 30 meter fra hverandre
+
+## Slide 27
+- Vi har ikke en GPS spoofer
+- Manipulerer tidsløsningen ved å flytte på mottakerne som SKAL stå på samme sted.
+
+## Slide 28
+- Baktpotet-o-rama
+
+## Slide 29
+- Forklar aksene!
+- Den tykke blå er data fra CSAC
+- Oransje i bakgrunnen er fra en CNT-91 frekvensteller
+- Loggene fra GPS, Serveren og klokka korrelerer svært bra.
+
+## Slide 30
+- Poenget er å teste Klokkemodellen og styring
+
+## Slide 32
+- Tydelig faseavvik
+
+
+
+
+
 
 
 

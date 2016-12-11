@@ -52,7 +52,8 @@
 
 \subsection{GPS timing}
 \begin{frame}
-\frametitle{GPS timing} 
+  \frametitle{Introduksjon}
+\framesubtitle{GPS timing} 
   \begin{figure}
   \vspace{-30pt}
       \includegraphics[scale=0.15]{thesis/graphics/trilaterate.pdf}
@@ -63,7 +64,8 @@
 
 \subsection{Anvendelse}
 \begin{frame}
-\frametitle{GPS timing: Anvendelse}
+  \frametitle{Introduksjon}
+\framesubtitle{GPS timing: Anvendelse}
   \begin{columns}
     \column{0.3\textwidth}
           \hspace{-50pt}
@@ -94,7 +96,8 @@
 
 \subsection{Utfordringer og trusler}
 \begin{frame}
-\frametitle{Utfordringer og trusler}
+  \frametitle{Introduksjon}
+\framesubtitle{Utfordringer og trusler}
   Utfordringer:
   \begin{itemize}
     \item Avhengig av å ha en antenne med fri sikt.
@@ -110,14 +113,16 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Utfordringer og trusler}
+  \frametitle{Introduksjon}
+\framesubtitle{Utfordringer og trusler}
       \begin{figure}
         \includegraphics[scale=0.15]{thesis/graphics/montage.pdf}
       \end{figure} 
 \end{frame}
 
 \begin{frame}
-\frametitle{Utfordringer og trusler}
+  \frametitle{Introduksjon}
+\framesubtitle{Utfordringer og trusler}
       \begin{figure}
         \includegraphics[scale=0.40]{thesis/graphics/fare.pdf}
       \end{figure} 
@@ -125,7 +130,8 @@
 
 \subsubsection{Referansetrusselen}
 \begin{frame}
-  \frametitle{Referansetrusselen}
+  \frametitle{Introduksjon}
+  \framesubtitle{Referansetrusselen}
   \begin{figure}
     \includegraphics[scale=0.2]{thesis/graphics/spoofer_diagram.pdf}
     \caption{Civil GPS Spoofer \cite{EVPMUGA}}
@@ -164,7 +170,8 @@
 
 \subsection{Flere GPS mottakere}
 \begin{frame} 
-  \frametitle{Flere GPS mottakere og kjent posisjon}
+\frametitle{Deteksjon og mottiltak}
+  \framesubtitle{Flere GPS mottakere og kjent posisjon}
   \begin{figure}
     \includegraphics[scale=0.23]{thesis/graphics/toantenner.pdf}
     \caption{Spoofing deteksjon med to antenner}
@@ -172,7 +179,8 @@
 \end{frame}
 
 \begin{frame} 
-  \frametitle{Flere GPS mottakere og kjent posisjon}
+\frametitle{Deteksjon og mottiltak}
+  \framesubtitle{Flere GPS mottakere og kjent posisjon}
   \begin{figure}
     \includegraphics[scale=0.23]{thesis/graphics/toantenner_2.pdf}
     \caption{Spoofing deteksjon med to antenner}
@@ -181,7 +189,8 @@
 
 \subsection{En god klokke}
 \begin{frame}
-  \frametitle{En god klokke}
+\frametitle{Deteksjon og mottiltak}
+  \framesubtitle{En god klokke}
   \begin{columns}
     \column{0.5\textwidth}
     \begin{itemize}
@@ -199,7 +208,8 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{En god klokke}
+\frametitle{Deteksjon og mottiltak}
+  \framesubtitle{En god klokke}
       \begin{figure}
         \includegraphics[scale=0.35]{thesis/graphics/csac_schematic.pdf}
       \caption{CSAC blokkdiagram}
@@ -209,7 +219,8 @@
 \section{System implementasjon}
 \subsection{Ønsket funksjonalitet}
 \begin{frame}
-  \frametitle{Ønsket funksjonalitet}
+\frametitle{Systemimplementasjon}
+  \framesubtitle{Ønsket funksjonalitet}
   \begin{itemize}
     \item Detektere angrep
     \item Logging
@@ -219,9 +230,10 @@
   \end{itemize}
 \end{frame}
 
-\subsubsection{Klokkemodell}
+\subsection{Klokkemodell}
 \begin{frame}
-  \frametitle{Klokkemodell}
+\frametitle{Systemimplementasjon}
+  \framesubtitle{Klokkemodell}
   \begin{itemize}
     \item Utviklet av Harald Hauglin
     \item Bruker klokkedata (telemetri)
@@ -243,9 +255,10 @@
     %\end{itemize}
 \end{frame}
 
-\subsubsection{Filtre}
+\subsection{Filtre}
 \begin{frame}
-  \frametitle{Filtre}
+\frametitle{Systemimplementasjon}
+  \framesubtitle{Filtre}
   \begin{itemize}
         \setlength\itemsep{2em}
     \item Sted og hastighet (GPS)
@@ -267,7 +280,8 @@
 
 \subsection{Sensor Client/Server}
 \begin{frame}
-  \frametitle{Sensor server: Idé}
+\frametitle{Systemimplementasjon}
+  \framesubtitle{Sensor server: Idé}
     \begin{figure}
       \includegraphics[scale=0.2]{thesis/graphics/raspi_gps.pdf}
     \end{figure}
@@ -284,7 +298,8 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Sensor Client}
+\frametitle{Systemimplementasjon}
+  \framesubtitle{Sensor Client}
     \begin{figure}
       \includegraphics[scale=0.25]{thesis/graphics/client_simplified.pdf}
     \end{figure}
@@ -310,7 +325,8 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Sensor server: Arkitektur}
+\frametitle{Systemimplementasjon}
+  \framesubtitle{Sensor server: Arkitektur}
     \begin{figure}
       \includegraphics[scale=0.25]{thesis/graphics/csac_core_simplified.pdf}
     \end{figure}
@@ -336,21 +352,24 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Kommunikasjon: Roller}
+\frametitle{Systemimplementasjon}
+  \framesubtitle{Kommunikasjon: Roller}
     \begin{figure}
       \includegraphics[scale=0.3]{thesis/graphics/server_explain.pdf}
     \end{figure}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Kommunikasjon: GPS data}
+\frametitle{Systemimplementasjon}
+  \framesubtitle{Kommunikasjon: GPS data}
     \begin{figure}
       \includegraphics[scale=0.25]{thesis/graphics/sensor_nmea.pdf}
     \end{figure}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Kommunikasjon: Interaksjon}
+\frametitle{Systemimplementasjon}
+  \framesubtitle{Kommunikasjon: Bruker/Script}
     \begin{figure}
       \includegraphics[scale=0.3]{thesis/graphics/monitor_csac_request.pdf}
     \end{figure}
@@ -358,7 +377,8 @@
 
 \section{Test av lokasjon- og hastighetsfilter}
 \begin{frame}
-\frametitle{Oppsett}
+\frametitle{Test av lokasjon- og hastighetsfilter}
+\framesubtitle{Testoppsett: Konfigurasjon}
   \subsection{Beskrivelse}
       \begin{figure}
         \includegraphics[scale=0.25]{thesis/graphics/server_layout.eps}
@@ -367,7 +387,8 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Oppsett}
+\frametitle{Test av lokasjon- og hastighetsfilter}
+\framesubtitle{Testoppsett: Måling}
       \begin{figure}
         \includegraphics[scale=0.25]{thesis/graphics/measure_setup.pdf}
         \caption{Oppsett av måleutstyr}
@@ -375,7 +396,8 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Oppsett}
+\frametitle{Test av lokasjon- og hastighetsfilter}
+\framesubtitle{Testoppsett: Måling}
       \begin{figure}
         \includegraphics[scale=0.08]{thesis/graphics/lab_setup_cropped.jpg}
         \caption{Oppsett av måleutstyr}
@@ -383,7 +405,8 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Oppsett: plassering av mottakere}
+\frametitle{Test av lokasjon- og hastighetsfilter}
+\framesubtitle{Testoppsett: Plassering av mottakere}
       \begin{figure}
         \includegraphics[scale=0.18]{thesis/graphics/roof.eps}
         \caption{Plasseringen av GPS-mottakere}
@@ -391,9 +414,10 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Utførelse}
+\frametitle{Test av lokasjon- og hastighetsfilter}
+\framesubtitle{Utførelse}
       \begin{itemize}
-            \setlength\itemsep{2em}
+        \setlength\itemsep{2em}
         \item Flyttet antenne 1 mot antenne 2
         \item Flyttet antenne 2 mot antenne 1
         \item Viftet antenne 1 rundt i en halvsirkel
@@ -403,7 +427,8 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Utførelse}
+\frametitle{Test av lokasjon- og hastighetsfilter}
+\framesubtitle{Utførelse}
 \begin{center}
 \begin{tikzpicture}
   \node (img1) {\includegraphics[height=5cm]{thesis/graphics/antenna_foil_over_hacked.jpg}};
@@ -413,18 +438,8 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Observasjon}
-      \begin{itemize}
-       \setlength\itemsep{2em}
-        \item Ingen falske positive
-        \item GPS log korrelerer
-        \item Server log korrelerer
-        \item Frekvensmåling korrelerer
-      \end{itemize}
-\end{frame}
-
-\begin{frame}
-\frametitle{Observasjon: Målesystem}
+\frametitle{Test av lokasjon- og hastighetsfilter}
+\framesubtitle{Observasjon}
       \begin{figure}
         \includegraphics[scale=0.70]{thesis/graphics/cns91-and-csac-telemetry-frequency-1.png}
         \caption{Måleserie gjort under test av lokasjon og hastighetsfilter}
@@ -433,16 +448,18 @@
 
 \section{Test av klokkemodell og filtre}
 \begin{frame}
-\frametitle{Oppsett}
+\frametitle{Test av klokkemodell og filtre}
+\framesubtitle{Oppsett}
   \begin{itemize}
         \setlength\itemsep{2em}
     \item Testet klokkemodellen og styring.
-    \item Tok bare med en Sensor da fokus var på klokkemodell.
+    \item Tok bare med en Sensor da fokus var på klokkemodell. 
   \end{itemize}
 \end{frame}
 
 \begin{frame}
-\frametitle{Utførelse}
+\frametitle{Test av klokkemodell og filtre}
+\framesubtitle{Utførelse}
       \begin{itemize}
             \setlength\itemsep{2em}
         \item Flyttet antenne 
@@ -451,28 +468,17 @@
 \end{frame}
 
 \begin{frame}
-\subsection{Observasjon}
-\frametitle{Observasjon}
-      \begin{itemize}
-            \setlength\itemsep{2em}
-        \item Ingen falske positive
-        \item GPS log korrelerer
-        \item Server log korrelerer
-        \item Frekvensmåling korrelerer
-      \end{itemize}
-\end{frame}
-
-\begin{frame}
-\frametitle{Observasjon}
+\frametitle{Test av klokkemodell og filtre}
+\framesubtitle{Observasjon}
       \begin{figure}
-        \includegraphics[scale=0.70]{thesis/graphics/20161024-test2-telemetry-and-cnt91-combined-1-2.png}
+        \includegraphics[scale=0.18]{thesis/graphics/20161024-test2-telemetry-and-cnt91-combined-1-3.png}
         \caption{Måleserie gjort under klokkemodell test}
       \end{figure}
 \end{frame}
 
 \begin{frame}
-\section{Observasjon: Utilsiktet forstyrrelse}
-\frametitle{Observasjon: Utilsiktet}
+\section{Utilsiktet forstyrrelse}
+\frametitle{Utilsiktet forstyrrelse}
       \begin{figure}
         \includegraphics[scale=0.70]{thesis/graphics/disturbance57667-csac-telemetry-phase-steer-combined-zoom-in-2-1.png}
         \caption{Måleserie gjort under utilsiktet forstyrrelse}
