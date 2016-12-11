@@ -11,6 +11,7 @@
 - Jeg har laget et system for å gjøre GPS-styrte klokker motstandsdyktige mot falske GPS-signaler.
 - GPS-mottakere er dessverre svært naive og enkle å lure
 - Systemet er en prototype ment for å teste deteksjonsteknikker.
+- Aldri gjort før. Lavthengende frukt.
 
 ## Slide 3
 - Hva har GPS med timing å gjøre? Er ikke GPS kun ment for finne frem med bilen når en er på ferie?
@@ -79,10 +80,28 @@
 - Bare les krava.
 
 ## Slide 15
+- Designet av Harald Hauglin, implementert av meg i C.
+- Bruker data fra klokka for å bygge seg opp. Vi har satt 2 dager som tid som trengs for å gjøre den moden.
+- Forklar grafen. Bakgrunnen har vi frekvensstyring som klokka har lagt på. Den svarte tynne er den midlede. Stiplede er predikert verdi fra modellen.
+- Viser også hvordan klokka oppfører seg, at den ikke trenger store korreksjonene.
+
+## Slide 16
+- Filtre er algoritmer som enten bruker GPS data (NMEA) eller telemetri fra klokka til avdekke abnormale tilstander.
+- Sted og hastighet og fasehopp filtrene bruker pre-konfigurerte grenseverdier
+- Disse grenseverdiene ble regnet ved at vi logget data fra GPS mottakerne og klokka for å finne ut hva vi kunne regne som en normal. 
+- De forskjellige filtrene er IKKE VEKTET på noen måte. 
+- Optimale grenseverdier utenfor skopet av oppgaven.   
+- Frekvenskorreksjonsfilteret bruker klokkemodellen som referanse. 
+
+## Slide 17
 - Siden administrering over nettverk, logging og utbyggbarhet var blant kravene, var det naturlig å også få GPS-mottakerne over på et nettverk.
 - Enkeltbrettsdatamaskiner svært rimelig og en enkel måte å få en GPS-mottaker med nettverkskort
 - Jeg har ikke gått på Westerdals, så jeg er komfortabel med å kalle dette en Sensor.
 
+## Slide 18
+- Klientprogramvare på Sensor.
+- Skrevet i C99
+- Dataene hentet ut fra GPS-mottakeren er i NMEA format
 
 
 

@@ -248,16 +248,16 @@
   \frametitle{Filtre}
   \begin{itemize}
         \setlength\itemsep{2em}
-    \item Lokasjon og hastighet
+    \item Sted og hastighet (GPS)
                   %\begin{itemize}
                   %  \item Data fra sensorene blir samlet formatert.
                   %  \item Sjekker løst posisjon og hastighet mot referanseverdier
                   %\end{itemize}
-    \item Fasehopp
+    \item Fasehopp (Klokke)
                    % \begin{itemize}
                    %   \item Sammenlikner nåværende fase med pre-konfigurert grense.
                    % \end{itemize}
-    \item Frekvenskorreksjon
+    \item Frekvenskorreksjon (Klokke)
                    % \begin{itemize}
                    %   \item Sammenlikner nåværende styringsverdi med en forventet styringsverdi
                    % \end{itemize}
@@ -265,7 +265,7 @@
   %Pre-konfigurerte referanseverdier er basert på et gjennomsnitt kalkulert fra en lengre måleserie.
 \end{frame}
 
-\subsection{Sensor server}
+\subsection{Sensor Client/Server}
 \begin{frame}
   \frametitle{Sensor server: Idé}
     \begin{figure}
@@ -280,6 +280,32 @@
   %    \item WiFi
   %  \end{itemize}
   %  \item Antall mottakere begrenset av serverens maskinvare.
+  %\end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Sensor Client}
+    \begin{figure}
+      \includegraphics[scale=0.25]{thesis/graphics/client_simplified.pdf}
+    \end{figure}
+    %\item 3000+ linjer med C99 kode
+    %\item Håndterer av/pålogging av klienter
+    %\item Håndtere mottak og formatering av GPS data
+    %\item En prosess per pålogging
+    %\item Delt minne mellom prosesser (anonym MMAP)
+    %  \begin{itemize}
+    %    \item Semaforer og barrierer for beskyttelse
+    %  \end{itemize}
+    %\item Mulighet for brukere å koble på og gi kommandoer, f.eks:
+    %  \begin{itemize}
+    %    \item Rapporterer lokasjon og tid
+    %    \item Rapportere server status
+    %    \item Rapportere filterstatus
+    %    \item Lagre og gjenopprette tilstand i sensorer
+    %    \item Laste inn nye lokasjonsdata
+    %    \item Avslutte egen og andres tilkobling
+    %    \item Sende kommandoer til atomklokka 
+    %  \end{itemize}
   %\end{itemize}
 \end{frame}
 
@@ -456,11 +482,14 @@
 \section{Konklusjon}
 \begin{frame}
   \frametitle{Konklusjon}
-  Vi har demonstrert:
   \begin{itemize}
-    \item At en fullt fungerende \textit{"spoof proof atomic clock controller"} ville ha vært i stand til å stå imot et angrep utført med en sofistikert GPS spoofer slik som \textit{"The Civil GPS spoofer"}.
-    \item Nåværende implementasjonen evne til å detektere en forstyrrelse av GPS signaler og en begrenset evne til å begrense skaden av nevnte forstyrrelse.
-    \item Effektivitet til Sensor server arkitekturen. 
+    \setlength\itemsep{2em}
+    \item Effektiv deteksjon 
+    \begin{itemize}
+      \item Vanskelig å spoofe to mottakere
+      \item God klokke -- litte spillerom for narring
+    \end{itemize}
+    \item Effektivitet til Sensor Server arkitekturen. 
     \begin{itemize}
       \item Lav responstid
       \item Høy stabilitet 
@@ -473,9 +502,10 @@
 \begin{frame}
     \frametitle{Videre arbeid}
   \begin{itemize}
+      \setlength\itemsep{2em}
   \item Kommunikasjon med atomklokke
     \begin{itemize}
-      \item Fastvare problem?
+      \item CSAC fastvare problem?
     \end{itemize}
   \item Integrasjon av filtre
   \end{itemize}
