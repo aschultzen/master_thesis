@@ -134,6 +134,15 @@
 
 ## Slide 32
 - Tydelig faseavvik
+- Grensa for styring satt til 50 
+
+## Slide 33
+- Grensa for phase offsett satt til 50?
+
+## Slide 34
+- Du kommer ikke utenom to eller flere mottakere
+- 
+
 
 
 

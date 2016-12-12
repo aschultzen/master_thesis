@@ -442,7 +442,7 @@
 \framesubtitle{Observasjon}
       \begin{figure}
         \includegraphics[scale=0.70]{thesis/graphics/cns91-and-csac-telemetry-frequency-1.png}
-        \caption{Måleserie gjort under test av lokasjon og hastighetsfilter}
+        \caption{Måleserie gjort under test av lokasjon og hastighetsfilter. Oransje: Frekvens målt mot Justervesenet atomklokker. Blå: Frekvenskorreksjon fra telemetri}
       \end{figure}
 \end{frame}
 
@@ -472,7 +472,7 @@
 \framesubtitle{Observasjon}
       \begin{figure}
         \includegraphics[scale=0.18]{thesis/graphics/20161024-test2-telemetry-and-cnt91-combined-1-3.png}
-        \caption{Måleserie gjort under klokkemodell test}
+        \caption{Måleserie gjort under klokkemodell test. Oransje er relativ frekvensforskjell mellom klokke og JVs atomklokker. Blå er relativ frekvenskorreksjon målt av klokka}
       \end{figure}
 \end{frame}
 
@@ -481,7 +481,7 @@
 \frametitle{Utilsiktet forstyrrelse}
       \begin{figure}
         \includegraphics[scale=0.70]{thesis/graphics/disturbance57667-csac-telemetry-phase-steer-combined-zoom-in-2-1.png}
-        \caption{Måleserie gjort under utilsiktet forstyrrelse}
+        \caption{Måleserie gjort under utilsiktet forstyrrelse. «Phase offset» (blå) er i nanosekunder. «Steering correction» (oransje) er i $10^{-12}$}
       \end{figure}
 \end{frame}
 
@@ -493,7 +493,10 @@
     \item Effektiv deteksjon 
     \begin{itemize}
       \item Vanskelig å spoofe to mottakere
-      \item God klokke -- litte spillerom for narring
+      \item God klokke -- lite spillerom for narring
+	%\begin{itemize}
+	%	\item 50 × $10^{-12}$ (0.05 ns/s) er trangt.
+	%\end{itemize}
     \end{itemize}
     \item Effektivitet til Sensor Server arkitekturen. 
     \begin{itemize}

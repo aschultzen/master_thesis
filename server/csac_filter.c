@@ -144,9 +144,7 @@ int fast_timing_filter(int phase_current, int phase_limit)
 */
 int freq_cor_filter(struct csac_model_data *cfd)
 {
-    if ( abs(cfd->steer_current -
-             cfd->steer_prediction) >
-            cfd->cf_conf.steer_limit) {
+    if ( abs(cfd->steer_current - cfd->steer_prediction) > cfd->cf_conf.steer_limit) {
         return 1;
     }
     return 0;
